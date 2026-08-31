@@ -6,41 +6,59 @@ const crypto = require("crypto");
 const PORT = process.env.PORT || 3000;
 const ADMIN_KEY = process.env.ADMIN_KEY || "dy4427574";
 
-const DB_FILE = path.join(__dirname, "data.json");
+const DATA_FILE = path.join(__dirname, "data.json");
 
 let db = {
   keys: [],
   round: null
 };
 
-try {
-  if (fs.existsSync(DB_FILE)) {
-    db = JSON.parse(fs.readFileSync(DB_FILE, "utf8"));
+function loadDB() {
+  try {
+    if (fs.existsSync(DATA_FILE)) {
+      const saved = JSON.parse(
+        fs.readFileSync(DATA_FILE, "utf8")
+      );
+
+      if (Array.isArray(saved.keys)) {
+        db.keys = saved.keys;
+      }
+
+      if (saved.round) {
+        db.round = saved.round;
+      }
+    }
+  } catch (error) {
+    console.log("Database load error:", error.message);
   }
-} catch (e) {
-  db = { keys: [], round: null };
 }
 
 function saveDB() {
   try {
-    fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
-  } catch (e) {
-    console.log("Database save error:", e.message);
+    fs.writeFileSync(
+      DATA_FILE,
+      JSON.stringify(db, null, 2)
+    );
+  } catch (error) {
+    console.log("Database save error:", error.message);
   }
 }
 
-function createRound() {
+loadDB();
+
+function getRound() {
   const period = Math.floor(Date.now() / 30000);
+  const endsAt = (period + 1) * 30000;
 
   if (!db.round || db.round.period !== period) {
     const number = crypto.randomInt(0, 10);
 
     db.round = {
-      period: period,
-      number: number,
+      period,
+      number,
       prediction: number >= 5 ? "BIG" : "SMALL",
-      confidence: 55 + crypto.randomInt(0, 31),
-      endsAt: (period + 1) * 30000
+      confidence: crypto.randomInt(55, 86),
+      endsAt
     };
 
     saveDB();
@@ -49,9 +67,9 @@ function createRound() {
   return db.round;
 }
 
-function json(res, status, data) {
+function sendJSON(res, status, data) {
   res.writeHead(status, {
-    "Content-Type": "application/json",
+    "Content-Type": "application/json; charset=utf-8",
     "Cache-Control": "no-store",
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers":
@@ -61,11 +79,31 @@ function json(res, status, data) {
   res.end(JSON.stringify(data));
 }
 
+function sendHTML(res, filename) {
+  const file = path.join(__dirname, filename);
+
+  if (!fs.existsSync(file)) {
+    res.writeHead(404, {
+      "Content-Type": "text/plain; charset=utf-8"
+    });
+
+    res.end("File not found: " + filename);
+    return;
+  }
+
+  res.writeHead(200, {
+    "Content-Type": "text/html; charset=utf-8",
+    "Cache-Control": "no-cache"
+  });
+
+  fs.createReadStream(file).pipe(res);
+}
+
 function readBody(req) {
   return new Promise((resolve) => {
     let body = "";
 
-    req.on("data", chunk => {
+    req.on("data", (chunk) => {
       body += chunk;
     });
 
@@ -91,25 +129,57 @@ const server = http.createServer(async (req, res) => {
     return res.end();
   }
 
-  /* USER: CURRENT PREDICTION */
+  const url = new URL(
+    req.url,
+    `http://${req.headers.host || "localhost"}`
+  );
 
-  if (req.url === "/api/state" && req.method === "GET") {
+  /*
+   * FRONTEND
+   */
 
-    const accessKey = req.headers["x-access-key"];
+  if (
+    url.pathname === "/" ||
+    url.pathname === "/index.html" ||
+    url.pathname === "/prediction.html"
+  ) {
+    return sendHTML(res, "prediction.html");
+  }
 
-    if (!accessKey || !db.keys.includes(accessKey)) {
-      return json(res, 401, {
+  if (url.pathname === "/admin.html") {
+    return sendHTML(res, "admin.html");
+  }
+
+  /*
+   * USER PREDICTION
+   */
+
+  if (
+    url.pathname === "/api/state" &&
+    req.method === "GET"
+  ) {
+
+    const accessKey =
+      req.headers["x-access-key"];
+
+    if (
+      !accessKey ||
+      !db.keys.includes(accessKey)
+    ) {
+      return sendJSON(res, 401, {
         error: "INVALID_KEY"
       });
     }
 
-    const round = createRound();
+    const round = getRound();
 
-    return json(res, 200, {
+    return sendJSON(res, 200, {
       period: "********",
       countdown: Math.max(
         0,
-        Math.ceil((round.endsAt - Date.now()) / 1000)
+        Math.ceil(
+          (round.endsAt - Date.now()) / 1000
+        )
       ),
       prediction: round.prediction,
       number: round.number,
@@ -117,34 +187,56 @@ const server = http.createServer(async (req, res) => {
     });
   }
 
-  /* ADMIN: LIST KEYS */
+  /*
+   * ADMIN AUTH
+   */
 
-  if (req.url === "/api/admin/keys" && req.method === "GET") {
+  function isAdmin() {
+    return (
+      req.headers["x-admin-key"] === ADMIN_KEY
+    );
+  }
 
-    if (req.headers["x-admin-key"] !== ADMIN_KEY) {
-      return json(res, 401, {
+  /*
+   * ADMIN - LIST KEYS
+   */
+
+  if (
+    url.pathname === "/api/admin/keys" &&
+    req.method === "GET"
+  ) {
+
+    if (!isAdmin()) {
+      return sendJSON(res, 401, {
         error: "UNAUTHORIZED"
       });
     }
 
-    return json(res, 200, {
+    return sendJSON(res, 200, {
       keys: db.keys
     });
   }
 
-  /* ADMIN: CREATE KEY */
+  /*
+   * ADMIN - CREATE KEY
+   */
 
-  if (req.url === "/api/admin/keys" && req.method === "POST") {
+  if (
+    url.pathname === "/api/admin/keys" &&
+    req.method === "POST"
+  ) {
 
-    if (req.headers["x-admin-key"] !== ADMIN_KEY) {
-      return json(res, 401, {
+    if (!isAdmin()) {
+      return sendJSON(res, 401, {
         error: "UNAUTHORIZED"
       });
     }
 
     const body = await readBody(req);
 
-    let key = String(body.key || "").trim();
+    let key = String(
+      body.key || ""
+    ).trim();
 
     if (!key) {
       key =
@@ -160,19 +252,24 @@ const server = http.createServer(async (req, res) => {
       saveDB();
     }
 
-    return json(res, 200, {
+    return sendJSON(res, 200, {
       success: true,
-      key: key,
+      key,
       keys: db.keys
     });
   }
 
-  /* ADMIN: DELETE KEY */
+  /*
+   * ADMIN - DELETE KEY
+   */
 
-  if (req.url === "/api/admin/keys" && req.method === "DELETE") {
+  if (
+    url.pathname === "/api/admin/keys" &&
+    req.method === "DELETE"
+  ) {
 
-    if (req.headers["x-admin-key"] !== ADMIN_KEY) {
-      return json(res, 401, {
+    if (!isAdmin()) {
+      return sendJSON(res, 401, {
         error: "UNAUTHORIZED"
       });
     }
@@ -180,76 +277,82 @@ const server = http.createServer(async (req, res) => {
     const body = await readBody(req);
 
     db.keys = db.keys.filter(
-      key => key !== body.key
+      (key) => key !== body.key
     );
 
     saveDB();
 
-    return json(res, 200, {
+    return sendJSON(res, 200, {
       success: true,
       keys: db.keys
     });
   }
 
-  /* ADMIN: APP STATUS */
+  /*
+   * ADMIN - STATUS
+   */
 
-  if (req.url === "/api/admin/status" && req.method === "GET") {
+  if (
+    url.pathname === "/api/admin/status" &&
+    req.method === "GET"
+  ) {
 
-    if (req.headers["x-admin-key"] !== ADMIN_KEY) {
-      return json(res, 401, {
+    if (!isAdmin()) {
+      return sendJSON(res, 401, {
         error: "UNAUTHORIZED"
       });
     }
 
-    const round = createRound();
+    const round = getRound();
 
-    return json(res, 200, {
+    return sendJSON(res, 200, {
       users: db.keys.length,
       prediction: round.prediction,
       number: round.number,
       countdown: Math.max(
         0,
-        Math.ceil((round.endsAt - Date.now()) / 1000)
+        Math.ceil(
+          (round.endsAt - Date.now()) / 1000
+        )
       )
     });
   }
 
-  /* FRONTEND FILES */
+  /*
+   * HEALTH CHECK
+   */
 
-  let file;
-
-  if (req.url === "/" || req.url === "/prediction.html") {
-    file = path.join(__dirname, "prediction.html");
-  } else if (req.url === "/admin.html") {
-    file = path.join(__dirname, "admin.html");
-  }
-
-  if (file && fs.existsSync(file)) {
-
-    res.writeHead(200, {
-      "Content-Type": "text/html; charset=utf-8"
+  if (
+    url.pathname === "/health"
+  ) {
+    return sendJSON(res, 200, {
+      status: "ok",
+      service: "DY AI"
     });
-
-    return fs.createReadStream(file).pipe(res);
   }
 
   res.writeHead(404, {
-    "Content-Type": "text/plain"
+    "Content-Type":
+      "text/plain; charset=utf-8"
   });
 
   res.end("Not Found");
 });
 
-/* SERVER-SIDE 30 SECOND CLOCK */
+/*
+ * Keep server-side round clock running.
+ */
 
 setInterval(() => {
-  createRound();
+  getRound();
 }, 1000);
 
-createRound();
-
-server.listen(PORT, "0.0.0.0", () => {
-  console.log(
-    `DY AI server running on port ${PORT}`
-  );
-});
+server.listen(
+  PORT,
+  "0.0.0.0",
+  () => {
+    console.log(
+      "DY AI server running on port " + PORT
+    );
+  }
+);
