@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>DY AI Admin Panel</title>
+
+<style>
+
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  min-height:100vh;
+  background:#070b16;
+  color:#fff;
+  font-family:Arial,sans-serif;
+}
+
+.container{
+  max-width:700px;
+  margin:auto;
+  padding:16px;
+}
+
+.card{
+  background:#10172a;
+  border:1px solid #293657;
+  border-radius:20px;
+  padding:20px;
+  margin:13px 0;
+  box-shadow:0 12px 35px rgba(0,0,0,.35);
+}
+
+h1,h2{
+  margin-top:0;
+}
+
+.muted{
+  color:#9aa7c4;
+  font-size:13px;
+}
+
+input{
+  width:100%;
+  padding:14px;
+  margin-top:9px;
+  border-radius:12px;
+  border:1px solid #34405f;
+  background:#0b1120;
+  color:#fff;
+  outline:none;
+}
+
+button{
+  width:100%;
+  padding:14px;
+  margin-top:10px;
+  border:0;
+  border-radius:12px;
+  background:#635bff;
+  color:#fff;
+  font-weight:800;
+}
+
+.danger{
+  background:#c83b57;
+}
+
+.success{
+  color:#62e6a7;
+}
+
+.error{
+  color:#ff7285;
+}
+
+.hidden{
+  display:none;
+}
+
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.badge{
+  background:#18233d;
+  padding:7px 12px;
+  border-radius:50px;
+  font-size:12px;
+}
+
+.key-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:13px 0;
+  border-bottom:1px solid #293657;
+}
+
+.key-text{
+  flex:1;
+  word-break:break-all;
+}
+
+.key-row button{
+  width:auto;
+  margin:0;
+  padding:9px 12px;
+}
+
+.stat-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+}
+
+.stat{
+  background:#0b1120;
+  border:1px solid #293657;
+  border-radius:14px;
+  padding:15px;
+}
+
+.stat-value{
+  font-size:25px;
+  font-weight:900;
+  margin-top:5px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<!-- LOGIN -->
+
+<div id="loginBox" class="card">
+
+  <h1>DY AI Admin</h1>
+
+  <p class="muted">
+    Secure administrator access
+  </p>
+
+  <input
+    id="adminKey"
+    type="password"
+    placeholder="Admin key"
+    autocomplete="off"
+  >
+
+  <button onclick="login()">
+    UNLOCK ADMIN PANEL
+  </button>
+
+  <p id="loginMessage"></p>
+
+</div>
+
+
+<!-- ADMIN PANEL -->
+
+<div id="adminPanel" class="hidden">
+
+  <div class="card header">
+
+    <div>
+      <h1>Admin Dashboard</h1>
+      <div class="muted">
+        DY AI control center
+      </div>
+    </div>
+
+    <div class="badge">
+      ADMIN
+    </div>
+
+  </div>
+
+
+  <!-- STATUS -->
+
+  <div class="card">
+
+    <h2>System Status</h2>
+
+    <div class="stat-grid">
+
+      <div class="stat">
+        <div class="muted">
+          ACTIVE KEYS
+        </div>
+
+        <div id="keyCount" class="stat-value">
+          0
+        </div>
+      </div>
+
+      <div class="stat">
+        <div class="muted">
+          CURRENT PREDICTION
+        </div>
+
+        <div id="currentPrediction" class="stat-value">
+          —
+        </div>
+      </div>
+
+      <div class="stat">
+        <div class="muted">
+          NUMBER
+        </div>
+
+        <div id="currentNumber" class="stat-value">
+          —
+        </div>
+      </div>
+
+      <div class="stat">
+        <div class="muted">
+          TIMER
+        </div>
+
+        <div id="currentTimer" class="stat-value">
+          —
+        </div>
+      </div>
+
+    </div>
+
+    <p id="systemStatus" class="muted">
+      Loading...
+    </p>
+
+  </div>
+
+
+  <!-- CREATE KEY -->
+
+  <div class="card">
+
+    <h2>Create Prediction Key</h2>
+
+    <p class="muted">
+      Leave empty to generate a random key.
+    </p>
+
+    <input
+      id="newKey"
+      placeholder="Example: DY-USER-001"
+      autocomplete="off"
+    >
+
+    <button onclick="createKey()">
+      CREATE ACCESS KEY
+    </button>
+
+    <p id="createMessage"></p>
+
+  </div>
+
+
+  <!-- KEY LIST -->
+
+  <div class="card">
+
+    <h2>Prediction Access Keys</h2>
+
+    <div id="keyList">
+      Loading...
+    </div>
+
+  </div>
+
+
+  <!-- REFRESH -->
+
+  <div class="card">
+
+    <button onclick="loadAll()">
+      REFRESH DASHBOARD
+    </button>
+
+    <button
+      class="danger"
+      onclick="logout()"
+    >
+      LOGOUT
+    </button>
+
+  </div>
+
+</div>
+
+</div>
+
+
+<script>
+
+let adminKey = "";
+
+
+/* LOGIN */
+
+async function login(){
+
+  const value =
+    document
+      .getElementById("adminKey")
+      .value
+      .trim();
+
+  if(!value){
+
+    showLoginMessage(
+      "Please enter admin key.",
+      "error"
+    );
+
+    return;
+  }
+
+  adminKey = value;
+
+  try{
+
+    const response =
+      await fetch(
+        "/api/admin/keys",
+        {
+          method:"GET",
+          cache:"no-store",
+          headers:{
+            "X-Admin-Key":adminKey
+          }
+        }
+      );
+
+    if(!response.ok){
+
+      throw new Error(
+        "Unauthorized"
+      );
+
+    }
+
+    document
+      .getElementById("loginBox")
+      .classList
+      .add("hidden");
+
+    document
+      .getElementById("adminPanel")
+      .classList
+      .remove("hidden");
+
+    await loadAll();
+
+  }
+
+  catch(error){
+
+    showLoginMessage(
+      "Wrong admin key or server unavailable.",
+      "error"
+    );
+
+    adminKey = "";
+
+  }
+
+}
+
+
+/* LOGIN MESSAGE */
+
+function showLoginMessage(
+  text,
+  type
+){
+
+  const el =
+    document.getElementById(
+      "loginMessage"
+    );
+
+  el.textContent = text;
+
+  el.className = type;
+
+}
+
+
+/* LOAD EVERYTHING */
+
+async function loadAll(){
+
+  await loadKeys();
+
+  await loadStatus();
+
+}
+
+
+/* LOAD KEYS */
+
+async function loadKeys(){
+
+  try{
+
+    const response =
+      await fetch(
+        "/api/admin/keys",
+        {
+          method:"GET",
+          cache:"no-store",
+          headers:{
+            "X-Admin-Key":adminKey
+          }
+        }
+      );
+
+    if(!response.ok){
+
+      throw new Error();
+
+    }
+
+    const data =
+      await response.json();
+
+    renderKeys(data.keys || []);
+
+  }
+
+  catch(error){
+
+    document
+      .getElementById("keyList")
+      .innerHTML =
+      "<p class='error'>Unable to load keys.</p>";
+
+  }
+
+}
+
+
+/* RENDER KEYS */
+
+function renderKeys(keys){
+
+  document
+    .getElementById("keyCount")
+    .textContent =
+    keys.length;
+
+
+  if(!keys.length){
+
+    document
+      .getElementById("keyList")
+      .innerHTML =
+      "<p class='muted'>No prediction keys created.</p>";
+
+    return;
+
+  }
+
+
+  const box =
+    document.getElementById(
+      "keyList"
+    );
+
+  box.innerHTML = "";
+
+
+  keys.forEach(function(key){
+
+    const row =
+      document.createElement("div");
+
+    row.className =
+      "key-row";
+
+
+    const text =
+      document.createElement("div");
+
+    text.className =
+      "key-text";
+
+    text.textContent = key;
+
+
+    const button =
+      document.createElement("button");
+
+    button.className =
+      "danger";
+
+    button.textContent =
+      "DELETE";
+
+    button.onclick =
+      function(){
+
+        deleteKey(key);
+
+      };
+
+
+    row.appendChild(text);
+
+    row.appendChild(button);
+
+    box.appendChild(row);
+
+  });
+
+}
+
+
+/* CREATE KEY */
+
+async function createKey(){
+
+  const input =
+    document.getElementById(
+      "newKey"
+    );
+
+  const customKey =
+    input.value.trim();
+
+
+  try{
+
+    const response =
+      await fetch(
+        "/api/admin/keys",
+        {
+          method:"POST",
+
+          headers:{
+            "Content-Type":
+              "application/json",
+
+            "X-Admin-Key":
+              adminKey
+          },
+
+          body:JSON.stringify({
+            key:customKey
+          })
+        }
+      );
+
+
+    if(!response.ok){
+
+      throw new Error();
+
+    }
+
+
+    const data =
+      await response.json();
+
+
+    input.value = "";
+
+
+    document
+      .getElementById(
+        "createMessage"
+      )
+      .textContent =
+      "Key created: " + data.key;
+
+
+    document
+      .getElementById(
+        "createMessage"
+      )
+      .className =
+      "success";
+
+
+    renderKeys(
+      data.keys || []
+    );
+
+  }
+
+  catch(error){
+
+    document
+      .getElementById(
+        "createMessage"
+      )
+      .textContent =
+      "Unable to create key.";
+
+    document
+      .getElementById(
+        "createMessage"
+      )
+      .className =
+      "error";
+
+  }
+
+}
+
+
+/* DELETE KEY */
+
+async function deleteKey(key){
+
+  if(
+    !confirm(
+      "Delete this access key?"
+    )
+  ){
+
+    return;
+
+  }
+
+
+  try{
+
+    const response =
+      await fetch(
+        "/api/admin/keys",
+        {
+          method:"DELETE",
+
+          headers:{
+            "Content-Type":
+              "application/json",
+
+            "X-Admin-Key":
+              adminKey
+          },
+
+          body:JSON.stringify({
+            key:key
+          })
+        }
+      );
+
+
+    if(!response.ok){
+
+      throw new Error();
+
+    }
+
+
+    const data =
+      await response.json();
+
+
+    renderKeys(
+      data.keys || []
+    );
+
+  }
+
+  catch(error){
+
+    alert(
+      "Unable to delete key."
+    );
+
+  }
+
+}
+
+
+/* SERVER STATUS */
+
+async function loadStatus(){
+
+  try{
+
+    const response =
+      await fetch(
+        "/api/admin/status",
+        {
+          method:"GET",
+          cache:"no-store",
+          headers:{
+            "X-Admin-Key":adminKey
+          }
+        }
+      );
+
+
+    if(!response.ok){
+
+      throw new Error();
+
+    }
+
+
+    const data =
+      await response.json();
+
+
+    document
+      .getElementById(
+        "currentPrediction"
+      )
+      .textContent =
+      data.prediction || "—";
+
+
+    document
+      .getElementById(
+        "currentNumber"
+      )
+      .textContent =
+      data.number ?? "—";
+
+
+    document
+      .getElementById(
+        "currentTimer"
+      )
+      .textContent =
+      "00:" +
+      String(
+        data.countdown || 0
+      ).padStart(2,"0");
+
+
+    document
+      .getElementById(
+        "systemStatus"
+      )
+      .textContent =
+      "● Server connected";
+
+    document
+      .getElementById(
+        "systemStatus"
+      )
+      .className =
+      "success";
+
+  }
+
+  catch(error){
+
+    document
+      .getElementById(
+        "systemStatus"
+      )
+      .textContent =
+      "Server connection unavailable";
+
+    document
+      .getElementById(
+        "systemStatus"
+      )
+      .className =
+      "error";
+
+  }
+
+}
+
+
+/* AUTO STATUS */
+
+setInterval(
+  function(){
+
+    if(adminKey){
+
+      loadStatus();
+
+    }
+
+  },
+  5000
+);
+
+
+/* LOGOUT */
+
+function logout(){
+
+  adminKey = "";
+
+  document
+    .getElementById(
+      "adminPanel"
+    )
+    .classList
+    .add("hidden");
+
+  document
+    .getElementById(
+      "loginBox"
+    )
+    .classList
+    .remove("hidden");
+
+  document
+    .getElementById(
+      "adminKey"
+    )
+    .value = "";
+
+}
+
+</script>
+
+</body>
+</html>
