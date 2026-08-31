@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DY AI Wingo 30S</title>
+
+<style>
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  min-height:100vh;
+  background:#070b16;
+  color:#fff;
+  font-family:Arial,sans-serif;
+}
+
+.container{
+  max-width:520px;
+  margin:auto;
+  padding:16px;
+}
+
+.card{
+  background:#10172a;
+  border:1px solid #293657;
+  border-radius:20px;
+  padding:20px;
+  margin:13px 0;
+  box-shadow:0 12px 35px rgba(0,0,0,.35);
+}
+
+.logo{
+  font-size:23px;
+  font-weight:800;
+}
+
+.live{
+  color:#62e6a7;
+  font-size:12px;
+  font-weight:bold;
+}
+
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.login-title{
+  font-size:24px;
+  font-weight:800;
+  margin-bottom:8px;
+}
+
+input{
+  width:100%;
+  padding:14px;
+  border-radius:12px;
+  border:1px solid #34405f;
+  background:#0b1120;
+  color:#fff;
+  outline:none;
+  font-size:15px;
+}
+
+button{
+  width:100%;
+  padding:14px;
+  margin-top:10px;
+  border:0;
+  border-radius:12px;
+  background:#635bff;
+  color:#fff;
+  font-weight:800;
+  font-size:15px;
+}
+
+.error{
+  color:#ff7285;
+  text-align:center;
+  font-size:13px;
+}
+
+.label{
+  color:#9aa7c4;
+  font-size:12px;
+  letter-spacing:1.5px;
+  text-align:center;
+}
+
+.period{
+  text-align:center;
+}
+
+.period-id{
+  font-size:23px;
+  letter-spacing:4px;
+  margin:10px;
+}
+
+.timer{
+  font-size:52px;
+  font-weight:900;
+  margin:5px 0 14px;
+}
+
+.bar{
+  height:7px;
+  background:#202b46;
+  border-radius:20px;
+  overflow:hidden;
+}
+
+.fill{
+  height:100%;
+  width:100%;
+  background:#635bff;
+  transition:width .5s linear;
+}
+
+.result{
+  text-align:center;
+  padding:30px 15px;
+}
+
+.prediction{
+  font-size:58px;
+  font-weight:900;
+  margin:10px 0;
+}
+
+.number{
+  font-size:24px;
+  font-weight:800;
+  margin-top:14px;
+}
+
+.confidence{
+  display:inline-block;
+  padding:8px 14px;
+  border-radius:50px;
+  background:#18233d;
+  color:#dce3ff;
+}
+
+.status{
+  color:#9aa7c4;
+  text-align:center;
+  font-size:13px;
+}
+
+.note{
+  color:#7886a5;
+  font-size:11px;
+  line-height:1.5;
+  text-align:center;
+}
+
+.hidden{
+  display:none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <!-- LOGIN -->
+  <div id="loginBox" class="card">
+
+    <div class="login-title">
+      DY AI Wingo 30S
+    </div>
+
+    <p class="status">
+      Enter your prediction access key
+    </p>
+
+    <input
+      id="accessKey"
+      type="text"
+      placeholder="Prediction key"
+      autocomplete="off"
+    >
+
+    <button onclick="login()">
+      OPEN PREDICTION
+    </button>
+
+    <p id="loginError" class="error"></p>
+
+  </div>
+
+
+  <!-- APP -->
+  <div id="app" class="hidden">
+
+    <div class="card header">
+
+      <div class="logo">
+        DY AI Wingo 30S
+      </div>
+
+      <div class="live">
+        ● LIVE
+      </div>
+
+    </div>
+
+
+    <!-- TIMER -->
+
+    <div class="card period">
+
+      <div class="label">
+        CURRENT PERIOD
+      </div>
+
+      <div class="period-id">
+        ********
+      </div>
+
+      <div id="timer" class="timer">
+        00:30
+      </div>
+
+      <div class="bar">
+        <div id="progress" class="fill"></div>
+      </div>
+
+      <p id="connection" class="status">
+        Connecting to server...
+      </p>
+
+    </div>
+
+
+    <!-- PREDICTION -->
+
+    <div class="card result">
+
+      <div class="label">
+        BIG / SMALL PREDICTION
+      </div>
+
+      <div id="prediction" class="prediction">
+        —
+      </div>
+
+      <div id="confidence" class="confidence">
+        Waiting...
+      </div>
+
+      <div id="number" class="number">
+        Number: —
+      </div>
+
+    </div>
+
+
+    <div class="card">
+
+      <div class="label">
+        AUTO MODE
+      </div>
+
+      <p class="status">
+        Prediction automatically updates with the
+        server's 30-second round.
+      </p>
+
+    </div>
+
+
+    <p class="note">
+      Period ID and prediction history are hidden.
+      The included backend generates simulated
+      results; it is not a real Wingo result feed.
+    </p>
+
+  </div>
+
+</div>
+
+
+<script>
+
+let accessKey = "";
+let serverEndTime = 0;
+let currentPrediction = "";
+
+
+/* LOGIN */
+
+async function login(){
+
+  const key =
+    document.getElementById("accessKey").value.trim();
+
+  if(!key){
+    document.getElementById("loginError").textContent =
+      "Please enter your access key.";
+
+    return;
+  }
+
+  accessKey = key;
+
+  try{
+
+    const response = await fetch(
+      "/api/state",
+      {
+        method:"GET",
+        cache:"no-store",
+        headers:{
+          "X-Access-Key":accessKey
+        }
+      }
+    );
+
+    if(!response.ok){
+      throw new Error("Invalid key");
+    }
+
+    document.getElementById("loginBox")
+      .classList.add("hidden");
+
+    document.getElementById("app")
+      .classList.remove("hidden");
+
+    await syncServer();
+
+  }
+
+  catch(error){
+
+    document.getElementById("loginError").textContent =
+      "Invalid key or server unavailable.";
+
+  }
+
+}
+
+
+/* SERVER SYNC */
+
+async function syncServer(){
+
+  try{
+
+    const response = await fetch(
+      "/api/state",
+      {
+        method:"GET",
+        cache:"no-store",
+        headers:{
+          "X-Access-Key":accessKey
+        }
+      }
+    );
+
+    if(!response.ok){
+      throw new Error("Server error");
+    }
+
+    const data = await response.json();
+
+    /*
+      IMPORTANT:
+      Prediction comes from server.
+      Browser refresh does NOT generate a new result.
+    */
+
+    currentPrediction = data.prediction;
+
+    document.getElementById("prediction")
+      .textContent = data.prediction;
+
+    document.getElementById("number")
+      .textContent = "Number: " + data.number;
+
+    document.getElementById("confidence")
+      .textContent =
+      "Confidence " + data.confidence + "%";
+
+    serverEndTime =
+      Date.now() + (data.countdown * 1000);
+
+    document.getElementById("connection")
+      .textContent = "● Server synchronized";
+
+  }
+
+  catch(error){
+
+    document.getElementById("connection")
+      .textContent = "Connection lost — retrying...";
+
+  }
+
+}
+
+
+/* TIMER */
+
+setInterval(async function(){
+
+  if(
+    document
+      .getElementById("app")
+      .classList
+      .contains("hidden")
+  ){
+    return;
+  }
+
+  const remaining =
+    Math.max(
+      0,
+      Math.ceil(
+        (serverEndTime - Date.now()) / 1000
+      )
+    );
+
+  document.getElementById("timer")
+    .textContent =
+    "00:" +
+    String(remaining).padStart(2,"0");
+
+  document.getElementById("progress")
+    .style.width =
+    ((remaining / 30) * 100) + "%";
+
+
+  /*
+    When round changes,
+    fetch the server's new prediction.
+  */
+
+  if(remaining <= 0){
+
+    await syncServer();
+
+  }
+
+},500);
+
+
+/*
+  Small background synchronization.
+  This keeps multiple devices aligned.
+*/
+
+setInterval(async function(){
+
+  if(
+    !document
+      .getElementById("app")
+      .classList
+      .contains("hidden")
+  ){
+
+    await syncServer();
+
+  }
+
+},5000);
+
+</script>
+
+</body>
+</html>
