@@ -1,1 +1,13 @@
-
+{
+  "name": "dy-ai-wingo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "DY AI 30 second web application",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
