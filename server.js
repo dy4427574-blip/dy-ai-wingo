@@ -1,51 +1,63 @@
 const http = require("http");
 const crypto = require("crypto");
+const { Pool } = require("pg");
 
 const PORT = process.env.PORT || 3000;
 const ADMIN_KEY = process.env.ADMIN_KEY || "dy4427574";
 
-/*
-  --------------------------------------------------
-  IN-MEMORY DATA
-  --------------------------------------------------
-*/
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_URL
+    ? { rejectUnauthorized: false }
+    : false
+});
 
-const db = {
-  keys: new Map(),
-  round: null
-};
+/* --------------------------------------------------
+   DATABASE
+-------------------------------------------------- */
 
-/*
-  --------------------------------------------------
-  ROUND ENGINE
-  --------------------------------------------------
-*/
+async function initDB() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS access_keys (
+      id SERIAL PRIMARY KEY,
+      access_key TEXT UNIQUE NOT NULL,
+      device_id TEXT,
+      created_at BIGINT NOT NULL,
+      last_seen BIGINT DEFAULT 0
+    )
+  `);
+
+  console.log("Database ready");
+}
+
+/* --------------------------------------------------
+   ROUND ENGINE
+-------------------------------------------------- */
+
+let round = null;
 
 function getRound() {
   const period = Math.floor(Date.now() / 30000);
   const endsAt = (period + 1) * 30000;
 
-  if (!db.round || db.round.period !== period) {
+  if (!round || round.period !== period) {
     const number = crypto.randomInt(0, 10);
 
-    db.round = {
+    round = {
       period,
       number,
       prediction: number >= 5 ? "BIG" : "SMALL",
       confidence: crypto.randomInt(55, 86),
-      createdAt: Date.now(),
       endsAt
     };
   }
 
-  return db.round;
+  return round;
 }
 
-/*
-  --------------------------------------------------
-  HELPERS
-  --------------------------------------------------
-*/
+/* --------------------------------------------------
+   HELPERS
+-------------------------------------------------- */
 
 function sendJSON(res, status, data) {
   res.writeHead(status, {
@@ -55,7 +67,7 @@ function sendJSON(res, status, data) {
     "Access-Control-Allow-Headers":
       "Content-Type, X-Admin-Key, X-Access-Key, X-Device-ID",
     "Access-Control-Allow-Methods":
-      "GET, POST, DELETE, PATCH, OPTIONS"
+      "GET, POST, DELETE, OPTIONS"
   });
 
   res.end(JSON.stringify(data));
@@ -107,40 +119,41 @@ function isAdmin(req) {
 function generateKey() {
   return (
     "DY-" +
-    crypto
-      .randomBytes(5)
-      .toString("hex")
-      .toUpperCase()
+    crypto.randomBytes(5).toString("hex").toUpperCase()
   );
 }
 
-function getKeyStatus(item) {
-  if (!item.enabled) {
-    return "DISABLED";
+function keyStatus(item) {
+  if (!item.device_id) return "UNBOUND";
+
+  if (
+    item.last_seen &&
+    Date.now() - Number(item.last_seen) <= 90000
+  ) {
+    return "LIVE";
   }
 
-  if (!item.lastSeen) {
-    return "OFFLINE";
+  return "OFFLINE";
+}
+
+/* --------------------------------------------------
+   DEVICE CHECK
+-------------------------------------------------- */
+
+async function checkAccessKey(req) {
+  const accessKey =
+    String(req.headers["x-access-key"] || "").trim();
+
+  const deviceId =
+    String(req.headers["x-device-id"] || "").trim();
+
+  if (!accessKey) {
+    return {
+      ok: false,
+      status: 401,
+      error: "INVALID_KEY"
+    };
   }
-
-  return Date.now() - item.lastSeen <= 90000
-    ? "LIVE"
-    : "OFFLINE";
-}
-
-/*
-  --------------------------------------------------
-  DEVICE ID
-  --------------------------------------------------
-*/
-
-function getDeviceID(req) {
-  return String(
-    req.headers["x-device-id"] || ""
-  ).trim();
-}
-
-function checkDevice(item, deviceId) {
 
   if (!deviceId) {
     return {
@@ -150,665 +163,556 @@ function checkDevice(item, deviceId) {
     };
   }
 
-  /*
-    First device automatically gets bound.
-  */
+  const result = await pool.query(
+    `
+    SELECT *
+    FROM access_keys
+    WHERE access_key = $1
+    `,
+    [accessKey]
+  );
 
-  if (!item.deviceId) {
-    item.deviceId = deviceId;
-    item.deviceBoundAt = Date.now();
-
+  if (result.rows.length === 0) {
     return {
-      ok: true,
-      newlyBound: true
+      ok: false,
+      status: 401,
+      error: "INVALID_KEY"
     };
   }
 
-  /*
-    Different device = reject.
-  */
+  const item = result.rows[0];
 
-  if (item.deviceId !== deviceId) {
+  /* First device automatically gets bound */
+  if (!item.device_id) {
+    await pool.query(
+      `
+      UPDATE access_keys
+      SET device_id = $1,
+          last_seen = $2
+      WHERE access_key = $3
+      `,
+      [deviceId, Date.now(), accessKey]
+    );
+
+    return {
+      ok: true,
+      key: accessKey,
+      deviceId
+    };
+  }
+
+  /* Different device = reject */
+  if (item.device_id !== deviceId) {
     return {
       ok: false,
       status: 403,
-      error: "KEY_ALREADY_BOUND",
+      error: "DEVICE_MISMATCH",
       message:
         "This key is already linked to another device."
     };
   }
 
+  await pool.query(
+    `
+    UPDATE access_keys
+    SET last_seen = $1
+    WHERE access_key = $2
+    `,
+    [Date.now(), accessKey]
+  );
+
   return {
     ok: true,
-    newlyBound: false
+    key: accessKey,
+    deviceId
   };
 }
 
-/*
-  --------------------------------------------------
-  SERVER
-  --------------------------------------------------
-*/
+/* --------------------------------------------------
+   SERVER
+-------------------------------------------------- */
 
 const server = http.createServer(async (req, res) => {
 
-  /*
-    CORS
-  */
+  try {
 
-  if (req.method === "OPTIONS") {
-    res.writeHead(204, {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Headers":
-        "Content-Type, X-Admin-Key, X-Access-Key, X-Device-ID",
-      "Access-Control-Allow-Methods":
-        "GET, POST, DELETE, PATCH, OPTIONS"
-    });
+    /* CORS */
 
-    return res.end();
-  }
+    if (req.method === "OPTIONS") {
+      res.writeHead(204, {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers":
+          "Content-Type, X-Admin-Key, X-Access-Key, X-Device-ID",
+        "Access-Control-Allow-Methods":
+          "GET, POST, DELETE, OPTIONS"
+      });
 
-  const url = new URL(
-    req.url,
-    `http://${req.headers.host || "localhost"}`
-  );
+      return res.end();
+    }
 
-  /*
-    ------------------------------------------------
-    FRONTEND
-    ------------------------------------------------
-  */
+    const url = new URL(
+      req.url,
+      `http://${req.headers.host || "localhost"}`
+    );
 
-  if (
-    url.pathname === "/" ||
-    url.pathname === "/index.html" ||
-    url.pathname === "/prediction.html"
-  ) {
-    return sendHTML(res, "prediction.html");
-  }
-
-  if (url.pathname === "/admin.html") {
-    return sendHTML(res, "admin.html");
-  }
-
-  /*
-    ------------------------------------------------
-    HEALTH
-    ------------------------------------------------
-  */
-
-  if (
-    url.pathname === "/health" &&
-    req.method === "GET"
-  ) {
-    return sendJSON(res, 200, {
-      status: "ok",
-      service: "DY AI",
-      version: "V2",
-      uptime: process.uptime(),
-      time: Date.now()
-    });
-  }
-
-  /*
-    ------------------------------------------------
-    USER KEY CHECK
-    ------------------------------------------------
-  */
-
-  if (
-    url.pathname === "/api/key/check" &&
-    req.method === "GET"
-  ) {
-
-    const accessKey =
-      String(
-        req.headers["x-access-key"] || ""
-      ).trim();
-
-    const deviceId = getDeviceID(req);
+    /* ------------------------------------------------
+       FRONTEND
+    ------------------------------------------------ */
 
     if (
-      !accessKey ||
-      !db.keys.has(accessKey)
+      url.pathname === "/" ||
+      url.pathname === "/index.html" ||
+      url.pathname === "/prediction.html"
     ) {
-      return sendJSON(res, 401, {
-        valid: false,
-        status: "INVALID_KEY"
+      return sendHTML(res, "prediction.html");
+    }
+
+    if (url.pathname === "/admin.html") {
+      return sendHTML(res, "admin.html");
+    }
+
+    /* ------------------------------------------------
+       HEALTH
+    ------------------------------------------------ */
+
+    if (
+      url.pathname === "/health" &&
+      req.method === "GET"
+    ) {
+      return sendJSON(res, 200, {
+        status: "ok",
+        service: "DY AI",
+        uptime: process.uptime(),
+        time: Date.now()
       });
     }
 
-    const item = db.keys.get(accessKey);
+    /* ------------------------------------------------
+       KEY CHECK
+    ------------------------------------------------ */
 
-    if (!item.enabled) {
-      return sendJSON(res, 403, {
-        valid: false,
-        status: "DISABLED"
-      });
-    }
+    if (
+      url.pathname === "/api/key/check" &&
+      req.method === "GET"
+    ) {
 
-    const deviceCheck =
-      checkDevice(item, deviceId);
+      const auth = await checkAccessKey(req);
 
-    if (!deviceCheck.ok) {
-      return sendJSON(
-        res,
-        deviceCheck.status,
-        {
+      if (!auth.ok) {
+        return sendJSON(res, auth.status, {
           valid: false,
-          error: deviceCheck.error,
-          message: deviceCheck.message
-        }
+          error: auth.error,
+          message: auth.message || "Access denied"
+        });
+      }
+
+      const result = await pool.query(
+        `
+        SELECT *
+        FROM access_keys
+        WHERE access_key = $1
+        `,
+        [auth.key]
       );
+
+      const item = result.rows[0];
+
+      return sendJSON(res, 200, {
+        valid: true,
+        status: keyStatus(item),
+        deviceBound: !!item.device_id,
+        createdAt: Number(item.created_at),
+        lastSeen: Number(item.last_seen || 0)
+      });
     }
 
-    item.lastSeen = Date.now();
-
-    return sendJSON(res, 200, {
-      valid: true,
-      status: getKeyStatus(item),
-      deviceBound: true,
-      createdAt: item.createdAt,
-      deviceBoundAt: item.deviceBoundAt,
-      lastSeen: item.lastSeen
-    });
-  }
-
-  /*
-    ------------------------------------------------
-    USER PREDICTION STATE
-    ------------------------------------------------
-  */
-
-  if (
-    url.pathname === "/api/state" &&
-    req.method === "GET"
-  ) {
-
-    const accessKey =
-      String(
-        req.headers["x-access-key"] || ""
-      ).trim();
-
-    const deviceId = getDeviceID(req);
+    /* ------------------------------------------------
+       USER STATE
+    ------------------------------------------------ */
 
     if (
-      !accessKey ||
-      !db.keys.has(accessKey)
+      url.pathname === "/api/state" &&
+      req.method === "GET"
     ) {
-      return sendJSON(res, 401, {
-        error: "INVALID_KEY"
-      });
-    }
 
-    const keyData =
-      db.keys.get(accessKey);
+      const auth = await checkAccessKey(req);
 
-    if (!keyData.enabled) {
-      return sendJSON(res, 403, {
-        error: "KEY_DISABLED"
-      });
-    }
+      if (!auth.ok) {
+        return sendJSON(res, auth.status, {
+          success: false,
+          error: auth.error,
+          message: auth.message || "Access denied"
+        });
+      }
 
-    const deviceCheck =
-      checkDevice(keyData, deviceId);
+      const current = getRound();
 
-    if (!deviceCheck.ok) {
-      return sendJSON(
-        res,
-        deviceCheck.status,
-        {
-          error: deviceCheck.error,
-          message: deviceCheck.message
-        }
-      );
-    }
+      return sendJSON(res, 200, {
+        success: true,
 
-    keyData.lastSeen = Date.now();
+        period: String(current.period),
 
-    const round = getRound();
-
-    return sendJSON(res, 200, {
-
-      success: true,
-
-      period:
-        String(round.period),
-
-      countdown:
-        Math.max(
+        countdown: Math.max(
           0,
           Math.ceil(
-            (round.endsAt - Date.now()) / 1000
+            (current.endsAt - Date.now()) / 1000
           )
         ),
 
-      prediction:
-        round.prediction,
+        prediction: current.prediction,
 
-      number:
-        round.number,
+        number: current.number,
 
-      confidence:
-        round.confidence,
+        confidence: current.confidence,
 
-      keyStatus:
-        getKeyStatus(keyData),
-
-      deviceBound:
-        Boolean(keyData.deviceId)
-    });
-  }
-
-  /*
-    ------------------------------------------------
-    ADMIN - LIST KEYS
-    ------------------------------------------------
-  */
-
-  if (
-    url.pathname === "/api/admin/keys" &&
-    req.method === "GET"
-  ) {
-
-    if (!isAdmin(req)) {
-      return sendJSON(res, 401, {
-        error: "UNAUTHORIZED"
+        keyStatus: "LIVE"
       });
     }
 
-    const keys =
-      Array.from(db.keys.entries())
-        .map(([key, item]) => ({
-          key,
+    /* ------------------------------------------------
+       ADMIN LIST KEYS
+    ------------------------------------------------ */
 
-          status:
-            getKeyStatus(item),
+    if (
+      url.pathname === "/api/admin/keys" &&
+      req.method === "GET"
+    ) {
 
-          enabled:
-            item.enabled,
+      if (!isAdmin(req)) {
+        return sendJSON(res, 401, {
+          error: "UNAUTHORIZED"
+        });
+      }
 
-          deviceBound:
-            Boolean(item.deviceId),
+      const result = await pool.query(`
+        SELECT
+          access_key,
+          device_id,
+          created_at,
+          last_seen
+        FROM access_keys
+        ORDER BY id DESC
+      `);
 
-          deviceBoundAt:
-            item.deviceBoundAt || null,
+      const keys = result.rows.map(item => ({
+        key: item.access_key,
+        deviceId: item.device_id || null,
+        status: keyStatus(item),
+        createdAt: Number(item.created_at),
+        lastSeen: Number(item.last_seen || 0)
+      }));
 
-          createdAt:
-            item.createdAt,
-
-          lastSeen:
-            item.lastSeen || null
-        }));
-
-    return sendJSON(res, 200, {
-      success: true,
-
-      total:
-        keys.length,
-
-      live:
-        keys.filter(
-          k => k.status === "LIVE"
-        ).length,
-
-      offline:
-        keys.filter(
-          k => k.status === "OFFLINE"
-        ).length,
-
-      disabled:
-        keys.filter(
-          k => k.status === "DISABLED"
-        ).length,
-
-      keys
-    });
-  }
-
-  /*
-    ------------------------------------------------
-    ADMIN - CREATE KEY
-    ------------------------------------------------
-  */
-
-  if (
-    url.pathname === "/api/admin/keys" &&
-    req.method === "POST"
-  ) {
-
-    if (!isAdmin(req)) {
-      return sendJSON(res, 401, {
-        error: "UNAUTHORIZED"
+      return sendJSON(res, 200, {
+        success: true,
+        total: keys.length,
+        live: keys.filter(k => k.status === "LIVE").length,
+        offline: keys.filter(k => k.status === "OFFLINE").length,
+        unbound: keys.filter(k => k.status === "UNBOUND").length,
+        keys
       });
     }
 
-    const body =
-      await readBody(req);
+    /* ------------------------------------------------
+       ADMIN CREATE KEY
+    ------------------------------------------------ */
 
-    let key =
-      String(
-        body.key || ""
-      ).trim();
+    if (
+      url.pathname === "/api/admin/keys" &&
+      req.method === "POST"
+    ) {
 
-    if (!key) {
-      key = generateKey();
-    }
+      if (!isAdmin(req)) {
+        return sendJSON(res, 401, {
+          error: "UNAUTHORIZED"
+        });
+      }
 
-    if (db.keys.has(key)) {
-      return sendJSON(res, 409, {
-        error: "KEY_ALREADY_EXISTS"
+      const body = await readBody(req);
+
+      let key =
+        String(body.key || "").trim();
+
+      if (!key) {
+        key = generateKey();
+      }
+
+      try {
+
+        await pool.query(
+          `
+          INSERT INTO access_keys
+          (
+            access_key,
+            device_id,
+            created_at,
+            last_seen
+          )
+          VALUES ($1, NULL, $2, 0)
+          `,
+          [key, Date.now()]
+        );
+
+      } catch (error) {
+
+        if (error.code === "23505") {
+          return sendJSON(res, 409, {
+            error: "KEY_ALREADY_EXISTS"
+          });
+        }
+
+        throw error;
+      }
+
+      return sendJSON(res, 200, {
+        success: true,
+        key
       });
     }
 
-    db.keys.set(key, {
+    /* ------------------------------------------------
+       ADMIN DELETE KEY
+    ------------------------------------------------ */
 
-      createdAt:
-        Date.now(),
+    if (
+      url.pathname === "/api/admin/keys" &&
+      req.method === "DELETE"
+    ) {
 
-      lastSeen:
-        0,
+      if (!isAdmin(req)) {
+        return sendJSON(res, 401, {
+          error: "UNAUTHORIZED"
+        });
+      }
 
-      deviceId:
-        null,
+      const body = await readBody(req);
 
-      deviceBoundAt:
-        null,
+      const key =
+        String(body.key || "").trim();
 
-      enabled:
-        true
-
-    });
-
-    return sendJSON(res, 200, {
-      success: true,
-      key
-    });
-  }
-
-  /*
-    ------------------------------------------------
-    ADMIN - DELETE KEY
-    ------------------------------------------------
-  */
-
-  if (
-    url.pathname === "/api/admin/keys" &&
-    req.method === "DELETE"
-  ) {
-
-    if (!isAdmin(req)) {
-      return sendJSON(res, 401, {
-        error: "UNAUTHORIZED"
-      });
-    }
-
-    const body =
-      await readBody(req);
-
-    const key =
-      String(
-        body.key || ""
-      ).trim();
-
-    if (!db.keys.has(key)) {
-      return sendJSON(res, 404, {
-        error: "KEY_NOT_FOUND"
-      });
-    }
-
-    db.keys.delete(key);
-
-    return sendJSON(res, 200, {
-      success: true,
-      deleted: key
-    });
-  }
-
-  /*
-    ------------------------------------------------
-    ADMIN - RESET DEVICE
-    ------------------------------------------------
-  */
-
-  if (
-    url.pathname === "/api/admin/keys/reset-device" &&
-    req.method === "POST"
-  ) {
-
-    if (!isAdmin(req)) {
-      return sendJSON(res, 401, {
-        error: "UNAUTHORIZED"
-      });
-    }
-
-    const body =
-      await readBody(req);
-
-    const key =
-      String(
-        body.key || ""
-      ).trim();
-
-    if (!db.keys.has(key)) {
-      return sendJSON(res, 404, {
-        error: "KEY_NOT_FOUND"
-      });
-    }
-
-    const item =
-      db.keys.get(key);
-
-    item.deviceId = null;
-    item.deviceBoundAt = null;
-
-    return sendJSON(res, 200, {
-      success: true,
-      message:
-        "Device binding has been reset."
-    });
-  }
-
-  /*
-    ------------------------------------------------
-    ADMIN - ENABLE / DISABLE KEY
-    ------------------------------------------------
-  */
-
-  if (
-    url.pathname === "/api/admin/keys/toggle" &&
-    req.method === "POST"
-  ) {
-
-    if (!isAdmin(req)) {
-      return sendJSON(res, 401, {
-        error: "UNAUTHORIZED"
-      });
-    }
-
-    const body =
-      await readBody(req);
-
-    const key =
-      String(
-        body.key || ""
-      ).trim();
-
-    if (!db.keys.has(key)) {
-      return sendJSON(res, 404, {
-        error: "KEY_NOT_FOUND"
-      });
-    }
-
-    const item =
-      db.keys.get(key);
-
-    item.enabled =
-      body.enabled !== false;
-
-    return sendJSON(res, 200, {
-      success: true,
-      key,
-      enabled: item.enabled
-    });
-  }
-
-  /*
-    ------------------------------------------------
-    ADMIN - STATUS
-    ------------------------------------------------
-  */
-
-  if (
-    url.pathname === "/api/admin/status" &&
-    req.method === "GET"
-  ) {
-
-    if (!isAdmin(req)) {
-      return sendJSON(res, 401, {
-        error: "UNAUTHORIZED"
-      });
-    }
-
-    const round =
-      getRound();
-
-    const allKeys =
-      Array.from(
-        db.keys.entries()
+      const result = await pool.query(
+        `
+        DELETE FROM access_keys
+        WHERE access_key = $1
+        `,
+        [key]
       );
 
-    const live =
-      allKeys.filter(
-        ([, item]) =>
-          getKeyStatus(item) === "LIVE"
-      ).length;
+      if (result.rowCount === 0) {
+        return sendJSON(res, 404, {
+          error: "KEY_NOT_FOUND"
+        });
+      }
 
-    const disabled =
-      allKeys.filter(
-        ([, item]) =>
-          getKeyStatus(item) === "DISABLED"
-      ).length;
-
-    const offline =
-      allKeys.length -
-      live -
-      disabled;
-
-    return sendJSON(res, 200, {
-
-      success: true,
-
-      server:
-        "LIVE",
-
-      users:
-        allKeys.length,
-
-      live,
-
-      offline,
-
-      disabled,
-
-      boundDevices:
-        allKeys.filter(
-          ([, item]) =>
-            Boolean(item.deviceId)
-        ).length,
-
-      round: {
-
-        period:
-          round.period,
-
-        prediction:
-          round.prediction,
-
-        number:
-          round.number,
-
-        confidence:
-          round.confidence,
-
-        countdown:
-          Math.max(
-            0,
-            Math.ceil(
-              (round.endsAt - Date.now()) / 1000
-            )
-          )
-      },
-
-      uptime:
-        process.uptime(),
-
-      timestamp:
-        Date.now()
-    });
-  }
-
-  /*
-    ------------------------------------------------
-    ADMIN PING
-    ------------------------------------------------
-  */
-
-  if (
-    url.pathname === "/api/admin/ping" &&
-    req.method === "GET"
-  ) {
-
-    if (!isAdmin(req)) {
-      return sendJSON(res, 401, {
-        error: "UNAUTHORIZED"
+      return sendJSON(res, 200, {
+        success: true,
+        deleted: key
       });
     }
 
-    return sendJSON(res, 200, {
-      success: true,
-      message:
-        "Admin connection active",
-      timestamp:
-        Date.now()
+    /* ------------------------------------------------
+       ADMIN RESET DEVICE
+    ------------------------------------------------ */
+
+    if (
+      url.pathname === "/api/admin/reset-device" &&
+      req.method === "POST"
+    ) {
+
+      if (!isAdmin(req)) {
+        return sendJSON(res, 401, {
+          error: "UNAUTHORIZED"
+        });
+      }
+
+      const body = await readBody(req);
+
+      const key =
+        String(body.key || "").trim();
+
+      if (!key) {
+        return sendJSON(res, 400, {
+          error: "KEY_REQUIRED"
+        });
+      }
+
+      const result = await pool.query(
+        `
+        UPDATE access_keys
+        SET device_id = NULL,
+            last_seen = 0
+        WHERE access_key = $1
+        `,
+        [key]
+      );
+
+      if (result.rowCount === 0) {
+        return sendJSON(res, 404, {
+          error: "KEY_NOT_FOUND"
+        });
+      }
+
+      return sendJSON(res, 200, {
+        success: true,
+        message:
+          "Device binding has been reset."
+      });
+    }
+
+    /* ------------------------------------------------
+       ADMIN STATUS
+    ------------------------------------------------ */
+
+    if (
+      url.pathname === "/api/admin/status" &&
+      req.method === "GET"
+    ) {
+
+      if (!isAdmin(req)) {
+        return sendJSON(res, 401, {
+          error: "UNAUTHORIZED"
+        });
+      }
+
+      const result = await pool.query(`
+        SELECT *
+        FROM access_keys
+      `);
+
+      const users = result.rows.length;
+
+      const live = result.rows.filter(
+        item => keyStatus(item) === "LIVE"
+      ).length;
+
+      const offline = result.rows.filter(
+        item => keyStatus(item) === "OFFLINE"
+      ).length;
+
+      const unbound = result.rows.filter(
+        item => keyStatus(item) === "UNBOUND"
+      ).length;
+
+      const current = getRound();
+
+      return sendJSON(res, 200, {
+        success: true,
+
+        server: "LIVE",
+
+        users,
+
+        live,
+        offline,
+        unbound,
+
+        /* top-level fields for admin compatibility */
+
+        prediction: current.prediction,
+        number: current.number,
+        countdown: Math.max(
+          0,
+          Math.ceil(
+            (current.endsAt - Date.now()) / 1000
+          )
+        ),
+
+        round: {
+          period: current.period,
+          prediction: current.prediction,
+          number: current.number,
+          confidence: current.confidence,
+          countdown: Math.max(
+            0,
+            Math.ceil(
+              (current.endsAt - Date.now()) / 1000
+            )
+          )
+        },
+
+        uptime: process.uptime(),
+        timestamp: Date.now()
+      });
+    }
+
+    /* ------------------------------------------------
+       ADMIN PING
+    ------------------------------------------------ */
+
+    if (
+      url.pathname === "/api/admin/ping" &&
+      req.method === "GET"
+    ) {
+
+      if (!isAdmin(req)) {
+        return sendJSON(res, 401, {
+          error: "UNAUTHORIZED"
+        });
+      }
+
+      return sendJSON(res, 200, {
+        success: true,
+        message: "Admin connection active",
+        timestamp: Date.now()
+      });
+    }
+
+    /* ------------------------------------------------
+       404
+    ------------------------------------------------ */
+
+    return sendJSON(res, 404, {
+      error: "NOT_FOUND",
+      path: url.pathname
+    });
+
+  } catch (error) {
+
+    console.error("SERVER ERROR:", error);
+
+    return sendJSON(res, 500, {
+      error: "INTERNAL_SERVER_ERROR",
+      message: "Server error"
     });
   }
-
-  /*
-    ------------------------------------------------
-    404
-    ------------------------------------------------
-  */
-
-  return sendJSON(res, 404, {
-    error: "NOT_FOUND",
-    path: url.pathname
-  });
 });
 
-/*
-  --------------------------------------------------
-  ROUND CLOCK
-  --------------------------------------------------
-*/
+/* --------------------------------------------------
+   ROUND CLOCK
+-------------------------------------------------- */
 
 setInterval(() => {
   getRound();
 }, 1000);
 
-/*
-  --------------------------------------------------
-  START
-  --------------------------------------------------
-*/
+/* --------------------------------------------------
+   START
+-------------------------------------------------- */
 
-server.listen(
-  PORT,
-  "0.0.0.0",
-  () => {
-    console.log(
-      "DY AI V2 server running on port " +
-      PORT
+async function start() {
+
+  try {
+
+    await initDB();
+
+    server.listen(
+      PORT,
+      "0.0.0.0",
+      () => {
+        console.log(
+          "DY AI server running on port " + PORT
+        );
+      }
     );
+
+  } catch (error) {
+
+    console.error(
+      "Database startup failed:",
+      error
+    );
+
+    process.exit(1);
   }
-);
+}
+
+start();
