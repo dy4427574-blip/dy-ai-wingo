@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta name="theme-color" content="#060914">
 <meta name="color-scheme" content="dark">
+
 <title>DY AI Wingo 30S</title>
 
 <style>
@@ -23,7 +24,12 @@ body{
   color:#fff;
   font-family:Arial,Helvetica,sans-serif;
   background:
-    radial-gradient(circle at 50% -10%,#25346d 0,#111a38 20%,#070b16 52%),
+    radial-gradient(
+      circle at 50% -10%,
+      #25346d 0,
+      #111a38 20%,
+      #070b16 52%
+    ),
     #070b16;
 }
 
@@ -54,7 +60,7 @@ body:before{
   display:none!important;
 }
 
-/* ---------- COMMON ---------- */
+/* ================= COMMON ================= */
 
 .card{
   position:relative;
@@ -115,7 +121,7 @@ body:before{
   color:#ff7187!important;
 }
 
-/* ---------- LOGIN ---------- */
+/* ================= LOGIN ================= */
 
 .login{
   margin-top:42px;
@@ -151,10 +157,6 @@ body:before{
   font-size:13px;
 }
 
-.input-wrap{
-  position:relative;
-}
-
 input{
   width:100%;
   height:53px;
@@ -165,7 +167,6 @@ input{
   color:#fff;
   background:#080e1d;
   font-size:14px;
-  transition:.2s;
 }
 
 input:focus{
@@ -180,12 +181,20 @@ button{
   border:0;
   border-radius:14px;
   color:#fff;
-  background:linear-gradient(135deg,#675fff,#5148d8);
+  background:
+    linear-gradient(
+      135deg,
+      #675fff,
+      #5148d8
+    );
   font-size:14px;
   font-weight:900;
   cursor:pointer;
-  box-shadow:0 10px 25px rgba(99,91,255,.22);
-  transition:transform .15s,opacity .15s;
+  box-shadow:
+    0 10px 25px rgba(99,91,255,.22);
+  transition:
+    transform .15s,
+    opacity .15s;
 }
 
 button:active{
@@ -197,13 +206,6 @@ button:disabled{
   cursor:not-allowed;
 }
 
-.device-login{
-  margin-top:18px;
-  color:#596783;
-  font-size:9px;
-  word-break:break-all;
-}
-
 .message{
   min-height:18px;
   margin-top:12px;
@@ -211,7 +213,14 @@ button:disabled{
   font-weight:700;
 }
 
-/* ---------- HEADER ---------- */
+.device-login{
+  margin-top:18px;
+  color:#596783;
+  font-size:9px;
+  word-break:break-all;
+}
+
+/* ================= HEADER ================= */
 
 .topbar{
   display:flex;
@@ -234,7 +243,12 @@ button:disabled{
   align-items:center;
   justify-content:center;
   border-radius:13px;
-  background:linear-gradient(145deg,#756dff,#5148d8);
+  background:
+    linear-gradient(
+      145deg,
+      #756dff,
+      #5148d8
+    );
   font-size:17px;
   font-weight:1000;
 }
@@ -269,10 +283,11 @@ button:disabled{
   height:6px;
   border-radius:50%;
   background:#62e6a7;
-  box-shadow:0 0 10px #62e6a7;
+  box-shadow:
+    0 0 10px #62e6a7;
 }
 
-/* ---------- ROUND ---------- */
+/* ================= ROUND ================= */
 
 .round-card{
   text-align:center;
@@ -293,7 +308,8 @@ button:disabled{
   line-height:1;
   font-weight:1000;
   letter-spacing:-2px;
-  text-shadow:0 5px 25px rgba(99,91,255,.2);
+  text-shadow:
+    0 5px 25px rgba(99,91,255,.2);
 }
 
 .timer-caption{
@@ -315,16 +331,22 @@ button:disabled{
   width:100%;
   height:100%;
   border-radius:20px;
-  background:linear-gradient(90deg,#5148d8,#827aff);
+  background:
+    linear-gradient(
+      90deg,
+      #5148d8,
+      #827aff
+    );
   transition:width .4s linear;
-  box-shadow:0 0 14px rgba(99,91,255,.4);
+  box-shadow:
+    0 0 14px rgba(99,91,255,.4);
 }
 
 .connection{
   margin:13px 0 0;
 }
 
-/* ---------- PREDICTION ---------- */
+/* ================= PREDICTION ================= */
 
 .prediction-card{
   padding:25px 18px;
@@ -350,6 +372,7 @@ button:disabled{
   box-shadow:
     0 0 45px rgba(99,91,255,.12),
     inset 0 0 25px rgba(99,91,255,.08);
+  transition:.3s;
 }
 
 .prediction{
@@ -388,7 +411,8 @@ button:disabled{
   height:7px;
   border-radius:50%;
   background:#62e6a7;
-  box-shadow:0 0 8px rgba(98,230,167,.6);
+  box-shadow:
+    0 0 8px rgba(98,230,167,.6);
 }
 
 .number-box{
@@ -413,7 +437,7 @@ button:disabled{
   font-weight:1000;
 }
 
-/* ---------- INFO ---------- */
+/* ================= INFO ================= */
 
 .info-grid{
   display:grid;
@@ -443,8 +467,6 @@ button:disabled{
   font-weight:900;
 }
 
-/* ---------- BUTTON ---------- */
-
 .sync-btn{
   background:#121d35;
   border:1px solid #354261;
@@ -468,9 +490,32 @@ button:disabled{
   text-align:center;
 }
 
-/* ---------- MOBILE ---------- */
+/* ================= AUTO UPDATE ================= */
+
+.auto-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  margin-top:11px;
+  padding:7px 11px;
+  border-radius:30px;
+  background:rgba(99,91,255,.08);
+  border:1px solid rgba(99,91,255,.2);
+  color:#aaa5ff;
+  font-size:9px;
+  font-weight:900;
+}
+
+.auto-dot{
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:#aaa5ff;
+  box-shadow:0 0 8px rgba(170,165,255,.7);
+}
 
 @media(max-width:390px){
+
   .container{
     padding:10px;
   }
@@ -503,7 +548,9 @@ button:disabled{
 
 <div id="loginBox" class="card login">
 
-  <div class="login-logo">DY</div>
+  <div class="login-logo">
+    DY
+  </div>
 
   <div class="login-title">
     DY AI Wingo 30S
@@ -513,15 +560,13 @@ button:disabled{
     Secure prediction access
   </div>
 
-  <div class="input-wrap">
-    <input
-      id="key"
-      type="text"
-      placeholder="Enter prediction access key"
-      autocomplete="off"
-      spellcheck="false"
-    >
-  </div>
+  <input
+    id="key"
+    type="text"
+    placeholder="Enter prediction access key"
+    autocomplete="off"
+    spellcheck="false"
+  >
 
   <button id="loginBtn" onclick="login()">
     OPEN PREDICTION
@@ -531,7 +576,9 @@ button:disabled{
 
   <div class="device-login">
     DEVICE ID:
-    <span id="deviceText">Creating...</span>
+    <span id="deviceText">
+      Creating...
+    </span>
   </div>
 
 </div>
@@ -552,6 +599,7 @@ button:disabled{
       </div>
 
       <div>
+
         <div class="brand-name">
           DY AI Wingo
         </div>
@@ -559,6 +607,7 @@ button:disabled{
         <div class="brand-sub">
           30 SECOND PREDICTION
         </div>
+
       </div>
 
     </div>
@@ -571,7 +620,7 @@ button:disabled{
   </div>
 
 
-  <!-- CURRENT ROUND -->
+  <!-- ROUND -->
 
   <div class="card round-card">
 
@@ -579,11 +628,13 @@ button:disabled{
       CURRENT PERIOD
     </div>
 
-    <div id="period" class="period-id">
+    <div id="period"
+         class="period-id">
       —
     </div>
 
-    <div id="timer" class="timer">
+    <div id="timer"
+         class="timer">
       00:30
     </div>
 
@@ -592,13 +643,22 @@ button:disabled{
     </div>
 
     <div class="progress-track">
-      <div id="fill" class="progress-fill"></div>
+
+      <div id="fill"
+           class="progress-fill">
+      </div>
+
     </div>
 
     <p id="serverStatus"
-       class="status">
+       class="status connection">
       Connecting to server...
     </p>
+
+    <div class="auto-badge">
+      <span class="auto-dot"></span>
+      AUTO NEXT ROUND ENABLED
+    </div>
 
   </div>
 
@@ -624,6 +684,7 @@ button:disabled{
          class="confidence">
 
       <span class="conf-dot"></span>
+
       Waiting for analysis
 
     </div>
@@ -644,7 +705,7 @@ button:disabled{
   </div>
 
 
-  <!-- SYSTEM INFO -->
+  <!-- SYSTEM -->
 
   <div class="card">
 
@@ -675,7 +736,7 @@ button:disabled{
         </div>
 
         <div id="connectionValue"
-             class="info-value">
+             class="info-value success">
           ONLINE
         </div>
 
@@ -716,8 +777,11 @@ button:disabled{
 let accessKey = "";
 let deviceId = "";
 let endTime = 0;
+
 let loggedIn = false;
 let syncing = false;
+
+let lastPeriod = "";
 
 
 /* ==================================================
@@ -784,12 +848,15 @@ document.getElementById("deviceId")
 function showMessage(text,type){
 
   const el =
-    document.getElementById("message");
+    document.getElementById(
+      "message"
+    );
 
   el.textContent = text;
 
   el.className =
-    "message " + (type || "");
+    "message " +
+    (type || "");
 
 }
 
@@ -821,7 +888,8 @@ async function login(){
   }
 
   button.disabled = true;
-  button.textContent = "CHECKING...";
+  button.textContent =
+    "CHECKING...";
 
   accessKey = key;
 
@@ -834,126 +902,11 @@ async function login(){
           method:"GET",
           cache:"no-store",
           headers:{
-            "X-Access-Key":accessKey,
-            "X-Device-ID":deviceId
-          }
-        }
-      );
+            "X-Access-Key":
+              accessKey,
 
-    const raw =
-      await response.text();
-
-    let data = {};
-
-    try{
-      data = JSON.parse(raw);
-    }catch{}
-
-    if(!response.ok){
-
-      let error =
-        data.error ||
-        data.message ||
-        "INVALID_KEY";
-
-      if(
-        error ===
-        "DEVICE_MISMATCH"
-      ){
-
-        throw new Error(
-          "This key is already linked to another device."
-        );
-
-      }
-
-      if(
-        error ===
-        "DEVICE_ID_REQUIRED"
-      ){
-
-        throw new Error(
-          "Device verification failed."
-        );
-
-      }
-
-      throw new Error(
-        "Invalid prediction key."
-      );
-    }
-
-
-    loggedIn = true;
-
-    document
-      .getElementById("loginBox")
-      .classList
-      .add("hidden");
-
-    document
-      .getElementById("app")
-      .classList
-      .remove("hidden");
-
-    setKeyStatus(
-      data.status || "LIVE"
-    );
-
-    await sync();
-
-  }
-  catch(error){
-
-    accessKey = "";
-    loggedIn = false;
-
-    showMessage(
-      error.message ||
-      "Unable to connect to server.",
-      "error"
-    );
-
-  }
-  finally{
-
-    button.disabled = false;
-    button.textContent =
-      "OPEN PREDICTION";
-
-  }
-
-}
-
-
-/* ==================================================
-   SERVER SYNC
-   Manual / login only.
-   No automatic next-round fetch.
-================================================== */
-
-async function sync(){
-
-  if(
-    !accessKey ||
-    syncing
-  ){
-    return;
-  }
-
-  syncing = true;
-
-  try{
-
-    const response =
-      await fetch(
-        "/api/state",
-        {
-          method:"GET",
-          cache:"no-store",
-          headers:{
-            "X-Access-Key":accessKey,
-            "X-Device-ID":deviceId
+            "X-Device-ID":
+              deviceId
           }
         }
       );
@@ -981,6 +934,146 @@ async function sync(){
 
       }
 
+      if(
+        data.error ===
+        "DEVICE_ID_REQUIRED"
+      ){
+
+        throw new Error(
+          "Device verification failed."
+        );
+
+      }
+
+      throw new Error(
+        data.message ||
+        "Invalid prediction key."
+      );
+
+    }
+
+
+    loggedIn = true;
+
+    document
+      .getElementById("loginBox")
+      .classList
+      .add("hidden");
+
+    document
+      .getElementById("app")
+      .classList
+      .remove("hidden");
+
+
+    setKeyStatus(
+      data.status ||
+      "LIVE"
+    );
+
+
+    await sync();
+
+
+    showMessage(
+      "Connected successfully.",
+      "success"
+    );
+
+  }
+  catch(error){
+
+    accessKey = "";
+    loggedIn = false;
+
+    showMessage(
+      error.message ||
+      "Unable to connect to server.",
+      "error"
+    );
+
+  }
+  finally{
+
+    button.disabled = false;
+
+    button.textContent =
+      "OPEN PREDICTION";
+
+  }
+
+}
+
+
+/* ==================================================
+   SERVER SYNC
+   AUTO NEXT ROUND ENABLED
+================================================== */
+
+async function sync(){
+
+  if(
+    !accessKey ||
+    !loggedIn ||
+    syncing
+  ){
+    return;
+  }
+
+  syncing = true;
+
+  try{
+
+    const response =
+      await fetch(
+        "/api/state",
+        {
+          method:"GET",
+          cache:"no-store",
+          headers:{
+            "X-Access-Key":
+              accessKey,
+
+            "X-Device-ID":
+              deviceId
+          }
+        }
+      );
+
+    const raw =
+      await response.text();
+
+    let data = {};
+
+    try{
+      data = JSON.parse(raw);
+    }catch{}
+
+
+    if(!response.ok){
+
+      if(
+        data.error ===
+        "DEVICE_MISMATCH"
+      ){
+
+        throw new Error(
+          "This key is linked to another device."
+        );
+
+      }
+
+      if(
+        data.error ===
+        "INVALID_KEY"
+      ){
+
+        throw new Error(
+          "Prediction key is invalid."
+        );
+
+      }
+
       throw new Error(
         data.message ||
         data.error ||
@@ -1003,7 +1096,7 @@ async function sync(){
     document
       .getElementById("serverStatus")
       .className =
-      "status error";
+      "status connection error";
 
     document
       .getElementById("connectionValue")
@@ -1026,7 +1119,7 @@ async function sync(){
 
 
 /* ==================================================
-   APPLY SERVER DATA
+   APPLY STATE
 ================================================== */
 
 function applyState(data){
@@ -1035,10 +1128,13 @@ function applyState(data){
     data.period !== undefined
   ){
 
+    lastPeriod =
+      String(data.period);
+
     document
       .getElementById("period")
       .textContent =
-      String(data.period);
+      lastPeriod;
 
   }
 
@@ -1117,7 +1213,8 @@ function applyState(data){
 
 
   setKeyStatus(
-    data.keyStatus || "LIVE"
+    data.keyStatus ||
+    "LIVE"
   );
 
 
@@ -1129,7 +1226,7 @@ function applyState(data){
   document
     .getElementById("serverStatus")
     .className =
-    "status success";
+    "status connection success";
 
   document
     .getElementById("connectionValue")
@@ -1156,7 +1253,8 @@ function setKeyStatus(status){
     );
 
   const value =
-    String(status).toUpperCase();
+    String(status)
+      .toUpperCase();
 
   el.textContent =
     value === "LIVE"
@@ -1179,16 +1277,15 @@ async function manualSync(){
     return;
   }
 
-  const status =
-    document.getElementById(
-      "serverStatus"
-    );
-
-  status.textContent =
+  document
+    .getElementById("serverStatus")
+    .textContent =
     "● Syncing...";
 
-  status.className =
-    "status";
+  document
+    .getElementById("serverStatus")
+    .className =
+    "status connection";
 
   await sync();
 
@@ -1197,8 +1294,6 @@ async function manualSync(){
 
 /* ==================================================
    TIMER
-   Only displays the current synced round.
-   It DOES NOT automatically fetch a new prediction.
 ================================================== */
 
 setInterval(function(){
@@ -1220,12 +1315,14 @@ setInterval(function(){
     remaining = 30;
   }
 
+
   document
     .getElementById("timer")
     .textContent =
     "00:" +
     String(remaining)
       .padStart(2,"0");
+
 
   document
     .getElementById("fill")
@@ -1237,7 +1334,69 @@ setInterval(function(){
 
 
 /* ==================================================
-   ENTER TO LOGIN
+   AUTO NEXT ROUND
+================================================== */
+
+/*
+  When the current round reaches zero,
+  fetch the server's new round.
+
+  Small delay prevents duplicate requests
+  around the exact round boundary.
+*/
+
+setInterval(async function(){
+
+  if(!loggedIn){
+    return;
+  }
+
+  const remaining =
+    Math.ceil(
+      (endTime - Date.now()) /
+      1000
+    );
+
+  if(
+    remaining <= 0 &&
+    !syncing
+  ){
+
+    await sync();
+
+  }
+
+},1000);
+
+
+/*
+  Background health synchronization.
+
+  This keeps the current round aligned
+  if the browser was paused or delayed.
+*/
+
+setInterval(async function(){
+
+  if(!loggedIn){
+    return;
+  }
+
+  if(
+    endTime - Date.now()
+    > 5000
+  ){
+
+    return;
+  }
+
+  await sync();
+
+},3000);
+
+
+/* ==================================================
+   ENTER KEY
 ================================================== */
 
 document
