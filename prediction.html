@@ -2,30 +2,34 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#070b16">
 <title>DY AI Wingo 30S</title>
 
 <style>
 *{
   box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
 }
 
 body{
   margin:0;
   min-height:100vh;
-  background:#070b16;
+  background:
+    radial-gradient(circle at top,#18234a 0,#070b16 45%);
   color:#fff;
   font-family:Arial,sans-serif;
 }
 
 .container{
+  width:100%;
   max-width:520px;
   margin:auto;
   padding:16px;
 }
 
 .card{
-  background:#10172a;
+  background:rgba(16,23,42,.94);
   border:1px solid #293657;
   border-radius:20px;
   padding:20px;
@@ -34,14 +38,8 @@ body{
 }
 
 .logo{
-  font-size:23px;
-  font-weight:800;
-}
-
-.live{
-  color:#62e6a7;
-  font-size:12px;
-  font-weight:bold;
+  font-size:22px;
+  font-weight:900;
 }
 
 .header{
@@ -50,16 +48,29 @@ body{
   align-items:center;
 }
 
-.login-title{
-  font-size:24px;
+.live{
+  color:#62e6a7;
+  font-size:12px;
   font-weight:800;
+}
+
+.login-title{
+  font-size:26px;
+  font-weight:900;
   margin-bottom:8px;
+}
+
+.status{
+  color:#9aa7c4;
+  text-align:center;
+  font-size:13px;
+  line-height:1.5;
 }
 
 input{
   width:100%;
-  padding:14px;
-  border-radius:12px;
+  padding:15px;
+  border-radius:13px;
   border:1px solid #34405f;
   background:#0b1120;
   color:#fff;
@@ -67,29 +78,40 @@ input{
   font-size:15px;
 }
 
+input:focus{
+  border-color:#716aff;
+}
+
 button{
   width:100%;
-  padding:14px;
-  margin-top:10px;
+  padding:15px;
+  margin-top:11px;
   border:0;
-  border-radius:12px;
-  background:#635bff;
+  border-radius:13px;
+  background:linear-gradient(135deg,#635bff,#7d5cff);
   color:#fff;
-  font-weight:800;
+  font-weight:900;
   font-size:15px;
+  cursor:pointer;
+}
+
+button:disabled{
+  opacity:.6;
 }
 
 .error{
   color:#ff7285;
   text-align:center;
   font-size:13px;
+  min-height:18px;
 }
 
 .label{
   color:#9aa7c4;
-  font-size:12px;
-  letter-spacing:1.5px;
+  font-size:11px;
+  letter-spacing:1.7px;
   text-align:center;
+  font-weight:700;
 }
 
 .period{
@@ -97,19 +119,19 @@ button{
 }
 
 .period-id{
-  font-size:23px;
+  font-size:21px;
   letter-spacing:4px;
-  margin:10px;
+  margin:11px;
 }
 
 .timer{
-  font-size:52px;
+  font-size:55px;
   font-weight:900;
-  margin:5px 0 14px;
+  margin:5px 0 15px;
 }
 
 .bar{
-  height:7px;
+  height:8px;
   background:#202b46;
   border-radius:20px;
   overflow:hidden;
@@ -118,7 +140,7 @@ button{
 .fill{
   height:100%;
   width:100%;
-  background:#635bff;
+  background:linear-gradient(90deg,#635bff,#8b7cff);
   transition:width .5s linear;
 }
 
@@ -128,28 +150,54 @@ button{
 }
 
 .prediction{
-  font-size:58px;
+  font-size:57px;
   font-weight:900;
   margin:10px 0;
 }
 
 .number{
   font-size:24px;
-  font-weight:800;
-  margin-top:14px;
+  font-weight:900;
+  margin-top:15px;
 }
 
 .confidence{
   display:inline-block;
-  padding:8px 14px;
+  padding:8px 15px;
   border-radius:50px;
   background:#18233d;
   color:#dce3ff;
+  font-size:13px;
+  font-weight:700;
 }
 
-.status{
-  color:#9aa7c4;
+.connection{
+  margin-top:14px;
+}
+
+.online{
+  color:#62e6a7;
+}
+
+.offline{
+  color:#ff7285;
+}
+
+.device{
   text-align:center;
+  color:#657394;
+  font-size:10px;
+  margin-top:15px;
+  word-break:break-all;
+}
+
+.hidden{
+  display:none!important;
+}
+
+.small-btn{
+  background:#18233d;
+  border:1px solid #34405f;
   font-size:13px;
 }
 
@@ -160,8 +208,15 @@ button{
   text-align:center;
 }
 
-.hidden{
-  display:none;
+.badge{
+  display:inline-block;
+  margin-top:10px;
+  padding:6px 11px;
+  border-radius:30px;
+  background:#14283a;
+  color:#62e6a7;
+  font-size:11px;
+  font-weight:800;
 }
 </style>
 </head>
@@ -170,140 +225,206 @@ button{
 
 <div class="container">
 
-  <!-- LOGIN -->
-  <div id="loginBox" class="card">
+<!-- LOGIN -->
+<div id="loginBox" class="card">
 
-    <div class="login-title">
+  <div class="login-title">
+    DY AI Wingo 30S
+  </div>
+
+  <p class="status">
+    Secure prediction access
+  </p>
+
+  <input
+    id="accessKey"
+    type="text"
+    placeholder="Enter prediction key"
+    autocomplete="off"
+    spellcheck="false"
+  >
+
+  <button id="loginBtn" onclick="login()">
+    OPEN PREDICTION
+  </button>
+
+  <p id="loginError" class="error"></p>
+
+  <div class="device">
+    Device ID: <span id="devicePreview">Creating...</span>
+  </div>
+
+</div>
+
+
+<!-- APP -->
+<div id="app" class="hidden">
+
+  <!-- HEADER -->
+  <div class="card header">
+
+    <div class="logo">
       DY AI Wingo 30S
     </div>
 
-    <p class="status">
-      Enter your prediction access key
+    <div class="live">
+      ● LIVE
+    </div>
+
+  </div>
+
+
+  <!-- PERIOD -->
+  <div class="card period">
+
+    <div class="label">
+      CURRENT PERIOD
+    </div>
+
+    <div id="period" class="period-id">
+      ********
+    </div>
+
+    <div id="timer" class="timer">
+      00:30
+    </div>
+
+    <div class="bar">
+      <div id="progress" class="fill"></div>
+    </div>
+
+    <p id="connection" class="status">
+      Connecting to server...
     </p>
 
-    <input
-      id="accessKey"
-      type="text"
-      placeholder="Prediction key"
-      autocomplete="off"
-    >
+  </div>
 
-    <button onclick="login()">
-      OPEN PREDICTION
+
+  <!-- PREDICTION -->
+  <div class="card result">
+
+    <div class="label">
+      BIG / SMALL ANALYSIS
+    </div>
+
+    <div id="prediction" class="prediction">
+      —
+    </div>
+
+    <div id="confidence" class="confidence">
+      Waiting...
+    </div>
+
+    <div id="number" class="number">
+      Number: —
+    </div>
+
+    <div id="keyStatus" class="badge">
+      KEY ACTIVE
+    </div>
+
+  </div>
+
+
+  <!-- AUTO MODE -->
+  <div class="card">
+
+    <div class="label">
+      AUTO MODE
+    </div>
+
+    <p class="status">
+      Prediction automatically synchronizes with
+      the server's 30-second round.
+    </p>
+
+    <button
+      class="small-btn"
+      onclick="syncServer()">
+      SYNC NOW
     </button>
 
-    <p id="loginError" class="error"></p>
-
   </div>
 
 
-  <!-- APP -->
-  <div id="app" class="hidden">
-
-    <div class="card header">
-
-      <div class="logo">
-        DY AI Wingo 30S
-      </div>
-
-      <div class="live">
-        ● LIVE
-      </div>
-
-    </div>
-
-
-    <!-- TIMER -->
-
-    <div class="card period">
-
-      <div class="label">
-        CURRENT PERIOD
-      </div>
-
-      <div class="period-id">
-        ********
-      </div>
-
-      <div id="timer" class="timer">
-        00:30
-      </div>
-
-      <div class="bar">
-        <div id="progress" class="fill"></div>
-      </div>
-
-      <p id="connection" class="status">
-        Connecting to server...
-      </p>
-
-    </div>
-
-
-    <!-- PREDICTION -->
-
-    <div class="card result">
-
-      <div class="label">
-        BIG / SMALL PREDICTION
-      </div>
-
-      <div id="prediction" class="prediction">
-        —
-      </div>
-
-      <div id="confidence" class="confidence">
-        Waiting...
-      </div>
-
-      <div id="number" class="number">
-        Number: —
-      </div>
-
-    </div>
-
-
-    <div class="card">
-
-      <div class="label">
-        AUTO MODE
-      </div>
-
-      <p class="status">
-        Prediction automatically updates with the
-        server's 30-second round.
-      </p>
-
-    </div>
-
-
-    <p class="note">
-      Period ID and prediction history are hidden.
-      The included backend generates simulated
-      results; it is not a real Wingo result feed.
-    </p>
-
+  <div class="device">
+    Device: <span id="deviceId"></span>
   </div>
+
+  <p class="note">
+    DY AI uses its own server-side analysis engine.
+    Results are informational and are not guaranteed.
+  </p>
+
+</div>
 
 </div>
 
 
 <script>
 
+/* =========================================
+   DEVICE ID
+========================================= */
+
+let deviceId = localStorage.getItem("DY_AI_DEVICE_ID");
+
+if(!deviceId){
+
+  const randomPart =
+    crypto.randomUUID
+      ? crypto.randomUUID()
+      : Math.random().toString(36).slice(2) +
+        Date.now().toString(36);
+
+  deviceId = "DY-" + randomPart;
+
+  localStorage.setItem(
+    "DY_AI_DEVICE_ID",
+    deviceId
+  );
+}
+
+document.getElementById("devicePreview").textContent =
+  deviceId.slice(0,18) + "...";
+
+document.getElementById("deviceId").textContent =
+  deviceId;
+
+
+/* =========================================
+   VARIABLES
+========================================= */
+
 let accessKey = "";
 let serverEndTime = 0;
-let currentPrediction = "";
+let lastPeriod = null;
+let syncing = false;
 
 
-/* LOGIN */
+/* =========================================
+   LOGIN
+========================================= */
 
 async function login(){
 
+  const input =
+    document.getElementById("accessKey");
+
+  const button =
+    document.getElementById("loginBtn");
+
+  const error =
+    document.getElementById("loginError");
+
   const key =
-    document.getElementById("accessKey").value.trim();
+    input.value.trim();
+
+  error.textContent = "";
 
   if(!key){
-    document.getElementById("loginError").textContent =
+
+    error.textContent =
       "Please enter your access key.";
 
     return;
@@ -311,166 +432,343 @@ async function login(){
 
   accessKey = key;
 
-  try{
-
-    const response = await fetch(
-      "/api/state",
-      {
-        method:"GET",
-        cache:"no-store",
-        headers:{
-          "X-Access-Key":accessKey
-        }
-      }
-    );
-
-    if(!response.ok){
-      throw new Error("Invalid key");
-    }
-
-    document.getElementById("loginBox")
-      .classList.add("hidden");
-
-    document.getElementById("app")
-      .classList.remove("hidden");
-
-    await syncServer();
-
-  }
-
-  catch(error){
-
-    document.getElementById("loginError").textContent =
-      "Invalid key or server unavailable.";
-
-  }
-
-}
-
-
-/* SERVER SYNC */
-
-async function syncServer(){
+  button.disabled = true;
+  button.textContent = "CHECKING...";
 
   try{
 
-    const response = await fetch(
-      "/api/state",
-      {
-        method:"GET",
-        cache:"no-store",
-        headers:{
-          "X-Access-Key":accessKey
+    const response =
+      await fetch(
+        "/api/key/check",
+        {
+          method:"GET",
+          cache:"no-store",
+          headers:{
+            "X-Access-Key":accessKey
+          }
         }
-      }
-    );
+      );
 
-    if(!response.ok){
-      throw new Error("Server error");
+    const data =
+      await response.json();
+
+    if(!response.ok || !data.valid){
+
+      throw new Error(
+        data.status || "INVALID_KEY"
+      );
     }
 
-    const data = await response.json();
+    document
+      .getElementById("loginBox")
+      .classList
+      .add("hidden");
 
-    /*
-      IMPORTANT:
-      Prediction comes from server.
-      Browser refresh does NOT generate a new result.
-    */
-
-    currentPrediction = data.prediction;
-
-    document.getElementById("prediction")
-      .textContent = data.prediction;
-
-    document.getElementById("number")
-      .textContent = "Number: " + data.number;
-
-    document.getElementById("confidence")
-      .textContent =
-      "Confidence " + data.confidence + "%";
-
-    serverEndTime =
-      Date.now() + (data.countdown * 1000);
-
-    document.getElementById("connection")
-      .textContent = "● Server synchronized";
-
-  }
-
-  catch(error){
-
-    document.getElementById("connection")
-      .textContent = "Connection lost — retrying...";
-
-  }
-
-}
-
-
-/* TIMER */
-
-setInterval(async function(){
-
-  if(
     document
       .getElementById("app")
       .classList
-      .contains("hidden")
-  ){
+      .remove("hidden");
+
+    await syncServer();
+
+  }
+  catch(error){
+
+    accessKey = "";
+
+    if(error.message === "INVALID_KEY"){
+
+      error.textContent =
+        "Invalid prediction key.";
+
+    }
+    else{
+
+      document.getElementById("loginError")
+        .textContent =
+        "Key check failed. Server unavailable.";
+
+    }
+
+    document
+      .getElementById("loginBox")
+      .classList
+      .remove("hidden");
+
+  }
+  finally{
+
+    button.disabled = false;
+    button.textContent = "OPEN PREDICTION";
+
+  }
+
+}
+
+
+/* =========================================
+   SERVER SYNC
+========================================= */
+
+async function syncServer(){
+
+  if(!accessKey || syncing){
     return;
   }
 
-  const remaining =
-    Math.max(
-      0,
-      Math.ceil(
-        (serverEndTime - Date.now()) / 1000
-      )
-    );
+  syncing = true;
 
-  document.getElementById("timer")
+  try{
+
+    const response =
+      await fetch(
+        "/api/state",
+        {
+          method:"GET",
+          cache:"no-store",
+          headers:{
+            "X-Access-Key":accessKey
+          }
+        }
+      );
+
+    if(response.status === 401){
+
+      logout(
+        "Your prediction key is no longer valid."
+      );
+
+      return;
+    }
+
+    if(!response.ok){
+
+      throw new Error(
+        "SERVER_ERROR"
+      );
+    }
+
+    const data =
+      await response.json();
+
+
+    /* PERIOD */
+
+    if(data.period){
+
+      lastPeriod =
+        data.period;
+
+      document.getElementById("period")
+        .textContent =
+        data.period;
+    }
+
+
+    /* PREDICTION */
+
+    document.getElementById("prediction")
+      .textContent =
+      data.prediction || "—";
+
+
+    /* NUMBER */
+
+    document.getElementById("number")
+      .textContent =
+      "Number: " +
+      (
+        data.number !== undefined
+        ? data.number
+        : "—"
+      );
+
+
+    /* CONFIDENCE */
+
+    document.getElementById("confidence")
+      .textContent =
+      "Confidence " +
+      (
+        data.confidence !== undefined
+        ? data.confidence
+        : 0
+      ) +
+      "%";
+
+
+    /* TIMER */
+
+    serverEndTime =
+      Date.now() +
+      (
+        Number(data.countdown || 0)
+        * 1000
+      );
+
+
+    /* CONNECTION */
+
+    const connection =
+      document.getElementById("connection");
+
+    connection.textContent =
+      "● Server synchronized";
+
+    connection.className =
+      "status online";
+
+
+    /* KEY STATUS */
+
+    const keyStatus =
+      document.getElementById("keyStatus");
+
+    keyStatus.textContent =
+      data.keyStatus === "LIVE"
+      ? "KEY LIVE"
+      : "KEY ACTIVE";
+
+  }
+  catch(error){
+
+    const connection =
+      document.getElementById("connection");
+
+    connection.textContent =
+      "● Connection lost — retrying...";
+
+    connection.className =
+      "status offline";
+
+  }
+  finally{
+
+    syncing = false;
+
+  }
+
+}
+
+
+/* =========================================
+   TIMER
+========================================= */
+
+setInterval(
+  async function(){
+
+    const app =
+      document.getElementById("app");
+
+    if(app.classList.contains("hidden")){
+      return;
+    }
+
+    const remaining =
+      Math.max(
+        0,
+        Math.ceil(
+          (serverEndTime - Date.now())
+          / 1000
+        )
+      );
+
+    document.getElementById("timer")
+      .textContent =
+      "00:" +
+      String(remaining)
+        .padStart(2,"0");
+
+    document.getElementById("progress")
+      .style.width =
+      Math.min(
+        100,
+        (remaining / 30) * 100
+      ) + "%";
+
+
+    if(remaining <= 0){
+
+      await syncServer();
+
+    }
+
+  },
+  500
+);
+
+
+/* =========================================
+   BACKGROUND SYNC
+========================================= */
+
+setInterval(
+  async function(){
+
+    if(
+      !document
+        .getElementById("app")
+        .classList
+        .contains("hidden")
+    ){
+
+      await syncServer();
+
+    }
+
+  },
+  5000
+);
+
+
+/* =========================================
+   LOGOUT
+========================================= */
+
+function logout(message){
+
+  accessKey = "";
+  serverEndTime = 0;
+
+  document
+    .getElementById("app")
+    .classList
+    .add("hidden");
+
+  document
+    .getElementById("loginBox")
+    .classList
+    .remove("hidden");
+
+  document
+    .getElementById("loginError")
     .textContent =
-    "00:" +
-    String(remaining).padStart(2,"0");
+    message || "";
 
-  document.getElementById("progress")
-    .style.width =
-    ((remaining / 30) * 100) + "%";
+  document
+    .getElementById("prediction")
+    .textContent = "—";
 
-
-  /*
-    When round changes,
-    fetch the server's new prediction.
-  */
-
-  if(remaining <= 0){
-
-    await syncServer();
-
-  }
-
-},500);
+}
 
 
-/*
-  Small background synchronization.
-  This keeps multiple devices aligned.
-*/
+/* =========================================
+   ENTER KEY LOGIN
+========================================= */
 
-setInterval(async function(){
+document
+  .getElementById("accessKey")
+  .addEventListener(
+    "keydown",
+    function(event){
 
-  if(
-    !document
-      .getElementById("app")
-      .classList
-      .contains("hidden")
-  ){
+      if(event.key === "Enter"){
+        login();
+      }
 
-    await syncServer();
-
-  }
-
-},5000);
+    }
+  );
 
 </script>
 
