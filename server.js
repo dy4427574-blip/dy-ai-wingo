@@ -5,9 +5,9 @@ const PORT = process.env.PORT || 3000;
 const ADMIN_KEY = process.env.ADMIN_KEY || "dy4427574";
 
 /*
-  In-memory data.
-  NOTE: Render Free instances can restart, so production persistence
-  should use PostgreSQL rather than local files.
+  --------------------------------------------------
+  IN-MEMORY DATA
+  --------------------------------------------------
 */
 
 const db = {
@@ -53,9 +53,9 @@ function sendJSON(res, status, data) {
     "Cache-Control": "no-store",
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers":
-      "Content-Type, X-Admin-Key, X-Access-Key",
+      "Content-Type, X-Admin-Key, X-Access-Key, X-Device-ID",
     "Access-Control-Allow-Methods":
-      "GET, POST, DELETE, OPTIONS"
+      "GET, POST, DELETE, PATCH, OPTIONS"
   });
 
   res.end(JSON.stringify(data));
@@ -107,16 +107,81 @@ function isAdmin(req) {
 function generateKey() {
   return (
     "DY-" +
-    crypto.randomBytes(5).toString("hex").toUpperCase()
+    crypto
+      .randomBytes(5)
+      .toString("hex")
+      .toUpperCase()
   );
 }
 
 function getKeyStatus(item) {
-  const onlineFor = Date.now() - item.lastSeen;
+  if (!item.enabled) {
+    return "DISABLED";
+  }
 
-  return onlineFor <= 90000
+  if (!item.lastSeen) {
+    return "OFFLINE";
+  }
+
+  return Date.now() - item.lastSeen <= 90000
     ? "LIVE"
     : "OFFLINE";
+}
+
+/*
+  --------------------------------------------------
+  DEVICE ID
+  --------------------------------------------------
+*/
+
+function getDeviceID(req) {
+  return String(
+    req.headers["x-device-id"] || ""
+  ).trim();
+}
+
+function checkDevice(item, deviceId) {
+
+  if (!deviceId) {
+    return {
+      ok: false,
+      status: 400,
+      error: "DEVICE_ID_REQUIRED"
+    };
+  }
+
+  /*
+    First device automatically gets bound.
+  */
+
+  if (!item.deviceId) {
+    item.deviceId = deviceId;
+    item.deviceBoundAt = Date.now();
+
+    return {
+      ok: true,
+      newlyBound: true
+    };
+  }
+
+  /*
+    Different device = reject.
+  */
+
+  if (item.deviceId !== deviceId) {
+    return {
+      ok: false,
+      status: 403,
+      error: "KEY_ALREADY_BOUND",
+      message:
+        "This key is already linked to another device."
+    };
+  }
+
+  return {
+    ok: true,
+    newlyBound: false
+  };
 }
 
 /*
@@ -128,16 +193,16 @@ function getKeyStatus(item) {
 const server = http.createServer(async (req, res) => {
 
   /*
-    CORS PREFLIGHT
+    CORS
   */
 
   if (req.method === "OPTIONS") {
     res.writeHead(204, {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Headers":
-        "Content-Type, X-Admin-Key, X-Access-Key",
+        "Content-Type, X-Admin-Key, X-Access-Key, X-Device-ID",
       "Access-Control-Allow-Methods":
-        "GET, POST, DELETE, OPTIONS"
+        "GET, POST, DELETE, PATCH, OPTIONS"
     });
 
     return res.end();
@@ -179,6 +244,7 @@ const server = http.createServer(async (req, res) => {
     return sendJSON(res, 200, {
       status: "ok",
       service: "DY AI",
+      version: "V2",
       uptime: process.uptime(),
       time: Date.now()
     });
@@ -186,7 +252,7 @@ const server = http.createServer(async (req, res) => {
 
   /*
     ------------------------------------------------
-    USER LOGIN / KEY CHECK
+    USER KEY CHECK
     ------------------------------------------------
   */
 
@@ -196,23 +262,54 @@ const server = http.createServer(async (req, res) => {
   ) {
 
     const accessKey =
-      String(req.headers["x-access-key"] || "").trim();
+      String(
+        req.headers["x-access-key"] || ""
+      ).trim();
 
-    if (!accessKey || !db.keys.has(accessKey)) {
+    const deviceId = getDeviceID(req);
+
+    if (
+      !accessKey ||
+      !db.keys.has(accessKey)
+    ) {
       return sendJSON(res, 401, {
         valid: false,
-        status: "INVALID"
+        status: "INVALID_KEY"
       });
     }
 
     const item = db.keys.get(accessKey);
+
+    if (!item.enabled) {
+      return sendJSON(res, 403, {
+        valid: false,
+        status: "DISABLED"
+      });
+    }
+
+    const deviceCheck =
+      checkDevice(item, deviceId);
+
+    if (!deviceCheck.ok) {
+      return sendJSON(
+        res,
+        deviceCheck.status,
+        {
+          valid: false,
+          error: deviceCheck.error,
+          message: deviceCheck.message
+        }
+      );
+    }
 
     item.lastSeen = Date.now();
 
     return sendJSON(res, 200, {
       valid: true,
       status: getKeyStatus(item),
+      deviceBound: true,
       createdAt: item.createdAt,
+      deviceBoundAt: item.deviceBoundAt,
       lastSeen: item.lastSeen
     });
   }
@@ -229,21 +326,50 @@ const server = http.createServer(async (req, res) => {
   ) {
 
     const accessKey =
-      String(req.headers["x-access-key"] || "").trim();
+      String(
+        req.headers["x-access-key"] || ""
+      ).trim();
 
-    if (!accessKey || !db.keys.has(accessKey)) {
+    const deviceId = getDeviceID(req);
+
+    if (
+      !accessKey ||
+      !db.keys.has(accessKey)
+    ) {
       return sendJSON(res, 401, {
         error: "INVALID_KEY"
       });
     }
 
-    const keyData = db.keys.get(accessKey);
+    const keyData =
+      db.keys.get(accessKey);
+
+    if (!keyData.enabled) {
+      return sendJSON(res, 403, {
+        error: "KEY_DISABLED"
+      });
+    }
+
+    const deviceCheck =
+      checkDevice(keyData, deviceId);
+
+    if (!deviceCheck.ok) {
+      return sendJSON(
+        res,
+        deviceCheck.status,
+        {
+          error: deviceCheck.error,
+          message: deviceCheck.message
+        }
+      );
+    }
 
     keyData.lastSeen = Date.now();
 
     const round = getRound();
 
     return sendJSON(res, 200, {
+
       success: true,
 
       period:
@@ -267,7 +393,10 @@ const server = http.createServer(async (req, res) => {
         round.confidence,
 
       keyStatus:
-        getKeyStatus(keyData)
+        getKeyStatus(keyData),
+
+      deviceBound:
+        Boolean(keyData.deviceId)
     });
   }
 
@@ -288,19 +417,51 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
-    const keys = Array.from(db.keys.entries())
-      .map(([key, item]) => ({
-        key,
-        status: getKeyStatus(item),
-        createdAt: item.createdAt,
-        lastSeen: item.lastSeen
-      }));
+    const keys =
+      Array.from(db.keys.entries())
+        .map(([key, item]) => ({
+          key,
+
+          status:
+            getKeyStatus(item),
+
+          enabled:
+            item.enabled,
+
+          deviceBound:
+            Boolean(item.deviceId),
+
+          deviceBoundAt:
+            item.deviceBoundAt || null,
+
+          createdAt:
+            item.createdAt,
+
+          lastSeen:
+            item.lastSeen || null
+        }));
 
     return sendJSON(res, 200, {
       success: true,
-      total: keys.length,
-      live: keys.filter(k => k.status === "LIVE").length,
-      offline: keys.filter(k => k.status === "OFFLINE").length,
+
+      total:
+        keys.length,
+
+      live:
+        keys.filter(
+          k => k.status === "LIVE"
+        ).length,
+
+      offline:
+        keys.filter(
+          k => k.status === "OFFLINE"
+        ).length,
+
+      disabled:
+        keys.filter(
+          k => k.status === "DISABLED"
+        ).length,
+
       keys
     });
   }
@@ -322,10 +483,13 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
-    const body = await readBody(req);
+    const body =
+      await readBody(req);
 
     let key =
-      String(body.key || "").trim();
+      String(
+        body.key || ""
+      ).trim();
 
     if (!key) {
       key = generateKey();
@@ -338,8 +502,22 @@ const server = http.createServer(async (req, res) => {
     }
 
     db.keys.set(key, {
-      createdAt: Date.now(),
-      lastSeen: 0
+
+      createdAt:
+        Date.now(),
+
+      lastSeen:
+        0,
+
+      deviceId:
+        null,
+
+      deviceBoundAt:
+        null,
+
+      enabled:
+        true
+
     });
 
     return sendJSON(res, 200, {
@@ -365,10 +543,13 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
-    const body = await readBody(req);
+    const body =
+      await readBody(req);
 
     const key =
-      String(body.key || "").trim();
+      String(
+        body.key || ""
+      ).trim();
 
     if (!db.keys.has(key)) {
       return sendJSON(res, 404, {
@@ -381,6 +562,94 @@ const server = http.createServer(async (req, res) => {
     return sendJSON(res, 200, {
       success: true,
       deleted: key
+    });
+  }
+
+  /*
+    ------------------------------------------------
+    ADMIN - RESET DEVICE
+    ------------------------------------------------
+  */
+
+  if (
+    url.pathname === "/api/admin/keys/reset-device" &&
+    req.method === "POST"
+  ) {
+
+    if (!isAdmin(req)) {
+      return sendJSON(res, 401, {
+        error: "UNAUTHORIZED"
+      });
+    }
+
+    const body =
+      await readBody(req);
+
+    const key =
+      String(
+        body.key || ""
+      ).trim();
+
+    if (!db.keys.has(key)) {
+      return sendJSON(res, 404, {
+        error: "KEY_NOT_FOUND"
+      });
+    }
+
+    const item =
+      db.keys.get(key);
+
+    item.deviceId = null;
+    item.deviceBoundAt = null;
+
+    return sendJSON(res, 200, {
+      success: true,
+      message:
+        "Device binding has been reset."
+    });
+  }
+
+  /*
+    ------------------------------------------------
+    ADMIN - ENABLE / DISABLE KEY
+    ------------------------------------------------
+  */
+
+  if (
+    url.pathname === "/api/admin/keys/toggle" &&
+    req.method === "POST"
+  ) {
+
+    if (!isAdmin(req)) {
+      return sendJSON(res, 401, {
+        error: "UNAUTHORIZED"
+      });
+    }
+
+    const body =
+      await readBody(req);
+
+    const key =
+      String(
+        body.key || ""
+      ).trim();
+
+    if (!db.keys.has(key)) {
+      return sendJSON(res, 404, {
+        error: "KEY_NOT_FOUND"
+      });
+    }
+
+    const item =
+      db.keys.get(key);
+
+    item.enabled =
+      body.enabled !== false;
+
+    return sendJSON(res, 200, {
+      success: true,
+      key,
+      enabled: item.enabled
     });
   }
 
@@ -401,10 +670,13 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
-    const round = getRound();
+    const round =
+      getRound();
 
     const allKeys =
-      Array.from(db.keys.entries());
+      Array.from(
+        db.keys.entries()
+      );
 
     const live =
       allKeys.filter(
@@ -412,40 +684,73 @@ const server = http.createServer(async (req, res) => {
           getKeyStatus(item) === "LIVE"
       ).length;
 
+    const disabled =
+      allKeys.filter(
+        ([, item]) =>
+          getKeyStatus(item) === "DISABLED"
+      ).length;
+
     const offline =
-      allKeys.length - live;
+      allKeys.length -
+      live -
+      disabled;
 
     return sendJSON(res, 200, {
+
       success: true,
 
-      server: "LIVE",
+      server:
+        "LIVE",
 
-      users: allKeys.length,
+      users:
+        allKeys.length,
 
       live,
+
       offline,
 
+      disabled,
+
+      boundDevices:
+        allKeys.filter(
+          ([, item]) =>
+            Boolean(item.deviceId)
+        ).length,
+
       round: {
-        period: round.period,
-        prediction: round.prediction,
-        number: round.number,
-        confidence: round.confidence,
-        countdown: Math.max(
-          0,
-          Math.ceil(
-            (round.endsAt - Date.now()) / 1000
+
+        period:
+          round.period,
+
+        prediction:
+          round.prediction,
+
+        number:
+          round.number,
+
+        confidence:
+          round.confidence,
+
+        countdown:
+          Math.max(
+            0,
+            Math.ceil(
+              (round.endsAt - Date.now()) / 1000
+            )
           )
-        )
       },
 
-      uptime: process.uptime(),
-      timestamp: Date.now()
+      uptime:
+        process.uptime(),
+
+      timestamp:
+        Date.now()
     });
   }
 
   /*
     ------------------------------------------------
-    ADMIN - PING
+    ADMIN PING
     ------------------------------------------------
   */
 
@@ -462,8 +767,10 @@ const server = http.createServer(async (req, res) => {
 
     return sendJSON(res, 200, {
       success: true,
-      message: "Admin connection active",
-      timestamp: Date.now()
+      message:
+        "Admin connection active",
+      timestamp:
+        Date.now()
     });
   }
 
@@ -500,7 +807,8 @@ server.listen(
   "0.0.0.0",
   () => {
     console.log(
-      "DY AI server running on port " + PORT
+      "DY AI V2 server running on port " +
+      PORT
     );
   }
 );
