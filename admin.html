@@ -3,31 +3,34 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#070b16">
 
 <title>DY AI Admin Panel</title>
 
 <style>
-
 *{
   box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
 }
 
 body{
   margin:0;
   min-height:100vh;
-  background:#070b16;
+  background:
+    radial-gradient(circle at top,#18234a 0,#070b16 45%);
   color:#fff;
   font-family:Arial,sans-serif;
 }
 
 .container{
-  max-width:700px;
+  width:100%;
+  max-width:760px;
   margin:auto;
   padding:16px;
 }
 
 .card{
-  background:#10172a;
+  background:rgba(16,23,42,.96);
   border:1px solid #293657;
   border-radius:20px;
   padding:20px;
@@ -42,17 +45,23 @@ h1,h2{
 .muted{
   color:#9aa7c4;
   font-size:13px;
+  line-height:1.5;
 }
 
 input{
   width:100%;
-  padding:14px;
+  padding:15px;
   margin-top:9px;
-  border-radius:12px;
+  border-radius:13px;
   border:1px solid #34405f;
   background:#0b1120;
   color:#fff;
   outline:none;
+  font-size:15px;
+}
+
+input:focus{
+  border-color:#716aff;
 }
 
 button{
@@ -60,10 +69,15 @@ button{
   padding:14px;
   margin-top:10px;
   border:0;
-  border-radius:12px;
-  background:#635bff;
+  border-radius:13px;
+  background:linear-gradient(135deg,#635bff,#7d5cff);
   color:#fff;
-  font-weight:800;
+  font-weight:900;
+  font-size:14px;
+}
+
+button:disabled{
+  opacity:.55;
 }
 
 .danger{
@@ -79,39 +93,27 @@ button{
 }
 
 .hidden{
-  display:none;
+  display:none!important;
 }
 
 .header{
   display:flex;
   justify-content:space-between;
   align-items:center;
+  gap:15px;
 }
 
 .badge{
   background:#18233d;
-  padding:7px 12px;
+  padding:8px 13px;
   border-radius:50px;
-  font-size:12px;
+  font-size:11px;
+  font-weight:900;
+  white-space:nowrap;
 }
 
-.key-row{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:13px 0;
-  border-bottom:1px solid #293657;
-}
-
-.key-text{
-  flex:1;
-  word-break:break-all;
-}
-
-.key-row button{
-  width:auto;
-  margin:0;
-  padding:9px 12px;
+.admin-badge{
+  color:#b9b2ff;
 }
 
 .stat-grid{
@@ -123,7 +125,7 @@ button{
 .stat{
   background:#0b1120;
   border:1px solid #293657;
-  border-radius:14px;
+  border-radius:15px;
   padding:15px;
 }
 
@@ -133,6 +135,123 @@ button{
   margin-top:5px;
 }
 
+.live-stat{
+  color:#62e6a7;
+}
+
+.offline-stat{
+  color:#ff7285;
+}
+
+.round-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+}
+
+.round-item{
+  background:#0b1120;
+  border:1px solid #293657;
+  border-radius:14px;
+  padding:14px;
+}
+
+.round-value{
+  font-size:21px;
+  font-weight:900;
+  margin-top:5px;
+}
+
+.key-row{
+  background:#0b1120;
+  border:1px solid #293657;
+  border-radius:15px;
+  padding:15px;
+  margin:10px 0;
+}
+
+.key-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.key-text{
+  font-size:14px;
+  font-weight:800;
+  word-break:break-all;
+}
+
+.status-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  padding:6px 10px;
+  border-radius:30px;
+  font-size:10px;
+  font-weight:900;
+  white-space:nowrap;
+}
+
+.status-live{
+  background:#123c2b;
+  color:#62e6a7;
+}
+
+.status-offline{
+  background:#3c1821;
+  color:#ff7285;
+}
+
+.key-meta{
+  color:#7886a5;
+  font-size:10px;
+  margin-top:9px;
+  line-height:1.5;
+}
+
+.key-actions{
+  display:flex;
+  gap:8px;
+  margin-top:12px;
+}
+
+.key-actions button{
+  width:auto;
+  flex:1;
+  margin:0;
+  padding:10px;
+  font-size:11px;
+}
+
+.refresh{
+  background:#18233d;
+  border:1px solid #34405f;
+}
+
+.loading{
+  color:#9aa7c4;
+  text-align:center;
+  padding:15px;
+}
+
+.message{
+  min-height:18px;
+  font-size:13px;
+  margin-top:10px;
+}
+
+@media(max-width:420px){
+  .stat-grid,
+  .round-grid{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .key-top{
+    align-items:flex-start;
+  }
+}
 </style>
 </head>
 
@@ -140,11 +259,11 @@ button{
 
 <div class="container">
 
-<!-- LOGIN -->
+<!-- ================= LOGIN ================= -->
 
 <div id="loginBox" class="card">
 
-  <h1>DY AI Admin</h1>
+  <h1>👑 DY AI Admin</h1>
 
   <p class="muted">
     Secure administrator access
@@ -153,146 +272,275 @@ button{
   <input
     id="adminKey"
     type="password"
-    placeholder="Admin key"
+    placeholder="Enter admin key"
     autocomplete="off"
   >
 
-  <button onclick="login()">
+  <button id="loginBtn" onclick="login()">
     UNLOCK ADMIN PANEL
   </button>
 
-  <p id="loginMessage"></p>
+  <p id="loginMessage" class="message"></p>
 
 </div>
 
 
-<!-- ADMIN PANEL -->
+<!-- ================= ADMIN ================= -->
 
 <div id="adminPanel" class="hidden">
+
+  <!-- HEADER -->
 
   <div class="card header">
 
     <div>
-      <h1>Admin Dashboard</h1>
+      <h1>DY AI Dashboard</h1>
+
       <div class="muted">
-        DY AI control center
+        Prediction control center
       </div>
     </div>
 
-    <div class="badge">
+    <div class="badge admin-badge">
       ADMIN
     </div>
 
   </div>
 
 
-  <!-- STATUS -->
+  <!-- ================= SERVER ================= -->
 
   <div class="card">
 
-    <h2>System Status</h2>
+    <h2>Server Status</h2>
 
     <div class="stat-grid">
 
       <div class="stat">
         <div class="muted">
-          ACTIVE KEYS
+          SERVER
         </div>
 
-        <div id="keyCount" class="stat-value">
+        <div id="serverStatus"
+             class="stat-value live-stat">
+          LIVE
+        </div>
+      </div>
+
+      <div class="stat">
+        <div class="muted">
+          UPTIME
+        </div>
+
+        <div id="uptime"
+             class="stat-value">
+          —
+        </div>
+      </div>
+
+    </div>
+
+    <p id="connectionStatus"
+       class="muted">
+      Connecting...
+    </p>
+
+  </div>
+
+
+  <!-- ================= KEY STATS ================= -->
+
+  <div class="card">
+
+    <h2>Key Overview</h2>
+
+    <div class="stat-grid">
+
+      <div class="stat">
+        <div class="muted">
+          TOTAL KEYS
+        </div>
+
+        <div id="totalKeys"
+             class="stat-value">
           0
         </div>
       </div>
 
       <div class="stat">
         <div class="muted">
-          CURRENT PREDICTION
+          LIVE
         </div>
 
-        <div id="currentPrediction" class="stat-value">
-          —
+        <div id="liveKeys"
+             class="stat-value live-stat">
+          0
         </div>
       </div>
 
       <div class="stat">
+        <div class="muted">
+          OFFLINE
+        </div>
+
+        <div id="offlineKeys"
+             class="stat-value offline-stat">
+          0
+        </div>
+      </div>
+
+      <div class="stat">
+        <div class="muted">
+          ACTIVE USERS
+        </div>
+
+        <div id="activeUsers"
+             class="stat-value">
+          0
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- ================= CURRENT ROUND ================= -->
+
+  <div class="card">
+
+    <h2>Current AI Round</h2>
+
+    <div class="round-grid">
+
+      <div class="round-item">
+
+        <div class="muted">
+          PREDICTION
+        </div>
+
+        <div id="prediction"
+             class="round-value">
+          —
+        </div>
+
+      </div>
+
+      <div class="round-item">
+
         <div class="muted">
           NUMBER
         </div>
 
-        <div id="currentNumber" class="stat-value">
+        <div id="number"
+             class="round-value">
           —
         </div>
+
       </div>
 
-      <div class="stat">
+      <div class="round-item">
+
         <div class="muted">
-          TIMER
+          CONFIDENCE
         </div>
 
-        <div id="currentTimer" class="stat-value">
+        <div id="confidence"
+             class="round-value">
           —
         </div>
+
+      </div>
+
+      <div class="round-item">
+
+        <div class="muted">
+          COUNTDOWN
+        </div>
+
+        <div id="countdown"
+             class="round-value">
+          —
+        </div>
+
       </div>
 
     </div>
 
-    <p id="systemStatus" class="muted">
-      Loading...
-    </p>
-
   </div>
 
 
-  <!-- CREATE KEY -->
+  <!-- ================= CREATE KEY ================= -->
 
   <div class="card">
 
-    <h2>Create Prediction Key</h2>
+    <h2>🔑 Create Prediction Key</h2>
 
     <p class="muted">
-      Leave empty to generate a random key.
+      Custom key ya empty chhodkar automatic key generate karo.
     </p>
 
     <input
       id="newKey"
+      type="text"
       placeholder="Example: DY-USER-001"
       autocomplete="off"
     >
 
-    <button onclick="createKey()">
+    <button id="createBtn"
+            onclick="createKey()">
       CREATE ACCESS KEY
     </button>
 
-    <p id="createMessage"></p>
+    <p id="createMessage"
+       class="message">
+    </p>
 
   </div>
 
 
-  <!-- KEY LIST -->
+  <!-- ================= KEY LIST ================= -->
 
   <div class="card">
 
-    <h2>Prediction Access Keys</h2>
+    <div class="header">
+
+      <div>
+        <h2>🔐 Access Keys</h2>
+
+        <div class="muted">
+          Live device activity
+        </div>
+      </div>
+
+      <div class="badge">
+        AUTO
+      </div>
+
+    </div>
 
     <div id="keyList">
-      Loading...
+      <div class="loading">
+        Loading keys...
+      </div>
     </div>
 
   </div>
 
 
-  <!-- REFRESH -->
+  <!-- ================= CONTROLS ================= -->
 
   <div class="card">
 
-    <button onclick="loadAll()">
-      REFRESH DASHBOARD
+    <button
+      class="refresh"
+      onclick="loadAll()">
+      🔄 REFRESH DASHBOARD
     </button>
 
     <button
       class="danger"
-      onclick="logout()"
-    >
+      onclick="logout()">
       LOGOUT
     </button>
 
@@ -306,35 +554,50 @@ button{
 <script>
 
 let adminKey = "";
+let statusTimer = null;
 
 
-/* LOGIN */
+/* =========================================
+   LOGIN
+========================================= */
 
 async function login(){
 
-  const value =
-    document
-      .getElementById("adminKey")
-      .value
-      .trim();
+  const input =
+    document.getElementById("adminKey");
 
-  if(!value){
+  const button =
+    document.getElementById("loginBtn");
 
-    showLoginMessage(
-      "Please enter admin key.",
-      "error"
-    );
+  const message =
+    document.getElementById("loginMessage");
+
+  const key =
+    input.value.trim();
+
+  message.textContent = "";
+
+  if(!key){
+
+    message.textContent =
+      "Please enter admin key.";
+
+    message.className =
+      "message error";
 
     return;
   }
 
-  adminKey = value;
+  adminKey = key;
+
+  button.disabled = true;
+  button.textContent = "CHECKING...";
 
   try{
 
     const response =
       await fetch(
-        "/api/admin/keys",
+        "/api/admin/ping",
         {
           method:"GET",
           cache:"no-store",
@@ -347,9 +610,8 @@ async function login(){
     if(!response.ok){
 
       throw new Error(
-        "Unauthorized"
+        "UNAUTHORIZED"
       );
-
     }
 
     document
@@ -364,53 +626,60 @@ async function login(){
 
     await loadAll();
 
+    if(statusTimer){
+      clearInterval(statusTimer);
+    }
+
+    statusTimer =
+      setInterval(
+        loadAll,
+        5000
+      );
+
   }
-
   catch(error){
-
-    showLoginMessage(
-      "Wrong admin key or server unavailable.",
-      "error"
-    );
 
     adminKey = "";
 
+    message.textContent =
+      "Wrong admin key or server unavailable.";
+
+    message.className =
+      "message error";
+
+  }
+  finally{
+
+    button.disabled = false;
+    button.textContent =
+      "UNLOCK ADMIN PANEL";
+
   }
 
 }
 
 
-/* LOGIN MESSAGE */
-
-function showLoginMessage(
-  text,
-  type
-){
-
-  const el =
-    document.getElementById(
-      "loginMessage"
-    );
-
-  el.textContent = text;
-
-  el.className = type;
-
-}
-
-
-/* LOAD EVERYTHING */
+/* =========================================
+   LOAD EVERYTHING
+========================================= */
 
 async function loadAll(){
 
-  await loadKeys();
+  if(!adminKey){
+    return;
+  }
 
-  await loadStatus();
+  await Promise.all([
+    loadKeys(),
+    loadStatus()
+  ]);
 
 }
 
 
-/* LOAD KEYS */
+/* =========================================
+   LOAD KEYS
+========================================= */
 
 async function loadKeys(){
 
@@ -428,19 +697,58 @@ async function loadKeys(){
         }
       );
 
+    if(response.status === 401){
+
+      logout(
+        "Admin session expired."
+      );
+
+      return;
+    }
+
     if(!response.ok){
 
       throw new Error();
-
     }
 
     const data =
       await response.json();
 
-    renderKeys(data.keys || []);
+    const keys =
+      Array.isArray(data.keys)
+      ? data.keys
+      : [];
+
+    renderKeys(keys);
+
+    document
+      .getElementById("totalKeys")
+      .textContent =
+      data.total ?? keys.length;
+
+    document
+      .getElementById("liveKeys")
+      .textContent =
+      data.live ??
+      keys.filter(
+        k => k.status === "LIVE"
+      ).length;
+
+    document
+      .getElementById("offlineKeys")
+      .textContent =
+      data.offline ??
+      keys.filter(
+        k => k.status === "OFFLINE"
+      ).length;
+
+    document
+      .getElementById("activeUsers")
+      .textContent =
+      data.live ??
+      0;
 
   }
-
   catch(error){
 
     document
@@ -453,37 +761,57 @@ async function loadKeys(){
 }
 
 
-/* RENDER KEYS */
+/* =========================================
+   RENDER KEYS
+========================================= */
 
 function renderKeys(keys){
 
-  document
-    .getElementById("keyCount")
-    .textContent =
-    keys.length;
-
+  const box =
+    document.getElementById("keyList");
 
   if(!keys.length){
 
-    document
-      .getElementById("keyList")
-      .innerHTML =
-      "<p class='muted'>No prediction keys created.</p>";
+    box.innerHTML =
+      "<div class='loading'>No prediction keys created.</div>";
 
     return;
-
   }
-
-
-  const box =
-    document.getElementById(
-      "keyList"
-    );
 
   box.innerHTML = "";
 
+  keys.forEach(function(item){
 
-  keys.forEach(function(key){
+    /*
+      New server format:
+      {
+        key,
+        status,
+        createdAt,
+        lastSeen
+      }
+    */
+
+    const key =
+      typeof item === "string"
+      ? item
+      : item.key;
+
+    const status =
+      typeof item === "string"
+      ? "OFFLINE"
+      : item.status || "OFFLINE";
+
+    const createdAt =
+      typeof item === "object"
+      ? item.createdAt
+      : null;
+
+    const lastSeen =
+      typeof item === "object"
+      ? item.lastSeen
+      : 0;
+
 
     const row =
       document.createElement("div");
@@ -492,25 +820,75 @@ function renderKeys(keys){
       "key-row";
 
 
-    const text =
+    const top =
       document.createElement("div");
 
-    text.className =
+    top.className =
+      "key-top";
+
+
+    const keyText =
+      document.createElement("div");
+
+    keyText.className =
       "key-text";
 
-    text.textContent = key;
+    keyText.textContent =
+      key || "UNKNOWN";
 
 
-    const button =
+    const statusPill =
+      document.createElement("div");
+
+    statusPill.className =
+      "status-pill " +
+      (
+        status === "LIVE"
+        ? "status-live"
+        : "status-offline"
+      );
+
+    statusPill.textContent =
+      status === "LIVE"
+      ? "● LIVE"
+      : "● OFFLINE";
+
+
+    top.appendChild(keyText);
+    top.appendChild(statusPill);
+
+
+    const meta =
+      document.createElement("div");
+
+    meta.className =
+      "key-meta";
+
+    meta.innerHTML =
+      "Created: " +
+      formatDate(createdAt) +
+      "<br>" +
+      "Last seen: " +
+      formatLastSeen(lastSeen);
+
+
+    const actions =
+      document.createElement("div");
+
+    actions.className =
+      "key-actions";
+
+
+    const deleteButton =
       document.createElement("button");
 
-    button.className =
+    deleteButton.className =
       "danger";
 
-    button.textContent =
-      "DELETE";
+    deleteButton.textContent =
+      "DELETE KEY";
 
-    button.onclick =
+    deleteButton.onclick =
       function(){
 
         deleteKey(key);
@@ -518,9 +896,14 @@ function renderKeys(keys){
       };
 
 
-    row.appendChild(text);
+    actions.appendChild(
+      deleteButton
+    );
 
-    row.appendChild(button);
+
+    row.appendChild(top);
+    row.appendChild(meta);
+    row.appendChild(actions);
 
     box.appendChild(row);
 
@@ -529,18 +912,29 @@ function renderKeys(keys){
 }
 
 
-/* CREATE KEY */
+/* =========================================
+   CREATE KEY
+========================================= */
 
 async function createKey(){
 
   const input =
-    document.getElementById(
-      "newKey"
-    );
+    document.getElementById("newKey");
+
+  const button =
+    document.getElementById("createBtn");
+
+  const message =
+    document.getElementById("createMessage");
 
   const customKey =
     input.value.trim();
 
+  button.disabled = true;
+  button.textContent =
+    "CREATING...";
+
+  message.textContent = "";
 
   try{
 
@@ -565,77 +959,95 @@ async function createKey(){
       );
 
 
-    if(!response.ok){
-
-      throw new Error();
-
-    }
-
-
     const data =
       await response.json();
 
 
+    if(!response.ok){
+
+      if(
+        data.error ===
+        "KEY_ALREADY_EXISTS"
+      ){
+
+        throw new Error(
+          "KEY_ALREADY_EXISTS"
+        );
+
+      }
+
+      throw new Error(
+        "CREATE_FAILED"
+      );
+
+    }
+
+
     input.value = "";
 
+    message.textContent =
+      "Key created: " +
+      data.key;
 
-    document
-      .getElementById(
-        "createMessage"
-      )
-      .textContent =
-      "Key created: " + data.key;
-
-
-    document
-      .getElementById(
-        "createMessage"
-      )
-      .className =
-      "success";
+    message.className =
+      "message success";
 
 
-    renderKeys(
-      data.keys || []
-    );
+    await loadKeys();
 
   }
-
   catch(error){
 
-    document
-      .getElementById(
-        "createMessage"
-      )
-      .textContent =
-      "Unable to create key.";
+    if(
+      error.message ===
+      "KEY_ALREADY_EXISTS"
+    ){
 
-    document
-      .getElementById(
-        "createMessage"
-      )
-      .className =
-      "error";
+      message.textContent =
+        "This key already exists.";
+
+    }
+    else{
+
+      message.textContent =
+        "Unable to create key.";
+
+    }
+
+    message.className =
+      "message error";
+
+  }
+  finally{
+
+    button.disabled = false;
+    button.textContent =
+      "CREATE ACCESS KEY";
 
   }
 
 }
 
 
-/* DELETE KEY */
+/* =========================================
+   DELETE KEY
+========================================= */
 
 async function deleteKey(key){
 
-  if(
-    !confirm(
-      "Delete this access key?"
-    )
-  ){
-
+  if(!key){
     return;
-
   }
 
+  const confirmed =
+    confirm(
+      "Delete this prediction key?\n\n" +
+      key
+    );
+
+  if(!confirmed){
+    return;
+  }
 
   try{
 
@@ -667,16 +1079,9 @@ async function deleteKey(key){
     }
 
 
-    const data =
-      await response.json();
-
-
-    renderKeys(
-      data.keys || []
-    );
+    await loadKeys();
 
   }
-
   catch(error){
 
     alert(
@@ -688,7 +1093,9 @@ async function deleteKey(key){
 }
 
 
-/* SERVER STATUS */
+/* =========================================
+   LOAD SERVER STATUS
+========================================= */
 
 async function loadStatus(){
 
@@ -707,6 +1114,16 @@ async function loadStatus(){
       );
 
 
+    if(response.status === 401){
+
+      logout(
+        "Admin session expired."
+      );
+
+      return;
+    }
+
+
     if(!response.ok){
 
       throw new Error();
@@ -718,63 +1135,94 @@ async function loadStatus(){
       await response.json();
 
 
+    /*
+      New server format:
+      data.round.prediction
+      data.round.number
+      data.round.confidence
+      data.round.countdown
+    */
+
+    const round =
+      data.round || {};
+
+
     document
-      .getElementById(
-        "currentPrediction"
-      )
+      .getElementById("serverStatus")
       .textContent =
-      data.prediction || "—";
+      data.server || "LIVE";
 
 
     document
-      .getElementById(
-        "currentNumber"
-      )
+      .getElementById("prediction")
       .textContent =
-      data.number ?? "—";
+      round.prediction || "—";
 
 
     document
-      .getElementById(
-        "currentTimer"
-      )
+      .getElementById("number")
+      .textContent =
+      round.number ??
+      "—";
+
+
+    document
+      .getElementById("confidence")
+      .textContent =
+      round.confidence !== undefined
+      ? round.confidence + "%"
+      : "—";
+
+
+    document
+      .getElementById("countdown")
       .textContent =
       "00:" +
       String(
-        data.countdown || 0
+        round.countdown || 0
       ).padStart(2,"0");
 
 
     document
-      .getElementById(
-        "systemStatus"
-      )
+      .getElementById("activeUsers")
       .textContent =
-      "● Server connected";
+      data.live ??
+      data.users ??
+      0;
+
 
     document
-      .getElementById(
-        "systemStatus"
-      )
-      .className =
+      .getElementById("uptime")
+      .textContent =
+      formatUptime(
+        data.uptime || 0
+      );
+
+
+    const connection =
+      document.getElementById(
+        "connectionStatus"
+      );
+
+    connection.textContent =
+      "● Server connected • Updated just now";
+
+    connection.className =
       "success";
 
-  }
 
+  }
   catch(error){
 
-    document
-      .getElementById(
-        "systemStatus"
-      )
-      .textContent =
-      "Server connection unavailable";
+    const connection =
+      document.getElementById(
+        "connectionStatus"
+      );
 
-    document
-      .getElementById(
-        "systemStatus"
-      )
-      .className =
+    connection.textContent =
+      "● Server connection unavailable";
+
+    connection.className =
       "error";
 
   }
@@ -782,49 +1230,193 @@ async function loadStatus(){
 }
 
 
-/* AUTO STATUS */
+/* =========================================
+   DATE HELPERS
+========================================= */
 
-setInterval(
-  function(){
+function formatDate(timestamp){
 
-    if(adminKey){
+  if(!timestamp){
+    return "—";
+  }
 
-      loadStatus();
+  try{
 
-    }
+    return new Date(timestamp)
+      .toLocaleString();
 
-  },
-  5000
-);
+  }
+  catch{
+
+    return "—";
+
+  }
+
+}
 
 
-/* LOGOUT */
+function formatLastSeen(timestamp){
 
-function logout(){
+  if(!timestamp){
+    return "Never";
+  }
+
+  const diff =
+    Date.now() - timestamp;
+
+  if(diff < 60000){
+
+    return (
+      Math.max(
+        1,
+        Math.floor(diff / 1000)
+      ) +
+      " sec ago"
+    );
+
+  }
+
+  if(diff < 3600000){
+
+    return (
+      Math.floor(
+        diff / 60000
+      ) +
+      " min ago"
+    );
+
+  }
+
+  return formatDate(timestamp);
+
+}
+
+
+/* =========================================
+   UPTIME
+========================================= */
+
+function formatUptime(seconds){
+
+  seconds =
+    Math.floor(
+      Number(seconds) || 0
+    );
+
+  const days =
+    Math.floor(
+      seconds / 86400
+    );
+
+  seconds %= 86400;
+
+  const hours =
+    Math.floor(
+      seconds / 3600
+    );
+
+  seconds %= 3600;
+
+  const minutes =
+    Math.floor(
+      seconds / 60
+    );
+
+
+  if(days > 0){
+
+    return (
+      days + "d " +
+      hours + "h"
+    );
+
+  }
+
+  if(hours > 0){
+
+    return (
+      hours + "h " +
+      minutes + "m"
+    );
+
+  }
+
+  return minutes + "m";
+
+}
+
+
+/* =========================================
+   LOGOUT
+========================================= */
+
+function logout(message){
 
   adminKey = "";
 
+  if(statusTimer){
+
+    clearInterval(
+      statusTimer
+    );
+
+    statusTimer = null;
+
+  }
+
+
   document
-    .getElementById(
-      "adminPanel"
-    )
+    .getElementById("adminPanel")
     .classList
     .add("hidden");
 
+
   document
-    .getElementById(
-      "loginBox"
-    )
+    .getElementById("loginBox")
     .classList
     .remove("hidden");
 
+
   document
-    .getElementById(
-      "adminKey"
-    )
+    .getElementById("adminKey")
     .value = "";
 
+
+  if(message){
+
+    document
+      .getElementById("loginMessage")
+      .textContent =
+      message;
+
+    document
+      .getElementById("loginMessage")
+      .className =
+      "message error";
+
+  }
+
 }
+
+
+/* =========================================
+   ENTER KEY
+========================================= */
+
+document
+  .getElementById("adminKey")
+  .addEventListener(
+    "keydown",
+    function(event){
+
+      if(event.key === "Enter"){
+
+        login();
+
+      }
+
+    }
+  );
 
 </script>
 
