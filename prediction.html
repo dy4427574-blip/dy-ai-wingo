@@ -2,1326 +2,1900 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0,
+      maximum-scale=1.0,user-scalable=no">
 
-<title>DY AI Wingo 30S</title>
+<title>DY AI WINGO</title>
 
 <style>
+
 *{
-  box-sizing:border-box;
-  margin:0;
-  padding:0;
-  font-family:Arial,sans-serif;
+    box-sizing:border-box;
+    -webkit-tap-highlight-color:transparent;
+}
+
+html,body{
+    margin:0;
+    padding:0;
+    background:#050912;
+    color:#fff;
+    font-family:Arial,sans-serif;
 }
 
 body{
-  background:#060b14;
-  color:#fff;
-  min-height:100vh;
+    min-height:100vh;
+    overflow-x:hidden;
 }
 
 .container{
-  width:100%;
-  max-width:1050px;
-  margin:auto;
-  padding:14px;
+    width:100%;
+    max-width:720px;
+    margin:auto;
+    padding:18px 15px 40px;
 }
 
 .card{
-  background:#0d1523;
-  border:1px solid #1d2b40;
-  border-radius:20px;
-  padding:16px;
-  margin-bottom:14px;
-  box-shadow:0 8px 30px rgba(0,0,0,.25);
+    background:#0d1524;
+    border:1px solid #243149;
+    border-radius:25px;
+    padding:20px;
+    margin-bottom:18px;
+    box-shadow:
+        0 10px 35px rgba(0,0,0,.25);
 }
 
 .hidden{
-  display:none!important;
+    display:none !important;
 }
 
-/* LOGIN */
 
-.login{
-  max-width:430px;
-  margin:80px auto;
+/* =====================================================
+   LOGIN
+===================================================== */
+
+.login-card{
+    margin-top:70px;
+    text-align:center;
 }
 
 .logo{
-  text-align:center;
-  margin-bottom:20px;
+    font-size:34px;
+    font-weight:900;
+    color:#13d9ff;
+    letter-spacing:1px;
+    margin-bottom:5px;
 }
 
-.logo h1{
-  color:#00e5ff;
-  font-size:28px;
-  margin-bottom:5px;
-}
-
-.logo p{
-  color:#7f8da3;
-  font-size:13px;
+.subtitle{
+    color:#7f8ca3;
+    font-size:14px;
+    margin-bottom:28px;
 }
 
 input{
-  width:100%;
-  padding:14px;
-  background:#070d17;
-  border:1px solid #26364d;
-  border-radius:11px;
-  color:white;
-  outline:none;
-  margin-bottom:10px;
-}
-
-input:focus{
-  border-color:#00e5ff;
+    width:100%;
+    height:58px;
+    border-radius:18px;
+    border:1px solid #2b3b58;
+    background:#070e19;
+    color:#fff;
+    padding:0 18px;
+    font-size:16px;
+    outline:none;
+    margin-bottom:14px;
 }
 
 button{
-  width:100%;
-  padding:13px;
-  border:0;
-  border-radius:11px;
-  background:#007cff;
-  color:white;
-  font-weight:bold;
-  cursor:pointer;
+    width:100%;
+    height:56px;
+    border:0;
+    border-radius:18px;
+    background:#087ff5;
+    color:white;
+    font-weight:800;
+    font-size:16px;
+    cursor:pointer;
 }
 
 button:active{
-  transform:scale(.98);
-}
-
-.msg{
-  margin-top:10px;
-  padding:10px;
-  border-radius:9px;
-  font-size:13px;
-  display:none;
+    transform:scale(.98);
 }
 
 .error{
-  background:#35131b;
-  color:#ff6c83;
+    margin-top:14px;
+    padding:14px;
+    border-radius:15px;
+    background:#3a101d;
+    color:#ff7f91;
+    display:none;
 }
 
-.success{
-  background:#103326;
-  color:#4cffae;
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.header{
+    text-align:center;
+    padding:8px 0 20px;
 }
 
-/* HEADER */
-
-.top{
-  text-align:center;
-  margin-bottom:14px;
+.header h1{
+    margin:0;
+    color:#16ddff;
+    font-size:31px;
+    font-weight:900;
 }
 
-.top h1{
-  color:#00e5ff;
-  font-size:24px;
+.header p{
+    margin:7px 0 0;
+    color:#8793a8;
+    font-size:13px;
 }
 
-.top p{
-  color:#718096;
-  font-size:12px;
-  margin-top:5px;
-}
 
-/* PERIOD */
-
-.period-box{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:12px;
-}
+/* =====================================================
+   PERIOD
+===================================================== */
 
 .period-title{
-  color:#8795a9;
-  font-size:12px;
+    color:#8290a7;
+    font-size:12px;
+    text-align:center;
+    letter-spacing:1px;
 }
 
 .period{
-  color:#fff;
-  font-size:16px;
-  font-weight:bold;
-  word-break:break-all;
-  margin-top:5px;
+    text-align:center;
+    font-size:23px;
+    font-weight:900;
+    margin-top:8px;
+    word-break:break-all;
+}
+
+.timer-row{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:10px;
+    margin-top:14px;
 }
 
 .timer{
-  min-width:75px;
-  text-align:center;
+    min-width:82px;
+    padding:10px 17px;
+    border-radius:14px;
+    background:#172132;
+    border:1px solid #30405b;
+    color:#d5dceb;
+    font-weight:900;
 }
 
-.timer-label{
-  color:#8795a9;
-  font-size:11px;
+.pending{
+    color:#a9b4c7;
 }
 
-#timer{
-  color:#00f5a0;
-  font-size:25px;
-  font-weight:bold;
-  margin-top:3px;
+
+/* =====================================================
+   BIG SMALL + WIN LOSS
+===================================================== */
+
+.analysis-title{
+    text-align:center;
+    color:#8490a4;
+    font-size:13px;
+    letter-spacing:1px;
+    margin-bottom:18px;
 }
 
-/* PREDICTION */
+.analysis-main{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    align-items:stretch;
+}
 
-.prediction-card{
-  text-align:center;
+.prediction-box,
+.winloss-box{
+    min-height:145px;
+    border-radius:20px;
+    background:#07101d;
+    border:1px solid #263650;
+    padding:17px;
+}
+
+.prediction-box{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
 }
 
 .prediction-label{
-  color:#8491a5;
-  font-size:12px;
-  letter-spacing:1px;
-  margin-bottom:12px;
-}
-
-/* BIG SMALL + RESULT SIDE BY SIDE */
-
-.prediction-row{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  gap:18px;
-  margin:8px 0 16px;
+    color:#8793a8;
+    font-size:11px;
+    margin-bottom:8px;
 }
 
 .prediction{
-  font-size:34px;
-  font-weight:900;
-  letter-spacing:1px;
+    font-size:35px;
+    font-weight:900;
+    letter-spacing:1px;
 }
 
-.prediction.big{
-  color:#ff617b;
+.big{
+    color:#ff6b85;
 }
 
-.prediction.small{
-  color:#4d9dff;
+.small{
+    color:#55a5ff;
 }
 
-.result-status{
-  min-width:95px;
-  padding:9px 13px;
-  border-radius:10px;
-  font-size:14px;
-  font-weight:bold;
+.status{
+    margin-top:10px;
+    padding:7px 10px;
+    border-radius:12px;
+    background:#182334;
+    color:#9aa7bb;
+    font-size:11px;
 }
 
-.result-status.win{
-  background:#103b2b;
-  color:#4cffae;
-  border:1px solid #1d6849;
+
+/* WIN LOSS SIDE */
+
+.winloss-title{
+    color:#8793a8;
+    font-size:11px;
+    text-align:center;
+    margin-bottom:12px;
 }
 
-.result-status.loss{
-  background:#3a151e;
-  color:#ff6b82;
-  border:1px solid #713044;
+.wl-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
 }
 
-.result-status.pending{
-  background:#171f2c;
-  color:#9aa7ba;
-  border:1px solid #29384d;
+.wl-item{
+    background:#101a2a;
+    border-radius:12px;
+    padding:9px 5px;
+    text-align:center;
 }
 
-.analysis-grid{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:8px;
+.wl-label{
+    display:block;
+    color:#748198;
+    font-size:9px;
+    margin-bottom:4px;
 }
 
-.analysis-item{
-  background:#080e18;
-  border:1px solid #1b293b;
-  border-radius:10px;
-  padding:10px 5px;
+.wl-value{
+    font-size:17px;
+    font-weight:900;
 }
 
-.analysis-item span{
-  display:block;
-  color:#718096;
-  font-size:10px;
-  margin-bottom:5px;
+.win{
+    color:#58ed9c;
 }
 
-.analysis-item b{
-  font-size:12px;
+.loss{
+    color:#ff7087;
 }
 
-/* HISTORY */
-
-.title-row{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:12px;
+.rate{
+    color:#f3d26b;
 }
 
-.title-row h2{
-  font-size:17px;
+.streak{
+    color:#b8a1ff;
 }
 
-.title-row span{
-  color:#718096;
-  font-size:11px;
+
+/* =====================================================
+   ANALYSIS DETAILS
+===================================================== */
+
+.details{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-top:14px;
 }
 
-.table-head,
-.history-row{
-  display:grid;
-  grid-template-columns:1.8fr .6fr .8fr;
-  align-items:center;
-  gap:8px;
+.detail{
+    background:#070f1b;
+    border:1px solid #202f47;
+    border-radius:17px;
+    padding:15px;
+    text-align:center;
 }
 
-.table-head{
-  color:#68758a;
-  font-size:10px;
-  padding:7px 0;
-  border-bottom:1px solid #1c2939;
+.detail span{
+    display:block;
 }
 
-.history-row{
-  padding:12px 0;
-  border-bottom:1px solid #1a2636;
-  font-size:12px;
+.detail-label{
+    color:#7f8ba0;
+    font-size:10px;
+    margin-bottom:8px;
 }
 
-.history-row:last-child{
-  border-bottom:0;
+.detail-value{
+    font-size:16px;
+    font-weight:900;
+}
+
+
+/* =====================================================
+   WIN LOSS HISTORY
+===================================================== */
+
+.section-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:16px;
+}
+
+.section-head h2{
+    margin:0;
+    font-size:21px;
+}
+
+.section-head span{
+    color:#75839a;
+    font-size:11px;
+}
+
+.wl-table-head,
+.wl-row{
+    display:grid;
+    grid-template-columns:1.5fr .65fr .7fr;
+    gap:8px;
+    align-items:center;
+}
+
+.wl-table-head{
+    color:#718096;
+    font-size:10px;
+    padding-bottom:10px;
+    border-bottom:1px solid #202c40;
+}
+
+.wl-row{
+    min-height:53px;
+    border-bottom:1px solid #1c283a;
+    font-size:12px;
+}
+
+.wl-row:last-child{
+    border-bottom:0;
 }
 
 .issue{
-  font-weight:bold;
-  word-break:break-all;
+    font-size:11px;
+    word-break:break-all;
+}
+
+.result-win{
+    color:#58ed9c;
+    font-weight:900;
+}
+
+.result-loss{
+    color:#ff7087;
+    font-weight:900;
+}
+
+
+/* =====================================================
+   LIVE RESULT
+===================================================== */
+
+.live-row{
+    display:grid;
+    grid-template-columns:1.55fr .55fr .7fr;
+    gap:8px;
+    align-items:center;
+    min-height:56px;
+    border-bottom:1px solid #1c283a;
+}
+
+.live-row:last-child{
+    border-bottom:0;
+}
+
+.live-head{
+    color:#718096;
+    font-size:10px;
+    padding-bottom:11px;
+    border-bottom:1px solid #202c40;
 }
 
 .number{
-  font-weight:bold;
+    font-weight:900;
 }
 
-.big-text{
-  color:#ff617b;
-  font-weight:bold;
+.size-big{
+    color:#ff6b85;
+    font-weight:900;
 }
 
-.small-text{
-  color:#4d9dff;
-  font-weight:bold;
+.size-small{
+    color:#55a5ff;
+    font-weight:900;
 }
 
-/* GAME */
 
-.game-card{
-  padding:16px;
+/* =====================================================
+   MUSIC
+===================================================== */
+
+.music-card{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:14px 16px;
+}
+
+.music-button{
+    width:52px;
+    height:52px;
+    min-width:52px;
+    border-radius:50%;
+    padding:0;
+    background:#087ff5;
+    font-size:20px;
+}
+
+.music-info{
+    flex:1;
+}
+
+.music-title{
+    font-weight:900;
+    font-size:14px;
+}
+
+.music-sub{
+    color:#77849a;
+    font-size:10px;
+    margin-top:5px;
+}
+
+.volume{
+    width:85px;
+}
+
+
+/* =====================================================
+   LIVE GAME
+===================================================== */
+
+.game-box{
+    overflow:hidden;
 }
 
 .game-frame{
-  width:100%;
-  height:620px;
-  border:0;
-  border-radius:18px;
-  background:#101722;
-  display:block;
+    width:100%;
+    height:650px;
+    border:0;
+    border-radius:20px;
+    background:#fff;
 }
 
 .game-note{
-  color:#758298;
-  font-size:11px;
-  line-height:1.5;
-  margin-top:10px;
+    color:#78869c;
+    font-size:10px;
+    line-height:1.6;
+    margin-top:10px;
 }
 
-/* LOADING */
 
-.loading{
-  text-align:center;
-  color:#758298;
-  padding:20px;
-  font-size:13px;
-}
+/* =====================================================
+   MOBILE
+===================================================== */
 
-/* DESKTOP LAYOUT */
+@media(max-width:480px){
 
-.desktop-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:14px;
-  align-items:start;
-}
+    .container{
+        padding:14px 12px 35px;
+    }
 
-.left-column,
-.right-column{
-  min-width:0;
-}
+    .card{
+        padding:16px;
+        border-radius:22px;
+    }
 
-/* RESPONSIVE */
+    .header h1{
+        font-size:28px;
+    }
 
-@media(max-width:700px){
+    .analysis-main{
+        grid-template-columns:1fr 1fr;
+    }
 
-  .container{
-    padding:9px;
-  }
+    .prediction{
+        font-size:29px;
+    }
 
-  .card{
-    border-radius:17px;
-    padding:13px;
-  }
+    .prediction-box,
+    .winloss-box{
+        min-height:140px;
+        padding:13px;
+    }
 
-  .desktop-grid{
-    display:block;
-  }
+    .game-frame{
+        height:600px;
+    }
 
-  .analysis-grid{
-    grid-template-columns:repeat(2,1fr);
-  }
+    .wl-table-head,
+    .wl-row,
+    .live-row{
+        grid-template-columns:1.45fr .55fr .7fr;
+    }
 
-  .prediction{
-    font-size:30px;
-  }
-
-  .prediction-row{
-    gap:12px;
-  }
-
-  .game-frame{
-    height:600px;
-  }
+    .issue{
+        font-size:10px;
+    }
 
 }
 
-@media(max-width:380px){
-
-  .prediction{
-    font-size:27px;
-  }
-
-  .result-status{
-    min-width:85px;
-    font-size:12px;
-  }
-
-  .period{
-    font-size:13px;
-  }
-
-  #timer{
-    font-size:22px;
-  }
-
-}
 </style>
 </head>
 
+
 <body>
 
-<!-- LOGIN -->
+<div class="container">
 
-<div id="loginScreen" class="container">
 
-  <div class="card login">
+<!-- ===================================================
+     LOGIN
+=================================================== -->
+
+<div id="loginScreen" class="card login-card">
 
     <div class="logo">
-      <h1>DY AI WINGO</h1>
-      <p>30 Second Prediction Panel</p>
+        DY AI WINGO
+    </div>
+
+    <div class="subtitle">
+        30 Second Prediction Panel
     </div>
 
     <input
-      id="accessKey"
-      type="text"
-      placeholder="Enter Access Key"
-      autocomplete="off"
+        id="accessKey"
+        type="text"
+        placeholder="Enter access key"
+        autocomplete="off"
     >
 
     <button onclick="login()">
-      LOGIN
+        LOGIN
     </button>
 
-    <div id="loginMsg" class="msg"></div>
-
-  </div>
+    <div id="loginError" class="error"></div>
 
 </div>
 
 
-<!-- MAIN APP -->
+<!-- ===================================================
+     APP
+=================================================== -->
 
-<div id="app" class="container hidden">
-
-  <div class="top">
-    <h1>DY AI WINGO 30S</h1>
-    <p>Statistical Analysis • Live History</p>
-  </div>
+<div id="app" class="hidden">
 
 
-  <!-- PERIOD -->
+<div class="header">
 
-  <div class="card">
+    <h1>DY AI WINGO</h1>
 
-    <div class="period-box">
+    <p>
+        30 Second Statistical Analysis
+    </p>
 
-      <div>
-        <div class="period-title">
-          TARGET PERIOD
+</div>
+
+
+<!-- PERIOD -->
+
+<div class="card">
+
+    <div class="period-title">
+        TARGET PERIOD
+    </div>
+
+    <div
+        id="period"
+        class="period"
+    >
+        --
+    </div>
+
+    <div class="timer-row">
+
+        <div
+            id="timer"
+            class="timer"
+        >
+            30s
         </div>
 
         <div
-          id="targetIssue"
-          class="period"
+            id="timerStatus"
+            class="pending"
         >
-          Loading...
-        </div>
-      </div>
-
-      <div class="timer">
-
-        <div class="timer-label">
-          TIMER
-        </div>
-
-        <div id="timer">
-          00:30
-        </div>
-
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <!-- TWO COLUMN -->
-
-  <div class="desktop-grid">
-
-    <!-- LEFT -->
-
-    <div class="left-column">
-
-      <!-- PREDICTION -->
-
-      <div class="card prediction-card">
-
-        <div class="prediction-label">
-          CURRENT ANALYSIS
-        </div>
-
-        <div class="prediction-row">
-
-          <div
-            id="prediction"
-            class="prediction"
-          >
-            --
-          </div>
-
-          <div
-            id="resultStatus"
-            class="result-status pending"
-          >
             ⏳ PENDING
-          </div>
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ===================================================
+     CURRENT ANALYSIS
+=================================================== -->
+
+<div class="card">
+
+    <div class="analysis-title">
+        CURRENT ANALYSIS
+    </div>
+
+
+    <div class="analysis-main">
+
+
+        <!-- BIG SMALL -->
+
+        <div class="prediction-box">
+
+            <div class="prediction-label">
+                PREDICTION
+            </div>
+
+            <div
+                id="prediction"
+                class="prediction"
+            >
+                --
+            </div>
+
+            <div
+                id="signal"
+                class="status"
+            >
+                WAITING
+            </div>
 
         </div>
 
 
-        <div class="analysis-grid">
+        <!-- WIN LOSS -->
 
-          <div class="analysis-item">
-            <span>CONFIDENCE</span>
-            <b id="confidence">--</b>
-          </div>
+        <div class="winloss-box">
 
-          <div class="analysis-item">
-            <span>PATTERN</span>
-            <b id="patternScore">--</b>
-          </div>
+            <div class="winloss-title">
+                WIN / LOSS
+            </div>
 
-          <div class="analysis-item">
-            <span>SIGNAL</span>
-            <b id="signal">--</b>
-          </div>
+            <div class="wl-grid">
 
-          <div class="analysis-item">
-            <span>AGREEMENT</span>
-            <b id="agreement">--</b>
-          </div>
+                <div class="wl-item">
+                    <span class="wl-label">
+                        WIN
+                    </span>
 
+                    <span
+                        id="winCount"
+                        class="wl-value win"
+                    >
+                        0
+                    </span>
+                </div>
+
+
+                <div class="wl-item">
+                    <span class="wl-label">
+                        LOSS
+                    </span>
+
+                    <span
+                        id="lossCount"
+                        class="wl-value loss"
+                    >
+                        0
+                    </span>
+                </div>
+
+
+                <div class="wl-item">
+                    <span class="wl-label">
+                        RATE
+                    </span>
+
+                    <span
+                        id="winRate"
+                        class="wl-value rate"
+                    >
+                        0%
+                    </span>
+                </div>
+
+
+                <div class="wl-item">
+                    <span class="wl-label">
+                        STREAK
+                    </span>
+
+                    <span
+                        id="streak"
+                        class="wl-value streak"
+                    >
+                        -
+                    </span>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- DETAILS -->
+
+    <div class="details">
+
+        <div class="detail">
+
+            <span class="detail-label">
+                CONFIDENCE
+            </span>
+
+            <span
+                id="confidence"
+                class="detail-value"
+            >
+                --
+            </span>
+
+        </div>
+
+
+        <div class="detail">
+
+            <span class="detail-label">
+                PATTERN
+            </span>
+
+            <span
+                id="pattern"
+                class="detail-value"
+            >
+                --
+            </span>
+
+        </div>
+
+
+        <div class="detail">
+
+            <span class="detail-label">
+                AGREEMENT
+            </span>
+
+            <span
+                id="agreement"
+                class="detail-value"
+            >
+                --
+            </span>
+
+        </div>
+
+
+        <div class="detail">
+
+            <span class="detail-label">
+                EVIDENCE
+            </span>
+
+            <span
+                id="evidence"
+                class="detail-value"
+            >
+                --
+            </span>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ===================================================
+     WIN LOSS HISTORY
+=================================================== -->
+
+<div class="card">
+
+    <div class="section-head">
+
+        <h2>
+            WIN / LOSS HISTORY
+        </h2>
+
+        <span>
+            LAST 100
+        </span>
+
+    </div>
+
+
+    <div class="wl-table-head">
+
+        <div>
+            PERIOD
+        </div>
+
+        <div>
+            PRED
+        </div>
+
+        <div>
+            RESULT
+        </div>
+
+    </div>
+
+
+    <div id="winLossHistory">
+
+        <div
+            style="
+            padding:20px 0;
+            text-align:center;
+            color:#718096;
+            font-size:12px;
+            "
+        >
+            Loading...
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ===================================================
+     LIVE RESULT HISTORY
+=================================================== -->
+
+<div class="card">
+
+    <div class="section-head">
+
+        <h2>
+            LIVE RESULT HISTORY
+        </h2>
+
+        <span>
+            BIG / SMALL
+        </span>
+
+    </div>
+
+
+    <div class="live-row live-head">
+
+        <div>
+            PERIOD
+        </div>
+
+        <div>
+            NUMBER
+        </div>
+
+        <div>
+            SIZE
+        </div>
+
+    </div>
+
+
+    <div id="liveHistory">
+
+        <div
+            style="
+            padding:20px 0;
+            text-align:center;
+            color:#718096;
+            font-size:12px;
+            "
+        >
+            Loading...
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ===================================================
+     MUSIC
+=================================================== -->
+
+<div class="card music-card">
+
+    <button
+        id="musicButton"
+        class="music-button"
+        onclick="toggleMusic()"
+    >
+        ▶
+    </button>
+
+    <div class="music-info">
+
+        <div class="music-title">
+            DY AI MUSIC
         </div>
 
         <div
-          id="evidence"
-          class="game-note"
+            id="musicStatus"
+            class="music-sub"
         >
-          Waiting for analysis...
+            Tap play to start
         </div>
 
-      </div>
+    </div>
+
+    <input
+        id="volume"
+        class="volume"
+        type="range"
+        min="0"
+        max="1"
+        step="0.05"
+        value="0.7"
+        oninput="changeVolume(this.value)"
+    >
+
+</div>
 
 
-      <!-- LIVE RESULT HISTORY -->
+<audio
+    id="music"
+    preload="auto"
+    loop
+>
+    <source
+        src="/music.mp3"
+        type="audio/mpeg"
+    >
+</audio>
 
-      <div class="card">
 
-        <div class="title-row">
-          <h2>LIVE RESULT HISTORY</h2>
-          <span>BIG / SMALL</span>
-        </div>
+<!-- ===================================================
+     LIVE GAME
+=================================================== -->
 
-        <div class="table-head">
-          <div>PERIOD</div>
-          <div>NUMBER</div>
-          <div>SIZE</div>
-        </div>
+<div class="card game-box">
 
-        <div id="liveHistory">
-          <div class="loading">
-            Loading history...
-          </div>
-        </div>
+    <div class="section-head">
 
-      </div>
+        <h2>
+            LIVE GAME
+        </h2>
+
+        <span>
+            30 SEC
+        </span>
 
     </div>
 
 
-    <!-- RIGHT -->
+    <iframe
+        id="gameFrame"
+        class="game-frame"
+        src="https://www.tojvhr55.com/"
+        loading="lazy"
+        referrerpolicy="no-referrer"
+        allow="autoplay; fullscreen"
+    ></iframe>
 
-    <div class="right-column">
 
-      <!-- LIVE GAME -->
-
-      <div class="card game-card">
-
-        <div class="title-row">
-          <h2>LIVE GAME</h2>
-          <span>30 SEC</span>
-        </div>
-
-        <iframe
-          id="gameFrame"
-          class="game-frame"
-          src="https://www.tojvhr55.com/#/register?invitationCode=761671301584"
-          allow="fullscreen"
-          loading="eager"
-          referrerpolicy="no-referrer"
-        ></iframe>
-
-        <div class="game-note">
-          Live game provider page iframe ke andar load hota hai.
-          Agar provider iframe embedding block karta hai, browser
-          security ki wajah se page blank/error dikha sakta hai.
-        </div>
-
-      </div>
-
+    <div class="game-note">
+        Live game content is provided by the external
+        website. DY AI analysis is based on settled
+        historical results and is not a guarantee of
+        future outcomes.
     </div>
 
-  </div>
+</div>
+
+
+</div>
 
 </div>
 
 
 <script>
 
-/* =========================
-   GLOBAL
-========================= */
-
-let lastHistoryVersion = null;
-let serverOffset = 0;
-let targetEndTime = 0;
-let loggedIn = false;
-
-
-/* =========================
+/* =====================================================
    DEVICE ID
-========================= */
+===================================================== */
 
 function getDeviceId(){
 
-  let id =
-    localStorage.getItem(
-      "dy_device_id"
-    );
+    let id =
+        localStorage.getItem(
+            "dy_device_id"
+        );
 
-  if(!id){
 
-    id =
-      "dy-" +
-      crypto.randomUUID();
+    if(!id){
 
-    localStorage.setItem(
-      "dy_device_id",
-      id
-    );
+        id =
+            "DY-" +
+            crypto.randomUUID();
 
-  }
 
-  return id;
+        localStorage.setItem(
+            "dy_device_id",
+            id
+        );
+
+    }
+
+
+    return id;
+
 }
 
 
-/* =========================
-   API
-========================= */
-
-async function api(
-  url,
-  options = {}
-){
-
-  const response =
-    await fetch(
-      url,
-      options
-    );
-
-  let data;
-
-  try{
-    data =
-      await response.json();
-  }catch{
-    throw new Error(
-      "Server response invalid"
-    );
-  }
-
-  if(!response.ok){
-
-    throw new Error(
-      data.error ||
-      "Request failed"
-    );
-
-  }
-
-  return data;
-}
-
-
-/* =========================
+/* =====================================================
    LOGIN
-========================= */
+===================================================== */
 
 async function login(){
 
-  const key =
-    document
-      .getElementById("accessKey")
-      .value
-      .trim();
+    const input =
+        document.getElementById(
+            "accessKey"
+        );
 
-  const msg =
-    document
-      .getElementById("loginMsg");
 
-  if(!key){
+    const errorBox =
+        document.getElementById(
+            "loginError"
+        );
 
-    msg.style.display =
-      "block";
 
-    msg.className =
-      "msg error";
+    const key =
+        input.value.trim();
 
-    msg.textContent =
-      "Access key enter karo.";
 
-    return;
+    errorBox.style.display =
+        "none";
 
-  }
 
-  try{
+    if(!key){
 
-    const data =
-      await api(
-        "/api/key/check",
-        {
-          method:"POST",
-          headers:{
-            "Content-Type":
-              "application/json"
-          },
-          body:JSON.stringify({
-            access_key:key,
-            device_id:getDeviceId()
-          })
-        }
-      );
+        errorBox.textContent =
+            "Access key enter karo.";
 
-    if(!data.ok){
+        errorBox.style.display =
+            "block";
 
-      throw new Error(
-        data.error ||
-        "Invalid access key"
-      );
+        return;
 
     }
 
-    localStorage.setItem(
-      "dy_access_key",
-      key
-    );
 
-    loggedIn = true;
+    try{
 
-    document
-      .getElementById(
-        "loginScreen"
-      )
-      .classList.add("hidden");
+        const response =
+            await fetch(
+                "/api/key/check",
+                {
 
-    document
-      .getElementById(
-        "app"
-      )
-      .classList.remove("hidden");
+                    method:"POST",
 
-    startApplication();
+                    headers:{
+                        "Content-Type":
+                            "application/json",
 
-  }catch(error){
+                        "x-device-id":
+                            getDeviceId()
+                    },
 
-    msg.style.display =
-      "block";
+                    body:
+                        JSON.stringify({
 
-    msg.className =
-      "msg error";
+                            access_key:key,
 
-    msg.textContent =
-      error.message ||
-      "Login failed";
+                            key:key,
 
-  }
+                            device_id:
+                                getDeviceId()
+
+                        })
+
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if(!response.ok ||
+           !data.ok){
+
+            throw new Error(
+                data.error ||
+                data.message ||
+                "Invalid access key"
+            );
+
+        }
+
+
+        localStorage.setItem(
+            "dy_access_key",
+            key
+        );
+
+
+        startApplication();
+
+
+    }catch(error){
+
+        errorBox.textContent =
+            error.message ||
+            "Request failed";
+
+        errorBox.style.display =
+            "block";
+
+    }
 
 }
 
 
-/* =========================
+/* =====================================================
+   STATE
+===================================================== */
+
+let lastVersion = null;
+
+let currentSeconds = 30;
+
+let timerInterval = null;
+
+
+/* =====================================================
    LOAD STATE
-========================= */
+===================================================== */
 
 async function loadState(){
 
-  if(!loggedIn){
-    return;
-  }
+    try{
 
-  try{
+        const response =
+            await fetch(
+                "/api/state?t=" +
+                Date.now(),
+                {
+                    cache:"no-store"
+                }
+            );
 
-    const key =
-      localStorage.getItem(
-        "dy_access_key"
-      );
 
-    const data =
-      await api(
-        "/api/state",
-        {
-          headers:{
-            "x-access-key":
-              key,
-            "x-device-id":
-              getDeviceId()
-          }
+        if(!response.ok){
+
+            throw new Error(
+                "State request failed"
+            );
+
         }
-      );
 
 
-    /* PERIOD */
-
-    document
-      .getElementById(
-        "targetIssue"
-      )
-      .textContent =
-      data.targetIssue ||
-      data.currentIssue ||
-      "--";
+        const data =
+            await response.json();
 
 
-    /* TIMER */
+        if(!data.ok){
 
-    if(data.timing){
+            return;
 
-      if(
-        data.timing.serverNow
-      ){
+        }
 
-        serverOffset =
-          Number(
-            data.timing.serverNow
-          ) -
-          Date.now();
 
-      }
+        renderPeriod(
+            data
+        );
 
-      if(
-        data.timing.targetEnd
-      ){
 
-        targetEndTime =
-          Number(
-            data.timing.targetEnd
-          );
+        renderTimer(
+            data
+        );
 
-      }
+
+        /*
+          Prediction UI only changes
+          when historyVersion changes.
+        */
+
+        if(
+            lastVersion !==
+            data.historyVersion
+        ){
+
+            lastVersion =
+                data.historyVersion;
+
+
+            renderPrediction(
+                data.analysis
+            );
+
+        }
+
+
+        renderLiveHistory(
+            data.history || []
+        );
+
+
+    }catch(error){
+
+        console.log(
+            "State error:",
+            error.message
+        );
 
     }
 
+}
 
-    /*
-      IMPORTANT:
-      Prediction UI only changes
-      when settled history changes.
-    */
+
+/* =====================================================
+   PERIOD
+===================================================== */
+
+function renderPeriod(data){
+
+    document.getElementById(
+        "period"
+    ).textContent =
+        data.targetIssue ||
+        data.currentIssue ||
+        "--";
+
+}
+
+
+/* =====================================================
+   TIMER
+===================================================== */
+
+function renderTimer(data){
+
+    const seconds =
+        Number(
+            data?.timing?.seconds
+        );
+
 
     if(
-      lastHistoryVersion !==
-      data.historyVersion
+        Number.isFinite(seconds)
     ){
 
-      lastHistoryVersion =
-        data.historyVersion;
-
-      renderPrediction(
-        data.analysis,
-        data.targetIssue
-      );
+        currentSeconds =
+            Math.max(
+                0,
+                Math.min(
+                    30,
+                    Math.floor(seconds)
+                )
+            );
 
     }
-
-
-    renderLiveHistory(
-      data.history || []
-    );
-
-
-  }catch(error){
-
-    console.log(
-      "State error:",
-      error.message
-    );
-
-  }
 
 }
 
 
-/* =========================
-   RENDER PREDICTION
-========================= */
+/* =====================================================
+   LOCAL TIMER
+===================================================== */
+
+function startTimer(){
+
+    clearInterval(
+        timerInterval
+    );
+
+
+    timerInterval =
+        setInterval(
+            ()=>{
+
+                if(
+                    currentSeconds >
+                    0
+                ){
+
+                    currentSeconds--;
+
+                }else{
+
+                    currentSeconds =
+                        30;
+
+                }
+
+
+                const timer =
+                    document.getElementById(
+                        "timer"
+                    );
+
+
+                timer.textContent =
+                    currentSeconds +
+                    "s";
+
+            },
+            1000
+        );
+
+}
+
+
+/* =====================================================
+   PREDICTION
+===================================================== */
 
 function renderPrediction(
-  analysis,
-  targetIssue
+    analysis
 ){
 
-  const predictionEl =
-    document.getElementById(
-      "prediction"
-    );
+    if(!analysis){
 
-  const statusEl =
-    document.getElementById(
-      "resultStatus"
-    );
+        return;
 
-
-  if(!analysis){
-
-    predictionEl.textContent =
-      "--";
-
-    statusEl.className =
-      "result-status pending";
-
-    statusEl.textContent =
-      "⏳ PENDING";
-
-    return;
-
-  }
-
-
-  const value =
-    String(
-      analysis.prediction ||
-      analysis.size ||
-      "--"
-    ).toUpperCase();
-
-
-  predictionEl.textContent =
-    value;
-
-
-  predictionEl.className =
-    "prediction " +
-    (
-      value === "BIG"
-        ? "big"
-        : "small"
-    );
-
-
-  document.getElementById(
-    "confidence"
-  ).textContent =
-    analysis.confidence != null
-      ? analysis.confidence + "%"
-      : "--";
-
-
-  document.getElementById(
-    "patternScore"
-  ).textContent =
-    analysis.patternScore != null
-      ? analysis.patternScore
-      : "--";
-
-
-  document.getElementById(
-    "signal"
-  ).textContent =
-    analysis.signal ||
-    analysis.status ||
-    "--";
-
-
-  document.getElementById(
-    "agreement"
-  ).textContent =
-    analysis.agreement != null
-      ? analysis.agreement
-      : "--";
-
-
-  document.getElementById(
-    "evidence"
-  ).textContent =
-    analysis.evidence ||
-    "Statistical pattern analysis";
-
-
-  /*
-    Current prediction is pending
-    until its target period settles.
-  */
-
-  statusEl.className =
-    "result-status pending";
-
-  statusEl.textContent =
-    "⏳ PENDING";
-
-}
-
-
-/* =========================
-   LIVE HISTORY
-========================= */
-
-function renderLiveHistory(
-  history
-){
-
-  const box =
-    document.getElementById(
-      "liveHistory"
-    );
-
-  if(
-    !Array.isArray(history) ||
-    !history.length
-  ){
-
-    box.innerHTML =
-      `<div class="loading">
-        No live history available
-      </div>`;
-
-    return;
-
-  }
-
-
-  box.innerHTML =
-    history
-      .slice(0,15)
-      .map(row => {
-
-        const number =
-          row.number ?? "-";
-
-        const size =
-          String(
-            row.size ||
-            row.bigSmall ||
-            (
-              Number(number) >= 5
-                ? "BIG"
-                : "SMALL"
-            )
-          ).toUpperCase();
-
-        const sizeClass =
-          size === "BIG"
-            ? "big-text"
-            : "small-text";
-
-
-        return `
-
-          <div class="history-row">
-
-            <div class="issue">
-              ${escapeHtml(
-                row.issueNumber ||
-                row.period ||
-                "-"
-              )}
-            </div>
-
-            <div class="number">
-              ${escapeHtml(
-                String(number)
-              )}
-            </div>
-
-            <div class="${sizeClass}">
-              ${escapeHtml(size)}
-            </div>
-
-          </div>
-
-        `;
-
-      })
-      .join("");
-
-}
-
-
-/* =========================
-   TIMER
-========================= */
-
-function renderTimer(){
-
-  const timer =
-    document.getElementById(
-      "timer"
-    );
-
-  if(!targetEndTime){
-
-    timer.textContent =
-      "00:30";
-
-    return;
-
-  }
-
-
-  const now =
-    Date.now() +
-    serverOffset;
-
-  let remaining =
-    targetEndTime -
-    now;
-
-
-  /*
-    Fallback rolling display
-    if targetEndTime is unavailable.
-  */
-
-  if(
-    !Number.isFinite(remaining) ||
-    remaining <= 0
-  ){
-
-    timer.textContent =
-      "00:00";
-
-    return;
-
-  }
-
-
-  let seconds =
-    Math.ceil(
-      remaining / 1000
-    );
-
-  seconds =
-    Math.max(
-      0,
-      Math.min(30,seconds)
-    );
-
-
-  timer.textContent =
-    "00:" +
-    String(seconds)
-      .padStart(2,"0");
-
-}
-
-
-/* =========================
-   AUTO LOGIN
-========================= */
-
-async function autoLogin(){
-
-  const key =
-    localStorage.getItem(
-      "dy_access_key"
-    );
-
-  if(!key){
-    return;
-  }
-
-  try{
-
-    const data =
-      await api(
-        "/api/key/check",
-        {
-          method:"POST",
-          headers:{
-            "Content-Type":
-              "application/json"
-          },
-          body:JSON.stringify({
-            access_key:key,
-            device_id:getDeviceId()
-          })
-        }
-      );
-
-    if(!data.ok){
-      throw new Error(
-        "Access expired"
-      );
     }
 
-    loggedIn = true;
 
-    document
-      .getElementById(
-        "loginScreen"
-      )
-      .classList.add("hidden");
+    const prediction =
+        String(
+            analysis.prediction ||
+            "--"
+        ).toUpperCase();
 
-    document
-      .getElementById(
-        "app"
-      )
-      .classList.remove("hidden");
 
-    startApplication();
+    const predictionBox =
+        document.getElementById(
+            "prediction"
+        );
 
-  }catch(error){
 
-    localStorage.removeItem(
-      "dy_access_key"
-    );
+    predictionBox.textContent =
+        prediction;
 
-  }
+
+    predictionBox.className =
+        "prediction " +
+        (
+            prediction === "BIG"
+                ? "big"
+                : prediction === "SMALL"
+                    ? "small"
+                    : ""
+        );
+
+
+    document.getElementById(
+        "confidence"
+    ).textContent =
+        analysis.confidence != null
+            ? analysis.confidence + "%"
+            : "--";
+
+
+    document.getElementById(
+        "pattern"
+    ).textContent =
+        analysis.patternScore != null
+            ? analysis.patternScore
+            : "--";
+
+
+    document.getElementById(
+        "agreement"
+    ).textContent =
+        analysis.agreement != null
+            ? analysis.agreement
+            : "--";
+
+
+    document.getElementById(
+        "evidence"
+    ).textContent =
+        analysis.evidence != null
+            ? analysis.evidence
+            : "--";
+
+
+    document.getElementById(
+        "signal"
+    ).textContent =
+        analysis.status ||
+        "WAITING";
 
 }
 
 
-/* =========================
+/* =====================================================
+   LIVE HISTORY
+===================================================== */
+
+function renderLiveHistory(
+    rows
+){
+
+    const box =
+        document.getElementById(
+            "liveHistory"
+        );
+
+
+    if(
+        !Array.isArray(rows) ||
+        !rows.length
+    ){
+
+        box.innerHTML =
+            `
+            <div style="
+                padding:20px 0;
+                text-align:center;
+                color:#718096;
+                font-size:12px;
+            ">
+                No results available
+            </div>
+            `;
+
+        return;
+
+    }
+
+
+    box.innerHTML =
+        rows
+            .slice(0,30)
+            .map(
+                row => {
+
+                    const number =
+                        Number(
+                            row.number
+                        );
+
+
+                    const size =
+                        number >= 5
+                            ? "BIG"
+                            : "SMALL";
+
+
+                    const sizeClass =
+                        size === "BIG"
+                            ? "size-big"
+                            : "size-small";
+
+
+                    return `
+                    <div class="live-row">
+
+                        <div class="issue">
+                            ${escapeHTML(
+                                row.issueNumber
+                            )}
+                        </div>
+
+                        <div class="number">
+                            ${number}
+                        </div>
+
+                        <div class="${sizeClass}">
+                            ${size}
+                        </div>
+
+                    </div>
+                    `;
+
+                }
+            )
+            .join("");
+
+}
+
+
+/* =====================================================
+   WIN LOSS
+===================================================== */
+
+async function loadWinLoss(){
+
+    try{
+
+        const response =
+            await fetch(
+                "/api/history?t=" +
+                Date.now(),
+                {
+                    cache:"no-store"
+                }
+            );
+
+
+        if(!response.ok){
+
+            throw new Error(
+                "History request failed"
+            );
+
+        }
+
+
+        const data =
+            await response.json();
+
+
+        const stats =
+            data.stats ||
+            {};
+
+
+        document.getElementById(
+            "winCount"
+        ).textContent =
+            stats.win || 0;
+
+
+        document.getElementById(
+            "lossCount"
+        ).textContent =
+            stats.loss || 0;
+
+
+        document.getElementById(
+            "winRate"
+        ).textContent =
+            (stats.rate || 0) +
+            "%";
+
+
+        document.getElementById(
+            "streak"
+        ).textContent =
+            stats.streak || "-";
+
+
+        renderWinLossHistory(
+            data.rows || []
+        );
+
+
+    }catch(error){
+
+        console.log(
+            "WIN/LOSS error:",
+            error.message
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   WIN LOSS HISTORY
+===================================================== */
+
+function renderWinLossHistory(
+    rows
+){
+
+    const box =
+        document.getElementById(
+            "winLossHistory"
+        );
+
+
+    if(
+        !Array.isArray(rows) ||
+        !rows.length
+    ){
+
+        box.innerHTML =
+            `
+            <div style="
+                padding:20px 0;
+                text-align:center;
+                color:#718096;
+                font-size:12px;
+            ">
+                No settled predictions yet
+            </div>
+            `;
+
+        return;
+
+    }
+
+
+    box.innerHTML =
+        rows
+            .slice(0,100)
+            .map(
+                row => {
+
+                    const result =
+                        String(
+                            row.result ||
+                            ""
+                        ).toUpperCase();
+
+
+                    const resultClass =
+                        result === "WIN"
+                            ? "result-win"
+                            : "result-loss";
+
+
+                    const prediction =
+                        String(
+                            row.prediction ||
+                            "--"
+                        ).toUpperCase();
+
+
+                    return `
+                    <div class="wl-row">
+
+                        <div class="issue">
+                            ${escapeHTML(
+                                row.target_issue
+                            )}
+                        </div>
+
+                        <div>
+                            ${
+                                prediction === "BIG"
+                                    ? `<span class="big">BIG</span>`
+                                    : `<span class="small">SMALL</span>`
+                            }
+                        </div>
+
+                        <div class="${resultClass}">
+                            ${
+                                result === "WIN"
+                                    ? "✓ WIN"
+                                    : "✕ LOSS"
+                            }
+                        </div>
+
+                    </div>
+                    `;
+
+                }
+            )
+            .join("");
+
+}
+
+
+/* =====================================================
+   MUSIC
+===================================================== */
+
+const music =
+    document.getElementById(
+        "music"
+    );
+
+
+const musicButton =
+    document.getElementById(
+        "musicButton"
+    );
+
+
+const musicStatus =
+    document.getElementById(
+        "musicStatus"
+    );
+
+
+music.volume =
+    0.7;
+
+
+async function toggleMusic(){
+
+    try{
+
+        if(
+            music.paused
+        ){
+
+            await music.play();
+
+            musicButton.textContent =
+                "❚❚";
+
+            musicStatus.textContent =
+                "Music playing";
+
+        }else{
+
+            music.pause();
+
+            musicButton.textContent =
+                "▶";
+
+            musicStatus.textContent =
+                "Music paused";
+
+        }
+
+    }catch(error){
+
+        musicStatus.textContent =
+            "music.mp3 file not found";
+
+    }
+
+}
+
+
+function changeVolume(
+    value
+){
+
+    music.volume =
+        Number(
+            value
+        );
+
+}
+
+
+/* =====================================================
+   ESCAPE HTML
+===================================================== */
+
+function escapeHTML(
+    value
+){
+
+    return String(
+        value ?? ""
+    )
+    .replace(
+        /&/g,
+        "&amp;"
+    )
+    .replace(
+        /</g,
+        "&lt;"
+    )
+    .replace(
+        />/g,
+        "&gt;"
+    )
+    .replace(
+        /"/g,
+        "&quot;"
+    )
+    .replace(
+        /'/g,
+        "&#039;"
+    );
+
+}
+
+
+/* =====================================================
    START
-========================= */
+===================================================== */
 
 function startApplication(){
 
-  loadState();
+    document.getElementById(
+        "loginScreen"
+    ).classList.add(
+        "hidden"
+    );
 
-  /*
-    State every second for smooth
-    server-synchronised UI.
-  */
 
-  setInterval(
-    loadState,
-    1000
-  );
+    document.getElementById(
+        "app"
+    ).classList.remove(
+        "hidden"
+    );
 
-  /*
-    Timer itself updates every
-    second without waiting for API.
-  */
 
-  setInterval(
-    renderTimer,
-    250
-  );
+    loadState();
+
+    loadWinLoss();
+
+    startTimer();
+
+
+    /*
+      State every second
+    */
+
+    setInterval(
+        loadState,
+        1000
+    );
+
+
+    /*
+      Win/Loss every 3 seconds
+    */
+
+    setInterval(
+        loadWinLoss,
+        3000
+    );
 
 }
 
 
-/* =========================
-   ESCAPE HTML
-========================= */
-
-function escapeHtml(value){
-
-  return String(value)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-
-}
-
-
-/* =========================
-   ENTER LOGIN
-========================= */
-
-document
-  .getElementById(
-    "accessKey"
-  )
-  .addEventListener(
-    "keydown",
-    function(e){
-
-      if(e.key === "Enter"){
-        login();
-      }
-
-    }
-  );
-
-
-/* =========================
-   START AUTO LOGIN
-========================= */
+/* =====================================================
+   AUTO LOGIN
+===================================================== */
 
 window.addEventListener(
-  "load",
-  autoLogin
+    "DOMContentLoaded",
+    ()=>{
+
+        const saved =
+            localStorage.getItem(
+                "dy_access_key"
+            );
+
+
+        if(saved){
+
+            document.getElementById(
+                "accessKey"
+            ).value =
+                saved;
+
+            login();
+
+        }
+
+    }
 );
 
 </script>
 
 </body>
-</html>
+  </html>
