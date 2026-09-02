@@ -1,921 +1,216 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>DY AI WINGO 30S</title>
+const http = require("http");
+const fs = require("fs");
+const path = require("path");
+const crypto = require("crypto");
+const { Pool } = require("pg");
 
-<style>
-*{
-  box-sizing:border-box;
-  margin:0;
-  padding:0;
-  font-family:Arial,sans-serif;
-}
+const PORT = Number(process.env.PORT || 10000);
 
-body{
-  background:#060b14;
-  color:#fff;
-  min-height:100vh;
-}
+const ADMIN_KEY =
+  process.env.ADMIN_KEY || "change-this-admin-key";
 
-.container{
-  width:100%;
-  max-width:1050px;
-  margin:auto;
-  padding:14px;
-}
+const WINGOBOT_TOKEN =
+  process.env.WINGOBOT_TOKEN || "";
 
-.card{
-  background:#0d1523;
-  border:1px solid #1d2b40;
-  border-radius:20px;
-  padding:16px;
-  margin-bottom:14px;
-  box-shadow:0 8px 30px rgba(0,0,0,.25);
-}
+const WINGOBOT_URL =
+  "https://api.wingobot.com/v2/30-sec-game-history";
 
-.hidden{
-  display:none!important;
-}
-
-/* LOGIN */
-
-.login{
-  max-width:430px;
-  margin:80px auto;
-}
-
-.logo{
-  text-align:center;
-  margin-bottom:20px;
-}
-
-.logo h1{
-  color:#00e5ff;
-  font-size:28px;
-  margin-bottom:5px;
-}
-
-.logo p{
-  color:#7f8da3;
-  font-size:13px;
-}
-
-input{
-  width:100%;
-  padding:14px;
-  background:#070d17;
-  border:1px solid #26364d;
-  border-radius:11px;
-  color:white;
-  outline:none;
-  margin-bottom:10px;
-}
-
-input:focus{
-  border-color:#00e5ff;
-}
-
-button{
-  width:100%;
-  padding:13px;
-  border:0;
-  border-radius:11px;
-  background:#007cff;
-  color:white;
-  font-weight:bold;
-  cursor:pointer;
-}
-
-button:active{
-  transform:scale(.98);
-}
-
-.msg{
-  margin-top:10px;
-  padding:10px;
-  border-radius:9px;
-  font-size:13px;
-  display:none;
-}
-
-.error{
-  background:#35131b;
-  color:#ff6c83;
-}
-
-.success{
-  background:#103326;
-  color:#4cffae;
-}
-
-/* HEADER */
-
-.top{
-  text-align:center;
-  margin-bottom:14px;
-}
-
-.top h1{
-  color:#00e5ff;
-  font-size:24px;
-}
-
-.top p{
-  color:#718096;
-  font-size:12px;
-  margin-top:5px;
-}
-
-/* PERIOD */
-
-.period-box{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:12px;
-}
-
-.period-title{
-  color:#8795a9;
-  font-size:12px;
-}
-
-.period{
-  color:#fff;
-  font-size:16px;
-  font-weight:bold;
-  margin-top:5px;
-  word-break:break-all;
-}
-
-.timer{
-  min-width:75px;
-  text-align:center;
-}
-
-.timer-label{
-  color:#8795a9;
-  font-size:11px;
-}
-
-#timer{
-  color:#00f5a0;
-  font-size:25px;
-  font-weight:bold;
-  margin-top:3px;
-}
-
-/* PREDICTION */
-
-.prediction-card{
-  text-align:center;
-}
-
-.prediction-label{
-  color:#8491a5;
-  font-size:12px;
-  letter-spacing:1px;
-  margin-bottom:12px;
-}
-
-/* BIG SMALL + WIN LOSS */
-
-.prediction-row{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  gap:16px;
-  margin:8px 0 17px;
-}
-
-.prediction{
-  font-size:34px;
-  font-weight:900;
-  letter-spacing:1px;
-}
-
-.prediction.big{
-  color:#ff617b;
-}
-
-.prediction.small{
-  color:#4d9dff;
-}
-
-.result-status{
-  min-width:105px;
-  padding:10px 13px;
-  border-radius:11px;
-  font-size:14px;
-  font-weight:bold;
-  white-space:nowrap;
-}
-
-.result-status.win{
-  background:#103b2b;
-  color:#4cffae;
-  border:1px solid #1d6849;
-}
-
-.result-status.loss{
-  background:#3a151e;
-  color:#ff6b82;
-  border:1px solid #713044;
-}
-
-.result-status.pending{
-  background:#171f2c;
-  color:#aab5c5;
-  border:1px solid #29384d;
-}
-
-.analysis-grid{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:8px;
-}
-
-.analysis-item{
-  background:#080e18;
-  border:1px solid #1b293b;
-  border-radius:10px;
-  padding:10px 5px;
-}
-
-.analysis-item span{
-  display:block;
-  color:#718096;
-  font-size:10px;
-  margin-bottom:5px;
-}
-
-.analysis-item b{
-  font-size:12px;
-}
-
-.evidence{
-  color:#718096;
-  font-size:11px;
-  line-height:1.5;
-  margin-top:12px;
-}
-
-/* HISTORY */
-
-.title-row{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:12px;
-}
-
-.title-row h2{
-  font-size:17px;
-}
-
-.title-row span{
-  color:#718096;
-  font-size:11px;
-}
-
-.table-head,
-.history-row{
-  display:grid;
-  grid-template-columns:1.8fr .6fr .8fr;
-  align-items:center;
-  gap:8px;
-}
-
-.table-head{
-  color:#68758a;
-  font-size:10px;
-  padding:7px 0;
-  border-bottom:1px solid #1c2939;
-}
-
-.history-row{
-  padding:12px 0;
-  border-bottom:1px solid #1a2636;
-  font-size:12px;
-}
-
-.history-row:last-child{
-  border-bottom:0;
-}
-
-.issue{
-  font-weight:bold;
-  word-break:break-all;
-}
-
-.number{
-  font-weight:bold;
-}
-
-.big-text{
-  color:#ff617b;
-  font-weight:bold;
-}
-
-.small-text{
-  color:#4d9dff;
-  font-weight:bold;
-}
-
-/* GAME */
-
-.game-frame{
-  width:100%;
-  height:620px;
-  border:0;
-  border-radius:18px;
-  background:#101722;
-  display:block;
-}
-
-.game-note{
-  color:#758298;
-  font-size:11px;
-  line-height:1.5;
-  margin-top:10px;
-}
-
-/* GRID */
-
-.desktop-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:14px;
-  align-items:start;
-}
-
-.left-column,
-.right-column{
-  min-width:0;
-}
-
-.loading{
-  text-align:center;
-  color:#758298;
-  padding:20px;
-  font-size:13px;
-}
-
-/* MOBILE */
-
-@media(max-width:700px){
-
-  .container{
-    padding:9px;
-  }
-
-  .card{
-    border-radius:17px;
-    padding:13px;
-  }
-
-  .desktop-grid{
-    display:block;
-  }
-
-  .analysis-grid{
-    grid-template-columns:repeat(2,1fr);
-  }
-
-  .prediction{
-    font-size:30px;
-  }
-
-  .prediction-row{
-    gap:12px;
-  }
-
-  .game-frame{
-    height:600px;
-  }
-
-}
-
-@media(max-width:380px){
-
-  .prediction{
-    font-size:27px;
-  }
-
-  .result-status{
-    min-width:88px;
-    font-size:12px;
-    padding:9px;
-  }
-
-  .period{
-    font-size:13px;
-  }
-
-  #timer{
-    font-size:22px;
-  }
-
-}
-</style>
-</head>
-
-<body>
-
-<!-- LOGIN -->
-
-<div id="loginScreen" class="container">
-
-  <div class="card login">
-
-    <div class="logo">
-      <h1>DY AI WINGO</h1>
-      <p>30 Second Prediction Panel</p>
-    </div>
-
-    <input
-      id="accessKey"
-      type="text"
-      placeholder="Enter Access Key"
-      autocomplete="off"
-    >
-
-    <button onclick="login()">
-      LOGIN
-    </button>
-
-    <div id="loginMsg" class="msg"></div>
-
-  </div>
-
-</div>
-
-
-<!-- APP -->
-
-<div id="app" class="container hidden">
-
-  <div class="top">
-    <h1>DY AI WINGO 30S</h1>
-    <p>Statistical Analysis • Live History</p>
-  </div>
-
-
-  <!-- PERIOD -->
-
-  <div class="card">
-
-    <div class="period-box">
-
-      <div>
-
-        <div class="period-title">
-          TARGET PERIOD
-        </div>
-
-        <div
-          id="targetIssue"
-          class="period"
-        >
-          Loading...
-        </div>
-
-      </div>
-
-      <div class="timer">
-
-        <div class="timer-label">
-          TIMER
-        </div>
-
-        <div id="timer">
-          00:30
-        </div>
-
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <div class="desktop-grid">
-
-
-    <!-- LEFT -->
-
-    <div class="left-column">
-
-
-      <!-- PREDICTION -->
-
-      <div class="card prediction-card">
-
-        <div class="prediction-label">
-          CURRENT ANALYSIS
-        </div>
-
-
-        <!-- BIG SMALL + WIN LOSS -->
-
-        <div class="prediction-row">
-
-          <div
-            id="prediction"
-            class="prediction"
-          >
-            --
-          </div>
-
-          <div
-            id="resultStatus"
-            class="result-status pending"
-          >
-            ⏳ PENDING
-          </div>
-
-        </div>
-
-
-        <div class="analysis-grid">
-
-          <div class="analysis-item">
-            <span>CONFIDENCE</span>
-            <b id="confidence">--</b>
-          </div>
-
-          <div class="analysis-item">
-            <span>PATTERN</span>
-            <b id="patternScore">--</b>
-          </div>
-
-          <div class="analysis-item">
-            <span>SIGNAL</span>
-            <b id="signal">--</b>
-          </div>
-
-          <div class="analysis-item">
-            <span>AGREEMENT</span>
-            <b id="agreement">--</b>
-          </div>
-
-        </div>
-
-
-        <div
-          id="evidence"
-          class="evidence"
-        >
-          Waiting for analysis...
-        </div>
-
-      </div>
-
-
-      <!-- LIVE RESULT HISTORY -->
-
-      <div class="card">
-
-        <div class="title-row">
-
-          <h2>
-            LIVE RESULT HISTORY
-          </h2>
-
-          <span>
-            BIG / SMALL
-          </span>
-
-        </div>
-
-
-        <div class="table-head">
-
-          <div>PERIOD</div>
-          <div>NUMBER</div>
-          <div>SIZE</div>
-
-        </div>
-
-
-        <div id="liveHistory">
-
-          <div class="loading">
-            Loading history...
-          </div>
-
-        </div>
-
-      </div>
-
-
-    </div>
-
-
-    <!-- RIGHT -->
-
-    <div class="right-column">
-
-
-      <!-- LIVE GAME -->
-
-      <div class="card">
-
-        <div class="title-row">
-
-          <h2>
-            LIVE GAME
-          </h2>
-
-          <span>
-            30 SEC
-          </span>
-
-        </div>
-
-
-        <iframe
-          id="gameFrame"
-          class="game-frame"
-          src="https://www.tojvhr55.com/#/register?invitationCode=761671301584"
-          allow="fullscreen"
-          loading="eager"
-          referrerpolicy="no-referrer"
-        ></iframe>
-
-
-        <div class="game-note">
-          Live game provider page iframe ke andar
-          load hota hai. Agar provider iframe
-          embedding block karta hai to browser
-          security ki wajah se blank/error aa sakta hai.
-        </div>
-
-      </div>
-
-
-    </div>
-
-  </div>
-
-</div>
-
-
-<script>
-
-/* =====================================================
-   GLOBAL
-===================================================== */
-
-let loggedIn = false;
-
-let lastHistoryVersion = null;
-
-let targetEndTime = 0;
-
-let serverOffset = 0;
-
-let lastTargetIssue = "";
-
-let currentPrediction = "";
-
-let currentPredictionPeriod = "";
+const ROUND_SECONDS = 30;
 
 
 /* =====================================================
-   DEVICE ID
+   DATABASE
 ===================================================== */
 
-function getDeviceId(){
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
 
-  let id =
-    localStorage.getItem(
-      "dy_device_id"
-    );
+  ssl: process.env.DATABASE_URL
+    ? { rejectUnauthorized: false }
+    : false,
 
-  if(!id){
+  connectionTimeoutMillis: 10000
+});
 
-    id =
-      "dy-" +
-      crypto.randomUUID();
-
-    localStorage.setItem(
-      "dy_device_id",
-      id
-    );
-
-  }
-
-  return id;
-
-}
+let databaseReady = false;
 
 
 /* =====================================================
-   API
+   CACHE
 ===================================================== */
 
-async function api(
-  url,
-  options = {}
-){
+const cache = {
 
-  const response =
-    await fetch(
-      url,
-      options
-    );
+  history: [],
 
+  currentIssue: null,
 
-  let data;
+  settledIssue: null,
 
-  try{
+  targetIssue: null,
 
-    data =
-      await response.json();
+  historyVersion: 0,
 
-  }catch{
+  historySignature: "",
 
-    throw new Error(
-      "Server response invalid"
-    );
+  analysis: null,
 
-  }
+  lastUpdated: 0,
 
+  providerCountdown: null,
 
-  if(!response.ok){
+  anchorTime: 0,
 
-    throw new Error(
-      data.error ||
-      data.message ||
-      "Request failed"
-    );
+  error: null
 
-  }
-
-
-  return data;
-
-}
+};
 
 
 /* =====================================================
-   LOGIN
+   DATABASE INIT
 ===================================================== */
 
-async function login(){
+async function initDatabase() {
 
-  const key =
-    document
-      .getElementById(
-        "accessKey"
+  if (!process.env.DATABASE_URL) {
+
+    console.log(
+      "DATABASE_URL not configured"
+    );
+
+    databaseReady = false;
+
+    return false;
+  }
+
+
+  try {
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS access_keys (
+
+        id SERIAL PRIMARY KEY,
+
+        access_key TEXT UNIQUE NOT NULL,
+
+        device_id TEXT,
+
+        created_at BIGINT NOT NULL,
+
+        last_seen BIGINT DEFAULT 0
+
       )
-      .value
-      .trim();
+    `);
 
 
-  const msg =
-    document
-      .getElementById(
-        "loginMsg"
-      );
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS predictions (
+
+        id SERIAL PRIMARY KEY,
+
+        target_issue TEXT UNIQUE NOT NULL,
+
+        prediction TEXT NOT NULL,
+
+        confidence INTEGER DEFAULT 0,
+
+        pattern_score INTEGER DEFAULT 0,
+
+        created_at BIGINT NOT NULL,
+
+        actual TEXT,
+
+        result TEXT,
+
+        settled_at BIGINT DEFAULT 0
+
+      )
+    `);
 
 
-  if(!key){
+    databaseReady = true;
 
-    msg.style.display =
-      "block";
+    console.log(
+      "Database ready"
+    );
 
-    msg.className =
-      "msg error";
+    return true;
 
-    msg.textContent =
-      "Access key enter karo.";
+  } catch (error) {
 
-    return;
+    databaseReady = false;
+
+    console.error(
+      "Database init error:",
+      error.message
+    );
+
+    return false;
 
   }
 
-
-  try{
-
-    const data =
-      await api(
-        "/api/key/check",
-        {
-
-          method:"POST",
-
-          headers:{
-            "Content-Type":
-              "application/json"
-          },
-
-          body:
-            JSON.stringify({
-
-              access_key:key,
-
-              device_id:
-                getDeviceId()
-
-            })
-
-        }
-      );
+}
 
 
-    if(!data.ok){
+/* =====================================================
+   RESPONSE
+===================================================== */
 
-      throw new Error(
-        data.error ||
-        data.message ||
-        "Invalid access key"
-      );
+function sendJSON(
+  res,
+  status,
+  data
+) {
+
+  res.writeHead(
+    status,
+    {
+
+      "Content-Type":
+        "application/json; charset=utf-8",
+
+      "Cache-Control":
+        "no-store",
+
+      "Access-Control-Allow-Origin":
+        "*",
+
+      "Access-Control-Allow-Headers":
+        "Content-Type, x-access-key, x-device-id, x-admin-key"
 
     }
+  );
 
-
-    localStorage.setItem(
-      "dy_access_key",
-      key
-    );
-
-
-    loggedIn = true;
-
-
-    document
-      .getElementById(
-        "loginScreen"
-      )
-      .classList.add(
-        "hidden"
-      );
-
-
-    document
-      .getElementById(
-        "app"
-      )
-      .classList.remove(
-        "hidden"
-      );
-
-
-    startApplication();
-
-
-  }catch(error){
-
-    msg.style.display =
-      "block";
-
-    msg.className =
-      "msg error";
-
-    msg.textContent =
-      error.message ||
-      "Login failed";
-
-  }
+  res.end(
+    JSON.stringify(data)
+  );
 
 }
 
 
 /* =====================================================
-   LOAD STATE
+   BODY
 ===================================================== */
 
-async function loadState(){
+function readBody(req) {
 
-  if(!loggedIn){
-    return;
-  }
+  return new Promise(
+    resolve => {
 
+      let body = "";
 
-  try{
+      req.on(
+        "data",
+        chunk => {
 
-    const key =
-      localStorage.getItem(
-        "dy_access_key"
-      );
+          body += chunk;
 
+          if (
+            body.length >
+            1024 * 1024
+          ) {
 
-    const data =
-      await api(
-        "/api/state",
-        {
-
-          headers:{
-
-            "x-access-key":
-              key,
-
-            "x-device-id":
-              getDeviceId()
+            body = "";
 
           }
 
@@ -923,343 +218,1428 @@ async function loadState(){
       );
 
 
-    /* PERIOD */
+      req.on(
+        "end",
+        () => {
 
-    const target =
-      data.targetIssue ||
-      data.currentIssue ||
-      "--";
+          try {
 
+            resolve(
+              body
+                ? JSON.parse(body)
+                : {}
+            );
 
-    document
-      .getElementById(
-        "targetIssue"
-      )
-      .textContent =
-      target;
+          } catch {
 
+            resolve({});
 
-    /*
-      TIMER
-    */
+          }
 
-    if(data.timing){
-
-      if(
-        data.timing.serverNow
-      ){
-
-        serverOffset =
-          Number(
-            data.timing.serverNow
-          ) -
-          Date.now();
-
-      }
-
-      /*
-        Server currently returns
-        seconds instead of targetEnd.
-      */
-
-      if(
-        Number.isFinite(
-          Number(
-            data.timing.seconds
-          )
-        )
-      ){
-
-        targetEndTime =
-          Date.now() +
-          (
-            Number(
-              data.timing.seconds
-            ) * 1000
-          );
-
-      }
-
-    }
+        }
+      );
 
 
-    /*
-      Prediction only refreshes
-      when history version changes.
-    */
+      req.on(
+        "error",
+        () => {
 
-    if(
-      lastHistoryVersion !==
-      data.historyVersion
-    ){
+          resolve({});
 
-      lastHistoryVersion =
-        data.historyVersion;
-
-
-      currentPrediction =
-        String(
-          data.analysis?.prediction ||
-          ""
-        ).toUpperCase();
-
-
-      currentPredictionPeriod =
-        target;
-
-
-      renderPrediction(
-        data.analysis
+        }
       );
 
     }
-
-
-    renderLiveHistory(
-      data.history || []
-    );
-
-
-    /*
-      IMPORTANT:
-      Check actual WIN/LOSS
-      every state refresh.
-    */
-
-    await updatePredictionResult();
-
-
-  }catch(error){
-
-    console.log(
-      "State error:",
-      error.message
-    );
-
-  }
-
-}
-
-
-/* =====================================================
-   RENDER PREDICTION
-===================================================== */
-
-function renderPrediction(
-  analysis
-){
-
-  const predictionEl =
-    document.getElementById(
-      "prediction"
-    );
-
-
-  if(!analysis){
-
-    predictionEl.textContent =
-      "--";
-
-    predictionEl.className =
-      "prediction";
-
-
-    setResultStatus(
-      "PENDING"
-    );
-
-
-    return;
-
-  }
-
-
-  const value =
-    String(
-      analysis.prediction ||
-      ""
-    ).toUpperCase();
-
-
-  predictionEl.textContent =
-    value ||
-    "--";
-
-
-  predictionEl.className =
-    "prediction " +
-    (
-      value === "BIG"
-        ? "big"
-        : "small"
-    );
-
-
-  document.getElementById(
-    "confidence"
-  ).textContent =
-    analysis.confidence != null
-      ? analysis.confidence + "%"
-      : "--";
-
-
-  document.getElementById(
-    "patternScore"
-  ).textContent =
-    analysis.patternScore != null
-      ? analysis.patternScore
-      : "--";
-
-
-  document.getElementById(
-    "signal"
-  ).textContent =
-    analysis.status ||
-    analysis.signal ||
-    "--";
-
-
-  document.getElementById(
-    "agreement"
-  ).textContent =
-    analysis.agreement != null
-      ? analysis.agreement
-      : "--";
-
-
-  const matches =
-    analysis.matches || {};
-
-
-  document.getElementById(
-    "evidence"
-  ).textContent =
-    "Evidence: " +
-    (
-      analysis.evidence ??
-      0
-    ) +
-    " • Exact: " +
-    (
-      matches.exact ??
-      0
-    ) +
-    " • Similar: " +
-    (
-      matches.similar ??
-      0
-    );
-
-
-  setResultStatus(
-    "PENDING"
   );
 
 }
 
 
 /* =====================================================
-   WIN LOSS RESULT
+   BIG / SMALL
 ===================================================== */
 
-async function updatePredictionResult(){
+function classify(number) {
 
-  if(
-    !currentPredictionPeriod ||
-    !currentPrediction
-  ){
+  const n =
+    Number(number);
 
-    setResultStatus(
-      "PENDING"
+  if (
+    !Number.isFinite(n)
+  ) {
+
+    return null;
+
+  }
+
+  return n >= 5
+    ? "BIG"
+    : "SMALL";
+
+}
+
+
+/* =====================================================
+   ISSUE
+===================================================== */
+
+function cleanIssue(value) {
+
+  return String(
+    value || ""
+  ).trim();
+
+}
+
+
+function compareIssues(
+  a,
+  b
+) {
+
+  try {
+
+    const A =
+      BigInt(a);
+
+    const B =
+      BigInt(b);
+
+    if (A > B) return 1;
+
+    if (A < B) return -1;
+
+    return 0;
+
+  } catch {
+
+    return String(a)
+      .localeCompare(
+        String(b)
+      );
+
+  }
+
+}
+
+
+function nextIssue(value) {
+
+  const s =
+    cleanIssue(value);
+
+  const match =
+    s.match(
+      /^(.*?)(\d+)$/
     );
+
+  if (!match) {
+
+    return null;
+
+  }
+
+  try {
+
+    const prefix =
+      match[1];
+
+    const digits =
+      match[2];
+
+    const next =
+      BigInt(digits) + 1n;
+
+    return (
+      prefix +
+      next
+        .toString()
+        .padStart(
+          digits.length,
+          "0"
+        )
+    );
+
+  } catch {
+
+    return null;
+
+  }
+
+}
+
+
+/* =====================================================
+   NORMALIZE HISTORY
+===================================================== */
+
+function normalizeHistory(
+  data
+) {
+
+  const rows =
+
+    Array.isArray(
+      data?.history
+    )
+
+      ? data.history
+
+      : Array.isArray(
+          data?.data?.history
+        )
+
+        ? data.data.history
+
+        : Array.isArray(
+            data?.data
+          )
+
+          ? data.data
+
+          : [];
+
+
+  return rows
+
+    .map(
+      row => ({
+
+        issueNumber:
+          cleanIssue(
+            row.issueNumber ??
+            row.issue ??
+            row.period
+          ),
+
+        number:
+          Number(
+            row.number
+          ),
+
+        colour:
+          row.colour ??
+          row.color ??
+          "",
+
+        premium:
+          row.premium ??
+          "",
+
+        sum:
+          row.sum ??
+          ""
+
+      })
+    )
+
+    .filter(
+      row =>
+        row.issueNumber &&
+        Number.isFinite(
+          row.number
+        )
+    );
+
+}
+
+
+/* =====================================================
+   COUNTDOWN
+===================================================== */
+
+function extractCountdown(
+  data
+) {
+
+  const values = [
+
+    data?.countdown,
+
+    data?.remainingSeconds,
+
+    data?.seconds,
+
+    data?.timeLeft,
+
+    data?.current?.countdown,
+
+    data?.current?.remainingSeconds,
+
+    data?.current?.seconds,
+
+    data?.current?.timeLeft
+
+  ];
+
+
+  for (
+    const value of values
+  ) {
+
+    const n =
+      Number(value);
+
+    if (
+      Number.isFinite(n) &&
+      n >= 0 &&
+      n <= 120
+    ) {
+
+      return Math.floor(n);
+
+    }
+
+  }
+
+
+  return null;
+
+}
+
+
+/* =====================================================
+   WINGOBOT
+===================================================== */
+
+async function fetchWingoData() {
+
+  if (!WINGOBOT_TOKEN) {
+
+    throw new Error(
+      "WINGOBOT_TOKEN is not configured"
+    );
+
+  }
+
+
+  const response =
+    await fetch(
+      WINGOBOT_URL,
+      {
+
+        method: "GET",
+
+        headers: {
+
+          Authorization:
+            `Bearer ${WINGOBOT_TOKEN}`,
+
+          Accept:
+            "application/json"
+
+        },
+
+        signal:
+          AbortSignal.timeout(
+            10000
+          )
+
+      }
+    );
+
+
+  if (!response.ok) {
+
+    throw new Error(
+      `WingoBot HTTP ${response.status}`
+    );
+
+  }
+
+
+  return response.json();
+
+}
+
+
+/* =====================================================
+   WEIGHTED VOTE
+===================================================== */
+
+function weightedVote(
+  signals
+) {
+
+  let big = 0;
+
+  let small = 0;
+
+
+  for (
+    const signal of signals
+  ) {
+
+    const weight =
+      Number(
+        signal.weight
+      ) || 0;
+
+
+    if (
+      signal.side ===
+      "BIG"
+    ) {
+
+      big += weight;
+
+    }
+
+
+    if (
+      signal.side ===
+      "SMALL"
+    ) {
+
+      small += weight;
+
+    }
+
+  }
+
+
+  return {
+    big,
+    small
+  };
+
+}
+
+
+/* =====================================================
+   EXACT PATTERN
+===================================================== */
+
+function exactPattern(
+  sequence,
+  length
+) {
+
+  if (
+    sequence.length <
+    length + 2
+  ) {
+
+    return null;
+
+  }
+
+
+  const current =
+    sequence
+      .slice(
+        0,
+        length
+      )
+      .join("");
+
+
+  const signals = [];
+
+
+  for (
+    let i =
+      length + 1;
+
+    i <
+      sequence.length;
+
+    i++
+  ) {
+
+    const old =
+      sequence
+        .slice(
+          i,
+          i + length
+        )
+        .join("");
+
+
+    if (
+      old !==
+      current
+    ) {
+
+      continue;
+
+    }
+
+
+    signals.push({
+
+      side:
+        sequence[i - 1],
+
+      weight:
+        1 /
+        (
+          1 +
+          i * 0.07
+        )
+
+    });
+
+  }
+
+
+  if (
+    !signals.length
+  ) {
+
+    return null;
+
+  }
+
+
+  const vote =
+    weightedVote(
+      signals
+    );
+
+
+  return {
+
+    side:
+      vote.big >=
+      vote.small
+        ? "BIG"
+        : "SMALL",
+
+    matches:
+      signals.length,
+
+    weight:
+      Math.min(
+        1.6,
+        vote.big +
+        vote.small
+      ),
+
+    type:
+      "exact"
+
+  };
+
+}
+
+
+/* =====================================================
+   SIMILAR PATTERN
+===================================================== */
+
+function similarPattern(
+  sequence,
+  length
+) {
+
+  if (
+    sequence.length <
+    length + 2
+  ) {
+
+    return null;
+
+  }
+
+
+  const current =
+    sequence.slice(
+      0,
+      length
+    );
+
+
+  const maxDistance =
+    length <= 5
+      ? 1
+      : 2;
+
+
+  const signals = [];
+
+
+  for (
+    let i =
+      length + 1;
+
+    i <
+      sequence.length;
+
+    i++
+  ) {
+
+    const old =
+      sequence.slice(
+        i,
+        i + length
+      );
+
+
+    let distance = 0;
+
+
+    for (
+      let j = 0;
+      j < length;
+      j++
+    ) {
+
+      if (
+        current[j] !==
+        old[j]
+      ) {
+
+        distance++;
+
+      }
+
+    }
+
+
+    if (
+      distance >
+      maxDistance
+    ) {
+
+      continue;
+
+    }
+
+
+    const similarity =
+      1 -
+      distance /
+      length;
+
+
+    signals.push({
+
+      side:
+        sequence[i - 1],
+
+      weight:
+        similarity *
+        0.5 /
+        (
+          1 +
+          i * 0.08
+        )
+
+    });
+
+  }
+
+
+  if (
+    !signals.length
+  ) {
+
+    return null;
+
+  }
+
+
+  const vote =
+    weightedVote(
+      signals
+    );
+
+
+  return {
+
+    side:
+      vote.big >=
+      vote.small
+        ? "BIG"
+        : "SMALL",
+
+    matches:
+      signals.length,
+
+    weight:
+      Math.min(
+        1.3,
+        vote.big +
+        vote.small
+      ),
+
+    type:
+      "similar"
+
+  };
+
+}
+
+
+/* =====================================================
+   TRANSITION
+===================================================== */
+
+function transitionSignal(
+  sequence
+) {
+
+  if (
+    sequence.length <
+    8
+  ) {
+
+    return null;
+
+  }
+
+
+  const current =
+    sequence[0];
+
+
+  const signals = [];
+
+
+  for (
+    let i = 1;
+
+    i <
+      sequence.length - 1;
+
+    i++
+  ) {
+
+    if (
+      sequence[i] ===
+      current
+    ) {
+
+      signals.push({
+
+        side:
+          sequence[i - 1],
+
+        weight:
+          0.8 /
+          (
+            1 +
+            i * 0.06
+          )
+
+      });
+
+    }
+
+  }
+
+
+  if (
+    !signals.length
+  ) {
+
+    return null;
+
+  }
+
+
+  const vote =
+    weightedVote(
+      signals
+    );
+
+
+  return {
+
+    side:
+      vote.big >=
+      vote.small
+        ? "BIG"
+        : "SMALL",
+
+    matches:
+      signals.length,
+
+    weight:
+      Math.min(
+        1.2,
+        vote.big +
+        vote.small
+      ),
+
+    type:
+      "transition"
+
+  };
+
+}
+
+
+/* =====================================================
+   RUN
+===================================================== */
+
+function runSignal(
+  sequence
+) {
+
+  if (
+    sequence.length <
+    8
+  ) {
+
+    return null;
+
+  }
+
+
+  let currentRun = 1;
+
+
+  while (
+    currentRun <
+      sequence.length &&
+    sequence[currentRun] ===
+      sequence[0]
+  ) {
+
+    currentRun++;
+
+  }
+
+
+  const signals = [];
+
+
+  for (
+    let i =
+      currentRun + 1;
+
+    i <
+      sequence.length;
+
+    i++
+  ) {
+
+    let run = 1;
+
+
+    while (
+      i + run <
+        sequence.length &&
+      sequence[i + run] ===
+        sequence[i]
+    ) {
+
+      run++;
+
+    }
+
+
+    if (
+      run ===
+      currentRun
+    ) {
+
+      signals.push({
+
+        side:
+          sequence[i - 1],
+
+        weight:
+          0.75 /
+          (
+            1 +
+            i * 0.07
+          )
+
+      });
+
+    }
+
+  }
+
+
+  if (
+    !signals.length
+  ) {
+
+    return null;
+
+  }
+
+
+  const vote =
+    weightedVote(
+      signals
+    );
+
+
+  return {
+
+    side:
+      vote.big >=
+      vote.small
+        ? "BIG"
+        : "SMALL",
+
+    matches:
+      signals.length,
+
+    weight:
+      Math.min(
+        1,
+        vote.big +
+        vote.small
+      ),
+
+    type:
+      "run"
+
+  };
+
+}
+
+
+/* =====================================================
+   ALTERNATION
+===================================================== */
+
+function alternationSignal(
+  sequence
+) {
+
+  if (
+    sequence.length <
+    7
+  ) {
+
+    return null;
+
+  }
+
+
+  for (
+    let i = 0;
+
+    i < 6;
+
+    i++
+  ) {
+
+    if (
+      sequence[i] ===
+      sequence[i + 1]
+    ) {
+
+      return null;
+
+    }
+
+  }
+
+
+  return {
+
+    side:
+      sequence[0] ===
+      "BIG"
+        ? "SMALL"
+        : "BIG",
+
+    matches:
+      1,
+
+    weight:
+      0.35,
+
+    type:
+      "alternation"
+
+  };
+
+}
+
+
+/* =====================================================
+   ANALYSIS
+===================================================== */
+
+function analyze(
+  history
+) {
+
+  const sequence =
+    history
+      .slice(
+        0,
+        60
+      )
+      .map(
+        row =>
+          classify(
+            row.number
+          )
+      )
+      .filter(Boolean);
+
+
+  if (
+    sequence.length <
+    8
+  ) {
+
+    return {
+
+      prediction:
+        sequence[0] ===
+        "BIG"
+          ? "SMALL"
+          : "BIG",
+
+      confidence:
+        51,
+
+      patternScore:
+        50,
+
+      status:
+        "LOW SIGNAL",
+
+      agreement:
+        0,
+
+      evidence:
+        0,
+
+      matches: {
+
+        exact:
+          0,
+
+        similar:
+          0,
+
+        transition:
+          0,
+
+        runs:
+          0
+
+      }
+
+    };
+
+  }
+
+
+  const signals = [];
+
+
+  for (
+    const length of
+    [2,3,4,5,6,8]
+  ) {
+
+    const exact =
+      exactPattern(
+        sequence,
+        length
+      );
+
+
+    if (exact) {
+
+      exact.weight *=
+        length >= 4
+          ? 1.25
+          : 0.9;
+
+
+      signals.push(
+        exact
+      );
+
+    }
+
+
+    const similar =
+      similarPattern(
+        sequence,
+        length
+      );
+
+
+    if (similar) {
+
+      signals.push(
+        similar
+      );
+
+    }
+
+  }
+
+
+  const transition =
+    transitionSignal(
+      sequence
+    );
+
+
+  if (transition) {
+
+    signals.push(
+      transition
+    );
+
+  }
+
+
+  const run =
+    runSignal(
+      sequence
+    );
+
+
+  if (run) {
+
+    signals.push(
+      run
+    );
+
+  }
+
+
+  const alternating =
+    alternationSignal(
+      sequence
+    );
+
+
+  if (alternating) {
+
+    signals.push(
+      alternating
+    );
+
+  }
+
+
+  const vote =
+    weightedVote(
+      signals
+    );
+
+
+  const total =
+    vote.big +
+    vote.small;
+
+
+  const prediction =
+    vote.big >=
+    vote.small
+      ? "BIG"
+      : "SMALL";
+
+
+  const margin =
+    total
+      ? Math.abs(
+          vote.big -
+          vote.small
+        ) /
+        total
+      : 0;
+
+
+  const sides =
+    signals.map(
+      x =>
+        x.side
+    );
+
+
+  const agreement =
+    sides.length
+      ? Math.max(
+
+          sides.filter(
+            x =>
+              x === "BIG"
+          ).length,
+
+          sides.filter(
+            x =>
+              x === "SMALL"
+          ).length
+
+        ) /
+        sides.length
+
+      : 0;
+
+
+  let confidence =
+    Math.round(
+
+      51 +
+
+      margin *
+      18 +
+
+      Math.max(
+        0,
+        agreement -
+        0.5
+      ) *
+      18
+
+    );
+
+
+  confidence =
+    Math.max(
+      51,
+      Math.min(
+        72,
+        confidence
+      )
+    );
+
+
+  if (
+    agreement <
+      0.55 ||
+    margin <
+      0.08
+  ) {
+
+    confidence =
+      Math.min(
+        confidence,
+        56
+      );
+
+  }
+
+
+  const exactMatches =
+    signals
+      .filter(
+        x =>
+          x.type ===
+          "exact"
+      )
+      .reduce(
+        (
+          total,
+          x
+        ) =>
+          total +
+          x.matches,
+        0
+      );
+
+
+  const similarMatches =
+    signals
+      .filter(
+        x =>
+          x.type ===
+          "similar"
+      )
+      .reduce(
+        (
+          total,
+          x
+        ) =>
+          total +
+          x.matches,
+        0
+      );
+
+
+  const transitionMatches =
+    signals
+      .filter(
+        x =>
+          x.type ===
+          "transition"
+      )
+      .reduce(
+        (
+          total,
+          x
+        ) =>
+          total +
+          x.matches,
+        0
+      );
+
+
+  const runMatches =
+    signals
+      .filter(
+        x =>
+          x.type ===
+          "run"
+      )
+      .reduce(
+        (
+          total,
+          x
+        ) =>
+          total +
+          x.matches,
+        0
+      );
+
+
+  const patternScore =
+    Math.max(
+
+      50,
+
+      Math.min(
+
+        90,
+
+        Math.round(
+
+          50 +
+
+          margin *
+          35 +
+
+          Math.max(
+            0,
+            agreement -
+            0.5
+          ) *
+          25
+
+        )
+
+      )
+
+    );
+
+
+  return {
+
+    prediction,
+
+    confidence,
+
+    patternScore,
+
+    status:
+      agreement >= 0.65 &&
+      margin >= 0.12
+        ? "NORMAL SIGNAL"
+        : "LOW SIGNAL",
+
+    agreement:
+      Math.round(
+        agreement *
+        100
+      ),
+
+    evidence:
+      signals.length,
+
+    matches: {
+
+      exact:
+        exactMatches,
+
+      similar:
+        similarMatches,
+
+      transition:
+        transitionMatches,
+
+      runs:
+        runMatches
+
+    },
+
+    sequence:
+      sequence.slice(
+        0,
+        12
+      )
+
+  };
+
+}
+
+
+/* =====================================================
+   SAVE PREDICTION
+===================================================== */
+
+async function savePrediction(
+  targetIssue,
+  analysis
+) {
+
+  if (
+    !databaseReady ||
+    !targetIssue ||
+    !analysis
+  ) {
 
     return;
 
   }
 
 
-  try{
+  try {
 
-    const data =
-      await api(
-        "/api/history"
-      );
-
-
-    const rows =
-      Array.isArray(
-        data.rows
+    await pool.query(
+      `
+      INSERT INTO predictions
+      (
+        target_issue,
+        prediction,
+        confidence,
+        pattern_score,
+        created_at
       )
-        ? data.rows
-        : [];
 
+      VALUES
+      (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5
+      )
 
-    /*
-      Find the exact prediction
-      period in settled database.
-    */
+      ON CONFLICT
+      (
+        target_issue
+      )
+      DO NOTHING
+      `,
+      [
 
-    const found =
-      rows.find(
-        row =>
-          String(
-            row.target_issue
-          ) ===
-          String(
-            currentPredictionPeriod
-          )
-      );
+        targetIssue,
 
+        analysis.prediction,
 
-    if(!found){
+        analysis.confidence,
 
-      setResultStatus(
-        "PENDING"
-      );
+        analysis.patternScore,
 
-      return;
+        Date.now()
 
-    }
-
-
-    const result =
-      String(
-        found.result ||
-        ""
-      ).toUpperCase();
-
-
-    if(result === "WIN"){
-
-      setResultStatus(
-        "WIN"
-      );
-
-      return;
-
-    }
-
-
-    if(result === "LOSS"){
-
-      setResultStatus(
-        "LOSS"
-      );
-
-      return;
-
-    }
-
-
-    setResultStatus(
-      "PENDING"
+      ]
     );
 
+  } catch (error) {
 
-  }catch(error){
-
-    console.log(
-      "WIN/LOSS error:",
+    console.error(
+      "Save prediction error:",
       error.message
     );
 
@@ -1269,143 +1649,442 @@ async function updatePredictionResult(){
 
 
 /* =====================================================
-   SET RESULT STATUS
+   SETTLE
 ===================================================== */
 
-function setResultStatus(
-  result
-){
+async function settlePrediction(
+  row
+) {
 
-  const el =
-    document.getElementById(
-      "resultStatus"
+  if (
+    !databaseReady ||
+    !row
+  ) {
+
+    return;
+
+  }
+
+
+  const actual =
+    classify(
+      row.number
     );
 
 
-  if(result === "WIN"){
-
-    el.className =
-      "result-status win";
-
-    el.textContent =
-      "✓ WIN";
+  if (!actual) {
 
     return;
 
   }
 
 
-  if(result === "LOSS"){
+  try {
 
-    el.className =
-      "result-status loss";
+    await pool.query(
+      `
+      UPDATE predictions
 
-    el.textContent =
-      "✕ LOSS";
+      SET
 
-    return;
+        actual = $1,
+
+        result =
+          CASE
+            WHEN prediction = $1
+            THEN 'WIN'
+            ELSE 'LOSS'
+          END,
+
+        settled_at = $2
+
+      WHERE
+
+        target_issue = $3
+
+        AND result IS NULL
+      `,
+      [
+
+        actual,
+
+        Date.now(),
+
+        row.issueNumber
+
+      ]
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Settle error:",
+      error.message
+    );
 
   }
-
-
-  el.className =
-    "result-status pending";
-
-  el.textContent =
-    "⏳ PENDING";
 
 }
 
 
 /* =====================================================
-   LIVE HISTORY
+   WIN LOSS
 ===================================================== */
 
-function renderLiveHistory(
-  history
-){
+async function getWinLoss() {
 
-  const box =
-    document.getElementById(
-      "liveHistory"
-    );
+  if (
+    !databaseReady
+  ) {
 
+    return {
 
-  if(
-    !Array.isArray(history) ||
-    !history.length
-  ){
+      rows: [],
 
-    box.innerHTML =
-      `
-      <div class="loading">
-        No live history available
-      </div>
-      `;
+      stats: {
 
-    return;
+        total:
+          0,
+
+        win:
+          0,
+
+        loss:
+          0,
+
+        rate:
+          0,
+
+        streak:
+          "-"
+
+      }
+
+    };
 
   }
 
 
-  box.innerHTML =
-    history
-      .slice(0,15)
-      .map(
-        row => {
+  try {
 
-          const number =
-            row.number ??
-            "-";
+    const result =
+      await pool.query(
+        `
+        SELECT
+
+          target_issue,
+
+          prediction,
+
+          confidence,
+
+          pattern_score,
+
+          created_at,
+
+          actual,
+
+          result,
+
+          settled_at
+
+        FROM predictions
+
+        WHERE result IS NOT NULL
+
+        ORDER BY id DESC
+
+        LIMIT 100
+        `
+      );
 
 
-          const size =
-            String(
-              row.size ||
-              row.bigSmall ||
-              (
-                Number(number) >= 5
-                  ? "BIG"
-                  : "SMALL"
-              )
-            ).toUpperCase();
+    const rows =
+      result.rows;
 
 
-          const sizeClass =
-            size === "BIG"
-              ? "big-text"
-              : "small-text";
+    const win =
+      rows.filter(
+        x =>
+          x.result ===
+          "WIN"
+      ).length;
 
 
-          return `
+    const loss =
+      rows.filter(
+        x =>
+          x.result ===
+          "LOSS"
+      ).length;
 
-            <div class="history-row">
 
-              <div class="issue">
-                ${escapeHtml(
-                  row.issueNumber ||
-                  row.period ||
-                  "-"
-                )}
-              </div>
+    let streak = "-";
 
-              <div class="number">
-                ${escapeHtml(
-                  String(number)
-                )}
-              </div>
 
-              <div class="${sizeClass}">
-                ${escapeHtml(size)}
-              </div>
+    if (rows.length) {
 
-            </div>
+      const first =
+        rows[0].result;
 
-          `;
+
+      let count = 0;
+
+
+      for (
+        const row of rows
+      ) {
+
+        if (
+          row.result !==
+          first
+        ) {
+
+          break;
 
         }
-      )
-      .join("");
+
+
+        count++;
+
+      }
+
+
+      streak =
+        `${first} ${count}`;
+
+    }
+
+
+    return {
+
+      rows,
+
+      stats: {
+
+        total:
+          win +
+          loss,
+
+        win,
+
+        loss,
+
+        rate:
+          win + loss
+            ? Math.round(
+                win *
+                1000 /
+                (
+                  win +
+                  loss
+                )
+              ) / 10
+
+            : 0,
+
+        streak
+
+      }
+
+    };
+
+  } catch (error) {
+
+    console.error(
+      "History error:",
+      error.message
+    );
+
+
+    return {
+
+      rows: [],
+
+      stats: {
+
+        total:
+          0,
+
+        win:
+          0,
+
+        loss:
+          0,
+
+        rate:
+          0,
+
+        streak:
+          "-"
+
+      }
+
+    };
+
+  }
+
+}
+
+
+/* =====================================================
+   CACHE UPDATE
+===================================================== */
+
+async function updateCache() {
+
+  try {
+
+    const data =
+      await fetchWingoData();
+
+
+    const history =
+      normalizeHistory(
+        data
+      );
+
+
+    if (
+      !history.length
+    ) {
+
+      throw new Error(
+        "No history received"
+      );
+
+    }
+
+
+    const settledIssue =
+      history[0]
+        .issueNumber;
+
+
+    const providerCurrent =
+      cleanIssue(
+        data?.current
+          ?.issueNumber
+      );
+
+
+    let targetIssue =
+      null;
+
+
+    if (
+      providerCurrent &&
+      compareIssues(
+        providerCurrent,
+        settledIssue
+      ) > 0
+    ) {
+
+      targetIssue =
+        providerCurrent;
+
+    } else {
+
+      targetIssue =
+        nextIssue(
+          settledIssue
+        );
+
+    }
+
+
+    const signature =
+      history
+        .slice(
+          0,
+          8
+        )
+        .map(
+          row =>
+            `${row.issueNumber}:${row.number}`
+        )
+        .join("|");
+
+
+    const changed =
+      signature !==
+      cache.historySignature;
+
+
+    cache.history =
+      history;
+
+
+    cache.currentIssue =
+      providerCurrent ||
+      settledIssue;
+
+
+    cache.settledIssue =
+      settledIssue;
+
+
+    cache.targetIssue =
+      targetIssue;
+
+
+    cache.providerCountdown =
+      extractCountdown(
+        data
+      );
+
+
+    cache.lastUpdated =
+      Date.now();
+
+
+    cache.error =
+      null;
+
+
+    if (changed) {
+
+      cache.historySignature =
+        signature;
+
+
+      cache.historyVersion++;
+
+
+      cache.analysis =
+        analyze(
+          history
+        );
+
+
+      cache.anchorTime =
+        Date.now();
+
+
+      await settlePrediction(
+        history[0]
+      );
+
+
+      await savePrediction(
+        targetIssue,
+        cache.analysis
+      );
+
+    }
+
+  } catch (error) {
+
+    cache.error =
+      error.message;
+
+
+    console.error(
+      "Provider error:",
+      error.message
+    );
+
+  }
 
 }
 
@@ -1414,255 +2093,1514 @@ function renderLiveHistory(
    TIMER
 ===================================================== */
 
-function renderTimer(){
+function getTiming() {
 
-  const el =
-    document.getElementById(
-      "timer"
+  if (
+    Number.isFinite(
+      cache.providerCountdown
+    )
+  ) {
+
+    return {
+
+      seconds:
+        Math.min(
+          30,
+          cache.providerCountdown
+        ),
+
+      exact:
+        true
+
+    };
+
+  }
+
+
+  if (
+    !cache.anchorTime
+  ) {
+
+    return {
+
+      seconds:
+        30,
+
+      exact:
+        false
+
+    };
+
+  }
+
+
+  const elapsed =
+    Math.floor(
+
+      (
+        Date.now() -
+        cache.anchorTime
+      ) / 1000
+
     );
-
-
-  if(
-    !targetEndTime
-  ){
-
-    el.textContent =
-      "00:30";
-
-    return;
-
-  }
-
-
-  const now =
-    Date.now() +
-    serverOffset;
-
-
-  const remaining =
-    targetEndTime -
-    now;
-
-
-  if(
-    remaining <= 0
-  ){
-
-    el.textContent =
-      "00:00";
-
-    return;
-
-  }
 
 
   let seconds =
-    Math.ceil(
-      remaining /
-      1000
+    ROUND_SECONDS -
+    (
+      elapsed %
+      ROUND_SECONDS
     );
 
 
-  seconds =
-    Math.max(
-      0,
-      Math.min(
-        30,
-        seconds
-      )
-    );
+  if (
+    seconds === 0
+  ) {
+
+    seconds =
+      ROUND_SECONDS;
+
+  }
 
 
-  el.textContent =
-    "00:" +
-    String(seconds)
-      .padStart(
-        2,
-        "0"
-      );
+  return {
+
+    seconds,
+
+    exact:
+      false
+
+  };
 
 }
 
 
 /* =====================================================
-   AUTO LOGIN
+   API
 ===================================================== */
 
-async function autoLogin(){
+async function handleAPI(
+  req,
+  res,
+  url
+) {
 
-  const key =
-    localStorage.getItem(
-      "dy_access_key"
+
+  /* HEALTH */
+
+  if (
+    url.pathname ===
+    "/health"
+  ) {
+
+    return sendJSON(
+      res,
+      200,
+      {
+
+        ok:
+          true,
+
+        database:
+          databaseReady,
+
+        provider:
+          !!WINGOBOT_TOKEN,
+
+        time:
+          Date.now()
+
+      }
     );
 
-
-  if(!key){
-    return;
   }
 
 
-  try{
+  /* STATE */
+
+  if (
+    url.pathname ===
+      "/api/state" &&
+    req.method ===
+      "GET"
+  ) {
+
+    return sendJSON(
+      res,
+      200,
+      {
+
+        ok:
+          true,
+
+        history:
+          cache.history.slice(
+            0,
+            30
+          ),
+
+        currentIssue:
+          cache.currentIssue,
+
+        settledIssue:
+          cache.settledIssue,
+
+        targetIssue:
+          cache.targetIssue,
+
+        historyVersion:
+          cache.historyVersion,
+
+        lastUpdated:
+          cache.lastUpdated,
+
+        timing:
+          getTiming(),
+
+        analysis:
+          cache.analysis,
+
+        error:
+          cache.error
+
+      }
+    );
+
+  }
+
+
+  /* WIN LOSS */
+
+  if (
+    url.pathname ===
+      "/api/history" &&
+    req.method ===
+      "GET"
+  ) {
+
+    return sendJSON(
+      res,
+      200,
+      await getWinLoss()
+    );
+
+  }
+
+
+  /* =================================================
+     ACCESS KEY
+  ================================================= */
+
+  if (
+    url.pathname ===
+      "/api/key/check" &&
+    req.method ===
+      "POST"
+  ) {
 
     const data =
-      await api(
-        "/api/key/check",
-        {
-
-          method:"POST",
-
-          headers:{
-            "Content-Type":
-              "application/json"
-          },
-
-          body:
-            JSON.stringify({
-
-              access_key:key,
-
-              device_id:
-                getDeviceId()
-
-            })
-
-        }
+      await readBody(
+        req
       );
 
 
-    if(!data.ok){
+    /*
+      IMPORTANT:
+      prediction.html sends access_key.
+      key is also accepted for compatibility.
+    */
 
-      throw new Error(
-        "Access expired"
+    const key =
+      String(
+
+        data.access_key ||
+
+        data.key ||
+
+        req.headers[
+          "x-access-key"
+        ] ||
+
+        ""
+
+      ).trim();
+
+
+    const device =
+      String(
+
+        req.headers[
+          "x-device-id"
+        ] ||
+
+        data.device_id ||
+
+        ""
+
+      ).trim();
+
+
+    if (!key) {
+
+      return sendJSON(
+        res,
+        400,
+        {
+
+          ok:
+            false,
+
+          error:
+            "Access key is required"
+
+        }
       );
 
     }
 
 
-    loggedIn = true;
+    if (!device) {
+
+      return sendJSON(
+        res,
+        400,
+        {
+
+          ok:
+            false,
+
+          error:
+            "Device ID is required"
+
+        }
+      );
+
+    }
 
 
-    document
-      .getElementById(
-        "loginScreen"
-      )
-      .classList.add(
-        "hidden"
+    if (!databaseReady) {
+
+      return sendJSON(
+        res,
+        503,
+        {
+
+          ok:
+            false,
+
+          error:
+            "Database is not ready"
+
+        }
+      );
+
+    }
+
+
+    try {
+
+      const result =
+        await pool.query(
+          `
+          SELECT *
+
+          FROM access_keys
+
+          WHERE access_key = $1
+          `,
+          [key]
+        );
+
+
+      if (
+        !result.rowCount
+      ) {
+
+        return sendJSON(
+          res,
+          401,
+          {
+
+            ok:
+              false,
+
+            error:
+              "Invalid access key"
+
+          }
+        );
+
+      }
+
+
+      const row =
+        result.rows[0];
+
+
+      /*
+        Existing device binding:
+        only same device allowed.
+      */
+
+      if (
+        row.device_id &&
+        row.device_id !==
+          device
+      ) {
+
+        return sendJSON(
+          res,
+          403,
+          {
+
+            ok:
+              false,
+
+            error:
+              "Key already bound to another device"
+
+          }
+        );
+
+      }
+
+
+      await pool.query(
+        `
+        UPDATE access_keys
+
+        SET
+
+          device_id = $1,
+
+          last_seen = $2
+
+        WHERE id = $3
+        `,
+        [
+
+          device,
+
+          Date.now(),
+
+          row.id
+
+        ]
       );
 
 
-    document
-      .getElementById(
-        "app"
-      )
-      .classList.remove(
-        "hidden"
+      return sendJSON(
+        res,
+        200,
+        {
+
+          ok:
+            true,
+
+          message:
+            "Access granted",
+
+          access_key:
+            row.access_key
+
+        }
+      );
+
+    } catch (error) {
+
+      console.error(
+        "Key check error:",
+        error.message
       );
 
 
-    startApplication();
+      return sendJSON(
+        res,
+        500,
+        {
+
+          ok:
+            false,
+
+          error:
+            "Database error: " +
+            error.message
+
+        }
+      );
+
+    }
+
+  }
 
 
-  }catch(error){
+  /* =================================================
+     ADMIN
+  ================================================= */
 
-    localStorage.removeItem(
-      "dy_access_key"
+  if (
+    url.pathname.startsWith(
+      "/api/admin/"
+    )
+  ) {
+
+    const admin =
+      req.headers[
+        "x-admin-key"
+      ];
+
+
+    if (
+      admin !==
+      ADMIN_KEY
+    ) {
+
+      return sendJSON(
+        res,
+        401,
+        {
+
+          ok:
+            false,
+
+          error:
+            "Unauthorized"
+
+        }
+      );
+
+    }
+
+
+    /* STATUS */
+
+    if (
+      url.pathname ===
+      "/api/admin/status"
+    ) {
+
+      return sendJSON(
+        res,
+        200,
+        {
+
+          ok:
+            true,
+
+          database:
+            databaseReady,
+
+          wingobot:
+            !!WINGOBOT_TOKEN,
+
+          time:
+            Date.now()
+
+        }
+      );
+
+    }
+
+
+    /* PING */
+
+    if (
+      url.pathname ===
+      "/api/admin/ping"
+    ) {
+
+      return sendJSON(
+        res,
+        200,
+        {
+
+          ok:
+            true,
+
+          message:
+            "Admin API online",
+
+          time:
+            Date.now()
+
+        }
+      );
+
+    }
+
+
+    /* WINGOBOT TEST */
+
+    if (
+      url.pathname ===
+      "/api/admin/wingo-test"
+    ) {
+
+      try {
+
+        const data =
+          await fetchWingoData();
+
+
+        return sendJSON(
+          res,
+          200,
+          {
+
+            ok:
+              true,
+
+            current:
+              data.current ||
+              null,
+
+            currentIssue:
+              data?.current
+                ?.issueNumber ||
+              null,
+
+            history:
+              normalizeHistory(
+                data
+              ).slice(
+                0,
+                5
+              )
+
+          }
+        );
+
+      } catch (error) {
+
+        return sendJSON(
+          res,
+          500,
+          {
+
+            ok:
+              false,
+
+            error:
+              error.message
+
+          }
+        );
+
+      }
+
+    }
+
+
+    /* LIST KEYS */
+
+    if (
+      url.pathname ===
+        "/api/admin/keys" &&
+      req.method ===
+        "GET"
+    ) {
+
+      if (!databaseReady) {
+
+        return sendJSON(
+          res,
+          503,
+          {
+
+            ok:
+              false,
+
+            error:
+              "Database is not ready"
+
+          }
+        );
+
+      }
+
+
+      try {
+
+        const result =
+          await pool.query(
+            `
+            SELECT
+
+              id,
+
+              access_key,
+
+              device_id,
+
+              created_at,
+
+              last_seen
+
+            FROM access_keys
+
+            ORDER BY id DESC
+            `
+          );
+
+
+        return sendJSON(
+          res,
+          200,
+          {
+
+            ok:
+              true,
+
+            keys:
+              result.rows
+
+          }
+        );
+
+      } catch (error) {
+
+        return sendJSON(
+          res,
+          500,
+          {
+
+            ok:
+              false,
+
+            error:
+              error.message
+
+          }
+        );
+
+      }
+
+    }
+
+
+    /* CREATE KEY */
+
+    if (
+      url.pathname ===
+        "/api/admin/keys" &&
+      req.method ===
+        "POST"
+    ) {
+
+      if (!databaseReady) {
+
+        return sendJSON(
+          res,
+          503,
+          {
+
+            ok:
+              false,
+
+            error:
+              "Database is not ready"
+
+          }
+        );
+
+      }
+
+
+      const data =
+        await readBody(
+          req
+        );
+
+
+      const customKey =
+        String(
+
+          data.access_key ||
+
+          data.key ||
+
+          ""
+
+        ).trim();
+
+
+      /*
+        CUSTOM KEY
+      */
+
+      if (customKey) {
+
+        if (
+          customKey.length <
+            4 ||
+          customKey.length >
+            100
+        ) {
+
+          return sendJSON(
+            res,
+            400,
+            {
+
+              ok:
+                false,
+
+              error:
+                "Invalid custom key"
+
+            }
+          );
+
+        }
+
+
+        try {
+
+          const result =
+            await pool.query(
+              `
+              INSERT INTO access_keys
+              (
+                access_key,
+                created_at
+              )
+
+              VALUES
+              (
+                $1,
+                $2
+              )
+
+              ON CONFLICT
+              DO NOTHING
+
+              RETURNING access_key
+              `,
+              [
+
+                customKey,
+
+                Date.now()
+
+              ]
+            );
+
+
+          if (
+            !result.rowCount
+          ) {
+
+            return sendJSON(
+              res,
+              409,
+              {
+
+                ok:
+                  false,
+
+                error:
+                  "Key already exists"
+
+              }
+            );
+
+          }
+
+
+          return sendJSON(
+            res,
+            200,
+            {
+
+              ok:
+                true,
+
+              access_key:
+                customKey,
+
+              keys:
+                [customKey]
+
+            }
+          );
+
+        } catch (error) {
+
+          return sendJSON(
+            res,
+            500,
+            {
+
+              ok:
+                false,
+
+              error:
+                error.message
+
+            }
+          );
+
+        }
+
+      }
+
+
+      /*
+        RANDOM KEY
+      */
+
+      const count =
+        Math.max(
+          1,
+          Math.min(
+            100,
+            Number(
+              data.count ||
+              1
+            )
+          )
+        );
+
+
+      const keys = [];
+
+
+      for (
+        let i = 0;
+        i < count;
+        i++
+      ) {
+
+        let created =
+          false;
+
+
+        while (
+          !created
+        ) {
+
+          const key =
+            "DY-" +
+            crypto
+              .randomBytes(
+                5
+              )
+              .toString(
+                "hex"
+              )
+              .toUpperCase();
+
+
+          const result =
+            await pool.query(
+              `
+              INSERT INTO access_keys
+              (
+                access_key,
+                created_at
+              )
+
+              VALUES
+              (
+                $1,
+                $2
+              )
+
+              ON CONFLICT
+              DO NOTHING
+
+              RETURNING access_key
+              `,
+              [
+
+                key,
+
+                Date.now()
+
+              ]
+            );
+
+
+          if (
+            result.rowCount
+          ) {
+
+            keys.push(
+              key
+            );
+
+            created =
+              true;
+
+          }
+
+        }
+
+      }
+
+
+      return sendJSON(
+        res,
+        200,
+        {
+
+          ok:
+            true,
+
+          keys
+
+        }
+      );
+
+    }
+
+
+    /* DELETE */
+
+    if (
+      url.pathname ===
+        "/api/admin/keys" &&
+      req.method ===
+        "DELETE"
+    ) {
+
+      if (!databaseReady) {
+
+        return sendJSON(
+          res,
+          503,
+          {
+
+            ok:
+              false,
+
+            error:
+              "Database is not ready"
+
+          }
+        );
+
+      }
+
+
+      const body =
+        await readBody(
+          req
+        );
+
+
+      const id =
+        url.searchParams.get(
+          "id"
+        ) ||
+        body.id;
+
+
+      if (!id) {
+
+        return sendJSON(
+          res,
+          400,
+          {
+
+            ok:
+              false,
+
+            error:
+              "Key ID required"
+
+          }
+        );
+
+      }
+
+
+      await pool.query(
+        `
+        DELETE FROM access_keys
+        WHERE id = $1
+        `,
+        [id]
+      );
+
+
+      return sendJSON(
+        res,
+        200,
+        {
+
+          ok:
+            true
+
+        }
+      );
+
+    }
+
+
+    /* RESET DEVICE */
+
+    if (
+      url.pathname ===
+        "/api/admin/reset-device" &&
+      req.method ===
+        "POST"
+    ) {
+
+      if (!databaseReady) {
+
+        return sendJSON(
+          res,
+          503,
+          {
+
+            ok:
+              false,
+
+            error:
+              "Database is not ready"
+
+          }
+        );
+
+      }
+
+
+      const data =
+        await readBody(
+          req
+        );
+
+
+      if (!data.id) {
+
+        return sendJSON(
+          res,
+          400,
+          {
+
+            ok:
+              false,
+
+            error:
+              "Key ID required"
+
+          }
+        );
+
+      }
+
+
+      await pool.query(
+        `
+        UPDATE access_keys
+
+        SET
+
+          device_id = NULL,
+
+          last_seen = 0
+
+        WHERE id = $1
+        `,
+        [data.id]
+      );
+
+
+      return sendJSON(
+        res,
+        200,
+        {
+
+          ok:
+            true,
+
+          message:
+            "Device binding reset"
+
+        }
+      );
+
+    }
+
+  }
+
+
+  return null;
+
+}
+
+
+/* =====================================================
+   STATIC FILE
+===================================================== */
+
+function serveStatic(
+  req,
+  res,
+  url
+) {
+
+  let filename =
+    url.pathname === "/"
+      ? "prediction.html"
+      : url.pathname;
+
+
+  filename =
+    decodeURIComponent(
+      filename
     );
 
-    console.log(
-      error.message
+
+  /*
+    Remove leading slash
+    before path.join.
+  */
+
+  filename =
+    filename.replace(
+      /^[/\\]+/,
+      ""
+    );
+
+
+  if (
+    filename.includes("..")
+  ) {
+
+    return sendJSON(
+      res,
+      400,
+      {
+
+        ok:
+          false
+
+      }
     );
 
   }
 
-}
+
+  const filePath =
+    path.join(
+      __dirname,
+      filename
+    );
 
 
-/* =====================================================
-   START
-===================================================== */
+  if (
+    !fs.existsSync(
+      filePath
+    )
+  ) {
 
-function startApplication(){
+    return sendJSON(
+      res,
+      404,
+      {
 
-  loadState();
+        ok:
+          false,
+
+        error:
+          "File not found"
+
+      }
+    );
+
+  }
 
 
-  /*
-    Server state every second.
-  */
+  const ext =
+    path
+      .extname(
+        filePath
+      )
+      .toLowerCase();
 
-  setInterval(
-    loadState,
-    1000
+
+  const types = {
+
+    ".html":
+      "text/html; charset=utf-8",
+
+    ".css":
+      "text/css; charset=utf-8",
+
+    ".js":
+      "application/javascript; charset=utf-8",
+
+    ".json":
+      "application/json; charset=utf-8",
+
+    ".png":
+      "image/png",
+
+    ".jpg":
+      "image/jpeg",
+
+    ".jpeg":
+      "image/jpeg",
+
+    ".webp":
+      "image/webp",
+
+    ".ico":
+      "image/x-icon"
+
+  };
+
+
+  /* MP3 */
+
+  if (
+    ext === ".mp3"
+  ) {
+
+    const stat =
+      fs.statSync(
+        filePath
+      );
+
+
+    const range =
+      req.headers.range;
+
+
+    if (range) {
+
+      const match =
+        range.match(
+          /bytes=(\d+)-(\d*)/
+        );
+
+
+      if (match) {
+
+        const start =
+          Number(
+            match[1]
+          );
+
+
+        const requestedEnd =
+          match[2]
+            ? Number(
+                match[2]
+              )
+            : stat.size - 1;
+
+
+        const end =
+          Math.min(
+            requestedEnd,
+            stat.size - 1
+          );
+
+
+        if (
+          start >= 0 &&
+          start <= end &&
+          start < stat.size
+        ) {
+
+          res.writeHead(
+            206,
+            {
+
+              "Content-Type":
+                "audio/mpeg",
+
+              "Accept-Ranges":
+                "bytes",
+
+              "Content-Range":
+                `bytes ${start}-${end}/${stat.size}`,
+
+              "Content-Length":
+                end -
+                start +
+                1
+
+            }
+          );
+
+
+          return fs
+            .createReadStream(
+              filePath,
+              {
+                start,
+                end
+              }
+            )
+            .pipe(
+              res
+            );
+
+        }
+
+      }
+
+    }
+
+
+    res.writeHead(
+      200,
+      {
+
+        "Content-Type":
+          "audio/mpeg",
+
+        "Accept-Ranges":
+          "bytes",
+
+        "Content-Length":
+          stat.size
+
+      }
+    );
+
+
+    return fs
+      .createReadStream(
+        filePath
+      )
+      .pipe(
+        res
+      );
+
+  }
+
+
+  res.writeHead(
+    200,
+    {
+
+      "Content-Type":
+        types[ext] ||
+        "application/octet-stream"
+
+    }
   );
 
 
-  /*
-    Smooth timer.
-  */
-
-  setInterval(
-    renderTimer,
-    250
-  );
-
-}
-
-
-/* =====================================================
-   ESCAPE
-===================================================== */
-
-function escapeHtml(
-  value
-){
-
-  return String(value)
-
-    .replaceAll(
-      "&",
-      "&amp;"
+  fs
+    .createReadStream(
+      filePath
     )
-
-    .replaceAll(
-      "<",
-      "&lt;"
-    )
-
-    .replaceAll(
-      ">",
-      "&gt;"
-    )
-
-    .replaceAll(
-      '"',
-      "&quot;"
-    )
-
-    .replaceAll(
-      "'",
-      "&#039;"
+    .pipe(
+      res
     );
 
 }
 
 
 /* =====================================================
-   ENTER LOGIN
+   SERVER
 ===================================================== */
 
-document
-  .getElementById(
-    "accessKey"
-  )
-  .addEventListener(
-    "keydown",
-    function(e){
+const server =
+  http.createServer(
+    async (
+      req,
+      res
+    ) => {
 
-      if(
-        e.key === "Enter"
-      ){
+      try {
 
-        login();
+        /*
+          OPTIONS support
+        */
+
+        if (
+          req.method ===
+          "OPTIONS"
+        ) {
+
+          res.writeHead(
+            204,
+            {
+
+              "Access-Control-Allow-Origin":
+                "*",
+
+              "Access-Control-Allow-Methods":
+                "GET,POST,DELETE,OPTIONS",
+
+              "Access-Control-Allow-Headers":
+                "Content-Type, x-access-key, x-device-id, x-admin-key"
+
+            }
+          );
+
+          return res.end();
+
+        }
+
+
+        const url =
+          new URL(
+            req.url,
+            `http://${
+              req.headers.host ||
+              "localhost"
+            }`
+          );
+
+
+        const handled =
+          await handleAPI(
+            req,
+            res,
+            url
+          );
+
+
+        if (
+          handled !== null
+        ) {
+
+          return;
+
+        }
+
+
+        serveStatic(
+          req,
+          res,
+          url
+        );
+
+      } catch (error) {
+
+        console.error(
+          "SERVER ERROR:",
+          error
+        );
+
+
+        if (
+          !res.headersSent
+        ) {
+
+          sendJSON(
+            res,
+            500,
+            {
+
+              ok:
+                false,
+
+              error:
+                error.message
+
+            }
+          );
+
+        }
 
       }
 
@@ -1671,15 +3609,112 @@ document
 
 
 /* =====================================================
-   LOAD
+   START SERVER
 ===================================================== */
 
-window.addEventListener(
-  "load",
-  autoLogin
-);
+async function startServer() {
 
-</script>
+  console.log(
+    "Starting DY AI Wingo..."
+  );
 
-</body>
-</html>
+
+  /*
+    Database failure will NOT
+    stop the HTTP server.
+  */
+
+  await initDatabase();
+
+
+  /*
+    Provider failure will NOT
+    stop the HTTP server.
+  */
+
+  try {
+
+    await updateCache();
+
+  } catch (error) {
+
+    console.error(
+      "Initial provider error:",
+      error.message
+    );
+
+  }
+
+
+  /*
+    Update provider every second.
+  */
+
+  setInterval(
+    async () => {
+
+      try {
+
+        await updateCache();
+
+      } catch (error) {
+
+        console.error(
+          "Update error:",
+          error.message
+        );
+
+      }
+
+    },
+    1000
+  );
+
+
+  server.listen(
+    PORT,
+    "0.0.0.0",
+    () => {
+
+      console.log(
+        `DY AI Wingo running on port ${PORT}`
+      );
+
+      console.log(
+        `Database: ${
+          databaseReady
+            ? "READY"
+            : "NOT READY"
+        }`
+      );
+
+      console.log(
+        `WingoBot: ${
+          WINGOBOT_TOKEN
+            ? "CONFIGURED"
+            : "NOT CONFIGURED"
+        }`
+      );
+
+    }
+  );
+
+}
+
+
+startServer()
+  .catch(
+    error => {
+
+      console.error(
+        "STARTUP ERROR:",
+        error
+      );
+
+      /*
+        Do not intentionally crash
+        the Render instance.
+      */
+
+    }
+  );
