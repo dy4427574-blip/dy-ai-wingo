@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>DY AI Wingo 30S</title>
 
 <style>
@@ -264,6 +264,77 @@ input:focus{
 
 .sync-btn:disabled{
   opacity:.6;
+}
+
+/* MUSIC */
+
+.music-card{
+  position:relative;
+  overflow:hidden;
+}
+
+.music-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.music-title{
+  font-size:18px;
+  font-weight:900;
+}
+
+.music-status{
+  font-size:11px;
+  color:#55ed8b;
+  font-weight:800;
+}
+
+.music-name{
+  color:#9eb4d5;
+  font-size:12px;
+  margin-top:7px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.music-controls{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-top:15px;
+}
+
+.music-btn{
+  width:48px;
+  height:43px;
+  border:1px solid #29476f;
+  border-radius:11px;
+  background:#10223d;
+  color:#fff;
+  font-size:18px;
+  cursor:pointer;
+}
+
+.music-btn:active{
+  transform:scale(.96);
+}
+
+.volume-wrap{
+  flex:1;
+}
+
+.volume-label{
+  color:#7f96b6;
+  font-size:10px;
+  margin-bottom:5px;
+}
+
+.volume{
+  width:100%;
+  accent-color:#6c5cff;
 }
 
 /* GAME */
@@ -575,6 +646,74 @@ input:focus{
   </div>
 
 
+  <!-- ================= MUSIC ================= -->
+
+  <div class="card music-card">
+
+    <div class="music-head">
+
+      <div class="music-title">
+        🎵 DY AI MUSIC
+      </div>
+
+      <div
+        id="musicStatus"
+        class="music-status"
+      >
+        READY
+      </div>
+
+    </div>
+
+    <div class="music-name">
+      DY AI Background Music
+    </div>
+
+    <div class="music-controls">
+
+      <button
+        id="musicBtn"
+        class="music-btn"
+        type="button"
+      >
+        ▶
+      </button>
+
+      <div class="volume-wrap">
+
+        <div class="volume-label">
+          VOLUME
+        </div>
+
+        <input
+          id="volume"
+          class="volume"
+          type="range"
+          min="0"
+          max="1"
+          step="0.01"
+          value="0.55"
+        >
+
+      </div>
+
+    </div>
+
+    <audio
+      id="bgMusic"
+      preload="auto"
+      loop
+      playsinline
+    >
+      <source
+        src="music.mp3"
+        type="audio/mpeg"
+      >
+    </audio>
+
+  </div>
+
+
   <!-- ================= GAME HUB ================= -->
 
   <div class="card">
@@ -767,9 +906,152 @@ const syncBtn =
 
 
 /* =========================================
+   MUSIC
+========================================= */
+
+const bgMusic =
+  document.getElementById(
+    "bgMusic"
+  );
+
+const musicBtn =
+  document.getElementById(
+    "musicBtn"
+  );
+
+const volume =
+  document.getElementById(
+    "volume"
+  );
+
+const musicStatus =
+  document.getElementById(
+    "musicStatus"
+  );
+
+
+bgMusic.volume =
+  Number(volume.value);
+
+
+/* PLAY MUSIC */
+
+async function playMusic(){
+
+  try{
+
+    await bgMusic.play();
+
+    musicBtn.textContent =
+      "❚❚";
+
+    musicStatus.textContent =
+      "PLAYING";
+
+  }catch(error){
+
+    musicBtn.textContent =
+      "▶";
+
+    musicStatus.textContent =
+      "TAP PLAY";
+
+  }
+
+}
+
+
+/* PAUSE MUSIC */
+
+function pauseMusic(){
+
+  bgMusic.pause();
+
+  musicBtn.textContent =
+    "▶";
+
+  musicStatus.textContent =
+    "PAUSED";
+
+}
+
+
+/* PLAY / PAUSE BUTTON */
+
+musicBtn.addEventListener(
+  "click",
+  function(){
+
+    if(bgMusic.paused){
+
+      playMusic();
+
+    }else{
+
+      pauseMusic();
+
+    }
+
+  }
+);
+
+
+/* VOLUME */
+
+volume.addEventListener(
+  "input",
+  function(){
+
+    bgMusic.volume =
+      Number(
+        volume.value
+      );
+
+  }
+);
+
+
+/* MUSIC EVENTS */
+
+bgMusic.addEventListener(
+  "play",
+  function(){
+
+    musicBtn.textContent =
+      "❚❚";
+
+    musicStatus.textContent =
+      "PLAYING";
+
+  }
+);
+
+bgMusic.addEventListener(
+  "pause",
+  function(){
+
+    musicBtn.textContent =
+      "▶";
+
+    musicStatus.textContent =
+      "PAUSED";
+
+  }
+);
+
+bgMusic.addEventListener(
+  "ended",
+  function(){
+
+    musicStatus.textContent =
+      "RESTARTING";
+
+  }
+);
+
+
+/* =========================================
    COMMON HEADERS
-   IMPORTANT:
-   X-ACCESS-KEY + X-DEVICE-ID
 ========================================= */
 
 function getHeaders(){
@@ -893,6 +1175,14 @@ async function login(){
 
       await syncState();
 
+      /*
+       * Browser autoplay policy:
+       * music starts after the user
+       * presses LOGIN.
+       */
+
+      await playMusic();
+
     }else{
 
       loginError.textContent =
@@ -962,24 +1252,23 @@ async function syncState(){
         "/api/state",
         {
           method:"GET",
-
           headers:getHeaders(),
-
           cache:"no-store"
         }
       );
 
-
-    /* KEY INVALID */
 
     if(response.status === 401){
 
       let errorData = {};
 
       try{
+
         errorData =
           await response.json();
+
       }catch(e){}
+
 
       keyStatusEl.textContent =
         "INVALID";
@@ -1067,14 +1356,10 @@ function updateUI(data){
   }
 
 
-  /* PERIOD */
-
   periodEl.textContent =
     data.period ||
     "********";
 
-
-  /* PREDICTION */
 
   predictionEl.textContent =
     String(
@@ -1082,8 +1367,6 @@ function updateUI(data){
       "--"
     ).toUpperCase();
 
-
-  /* CONFIDENCE */
 
   if(
     data.confidence !== undefined &&
@@ -1103,8 +1386,6 @@ function updateUI(data){
   }
 
 
-  /* NUMBER */
-
   if(
     data.number !== undefined &&
     data.number !== null
@@ -1120,8 +1401,6 @@ function updateUI(data){
 
   }
 
-
-  /* COUNTDOWN */
 
   if(
     data.countdown !== undefined &&
@@ -1317,6 +1596,14 @@ async function autoLogin(){
       }
 
       await syncState();
+
+      /*
+       * If browser allows autoplay,
+       * continue music automatically.
+       * Otherwise user can press PLAY.
+       */
+
+      playMusic();
 
     }else{
 
