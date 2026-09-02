@@ -74,6 +74,7 @@ button{
   color:#fff;
   font-weight:900;
   font-size:14px;
+  cursor:pointer;
 }
 
 button:disabled{
@@ -242,7 +243,88 @@ button:disabled{
   margin-top:10px;
 }
 
+/* WINGOBOT */
+
+.api-card{
+  border-color:#3d4fa0;
+}
+
+.api-status{
+  padding:12px;
+  border-radius:12px;
+  background:#0b1120;
+  border:1px solid #293657;
+  margin-top:12px;
+  font-size:13px;
+}
+
+.api-current{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:12px;
+}
+
+.api-box{
+  background:#0b1120;
+  border:1px solid #293657;
+  border-radius:13px;
+  padding:12px;
+}
+
+.api-box-title{
+  color:#7886a5;
+  font-size:10px;
+  text-transform:uppercase;
+}
+
+.api-box-value{
+  font-size:18px;
+  font-weight:900;
+  margin-top:5px;
+  word-break:break-word;
+}
+
+.history-wrap{
+  margin-top:14px;
+  overflow-x:auto;
+}
+
+.history-table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:520px;
+  font-size:11px;
+}
+
+.history-table th{
+  color:#8796b4;
+  text-align:left;
+  padding:10px 7px;
+  border-bottom:1px solid #293657;
+}
+
+.history-table td{
+  padding:10px 7px;
+  border-bottom:1px solid #1d2940;
+}
+
+.api-big{
+  color:#ff7285;
+  font-weight:900;
+}
+
+.api-small{
+  color:#62a8ff;
+  font-weight:900;
+}
+
+.api-number{
+  font-weight:900;
+}
+
 @media(max-width:420px){
+
   .stat-grid,
   .round-grid{
     grid-template-columns:1fr 1fr;
@@ -250,6 +332,10 @@ button:disabled{
 
   .key-top{
     align-items:flex-start;
+  }
+
+  .api-current{
+    grid-template-columns:1fr 1fr;
   }
 }
 </style>
@@ -317,9 +403,7 @@ button:disabled{
     <div class="stat-grid">
 
       <div class="stat">
-        <div class="muted">
-          SERVER
-        </div>
+        <div class="muted">SERVER</div>
 
         <div id="serverStatus"
              class="stat-value live-stat">
@@ -328,9 +412,7 @@ button:disabled{
       </div>
 
       <div class="stat">
-        <div class="muted">
-          UPTIME
-        </div>
+        <div class="muted">UPTIME</div>
 
         <div id="uptime"
              class="stat-value">
@@ -357,9 +439,7 @@ button:disabled{
     <div class="stat-grid">
 
       <div class="stat">
-        <div class="muted">
-          TOTAL KEYS
-        </div>
+        <div class="muted">TOTAL KEYS</div>
 
         <div id="totalKeys"
              class="stat-value">
@@ -368,9 +448,7 @@ button:disabled{
       </div>
 
       <div class="stat">
-        <div class="muted">
-          LIVE
-        </div>
+        <div class="muted">LIVE</div>
 
         <div id="liveKeys"
              class="stat-value live-stat">
@@ -379,9 +457,7 @@ button:disabled{
       </div>
 
       <div class="stat">
-        <div class="muted">
-          OFFLINE
-        </div>
+        <div class="muted">OFFLINE</div>
 
         <div id="offlineKeys"
              class="stat-value offline-stat">
@@ -390,9 +466,7 @@ button:disabled{
       </div>
 
       <div class="stat">
-        <div class="muted">
-          ACTIVE USERS
-        </div>
+        <div class="muted">ACTIVE USERS</div>
 
         <div id="activeUsers"
              class="stat-value">
@@ -414,56 +488,129 @@ button:disabled{
     <div class="round-grid">
 
       <div class="round-item">
-
-        <div class="muted">
-          PREDICTION
-        </div>
+        <div class="muted">PREDICTION</div>
 
         <div id="prediction"
              class="round-value">
           —
         </div>
-
       </div>
 
       <div class="round-item">
-
-        <div class="muted">
-          NUMBER
-        </div>
+        <div class="muted">NUMBER</div>
 
         <div id="number"
              class="round-value">
           —
         </div>
-
       </div>
 
       <div class="round-item">
-
-        <div class="muted">
-          CONFIDENCE
-        </div>
+        <div class="muted">CONFIDENCE</div>
 
         <div id="confidence"
              class="round-value">
           —
         </div>
-
       </div>
 
       <div class="round-item">
-
-        <div class="muted">
-          COUNTDOWN
-        </div>
+        <div class="muted">COUNTDOWN</div>
 
         <div id="countdown"
              class="round-value">
           —
         </div>
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- ================= WINGOBOT TEST ================= -->
+
+  <div class="card api-card">
+
+    <h2>🌐 WingoBot API</h2>
+
+    <p class="muted">
+      Real 30-second game history connection test.
+    </p>
+
+    <button
+      id="wingoTestBtn"
+      onclick="testWingoAPI()">
+      🔎 TEST WINGOBOT API
+    </button>
+
+    <div
+      id="apiStatus"
+      class="api-status muted">
+      API not tested yet.
+    </div>
+
+    <div
+      id="apiCurrent"
+      class="api-current hidden">
+
+      <div class="api-box">
+
+        <div class="api-box-title">
+          Current Period
+        </div>
+
+        <div
+          id="apiPeriod"
+          class="api-box-value">
+          —
+        </div>
 
       </div>
+
+      <div class="api-box">
+
+        <div class="api-box-title">
+          Current Number
+        </div>
+
+        <div
+          id="apiNumber"
+          class="api-box-value">
+          —
+        </div>
+
+      </div>
+
+    </div>
+
+    <div
+      id="apiStats"
+      class="api-status hidden">
+    </div>
+
+    <div
+      id="historyWrap"
+      class="history-wrap hidden">
+
+      <table class="history-table">
+
+        <thead>
+
+          <tr>
+            <th>PERIOD</th>
+            <th>NUMBER</th>
+            <th>COLOUR</th>
+            <th>PREMIUM</th>
+            <th>SUM</th>
+          </tr>
+
+        </thead>
+
+        <tbody id="historyBody">
+        </tbody>
+
+      </table>
 
     </div>
 
@@ -678,6 +825,337 @@ async function loadAll(){
 
 
 /* =========================================
+   WINGOBOT API TEST
+========================================= */
+
+async function testWingoAPI(){
+
+  if(!adminKey){
+    return;
+  }
+
+  const button =
+    document.getElementById(
+      "wingoTestBtn"
+    );
+
+  const status =
+    document.getElementById(
+      "apiStatus"
+    );
+
+  const currentBox =
+    document.getElementById(
+      "apiCurrent"
+    );
+
+  const statsBox =
+    document.getElementById(
+      "apiStats"
+    );
+
+  const historyWrap =
+    document.getElementById(
+      "historyWrap"
+    );
+
+  button.disabled = true;
+  button.textContent =
+    "⏳ CONNECTING...";
+
+  status.className =
+    "api-status muted";
+
+  status.textContent =
+    "Connecting to WingoBot API...";
+
+  currentBox.classList.add(
+    "hidden"
+  );
+
+  statsBox.classList.add(
+    "hidden"
+  );
+
+  historyWrap.classList.add(
+    "hidden"
+  );
+
+  try{
+
+    const response =
+      await fetch(
+        "/api/admin/wingo-test",
+        {
+          method:"GET",
+          cache:"no-store",
+          headers:{
+            "X-Admin-Key":
+              adminKey
+          }
+        }
+      );
+
+    const data =
+      await response.json();
+
+    if(response.status === 401){
+
+      logout(
+        "Admin session expired."
+      );
+
+      return;
+    }
+
+    if(!response.ok){
+
+      throw new Error(
+        data.message ||
+        data.error ||
+        "WingoBot API failed"
+      );
+
+    }
+
+    status.className =
+      "api-status success";
+
+    status.textContent =
+      "✓ WingoBot API connected successfully.";
+
+    const current =
+      data.current || {};
+
+    document
+      .getElementById(
+        "apiPeriod"
+      )
+      .textContent =
+      current.issueNumber ||
+      "—";
+
+    document
+      .getElementById(
+        "apiNumber"
+      )
+      .textContent =
+      current.number ??
+      "—";
+
+    currentBox.classList.remove(
+      "hidden"
+    );
+
+
+    /* STATS */
+
+    const stats =
+      data.stats || {};
+
+    statsBox.innerHTML =
+      "Fetched: <b>" +
+      escapeHTML(
+        String(
+          stats.fetched ??
+          "—"
+        )
+      ) +
+      "</b>" +
+      "<br>" +
+      "Last updated: <b>" +
+      escapeHTML(
+        String(
+          stats.last_updated ??
+          "—"
+        )
+      ) +
+      "</b>";
+
+    statsBox.classList.remove(
+      "hidden"
+    );
+
+
+    /* HISTORY */
+
+    const history =
+      Array.isArray(
+        data.history
+      )
+      ? data.history
+      : [];
+
+    renderHistory(
+      history
+    );
+
+  }
+  catch(error){
+
+    status.className =
+      "api-status error";
+
+    status.textContent =
+      "✕ API test failed: " +
+      error.message;
+
+  }
+  finally{
+
+    button.disabled = false;
+
+    button.textContent =
+      "🔎 TEST WINGOBOT API";
+
+  }
+
+}
+
+
+/* =========================================
+   HISTORY
+========================================= */
+
+function renderHistory(history){
+
+  const wrap =
+    document.getElementById(
+      "historyWrap"
+    );
+
+  const body =
+    document.getElementById(
+      "historyBody"
+    );
+
+  body.innerHTML = "";
+
+  if(!history.length){
+
+    body.innerHTML =
+      `
+      <tr>
+        <td colspan="5">
+          No history returned.
+        </td>
+      </tr>
+      `;
+
+    wrap.classList.remove(
+      "hidden"
+    );
+
+    return;
+  }
+
+
+  history.forEach(
+    function(row){
+
+      const tr =
+        document.createElement(
+          "tr"
+        );
+
+
+      const issue =
+        row.issueNumber ??
+        "—";
+
+      const number =
+        row.number ??
+        "—";
+
+      const colour =
+        row.colour ??
+        "—";
+
+      const premium =
+        row.premium ??
+        "—";
+
+      const sum =
+        row.sum ??
+        "—";
+
+
+      let colourClass = "";
+
+      const colourText =
+        String(
+          colour
+        ).toUpperCase();
+
+
+      if(
+        colourText.includes(
+          "BIG"
+        )
+      ){
+
+        colourClass =
+          "api-big";
+
+      }
+      else if(
+        colourText.includes(
+          "SMALL"
+        )
+      ){
+
+        colourClass =
+          "api-small";
+
+      }
+
+
+      tr.innerHTML =
+        `
+        <td>${escapeHTML(String(issue))}</td>
+        <td class="api-number">
+          ${escapeHTML(String(number))}
+        </td>
+        <td class="${colourClass}">
+          ${escapeHTML(String(colour))}
+        </td>
+        <td>${escapeHTML(String(premium))}</td>
+        <td>${escapeHTML(String(sum))}</td>
+        `;
+
+
+      body.appendChild(
+        tr
+      );
+
+    }
+  );
+
+
+  wrap.classList.remove(
+    "hidden"
+  );
+
+}
+
+
+/* =========================================
+   HTML ESCAPE
+========================================= */
+
+function escapeHTML(value){
+
+  return String(value)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+
+}
+
+
+/* =========================================
    LOAD KEYS
 ========================================= */
 
@@ -692,7 +1170,8 @@ async function loadKeys(){
           method:"GET",
           cache:"no-store",
           headers:{
-            "X-Admin-Key":adminKey
+            "X-Admin-Key":
+              adminKey
           }
         }
       );
@@ -724,7 +1203,8 @@ async function loadKeys(){
     document
       .getElementById("totalKeys")
       .textContent =
-      data.total ?? keys.length;
+      data.total ??
+      keys.length;
 
     document
       .getElementById("liveKeys")
@@ -768,7 +1248,9 @@ async function loadKeys(){
 function renderKeys(keys){
 
   const box =
-    document.getElementById("keyList");
+    document.getElementById(
+      "keyList"
+    );
 
   if(!keys.length){
 
@@ -780,134 +1262,161 @@ function renderKeys(keys){
 
   box.innerHTML = "";
 
-  keys.forEach(function(item){
+  keys.forEach(
+    function(item){
 
-    /*
-      New server format:
-      {
-        key,
-        status,
-        createdAt,
-        lastSeen
-      }
-    */
+      const key =
+        typeof item === "string"
+        ? item
+        : item.key;
 
-    const key =
-      typeof item === "string"
-      ? item
-      : item.key;
+      const status =
+        typeof item === "string"
+        ? "OFFLINE"
+        : item.status ||
+          "OFFLINE";
 
-    const status =
-      typeof item === "string"
-      ? "OFFLINE"
-      : item.status || "OFFLINE";
+      const createdAt =
+        typeof item === "object"
+        ? item.createdAt
+        : null;
 
-    const createdAt =
-      typeof item === "object"
-      ? item.createdAt
-      : null;
-
-    const lastSeen =
-      typeof item === "object"
-      ? item.lastSeen
-      : 0;
+      const lastSeen =
+        typeof item === "object"
+        ? item.lastSeen
+        : 0;
 
 
-    const row =
-      document.createElement("div");
+      const row =
+        document.createElement(
+          "div"
+        );
 
-    row.className =
-      "key-row";
-
-
-    const top =
-      document.createElement("div");
-
-    top.className =
-      "key-top";
+      row.className =
+        "key-row";
 
 
-    const keyText =
-      document.createElement("div");
+      const top =
+        document.createElement(
+          "div"
+        );
 
-    keyText.className =
-      "key-text";
-
-    keyText.textContent =
-      key || "UNKNOWN";
+      top.className =
+        "key-top";
 
 
-    const statusPill =
-      document.createElement("div");
+      const keyText =
+        document.createElement(
+          "div"
+        );
 
-    statusPill.className =
-      "status-pill " +
-      (
+      keyText.className =
+        "key-text";
+
+      keyText.textContent =
+        key ||
+        "UNKNOWN";
+
+
+      const statusPill =
+        document.createElement(
+          "div"
+        );
+
+      statusPill.className =
+        "status-pill " +
+        (
+          status === "LIVE"
+          ? "status-live"
+          : "status-offline"
+        );
+
+      statusPill.textContent =
         status === "LIVE"
-        ? "status-live"
-        : "status-offline"
+        ? "● LIVE"
+        : "● OFFLINE";
+
+
+      top.appendChild(
+        keyText
       );
 
-    statusPill.textContent =
-      status === "LIVE"
-      ? "● LIVE"
-      : "● OFFLINE";
+      top.appendChild(
+        statusPill
+      );
 
 
-    top.appendChild(keyText);
-    top.appendChild(statusPill);
+      const meta =
+        document.createElement(
+          "div"
+        );
+
+      meta.className =
+        "key-meta";
+
+      meta.innerHTML =
+        "Created: " +
+        formatDate(createdAt) +
+        "<br>" +
+        "Last seen: " +
+        formatLastSeen(
+          lastSeen
+        );
 
 
-    const meta =
-      document.createElement("div");
+      const actions =
+        document.createElement(
+          "div"
+        );
 
-    meta.className =
-      "key-meta";
-
-    meta.innerHTML =
-      "Created: " +
-      formatDate(createdAt) +
-      "<br>" +
-      "Last seen: " +
-      formatLastSeen(lastSeen);
+      actions.className =
+        "key-actions";
 
 
-    const actions =
-      document.createElement("div");
+      const deleteButton =
+        document.createElement(
+          "button"
+        );
 
-    actions.className =
-      "key-actions";
+      deleteButton.className =
+        "danger";
 
+      deleteButton.textContent =
+        "DELETE KEY";
 
-    const deleteButton =
-      document.createElement("button");
+      deleteButton.onclick =
+        function(){
 
-    deleteButton.className =
-      "danger";
+          deleteKey(
+            key
+          );
 
-    deleteButton.textContent =
-      "DELETE KEY";
-
-    deleteButton.onclick =
-      function(){
-
-        deleteKey(key);
-
-      };
+        };
 
 
-    actions.appendChild(
-      deleteButton
-    );
+      actions.appendChild(
+        deleteButton
+      );
 
 
-    row.appendChild(top);
-    row.appendChild(meta);
-    row.appendChild(actions);
+      row.appendChild(
+        top
+      );
 
-    box.appendChild(row);
+      row.appendChild(
+        meta
+      );
 
-  });
+      row.appendChild(
+        actions
+      );
+
+      box.appendChild(
+        row
+      );
+
+    }
+  );
 
 }
 
@@ -919,18 +1428,25 @@ function renderKeys(keys){
 async function createKey(){
 
   const input =
-    document.getElementById("newKey");
+    document.getElementById(
+      "newKey"
+    );
 
   const button =
-    document.getElementById("createBtn");
+    document.getElementById(
+      "createBtn"
+    );
 
   const message =
-    document.getElementById("createMessage");
+    document.getElementById(
+      "createMessage"
+    );
 
   const customKey =
     input.value.trim();
 
   button.disabled = true;
+
   button.textContent =
     "CREATING...";
 
@@ -952,9 +1468,10 @@ async function createKey(){
               adminKey
           },
 
-          body:JSON.stringify({
-            key:customKey
-          })
+          body:
+            JSON.stringify({
+              key:customKey
+            })
         }
       );
 
@@ -1021,6 +1538,7 @@ async function createKey(){
   finally{
 
     button.disabled = false;
+
     button.textContent =
       "CREATE ACCESS KEY";
 
@@ -1065,9 +1583,10 @@ async function deleteKey(key){
               adminKey
           },
 
-          body:JSON.stringify({
-            key:key
-          })
+          body:
+            JSON.stringify({
+              key:key
+            })
         }
       );
 
@@ -1108,7 +1627,8 @@ async function loadStatus(){
           method:"GET",
           cache:"no-store",
           headers:{
-            "X-Admin-Key":adminKey
+            "X-Admin-Key":
+              adminKey
           }
         }
       );
@@ -1135,56 +1655,66 @@ async function loadStatus(){
       await response.json();
 
 
-    /*
-      New server format:
-      data.round.prediction
-      data.round.number
-      data.round.confidence
-      data.round.countdown
-    */
-
     const round =
       data.round || {};
 
 
     document
-      .getElementById("serverStatus")
+      .getElementById(
+        "serverStatus"
+      )
       .textContent =
-      data.server || "LIVE";
+      data.server ||
+      "LIVE";
 
 
     document
-      .getElementById("prediction")
+      .getElementById(
+        "prediction"
+      )
       .textContent =
-      round.prediction || "—";
+      round.prediction ||
+      "—";
 
 
     document
-      .getElementById("number")
+      .getElementById(
+        "number"
+      )
       .textContent =
       round.number ??
       "—";
 
 
     document
-      .getElementById("confidence")
+      .getElementById(
+        "confidence"
+      )
       .textContent =
-      round.confidence !== undefined
+      round.confidence !==
+      undefined
       ? round.confidence + "%"
       : "—";
 
 
     document
-      .getElementById("countdown")
+      .getElementById(
+        "countdown"
+      )
       .textContent =
       "00:" +
       String(
         round.countdown || 0
-      ).padStart(2,"0");
+      ).padStart(
+        2,
+        "0"
+      );
 
 
     document
-      .getElementById("activeUsers")
+      .getElementById(
+        "activeUsers"
+      )
       .textContent =
       data.live ??
       data.users ??
@@ -1192,7 +1722,9 @@ async function loadStatus(){
 
 
     document
-      .getElementById("uptime")
+      .getElementById(
+        "uptime"
+      )
       .textContent =
       formatUptime(
         data.uptime || 0
@@ -1242,8 +1774,9 @@ function formatDate(timestamp){
 
   try{
 
-    return new Date(timestamp)
-      .toLocaleString();
+    return new Date(
+      timestamp
+    ).toLocaleString();
 
   }
   catch{
@@ -1262,14 +1795,17 @@ function formatLastSeen(timestamp){
   }
 
   const diff =
-    Date.now() - timestamp;
+    Date.now() -
+    Number(timestamp);
 
   if(diff < 60000){
 
     return (
       Math.max(
         1,
-        Math.floor(diff / 1000)
+        Math.floor(
+          diff / 1000
+        )
       ) +
       " sec ago"
     );
@@ -1287,7 +1823,9 @@ function formatLastSeen(timestamp){
 
   }
 
-  return formatDate(timestamp);
+  return formatDate(
+    timestamp
+  );
 
 }
 
@@ -1366,31 +1904,41 @@ function logout(message){
 
 
   document
-    .getElementById("adminPanel")
+    .getElementById(
+      "adminPanel"
+    )
     .classList
     .add("hidden");
 
 
   document
-    .getElementById("loginBox")
+    .getElementById(
+      "loginBox"
+    )
     .classList
     .remove("hidden");
 
 
   document
-    .getElementById("adminKey")
+    .getElementById(
+      "adminKey"
+    )
     .value = "";
 
 
   if(message){
 
     document
-      .getElementById("loginMessage")
+      .getElementById(
+        "loginMessage"
+      )
       .textContent =
       message;
 
     document
-      .getElementById("loginMessage")
+      .getElementById(
+        "loginMessage"
+      )
       .className =
       "message error";
 
@@ -1404,12 +1952,16 @@ function logout(message){
 ========================================= */
 
 document
-  .getElementById("adminKey")
+  .getElementById(
+    "adminKey"
+  )
   .addEventListener(
     "keydown",
     function(event){
 
-      if(event.key === "Enter"){
+      if(
+        event.key === "Enter"
+      ){
 
         login();
 
