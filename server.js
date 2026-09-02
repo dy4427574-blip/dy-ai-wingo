@@ -1,34 +1,21 @@
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
-const crypto = require('crypto');
-const { Pool } = require('pg');
+const http = require("http");
+const fs = require("fs");
+const path = require("path");
+const crypto = require("crypto");
+const { Pool } = require("pg");
 
 const PORT = process.env.PORT || 8080;
 const ROOT = __dirname;
 
 const DB = process.env.DATABASE_URL;
-const ADMIN_KEY = process.env.ADMIN_KEY || 'dy4427574';
-const TOKEN = process.env.WINGOBOT_TOKEN || '';
+const ADMIN_KEY = process.env.ADMIN_KEY || "dy4427574";
+const TOKEN = process.env.WINGOBOT_TOKEN || "";
 
 const API_URL =
-  'https://api.wingobot.com/v2/30-sec-game-history';
+  "https://api.wingobot.com/v2/30-sec-game-history";
 
 const ROUND_SECONDS = 30;
-
-/*
-====================================================
- DY AI WINGO 30S
- REAL HISTORY + SMOOTH SYNC ENGINE
-====================================================
-
-Important:
-- No fixed +2 period offset.
-- WingoBot data is cached.
-- New API period automatically re-syncs timing.
-- If API temporarily fails, previous valid data remains.
-- Prediction is statistical only.
-*/
+const API_REFRESH_MS = 1000;
 
 const pool = new Pool({
   connectionString: DB,
@@ -39,9 +26,9 @@ const pool = new Pool({
 });
 
 
-/* ==================================================
-   GLOBAL WINGOBOT CACHE
-================================================== */
+/* =====================================================
+   LIVE CACHE
+===================================================== */
 
 const cache = {
   data: null,
@@ -51,76 +38,72 @@ const cache = {
   apiIssue: null,
   apiNumber: null,
 
-  syncedAt: 0,
   lastSuccessAt: 0,
+  syncedAt: 0,
+
+  anchorIssue: null,
+  anchorTime: 0,
 
   fetching: false,
-  error: null,
-
-  /*
-    Timing anchor.
-    When a fresh API result arrives, we anchor
-    the current known round to the current time.
-  */
-  anchorIssue: null,
-  anchorTime: 0
+  error: null
 };
 
 
-/* ==================================================
-   RESPONSE HELPERS
-================================================== */
+/* =====================================================
+   RESPONSE
+===================================================== */
 
-function send(res, code, obj) {
+function send(res, code, data) {
   if (res.headersSent) return;
 
   res.writeHead(code, {
-    'Content-Type': 'application/json; charset=utf-8',
-    'Cache-Control': 'no-store',
-    'Access-Control-Allow-Origin': '*'
+    "Content-Type": "application/json; charset=utf-8",
+    "Cache-Control": "no-store, no-cache, must-revalidate",
+    "Access-Control-Allow-Origin": "*"
   });
 
-  res.end(JSON.stringify(obj));
+  res.end(JSON.stringify(data));
 }
 
 
 function admin(req) {
-  return req.headers['x-admin-key'] === ADMIN_KEY;
+  return req.headers["x-admin-key"] === ADMIN_KEY;
 }
 
 
 function body(req) {
   return new Promise((resolve, reject) => {
-    let s = '';
+    let s = "";
 
-    req.on('data', chunk => {
+    req.on("data", chunk => {
       s += chunk;
+
       if (s.length > 1024 * 1024) {
-        reject(new Error('BODY_TOO_LARGE'));
+        reject(new Error("BODY_TOO_LARGE"));
         req.destroy();
       }
     });
 
-    req.on('end', () => {
+    req.on("end", () => {
       try {
         resolve(s ? JSON.parse(s) : {});
       } catch {
-        reject(new Error('INVALID_JSON'));
+        reject(new Error("INVALID_JSON"));
       }
     });
 
-    req.on('error', reject);
+    req.on("error", reject);
   });
 }
 
 
-/* ==================================================
+/* =====================================================
    DATABASE
-================================================== */
+===================================================== */
 
 async function init() {
   if (!DB) {
-    throw new Error('DATABASE_URL is not configured');
+    throw new Error("DATABASE_URL is not configured");
   }
 
   await pool.query(`
@@ -135,13 +118,15 @@ async function init() {
 }
 
 
-/* ==================================================
-   WINGOBOT FETCH
-================================================== */
+/* =====================================================
+   WINGOBOT
+===================================================== */
 
 async function fetchWingoBot() {
   if (!TOKEN) {
-    throw new Error('WINGOBOT_TOKEN is not configured');
+    throw new Error(
+      "WINGOBOT_TOKEN is not configured"
+    );
   }
 
   const controller = new AbortController();
@@ -152,14 +137,14 @@ async function fetchWingoBot() {
 
   try {
     const r = await fetch(API_URL, {
-      method: 'GET',
+      method: "GET",
 
       headers: {
-        Authorization: 'Bearer ' + TOKEN,
-        Accept: 'application/json'
+        Authorization: "Bearer " + TOKEN,
+        Accept: "application/json"
       },
 
-      cache: 'no-store',
+      cache: "no-store",
       signal: controller.signal
     });
 
@@ -171,9 +156,8 @@ async function fetchWingoBot() {
       data = JSON.parse(text);
     } catch {
       throw new Error(
-        'WingoBot returned invalid JSON (HTTP ' +
-        r.status +
-        ')'
+        "WingoBot returned invalid JSON HTTP " +
+        r.status
       );
     }
 
@@ -181,7 +165,7 @@ async function fetchWingoBot() {
       throw new Error(
         data.error ||
         data.message ||
-        ('WingoBot API HTTP ' + r.status)
+        ("WingoBot API HTTP " + r.status)
       );
     }
 
@@ -193,9 +177,9 @@ async function fetchWingoBot() {
 }
 
 
-/* ==================================================
-   HISTORY CLEANER
-================================================== */
+/* =====================================================
+   HISTORY CLEAN
+===================================================== */
 
 function hist(data) {
   const source =
@@ -206,23 +190,19 @@ function hist(data) {
   return source
     .map(x => ({
       issueNumber:
-        x.issueNumber ??
-        null,
+        x.issueNumber ?? null,
 
       number:
         Number(x.number),
 
       colour:
-        x.colour ??
-        '',
+        x.colour ?? "",
 
       premium:
-        x.premium ??
-        null,
+        x.premium ?? null,
 
       sum:
-        x.sum ??
-        null
+        x.sum ?? null
     }))
 
     .filter(x =>
@@ -233,25 +213,25 @@ function hist(data) {
 }
 
 
-/* ==================================================
-   BIG / SMALL
-================================================== */
+/* =====================================================
+   BIG SMALL
+===================================================== */
 
-function bs(number) {
-  return Number(number) >= 5
-    ? 'BIG'
-    : 'SMALL';
+function bs(n) {
+  return Number(n) >= 5
+    ? "BIG"
+    : "SMALL";
 }
 
 
-/* ==================================================
-   SAFE ISSUE NUMBER
-================================================== */
+/* =====================================================
+   ISSUE
+===================================================== */
 
 function issueValue(value) {
   const n = Number(
-    String(value ?? '')
-      .replace(/\D/g, '')
+    String(value ?? "")
+      .replace(/\D/g, "")
   );
 
   return Number.isSafeInteger(n)
@@ -259,14 +239,6 @@ function issueValue(value) {
     : null;
 }
 
-
-/*
-  Increment issue number by one round.
-
-  This is used only after observing the provider's
-  real issue sequence. It is NOT a permanent +2
-  calibration.
-*/
 
 function nextIssue(issue, rounds = 1) {
   const n = issueValue(issue);
@@ -279,25 +251,20 @@ function nextIssue(issue, rounds = 1) {
 }
 
 
-/* ==================================================
-   TIMING ENGINE
-================================================== */
+/* =====================================================
+   TIMING
+===================================================== */
 
-function syncTiming(issue) {
+function syncAnchor(issue) {
   if (issue === null || issue === undefined) {
     return;
   }
 
   const normalized = String(issue);
 
-  /*
-    Only create a new anchor when provider gives us
-    a different issue number.
-  */
-
   if (
-    cache.anchorIssue !== normalized ||
-    !cache.anchorTime
+    !cache.anchorIssue ||
+    cache.anchorIssue !== normalized
   ) {
     cache.anchorIssue = normalized;
     cache.anchorTime = Date.now();
@@ -305,21 +272,15 @@ function syncTiming(issue) {
 }
 
 
-/*
-  Get active period.
-
-  We treat the API's current issue as the latest
-  known real issue and move forward according to
-  elapsed 30-second rounds.
-
-  This prevents a permanently stuck period.
-*/
-
 function getTiming() {
-  if (!cache.anchorIssue || !cache.anchorTime) {
+  if (
+    !cache.anchorIssue ||
+    !cache.anchorTime
+  ) {
     return {
       period: cache.apiIssue,
       countdown: 30,
+      roundsPassed: 0,
       estimated: false
     };
   }
@@ -330,9 +291,12 @@ function getTiming() {
       Date.now() - cache.anchorTime
     );
 
+  const roundMs =
+    ROUND_SECONDS * 1000;
+
   const roundsPassed =
     Math.floor(
-      elapsed / (ROUND_SECONDS * 1000)
+      elapsed / roundMs
     );
 
   const period =
@@ -341,15 +305,12 @@ function getTiming() {
       roundsPassed
     );
 
-  const elapsedInRound =
-    elapsed %
-    (ROUND_SECONDS * 1000);
+  const inside =
+    elapsed % roundMs;
 
   let countdown =
     ROUND_SECONDS -
-    Math.floor(
-      elapsedInRound / 1000
-    );
+    Math.floor(inside / 1000);
 
   if (countdown < 1) {
     countdown = 1;
@@ -368,83 +329,60 @@ function getTiming() {
 }
 
 
-/* ==================================================
+/* =====================================================
    REAL HISTORY AI
-================================================== */
+===================================================== */
 
 function analyze(history) {
-  const numbers =
+
+  const nums =
     history
       .slice(0, 50)
       .map(x => x.number);
 
-  if (numbers.length < 5) {
+  if (nums.length < 5) {
     return {
       prediction: null,
       number: null,
       confidence: 0,
       patternScore: 0,
-      sampleSize: numbers.length,
-      method: 'INSUFFICIENT_HISTORY',
+      sampleSize: nums.length,
+      method: "INSUFFICIENT_HISTORY",
       note:
-        'Not enough historical results for statistical analysis.'
+        "Not enough history for analysis."
     };
   }
 
 
-  /* -----------------------------------------------
-     WINDOWS
-  ------------------------------------------------ */
-
-  const recent10 =
-    numbers.slice(0, 10);
-
-  const recent20 =
-    numbers.slice(0, 20);
-
-  const recent30 =
-    numbers.slice(0, 30);
+  const r10 = nums.slice(0, 10);
+  const r20 = nums.slice(0, 20);
+  const r30 = nums.slice(0, 30);
 
 
-  /* -----------------------------------------------
-     BIG / SMALL COUNTS
-  ------------------------------------------------ */
-
-  function ratioBig(arr) {
-    if (!arr.length) return 0.5;
-
-    return (
-      arr.filter(n => n >= 5).length /
-      arr.length
-    );
-  }
-
-  const overallRatio =
-    ratioBig(recent30);
-
-  const ratio20 =
-    ratioBig(recent20);
-
-  const ratio10 =
-    ratioBig(recent10);
+  const ratioBig = arr =>
+    arr.length
+      ? arr.filter(n => n >= 5).length / arr.length
+      : 0.5;
 
 
-  /* -----------------------------------------------
-     STREAK
-  ------------------------------------------------ */
+  const overall = ratioBig(r30);
+  const medium = ratioBig(r20);
+  const recent = ratioBig(r10);
 
-  const latestType =
-    bs(numbers[0]);
+
+  /* STREAK */
+
+  const latestType = bs(nums[0]);
 
   let streak = 1;
 
   for (
     let i = 1;
-    i < numbers.length;
+    i < nums.length;
     i++
   ) {
     if (
-      bs(numbers[i]) === latestType
+      bs(nums[i]) === latestType
     ) {
       streak++;
     } else {
@@ -453,21 +391,19 @@ function analyze(history) {
   }
 
 
-  /* -----------------------------------------------
-     TRANSITIONS
-  ------------------------------------------------ */
+  /* SAME / FLIP */
 
   let same = 0;
   let flip = 0;
 
   for (
     let i = 0;
-    i < numbers.length - 1;
+    i < nums.length - 1;
     i++
   ) {
     if (
-      bs(numbers[i]) ===
-      bs(numbers[i + 1])
+      bs(nums[i]) ===
+      bs(nums[i + 1])
     ) {
       same++;
     } else {
@@ -475,78 +411,60 @@ function analyze(history) {
     }
   }
 
-  const transitionTotal =
+  const totalTransition =
     same + flip;
 
   const sameRatio =
-    transitionTotal
-      ? same / transitionTotal
+    totalTransition
+      ? same / totalTransition
       : 0.5;
 
 
-  /* -----------------------------------------------
-     RECENT MOMENTUM
-  ------------------------------------------------ */
+  /* MOMENTUM */
 
-  let bigScore = 0;
-  let smallScore = 0;
+  let bigMomentum = 0;
+  let smallMomentum = 0;
 
-  /*
-    Recent results receive more weight.
-  */
+  r20.forEach((n, i) => {
 
-  recent20.forEach((n, i) => {
     const weight =
-      (recent20.length - i) /
-      recent20.length;
+      (r20.length - i) /
+      r20.length;
 
     if (n >= 5) {
-      bigScore += weight;
+      bigMomentum += weight;
     } else {
-      smallScore += weight;
+      smallMomentum += weight;
     }
   });
 
 
-  /* -----------------------------------------------
-     BASE PROBABILITY
-  ------------------------------------------------ */
-
-  let bigProbability =
-    0.5;
+  let bigProbability = 0.5;
 
   bigProbability +=
-    (overallRatio - 0.5) * 0.22;
+    (overall - 0.5) * 0.22;
 
   bigProbability +=
-    (ratio20 - 0.5) * 0.28;
+    (medium - 0.5) * 0.28;
 
   bigProbability +=
-    (ratio10 - 0.5) * 0.35;
+    (recent - 0.5) * 0.35;
+
 
   const momentumTotal =
-    bigScore +
-    smallScore;
+    bigMomentum +
+    smallMomentum;
 
   if (momentumTotal > 0) {
     bigProbability +=
       (
-        (bigScore / momentumTotal) -
+        bigMomentum / momentumTotal -
         0.5
       ) * 0.25;
   }
 
 
-  /*
-    Transition signal.
-
-    If latest is BIG and historical tendency
-    is same-result heavy, give a small BIG signal.
-
-    If flip tendency is stronger, signal is reversed.
-  */
-
-  if (latestType === 'BIG') {
+  if (latestType === "BIG") {
     bigProbability +=
       (sameRatio - 0.5) * 0.12;
   } else {
@@ -554,10 +472,6 @@ function analyze(history) {
       (sameRatio - 0.5) * 0.12;
   }
 
-
-  /*
-    Avoid extreme fake certainty.
-  */
 
   bigProbability =
     Math.max(
@@ -571,56 +485,40 @@ function analyze(history) {
 
   const prediction =
     bigProbability >= 0.5
-      ? 'BIG'
-      : 'SMALL';
+      ? "BIG"
+      : "SMALL";
 
 
-  /* -----------------------------------------------
-     SIGNAL STRENGTH
-  ------------------------------------------------ */
+  /* AGREEMENT */
 
-  const distance =
-    Math.abs(
-      bigProbability - 0.5
-    );
-
-  let confidence =
-    50 +
-    distance * 75;
-
-
-  /*
-    Conflicting windows reduce confidence.
-  */
-
-  const directions = [
-    overallRatio >= 0.5,
-    ratio20 >= 0.5,
-    ratio10 >= 0.5,
-    bigScore >= smallScore
+  const signals = [
+    overall >= 0.5,
+    medium >= 0.5,
+    recent >= 0.5,
+    bigMomentum >= smallMomentum
   ];
 
   const yes =
-    directions.filter(Boolean).length;
+    signals.filter(Boolean).length;
 
   const no =
-    directions.length - yes;
+    signals.length - yes;
 
   const agreement =
     Math.max(yes, no) /
-    directions.length;
+    signals.length;
 
+
+  let confidence =
+    50 +
+    Math.abs(
+      bigProbability - 0.5
+    ) * 75;
 
   confidence *=
     0.82 +
     agreement * 0.18;
 
-
-  /*
-    Very long streaks are NOT treated as guaranteed
-    reversal. We simply reduce confidence because
-    the pattern becomes less informative.
-  */
 
   if (streak >= 4) {
     confidence -= 4;
@@ -639,62 +537,44 @@ function analyze(history) {
     );
 
 
-  /* -----------------------------------------------
-     NUMBER ANALYSIS
-  ------------------------------------------------ */
+  /* NUMBER */
 
-  const frequency =
+  const freq =
     Array(10).fill(0);
 
-  const recency =
+  const rec =
     Array(10).fill(0);
 
-  recent30.forEach(n => {
-    frequency[n]++;
+  r30.forEach(n => {
+    freq[n]++;
   });
 
-  recent10.forEach((n, index) => {
-    recency[n] +=
-      (recent10.length - index) /
-      recent10.length;
+  r10.forEach((n, i) => {
+    rec[n] +=
+      (r10.length - i) /
+      r10.length;
   });
 
-
-  /*
-    Score each number using:
-    - historical frequency
-    - recent appearance
-    - BIG/SMALL alignment
-  */
 
   const candidates =
     Array
       .from(
         { length: 10 },
-        (_, n) => {
+        (_, n) => ({
 
-          const freq =
-            frequency[n] /
-            Math.max(
-              1,
-              recent30.length
-            );
+          n,
 
-          const rec =
-            recency[n] /
-            Math.max(
-              1,
-              recent10.length
-            );
+          score:
+            (
+              freq[n] /
+              Math.max(1, r30.length)
+            ) * 0.55 +
 
-          return {
-            n,
-
-            score:
-              freq * 0.55 +
-              rec * 0.45
-          };
-        }
+            (
+              rec[n] /
+              Math.max(1, r10.length)
+            ) * 0.45
+        })
       )
 
       .filter(x =>
@@ -708,46 +588,26 @@ function analyze(history) {
       );
 
 
-  const suggestedNumber =
+  const number =
     candidates[0]?.n ??
     (
-      prediction === 'BIG'
+      prediction === "BIG"
         ? 5
         : 0
     );
 
 
-  /* -----------------------------------------------
-     PATTERN SCORE
-  ------------------------------------------------ */
-
-  const balanceSignal =
-    Math.abs(
-      overallRatio - 0.5
-    );
-
-  const recentSignal =
-    Math.abs(
-      ratio10 - 0.5
-    );
-
-  const agreementSignal =
-    Math.abs(
-      agreement - 0.5
-    );
-
+  /* PATTERN */
 
   let patternScore =
     45 +
-    balanceSignal * 80 +
-    recentSignal * 80 +
-    agreementSignal * 30;
-
+    Math.abs(overall - 0.5) * 80 +
+    Math.abs(recent - 0.5) * 80 +
+    Math.abs(agreement - 0.5) * 30;
 
   if (streak >= 3) {
     patternScore -= 5;
   }
-
 
   patternScore =
     Math.round(
@@ -765,21 +625,20 @@ function analyze(history) {
 
     prediction,
 
-    number:
-      suggestedNumber,
+    number,
 
     confidence,
 
     patternScore,
 
     sampleSize:
-      numbers.length,
+      nums.length,
 
     latestNumber:
-      numbers[0],
+      nums[0],
 
     latestPrediction:
-      bs(numbers[0]),
+      latestType,
 
     streak,
 
@@ -787,17 +646,17 @@ function analyze(history) {
 
       bigPercent:
         Math.round(
-          overallRatio * 100
+          overall * 100
         ),
 
       recent20BigPercent:
         Math.round(
-          ratio20 * 100
+          medium * 100
         ),
 
       recent10BigPercent:
         Math.round(
-          ratio10 * 100
+          recent * 100
         ),
 
       samePercent:
@@ -807,9 +666,7 @@ function analyze(history) {
 
       flipPercent:
         Math.round(
-          (
-            1 - sameRatio
-          ) * 100
+          (1 - sameRatio) * 100
         ),
 
       bigProbability:
@@ -824,19 +681,20 @@ function analyze(history) {
     },
 
     method:
-      'DY_AI_REAL_HISTORY_STATISTICAL',
+      "DY_AI_REAL_HISTORY_STATISTICAL",
 
     note:
-      'Statistical estimate from historical results only. Future results are not guaranteed.'
+      "Statistical estimate from historical results only. Future results are not guaranteed."
   };
 }
 
 
-/* ==================================================
-   UPDATE CACHE
-================================================== */
+/* =====================================================
+   CACHE UPDATE
+===================================================== */
 
 function updateCache(data) {
+
   const history =
     hist(data);
 
@@ -845,11 +703,10 @@ function updateCache(data) {
     history[0]?.issueNumber ??
     null;
 
+
   const apiNumber =
     Number.isInteger(
-      Number(
-        data?.current?.number
-      )
+      Number(data?.current?.number)
     )
       ? Number(data.current.number)
       : (
@@ -859,15 +716,17 @@ function updateCache(data) {
 
 
   /*
-    Detect a genuinely new provider issue.
+    IMPORTANT:
 
-    Only then do we reset the timing anchor.
+    New API issue = new timing anchor.
+
+    We never permanently add +2.
   */
 
   if (
     apiIssue !== null &&
     String(apiIssue) !==
-      String(cache.apiIssue ?? '')
+      String(cache.apiIssue ?? "")
   ) {
 
     cache.apiIssue =
@@ -878,8 +737,10 @@ function updateCache(data) {
 
     cache.anchorTime =
       Date.now();
+  }
 
-  } else if (
+
+  if (
     !cache.anchorIssue &&
     apiIssue !== null
   ) {
@@ -895,14 +756,9 @@ function updateCache(data) {
   }
 
 
-  cache.data =
-    data;
-
-  cache.history =
-    history;
-
-  cache.apiNumber =
-    apiNumber;
+  cache.data = data;
+  cache.history = history;
+  cache.apiNumber = apiNumber;
 
   cache.analysis =
     analyze(history);
@@ -913,20 +769,15 @@ function updateCache(data) {
   cache.lastSuccessAt =
     Date.now();
 
-  cache.error =
-    null;
+  cache.error = null;
 }
 
 
-/* ==================================================
-   REFRESH CACHE
-================================================== */
+/* =====================================================
+   REFRESH
+===================================================== */
 
 async function refreshWingo() {
-
-  /*
-    Prevent multiple simultaneous API calls.
-  */
 
   if (cache.fetching) {
     return cache.data;
@@ -949,62 +800,47 @@ async function refreshWingo() {
       e.message;
 
     console.error(
-      'WINGOBOT REFRESH:',
+      "WINGOBOT:",
       e.message
     );
-
-    /*
-      Do NOT erase old valid data.
-    */
 
     return cache.data;
 
   } finally {
 
-    cache.fetching =
-      false;
+    cache.fetching = false;
   }
 }
 
 
 /*
-  Background refresh.
-
-  The API is refreshed independently from the
-  frontend countdown.
+  EXACTLY 1 SECOND REFRESH
 */
 
 setInterval(() => {
+
   refreshWingo()
     .catch(() => {});
-}, 3000);
+
+}, API_REFRESH_MS);
 
 
-/* ==================================================
-   INITIAL API LOAD
-================================================== */
-
-async function initialWingoLoad() {
-  await refreshWingo();
-}
-
-
-/* ==================================================
+/* =====================================================
    AUTH
-================================================== */
+===================================================== */
 
 async function auth(req, res) {
 
   const key =
     String(
-      req.headers['x-access-key'] ||
-      ''
+      req.headers["x-access-key"] ||
+      ""
     ).trim();
 
   const device =
     String(
-      req.headers['x-device-id'] ||
-      ''
+      req.headers["x-device-id"] ||
+      ""
     ).trim();
 
 
@@ -1013,7 +849,7 @@ async function auth(req, res) {
     send(res, 401, {
       success: false,
       error:
-        'ACCESS_HEADERS_REQUIRED'
+        "ACCESS_HEADERS_REQUIRED"
     });
 
     return null;
@@ -1037,7 +873,7 @@ async function auth(req, res) {
     send(res, 401, {
       success: false,
       error:
-        'INVALID_ACCESS_KEY'
+        "INVALID_ACCESS_KEY"
     });
 
     return null;
@@ -1056,7 +892,7 @@ async function auth(req, res) {
     send(res, 403, {
       success: false,
       error:
-        'KEY_BOUND_TO_ANOTHER_DEVICE'
+        "KEY_BOUND_TO_ANOTHER_DEVICE"
     });
 
     return null;
@@ -1083,11 +919,11 @@ async function auth(req, res) {
 }
 
 
-/* ==================================================
-   STATE RESPONSE
-================================================== */
+/* =====================================================
+   STATE
+===================================================== */
 
-function stateObject() {
+function makeState() {
 
   const timing =
     getTiming();
@@ -1099,11 +935,10 @@ function stateObject() {
 
   return {
 
-    success:
-      true,
+    success: true,
 
     source:
-      'WingoBot',
+      "WingoBot",
 
     realHistory:
       cache.history.length > 0,
@@ -1113,9 +948,10 @@ function stateObject() {
 
     stale:
       cache.lastSuccessAt
-        ? Date.now() -
-          cache.lastSuccessAt >
-          15000
+        ? (
+            Date.now() -
+            cache.lastSuccessAt
+          ) > 5000
         : true,
 
     lastSync:
@@ -1123,6 +959,9 @@ function stateObject() {
 
     period:
       timing.period,
+
+    countdown:
+      timing.countdown,
 
     current: {
 
@@ -1135,26 +974,6 @@ function stateObject() {
 
     apiPeriod:
       cache.apiIssue,
-
-    countdown:
-      timing.countdown,
-
-    timing: {
-
-      roundSeconds:
-        ROUND_SECONDS,
-
-      roundsPassed:
-        timing.roundsPassed || 0,
-
-      estimated:
-        timing.estimated,
-
-      status:
-        cache.error
-          ? 'USING_LAST_VALID_DATA'
-          : 'SYNCED'
-    },
 
     prediction:
       a.prediction,
@@ -1171,9 +990,6 @@ function stateObject() {
     sampleSize:
       a.sampleSize,
 
-    method:
-      a.method,
-
     latestNumber:
       a.latestNumber,
 
@@ -1186,12 +1002,31 @@ function stateObject() {
     statistics:
       a.statistics || null,
 
+    method:
+      a.method,
+
     history:
       cache.history.slice(0, 30),
 
     stats:
-      cache.data?.stats ||
-      null,
+      cache.data?.stats || null,
+
+    timing: {
+
+      roundSeconds:
+        ROUND_SECONDS,
+
+      roundsPassed:
+        timing.roundsPassed || 0,
+
+      estimated:
+        timing.estimated,
+
+      status:
+        cache.error
+          ? "USING_LAST_VALID_DATA"
+          : "LIVE"
+    },
 
     apiError:
       cache.error || null,
@@ -1202,46 +1037,43 @@ function stateObject() {
 }
 
 
-/* ==================================================
-   MAIN HANDLER
-================================================== */
+/* =====================================================
+   SERVER
+===================================================== */
 
 async function handle(req, res) {
 
   const u =
     new URL(
       req.url,
-      'http://localhost'
+      "http://localhost"
     );
 
 
-  /* -----------------------------------------------
-     OPTIONS
-  ------------------------------------------------ */
+  /* OPTIONS */
 
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
 
     res.writeHead(204, {
-      'Access-Control-Allow-Origin': '*',
 
-      'Access-Control-Allow-Headers':
-        'Content-Type,X-Admin-Key,X-Access-Key,X-Device-ID',
+      "Access-Control-Allow-Origin": "*",
 
-      'Access-Control-Allow-Methods':
-        'GET,POST,DELETE,OPTIONS'
+      "Access-Control-Allow-Headers":
+        "Content-Type,X-Admin-Key,X-Access-Key,X-Device-ID",
+
+      "Access-Control-Allow-Methods":
+        "GET,POST,DELETE,OPTIONS"
     });
 
     return res.end();
   }
 
 
-  /* -----------------------------------------------
-     HEALTH
-  ------------------------------------------------ */
+  /* HEALTH */
 
   if (
-    u.pathname === '/health' ||
-    u.pathname === '/api/health'
+    u.pathname === "/health" ||
+    u.pathname === "/api/health"
   ) {
 
     return send(res, 200, {
@@ -1251,13 +1083,13 @@ async function handle(req, res) {
       ok: true,
 
       service:
-        'DY AI Wingo 30S',
+        "DY AI Wingo 30S",
 
       wingobot:
         !!TOKEN,
 
-      cached:
-        !!cache.data,
+      realHistory:
+        cache.history.length > 0,
 
       lastSync:
         cache.lastSuccessAt || null
@@ -1265,20 +1097,18 @@ async function handle(req, res) {
   }
 
 
-  /* =================================================
-     ADMIN PING
-  ================================================= */
+  /* ADMIN PING */
 
   if (
-    u.pathname === '/api/admin/ping' &&
-    req.method === 'GET'
+    u.pathname === "/api/admin/ping" &&
+    req.method === "GET"
   ) {
 
     if (!admin(req)) {
 
       return send(res, 401, {
         success: false,
-        error: 'UNAUTHORIZED'
+        error: "UNAUTHORIZED"
       });
     }
 
@@ -1288,20 +1118,18 @@ async function handle(req, res) {
   }
 
 
-  /* =================================================
-     ADMIN STATUS
-  ================================================= */
+  /* ADMIN STATUS */
 
   if (
-    u.pathname === '/api/admin/status' &&
-    req.method === 'GET'
+    u.pathname === "/api/admin/status" &&
+    req.method === "GET"
   ) {
 
     if (!admin(req)) {
 
       return send(res, 401, {
         success: false,
-        error: 'UNAUTHORIZED'
+        error: "UNAUTHORIZED"
       });
     }
 
@@ -1309,8 +1137,11 @@ async function handle(req, res) {
     let database = false;
 
     try {
-      await pool.query('SELECT 1');
+
+      await pool.query("SELECT 1");
+
       database = true;
+
     } catch {}
 
 
@@ -1344,20 +1175,18 @@ async function handle(req, res) {
   }
 
 
-  /* =================================================
-     ADMIN KEYS GET
-  ================================================= */
+  /* ADMIN KEYS GET */
 
   if (
-    u.pathname === '/api/admin/keys' &&
-    req.method === 'GET'
+    u.pathname === "/api/admin/keys" &&
+    req.method === "GET"
   ) {
 
     if (!admin(req)) {
 
       return send(res, 401, {
         success: false,
-        error: 'UNAUTHORIZED'
+        error: "UNAUTHORIZED"
       });
     }
 
@@ -1397,20 +1226,18 @@ async function handle(req, res) {
   }
 
 
-  /* =================================================
-     ADMIN CREATE KEY
-  ================================================= */
+  /* CREATE KEY */
 
   if (
-    u.pathname === '/api/admin/keys' &&
-    req.method === 'POST'
+    u.pathname === "/api/admin/keys" &&
+    req.method === "POST"
   ) {
 
     if (!admin(req)) {
 
       return send(res, 401, {
         success: false,
-        error: 'UNAUTHORIZED'
+        error: "UNAUTHORIZED"
       });
     }
 
@@ -1424,14 +1251,14 @@ async function handle(req, res) {
         b.key ??
         b.access_key ??
         b.customKey ??
-        ''
+        ""
       ).trim()
       ||
       (
-        'DY-USER-' +
+        "DY-USER-" +
         crypto
           .randomBytes(5)
-          .toString('hex')
+          .toString("hex")
           .toUpperCase()
       );
 
@@ -1471,12 +1298,12 @@ async function handle(req, res) {
 
     } catch (e) {
 
-      if (e.code === '23505') {
+      if (e.code === "23505") {
 
         return send(res, 409, {
           success: false,
           error:
-            'KEY_ALREADY_EXISTS'
+            "KEY_ALREADY_EXISTS"
         });
       }
 
@@ -1485,20 +1312,18 @@ async function handle(req, res) {
   }
 
 
-  /* =================================================
-     ADMIN DELETE KEY
-  ================================================= */
+  /* DELETE KEY */
 
   if (
-    u.pathname === '/api/admin/keys' &&
-    req.method === 'DELETE'
+    u.pathname === "/api/admin/keys" &&
+    req.method === "DELETE"
   ) {
 
     if (!admin(req)) {
 
       return send(res, 401, {
         success: false,
-        error: 'UNAUTHORIZED'
+        error: "UNAUTHORIZED"
       });
     }
 
@@ -1511,7 +1336,7 @@ async function handle(req, res) {
       String(
         b.key ??
         b.access_key ??
-        ''
+        ""
       ).trim();
 
 
@@ -1530,20 +1355,18 @@ async function handle(req, res) {
   }
 
 
-  /* =================================================
-     RESET DEVICE
-  ================================================= */
+  /* RESET DEVICE */
 
   if (
-    u.pathname === '/api/admin/reset-device' &&
-    req.method === 'POST'
+    u.pathname === "/api/admin/reset-device" &&
+    req.method === "POST"
   ) {
 
     if (!admin(req)) {
 
       return send(res, 401, {
         success: false,
-        error: 'UNAUTHORIZED'
+        error: "UNAUTHORIZED"
       });
     }
 
@@ -1576,9 +1399,7 @@ async function handle(req, res) {
         WHERE access_key=$1
         `,
         [
-          String(
-            b.key || ''
-          )
+          String(b.key || "")
         ]
       );
     }
@@ -1590,20 +1411,18 @@ async function handle(req, res) {
   }
 
 
-  /* =================================================
-     ADMIN WINGOBOT TEST
-  ================================================= */
+  /* WINGOBOT TEST */
 
   if (
-    u.pathname === '/api/admin/wingo-test' &&
-    req.method === 'GET'
+    u.pathname === "/api/admin/wingo-test" &&
+    req.method === "GET"
   ) {
 
     if (!admin(req)) {
 
       return send(res, 401, {
         success: false,
-        error: 'UNAUTHORIZED'
+        error: "UNAUTHORIZED"
       });
     }
 
@@ -1618,11 +1437,11 @@ async function handle(req, res) {
         success: false,
 
         error:
-          'WINGOBOT_API_FAILED',
+          "WINGOBOT_API_FAILED",
 
         message:
           cache.error ||
-          'No WingoBot data available'
+          "No WingoBot data"
       });
     }
 
@@ -1632,7 +1451,7 @@ async function handle(req, res) {
       success: true,
 
       source:
-        'WingoBot',
+        "WingoBot",
 
       current:
         cache.data.current ||
@@ -1663,13 +1482,11 @@ async function handle(req, res) {
   }
 
 
-  /* =================================================
-     KEY CHECK
-  ================================================= */
+  /* KEY CHECK */
 
   if (
-    u.pathname === '/api/key/check' &&
-    req.method === 'GET'
+    u.pathname === "/api/key/check" &&
+    req.method === "GET"
   ) {
 
     const r =
@@ -1686,8 +1503,8 @@ async function handle(req, res) {
 
       status:
         r.device_id
-          ? 'LIVE'
-          : 'UNBOUND',
+          ? "LIVE"
+          : "UNBOUND",
 
       key:
         r.access_key
@@ -1696,12 +1513,12 @@ async function handle(req, res) {
 
 
   /* =================================================
-     REAL AI STATE
+     LIVE STATE
   ================================================= */
 
   if (
-    u.pathname === '/api/state' &&
-    req.method === 'GET'
+    u.pathname === "/api/state" &&
+    req.method === "GET"
   ) {
 
     const r =
@@ -1709,12 +1526,6 @@ async function handle(req, res) {
 
     if (!r) return;
 
-
-    /*
-      If there is no cached data, wait for one API
-      request. Normally the background cache already
-      has it.
-    */
 
     if (!cache.data) {
       await refreshWingo();
@@ -1728,17 +1539,17 @@ async function handle(req, res) {
         success: false,
 
         source:
-          'WingoBot',
+          "WingoBot",
 
         realHistory:
           false,
 
         error:
-          'WINGOBOT_API_FAILED',
+          "WINGOBOT_API_FAILED",
 
         message:
           cache.error ||
-          'No valid WingoBot data available'
+          "No valid data"
       });
     }
 
@@ -1746,18 +1557,16 @@ async function handle(req, res) {
     return send(
       res,
       200,
-      stateObject()
+      makeState()
     );
   }
 
 
-  /* =================================================
-     HISTORY
-  ================================================= */
+  /* HISTORY */
 
   if (
-    u.pathname === '/api/history' &&
-    req.method === 'GET'
+    u.pathname === "/api/history" &&
+    req.method === "GET"
   ) {
 
     const r =
@@ -1771,28 +1580,12 @@ async function handle(req, res) {
     }
 
 
-    if (!cache.data) {
-
-      return send(res, 502, {
-
-        success: false,
-
-        error:
-          'WINGOBOT_API_FAILED',
-
-        message:
-          cache.error ||
-          'No history available'
-      });
-    }
-
-
     return send(res, 200, {
 
       success: true,
 
       source:
-        'WingoBot',
+        "WingoBot",
 
       realHistory:
         true,
@@ -1801,17 +1594,17 @@ async function handle(req, res) {
         cache.history.slice(0, 30),
 
       current:
-        cache.data.current ||
+        cache.data?.current ||
         null,
-
-      apiPeriod:
-        cache.apiIssue,
 
       activePeriod:
         getTiming().period,
 
+      apiPeriod:
+        cache.apiIssue,
+
       stats:
-        cache.data.stats ||
+        cache.data?.stats ||
         null,
 
       lastSync:
@@ -1828,37 +1621,37 @@ async function handle(req, res) {
 
 
   if (
-    u.pathname === '/' ||
-    u.pathname === '/prediction.html'
+    u.pathname === "/" ||
+    u.pathname === "/prediction.html"
   ) {
 
-    file =
-      'prediction.html';
+    file = "prediction.html";
 
   } else if (
-    u.pathname === '/admin' ||
-    u.pathname === '/admin.html'
+    u.pathname === "/admin" ||
+    u.pathname === "/admin.html"
   ) {
 
-    file =
-      'admin.html';
+    file = "admin.html";
 
   } else if (
-    u.pathname === '/music.mp3'
+    u.pathname === "/music.mp3"
   ) {
 
-    file =
-      'music.mp3';
+    file = "music.mp3";
 
   } else {
 
     file =
       u.pathname.replace(
         /^\//,
-        ''
+        ""
       );
   }
 
+
+  const root =
+    path.resolve(ROOT);
 
   file =
     path.resolve(
@@ -1867,20 +1660,16 @@ async function handle(req, res) {
     );
 
 
-  const rootResolved =
-    path.resolve(ROOT);
-
-
   if (
-    file !== rootResolved &&
+    file !== root &&
     !file.startsWith(
-      rootResolved + path.sep
+      root + path.sep
     )
   ) {
 
     return send(res, 403, {
       success: false,
-      error: 'FORBIDDEN'
+      error: "FORBIDDEN"
     });
   }
 
@@ -1896,7 +1685,7 @@ async function handle(req, res) {
 
         return send(res, 404, {
           success: false,
-          error: 'NOT_FOUND'
+          error: "NOT_FOUND"
         });
       }
 
@@ -1909,41 +1698,39 @@ async function handle(req, res) {
 
       const types = {
 
-        '.html':
-          'text/html; charset=utf-8',
+        ".html":
+          "text/html; charset=utf-8",
 
-        '.css':
-          'text/css; charset=utf-8',
+        ".css":
+          "text/css; charset=utf-8",
 
-        '.js':
-          'application/javascript; charset=utf-8',
+        ".js":
+          "application/javascript; charset=utf-8",
 
-        '.json':
-          'application/json; charset=utf-8',
+        ".json":
+          "application/json; charset=utf-8",
 
-        '.png':
-          'image/png',
+        ".png":
+          "image/png",
 
-        '.jpg':
-          'image/jpeg',
+        ".jpg":
+          "image/jpeg",
 
-        '.jpeg':
-          'image/jpeg',
+        ".jpeg":
+          "image/jpeg",
 
-        '.svg':
-          'image/svg+xml',
+        ".svg":
+          "image/svg+xml",
 
-        '.mp3':
-          'audio/mpeg'
+        ".mp3":
+          "audio/mpeg"
       };
 
 
-      /* -------------------------------------------
-         MP3 RANGE
-      ------------------------------------------- */
+      /* MP3 */
 
       if (
-        ext === '.mp3' &&
+        ext === ".mp3" &&
         req.headers.range
       ) {
 
@@ -1964,7 +1751,6 @@ async function handle(req, res) {
         const start =
           Number(range[1]);
 
-
         const end =
           range[2]
             ? Number(range[2])
@@ -1979,7 +1765,7 @@ async function handle(req, res) {
           res.writeHead(
             416,
             {
-              'Content-Range':
+              "Content-Range":
                 `bytes */${s.size}`
             }
           );
@@ -1999,20 +1785,20 @@ async function handle(req, res) {
           206,
           {
 
-            'Content-Type':
-              'audio/mpeg',
+            "Content-Type":
+              "audio/mpeg",
 
-            'Content-Range':
+            "Content-Range":
               `bytes ${start}-${safeEnd}/${s.size}`,
 
-            'Accept-Ranges':
-              'bytes',
+            "Accept-Ranges":
+              "bytes",
 
-            'Content-Length':
+            "Content-Length":
               safeEnd - start + 1,
 
-            'Cache-Control':
-              'public, max-age=3600'
+            "Cache-Control":
+              "public, max-age=3600"
           }
         );
 
@@ -2029,22 +1815,18 @@ async function handle(req, res) {
       }
 
 
-      /* -------------------------------------------
-         NORMAL FILE
-      ------------------------------------------- */
-
       res.writeHead(
         200,
         {
 
-          'Content-Type':
+          "Content-Type":
             types[ext] ||
-            'application/octet-stream',
+            "application/octet-stream",
 
-          'Cache-Control':
-            ext === '.mp3'
-              ? 'public, max-age=3600'
-              : 'no-store'
+          "Cache-Control":
+            ext === ".mp3"
+              ? "public, max-age=3600"
+              : "no-store"
         }
       );
 
@@ -2057,9 +1839,9 @@ async function handle(req, res) {
 }
 
 
-/* ==================================================
-   SERVER START
-================================================== */
+/* =====================================================
+   START
+===================================================== */
 
 (async () => {
 
@@ -2068,11 +1850,10 @@ async function handle(req, res) {
     await init();
 
     /*
-      Try loading real API data before accepting
-      normal traffic.
+      Initial API load.
     */
 
-    await initialWingoLoad();
+    await refreshWingo();
 
 
     http
@@ -2083,10 +1864,9 @@ async function handle(req, res) {
             .catch(e => {
 
               console.error(
-                'SERVER ERROR:',
+                "SERVER ERROR:",
                 e
               );
-
 
               if (!res.headersSent) {
 
@@ -2096,7 +1876,7 @@ async function handle(req, res) {
 
                   error:
                     e.message ||
-                    'SERVER_ERROR'
+                    "SERVER_ERROR"
                 });
 
               } else {
@@ -2111,35 +1891,39 @@ async function handle(req, res) {
         () => {
 
           console.log(
-            '================================'
+            "================================"
           );
 
           console.log(
-            'DY AI WINGO 30S ONLINE'
+            "DY AI WINGO 30S ONLINE"
           );
 
           console.log(
-            'PORT:',
+            "PORT:",
             PORT
           );
 
           console.log(
-            'WINGOBOT:',
+            "WINGOBOT:",
             !!TOKEN
           );
 
           console.log(
-            'REAL HISTORY:',
+            "API REFRESH: 1 SECOND"
+          );
+
+          console.log(
+            "REAL HISTORY:",
             cache.history.length > 0
           );
 
           console.log(
-            'API PERIOD:',
+            "API PERIOD:",
             cache.apiIssue
           );
 
           console.log(
-            '================================'
+            "================================"
           );
         }
       );
@@ -2147,7 +1931,7 @@ async function handle(req, res) {
   } catch (e) {
 
     console.error(
-      'STARTUP ERROR:',
+      "STARTUP ERROR:",
       e
     );
 
