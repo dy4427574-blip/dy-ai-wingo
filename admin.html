@@ -1,341 +1,246 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#070b16">
-
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>DY AI Admin Panel</title>
 
 <style>
 *{
   box-sizing:border-box;
-  -webkit-tap-highlight-color:transparent;
-}
-
-body{
   margin:0;
-  min-height:100vh;
-  background:
-    radial-gradient(circle at top,#18234a 0,#070b16 45%);
-  color:#fff;
+  padding:0;
   font-family:Arial,sans-serif;
 }
 
-.container{
-  width:100%;
-  max-width:760px;
-  margin:auto;
+body{
+  background:#070b14;
+  color:#fff;
+  min-height:100vh;
   padding:16px;
 }
 
-.card{
-  background:rgba(16,23,42,.96);
-  border:1px solid #293657;
-  border-radius:20px;
-  padding:20px;
-  margin:13px 0;
-  box-shadow:0 12px 35px rgba(0,0,0,.35);
+.container{
+  max-width:900px;
+  margin:auto;
 }
 
-h1,h2{
-  margin-top:0;
+.header{
+  text-align:center;
+  margin-bottom:18px;
 }
 
-.muted{
-  color:#9aa7c4;
+.header h1{
+  font-size:25px;
+  color:#00e5ff;
+  margin-bottom:6px;
+}
+
+.header p{
+  color:#8f9bad;
   font-size:13px;
-  line-height:1.5;
+}
+
+.card{
+  background:#101722;
+  border:1px solid #202b3a;
+  border-radius:15px;
+  padding:16px;
+  margin-bottom:15px;
+  box-shadow:0 8px 30px rgba(0,0,0,.22);
+}
+
+.card h2{
+  font-size:17px;
+  margin-bottom:13px;
 }
 
 input{
   width:100%;
-  padding:15px;
-  margin-top:9px;
-  border-radius:13px;
-  border:1px solid #34405f;
-  background:#0b1120;
+  background:#080d15;
+  border:1px solid #293546;
   color:#fff;
+  border-radius:10px;
+  padding:13px;
   outline:none;
-  font-size:15px;
+  margin-bottom:10px;
 }
 
 input:focus{
-  border-color:#716aff;
+  border-color:#00e5ff;
 }
 
 button{
-  width:100%;
-  padding:14px;
-  margin-top:10px;
   border:0;
-  border-radius:13px;
-  background:linear-gradient(135deg,#635bff,#7d5cff);
-  color:#fff;
-  font-weight:900;
-  font-size:14px;
+  border-radius:10px;
+  padding:11px 14px;
   cursor:pointer;
+  font-weight:700;
+  color:#fff;
+  background:#007bff;
 }
 
-button:disabled{
-  opacity:.55;
+button:active{
+  transform:scale(.97);
 }
 
-.danger{
-  background:#c83b57;
+.btn-green{
+  background:#00a86b;
+}
+
+.btn-red{
+  background:#d9304f;
+}
+
+.btn-orange{
+  background:#e08a00;
+}
+
+.btn-gray{
+  background:#343d4b;
+}
+
+.row{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.row button{
+  flex:1;
+  min-width:120px;
+}
+
+#loginBox{
+  max-width:430px;
+  margin:70px auto;
+}
+
+#panel{
+  display:none;
+}
+
+.status{
+  padding:12px;
+  border-radius:10px;
+  background:#080d15;
+  border:1px solid #222d3b;
+  margin-top:10px;
+  font-size:13px;
+  line-height:1.6;
 }
 
 .success{
-  color:#62e6a7;
+  color:#35e39b;
 }
 
 .error{
-  color:#ff7285;
+  color:#ff6178;
 }
 
-.hidden{
-  display:none!important;
+.muted{
+  color:#8f9bad;
 }
 
-.header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:15px;
-}
-
-.badge{
-  background:#18233d;
-  padding:8px 13px;
-  border-radius:50px;
-  font-size:11px;
-  font-weight:900;
-  white-space:nowrap;
-}
-
-.admin-badge{
-  color:#b9b2ff;
-}
-
-.stat-grid{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:10px;
-}
-
-.stat{
-  background:#0b1120;
-  border:1px solid #293657;
-  border-radius:15px;
-  padding:15px;
-}
-
-.stat-value{
-  font-size:25px;
-  font-weight:900;
-  margin-top:5px;
-}
-
-.live-stat{
-  color:#62e6a7;
-}
-
-.offline-stat{
-  color:#ff7285;
-}
-
-.round-grid{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:10px;
-}
-
-.round-item{
-  background:#0b1120;
-  border:1px solid #293657;
-  border-radius:14px;
-  padding:14px;
-}
-
-.round-value{
-  font-size:21px;
-  font-weight:900;
-  margin-top:5px;
-}
-
-.key-row{
-  background:#0b1120;
-  border:1px solid #293657;
-  border-radius:15px;
-  padding:15px;
-  margin:10px 0;
+.key-item{
+  background:#080d15;
+  border:1px solid #222d3b;
+  border-radius:12px;
+  padding:12px;
+  margin-bottom:9px;
 }
 
 .key-top{
   display:flex;
-  align-items:center;
   justify-content:space-between;
+  align-items:center;
   gap:10px;
 }
 
-.key-text{
-  font-size:14px;
-  font-weight:800;
+.key-value{
+  font-weight:bold;
   word-break:break-all;
-}
-
-.status-pill{
-  display:inline-flex;
-  align-items:center;
-  gap:5px;
-  padding:6px 10px;
-  border-radius:30px;
-  font-size:10px;
-  font-weight:900;
-  white-space:nowrap;
-}
-
-.status-live{
-  background:#123c2b;
-  color:#62e6a7;
-}
-
-.status-offline{
-  background:#3c1821;
-  color:#ff7285;
+  color:#00e5ff;
+  font-size:14px;
 }
 
 .key-meta{
-  color:#7886a5;
-  font-size:10px;
-  margin-top:9px;
-  line-height:1.5;
+  margin-top:8px;
+  font-size:12px;
+  color:#8f9bad;
+  line-height:1.6;
 }
 
-.key-actions{
-  display:flex;
-  gap:8px;
-  margin-top:12px;
-}
-
-.key-actions button{
-  width:auto;
-  flex:1;
-  margin:0;
-  padding:10px;
+.badge{
+  display:inline-block;
+  padding:4px 8px;
+  border-radius:20px;
   font-size:11px;
+  font-weight:bold;
+  background:#172131;
+  color:#fff;
 }
 
-.refresh{
-  background:#18233d;
-  border:1px solid #34405f;
+.badge-used{
+  background:#4c3210;
+  color:#ffc65c;
 }
 
-.loading{
-  color:#9aa7c4;
-  text-align:center;
-  padding:15px;
+.badge-free{
+  background:#103b2d;
+  color:#48e5a4;
 }
 
-.message{
-  min-height:18px;
-  font-size:13px;
-  margin-top:10px;
-}
-
-/* WINGOBOT */
-
-.api-card{
-  border-color:#3d4fa0;
-}
-
-.api-status{
-  padding:12px;
-  border-radius:12px;
-  background:#0b1120;
-  border:1px solid #293657;
-  margin-top:12px;
-  font-size:13px;
-}
-
-.api-current{
+.stats{
   display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-  margin-top:12px;
+  grid-template-columns:repeat(3,1fr);
+  gap:9px;
 }
 
-.api-box{
-  background:#0b1120;
-  border:1px solid #293657;
-  border-radius:13px;
+.stat{
+  background:#080d15;
+  border:1px solid #222d3b;
+  border-radius:11px;
   padding:12px;
+  text-align:center;
 }
 
-.api-box-title{
-  color:#7886a5;
-  font-size:10px;
-  text-transform:uppercase;
+.stat b{
+  display:block;
+  font-size:20px;
+  color:#00e5ff;
 }
 
-.api-box-value{
-  font-size:18px;
-  font-weight:900;
-  margin-top:5px;
-  word-break:break-word;
-}
-
-.history-wrap{
-  margin-top:14px;
-  overflow-x:auto;
-}
-
-.history-table{
-  width:100%;
-  border-collapse:collapse;
-  min-width:520px;
+.stat span{
   font-size:11px;
+  color:#8f9bad;
 }
 
-.history-table th{
-  color:#8796b4;
-  text-align:left;
-  padding:10px 7px;
-  border-bottom:1px solid #293657;
+.small{
+  font-size:12px;
 }
 
-.history-table td{
-  padding:10px 7px;
-  border-bottom:1px solid #1d2940;
+hr{
+  border:0;
+  border-top:1px solid #202b3a;
+  margin:14px 0;
 }
 
-.api-big{
-  color:#ff7285;
-  font-weight:900;
-}
+@media(max-width:500px){
+  body{
+    padding:10px;
+  }
 
-.api-small{
-  color:#62a8ff;
-  font-weight:900;
-}
-
-.api-number{
-  font-weight:900;
-}
-
-@media(max-width:420px){
-
-  .stat-grid,
-  .round-grid{
-    grid-template-columns:1fr 1fr;
+  .stats{
+    grid-template-columns:1fr 1fr 1fr;
   }
 
   .key-top{
     align-items:flex-start;
   }
 
-  .api-current{
-    grid-template-columns:1fr 1fr;
+  .key-top button{
+    padding:8px 10px;
   }
 }
 </style>
@@ -345,1630 +250,817 @@ button:disabled{
 
 <div class="container">
 
-<!-- ================= LOGIN ================= -->
+  <!-- LOGIN -->
+  <div id="loginBox" class="card">
 
-<div id="loginBox" class="card">
-
-  <h1>👑 DY AI Admin</h1>
-
-  <p class="muted">
-    Secure administrator access
-  </p>
-
-  <input
-    id="adminKey"
-    type="password"
-    placeholder="Enter admin key"
-    autocomplete="off"
-  >
-
-  <button id="loginBtn" onclick="login()">
-    UNLOCK ADMIN PANEL
-  </button>
-
-  <p id="loginMessage" class="message"></p>
-
-</div>
-
-
-<!-- ================= ADMIN ================= -->
-
-<div id="adminPanel" class="hidden">
-
-  <!-- HEADER -->
-
-  <div class="card header">
-
-    <div>
-      <h1>DY AI Dashboard</h1>
-
-      <div class="muted">
-        Prediction control center
-      </div>
+    <div class="header">
+      <h1>DY AI ADMIN</h1>
+      <p>Secure Administrator Panel</p>
     </div>
-
-    <div class="badge admin-badge">
-      ADMIN
-    </div>
-
-  </div>
-
-
-  <!-- ================= SERVER ================= -->
-
-  <div class="card">
-
-    <h2>Server Status</h2>
-
-    <div class="stat-grid">
-
-      <div class="stat">
-        <div class="muted">SERVER</div>
-
-        <div id="serverStatus"
-             class="stat-value live-stat">
-          LIVE
-        </div>
-      </div>
-
-      <div class="stat">
-        <div class="muted">UPTIME</div>
-
-        <div id="uptime"
-             class="stat-value">
-          —
-        </div>
-      </div>
-
-    </div>
-
-    <p id="connectionStatus"
-       class="muted">
-      Connecting...
-    </p>
-
-  </div>
-
-
-  <!-- ================= KEY STATS ================= -->
-
-  <div class="card">
-
-    <h2>Key Overview</h2>
-
-    <div class="stat-grid">
-
-      <div class="stat">
-        <div class="muted">TOTAL KEYS</div>
-
-        <div id="totalKeys"
-             class="stat-value">
-          0
-        </div>
-      </div>
-
-      <div class="stat">
-        <div class="muted">LIVE</div>
-
-        <div id="liveKeys"
-             class="stat-value live-stat">
-          0
-        </div>
-      </div>
-
-      <div class="stat">
-        <div class="muted">OFFLINE</div>
-
-        <div id="offlineKeys"
-             class="stat-value offline-stat">
-          0
-        </div>
-      </div>
-
-      <div class="stat">
-        <div class="muted">ACTIVE USERS</div>
-
-        <div id="activeUsers"
-             class="stat-value">
-          0
-        </div>
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <!-- ================= CURRENT ROUND ================= -->
-
-  <div class="card">
-
-    <h2>Current AI Round</h2>
-
-    <div class="round-grid">
-
-      <div class="round-item">
-        <div class="muted">PREDICTION</div>
-
-        <div id="prediction"
-             class="round-value">
-          —
-        </div>
-      </div>
-
-      <div class="round-item">
-        <div class="muted">NUMBER</div>
-
-        <div id="number"
-             class="round-value">
-          —
-        </div>
-      </div>
-
-      <div class="round-item">
-        <div class="muted">CONFIDENCE</div>
-
-        <div id="confidence"
-             class="round-value">
-          —
-        </div>
-      </div>
-
-      <div class="round-item">
-        <div class="muted">COUNTDOWN</div>
-
-        <div id="countdown"
-             class="round-value">
-          —
-        </div>
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <!-- ================= WINGOBOT TEST ================= -->
-
-  <div class="card api-card">
-
-    <h2>🌐 WingoBot API</h2>
-
-    <p class="muted">
-      Real 30-second game history connection test.
-    </p>
-
-    <button
-      id="wingoTestBtn"
-      onclick="testWingoAPI()">
-      🔎 TEST WINGOBOT API
-    </button>
-
-    <div
-      id="apiStatus"
-      class="api-status muted">
-      API not tested yet.
-    </div>
-
-    <div
-      id="apiCurrent"
-      class="api-current hidden">
-
-      <div class="api-box">
-
-        <div class="api-box-title">
-          Current Period
-        </div>
-
-        <div
-          id="apiPeriod"
-          class="api-box-value">
-          —
-        </div>
-
-      </div>
-
-      <div class="api-box">
-
-        <div class="api-box-title">
-          Current Number
-        </div>
-
-        <div
-          id="apiNumber"
-          class="api-box-value">
-          —
-        </div>
-
-      </div>
-
-    </div>
-
-    <div
-      id="apiStats"
-      class="api-status hidden">
-    </div>
-
-    <div
-      id="historyWrap"
-      class="history-wrap hidden">
-
-      <table class="history-table">
-
-        <thead>
-
-          <tr>
-            <th>PERIOD</th>
-            <th>NUMBER</th>
-            <th>COLOUR</th>
-            <th>PREMIUM</th>
-            <th>SUM</th>
-          </tr>
-
-        </thead>
-
-        <tbody id="historyBody">
-        </tbody>
-
-      </table>
-
-    </div>
-
-  </div>
-
-
-  <!-- ================= CREATE KEY ================= -->
-
-  <div class="card">
-
-    <h2>🔑 Create Prediction Key</h2>
-
-    <p class="muted">
-      Custom key ya empty chhodkar automatic key generate karo.
-    </p>
 
     <input
-      id="newKey"
-      type="text"
-      placeholder="Example: DY-USER-001"
+      id="adminKey"
+      type="password"
+      placeholder="Admin Key"
       autocomplete="off"
     >
 
-    <button id="createBtn"
-            onclick="createKey()">
-      CREATE ACCESS KEY
+    <button
+      onclick="adminLogin()"
+      style="width:100%;"
+    >
+      LOGIN
     </button>
 
-    <p id="createMessage"
-       class="message">
-    </p>
+    <div id="loginMsg" class="status" style="display:none;"></div>
 
   </div>
 
 
-  <!-- ================= KEY LIST ================= -->
-
-  <div class="card">
+  <!-- ADMIN PANEL -->
+  <div id="panel">
 
     <div class="header">
+      <h1>DY AI ADMIN PANEL</h1>
+      <p>Access Key & System Management</p>
+    </div>
 
-      <div>
-        <h2>🔐 Access Keys</h2>
 
-        <div class="muted">
-          Live device activity
+    <!-- SYSTEM STATUS -->
+    <div class="card">
+
+      <h2>⚡ System Status</h2>
+
+      <div class="stats">
+
+        <div class="stat">
+          <b id="totalKeys">0</b>
+          <span>Total Keys</span>
         </div>
+
+        <div class="stat">
+          <b id="usedKeys">0</b>
+          <span>Used</span>
+        </div>
+
+        <div class="stat">
+          <b id="freeKeys">0</b>
+          <span>Free</span>
+        </div>
+
       </div>
 
-      <div class="badge">
-        AUTO
+      <div id="systemStatus" class="status">
+        Checking system...
       </div>
 
     </div>
 
-    <div id="keyList">
-      <div class="loading">
-        Loading keys...
+
+    <!-- GENERATE KEY -->
+    <div class="card">
+
+      <h2>🔑 Generate Access Key</h2>
+
+      <input
+        id="customKey"
+        type="text"
+        placeholder="Custom key (optional)"
+        autocomplete="off"
+      >
+
+      <div class="row">
+
+        <button
+          class="btn-green"
+          onclick="generateKey()"
+        >
+          GENERATE KEY
+        </button>
+
+        <button
+          class="btn-gray"
+          onclick="loadKeys()"
+        >
+          REFRESH
+        </button>
+
       </div>
+
+      <div id="generateMsg" class="status" style="display:none;"></div>
+
+    </div>
+
+
+    <!-- KEY LIST -->
+    <div class="card">
+
+      <h2>🔐 Access Keys</h2>
+
+      <div id="keyList">
+        Loading...
+      </div>
+
+    </div>
+
+
+    <!-- WINGOBOT TEST -->
+    <div class="card">
+
+      <h2>🌐 Provider Connection</h2>
+
+      <p class="small muted">
+        Provider API connection test karne ke liye button dabaye.
+      </p>
+
+      <br>
+
+      <button
+        class="btn-orange"
+        onclick="testProvider()"
+      >
+        TEST PROVIDER
+      </button>
+
+      <div
+        id="providerResult"
+        class="status"
+        style="display:none;"
+      ></div>
+
+    </div>
+
+
+    <!-- ADMIN ACTIONS -->
+    <div class="card">
+
+      <h2>🛠 Admin Actions</h2>
+
+      <div class="row">
+
+        <button
+          class="btn-gray"
+          onclick="loadStatus()"
+        >
+          SYSTEM STATUS
+        </button>
+
+        <button
+          class="btn-red"
+          onclick="adminLogout()"
+        >
+          LOGOUT
+        </button>
+
+      </div>
+
     </div>
 
   </div>
-
-
-  <!-- ================= CONTROLS ================= -->
-
-  <div class="card">
-
-    <button
-      class="refresh"
-      onclick="loadAll()">
-      🔄 REFRESH DASHBOARD
-    </button>
-
-    <button
-      class="danger"
-      onclick="logout()">
-      LOGOUT
-    </button>
-
-  </div>
-
-</div>
 
 </div>
 
 
 <script>
 
-let adminKey = "";
-let statusTimer = null;
+let ADMIN = "";
 
 
-/* =========================================
+/* =========================
+   API HELPER
+========================= */
+
+async function api(url, options = {}){
+
+  const headers = {
+    "Content-Type":"application/json",
+    ...(options.headers || {})
+  };
+
+  const response = await fetch(url,{
+    ...options,
+    headers
+  });
+
+  let data;
+
+  try{
+    data = await response.json();
+  }catch{
+    data = {
+      ok:false,
+      error:"Invalid server response"
+    };
+  }
+
+  if(!response.ok){
+
+    throw new Error(
+      data.error ||
+      "Request failed"
+    );
+
+  }
+
+  return data;
+}
+
+
+/* =========================
    LOGIN
-========================================= */
+========================= */
 
-async function login(){
-
-  const input =
-    document.getElementById("adminKey");
-
-  const button =
-    document.getElementById("loginBtn");
-
-  const message =
-    document.getElementById("loginMessage");
+async function adminLogin(){
 
   const key =
-    input.value.trim();
+    document.getElementById("adminKey")
+    .value
+    .trim();
 
-  message.textContent = "";
+  const msg =
+    document.getElementById("loginMsg");
 
   if(!key){
 
-    message.textContent =
-      "Please enter admin key.";
-
-    message.className =
-      "message error";
-
+    msg.style.display = "block";
+    msg.className = "status error";
+    msg.textContent = "Admin key enter karo.";
     return;
+
   }
-
-  adminKey = key;
-
-  button.disabled = true;
-  button.textContent = "CHECKING...";
 
   try{
 
-    const response =
-      await fetch(
-        "/api/admin/ping",
-        {
-          method:"GET",
-          cache:"no-store",
-          headers:{
-            "X-Admin-Key":adminKey
-          }
+    const data = await api(
+      "/api/admin/status",
+      {
+        headers:{
+          "x-admin-key":key
         }
-      );
+      }
+    );
 
-    if(!response.ok){
+    if(!data.ok){
 
       throw new Error(
-        "UNAUTHORIZED"
-      );
-    }
-
-    document
-      .getElementById("loginBox")
-      .classList
-      .add("hidden");
-
-    document
-      .getElementById("adminPanel")
-      .classList
-      .remove("hidden");
-
-    await loadAll();
-
-    if(statusTimer){
-      clearInterval(statusTimer);
-    }
-
-    statusTimer =
-      setInterval(
-        loadAll,
-        5000
-      );
-
-  }
-  catch(error){
-
-    adminKey = "";
-
-    message.textContent =
-      "Wrong admin key or server unavailable.";
-
-    message.className =
-      "message error";
-
-  }
-  finally{
-
-    button.disabled = false;
-    button.textContent =
-      "UNLOCK ADMIN PANEL";
-
-  }
-
-}
-
-
-/* =========================================
-   LOAD EVERYTHING
-========================================= */
-
-async function loadAll(){
-
-  if(!adminKey){
-    return;
-  }
-
-  await Promise.all([
-    loadKeys(),
-    loadStatus()
-  ]);
-
-}
-
-
-/* =========================================
-   WINGOBOT API TEST
-========================================= */
-
-async function testWingoAPI(){
-
-  if(!adminKey){
-    return;
-  }
-
-  const button =
-    document.getElementById(
-      "wingoTestBtn"
-    );
-
-  const status =
-    document.getElementById(
-      "apiStatus"
-    );
-
-  const currentBox =
-    document.getElementById(
-      "apiCurrent"
-    );
-
-  const statsBox =
-    document.getElementById(
-      "apiStats"
-    );
-
-  const historyWrap =
-    document.getElementById(
-      "historyWrap"
-    );
-
-  button.disabled = true;
-  button.textContent =
-    "⏳ CONNECTING...";
-
-  status.className =
-    "api-status muted";
-
-  status.textContent =
-    "Connecting to WingoBot API...";
-
-  currentBox.classList.add(
-    "hidden"
-  );
-
-  statsBox.classList.add(
-    "hidden"
-  );
-
-  historyWrap.classList.add(
-    "hidden"
-  );
-
-  try{
-
-    const response =
-      await fetch(
-        "/api/admin/wingo-test",
-        {
-          method:"GET",
-          cache:"no-store",
-          headers:{
-            "X-Admin-Key":
-              adminKey
-          }
-        }
-      );
-
-    const data =
-      await response.json();
-
-    if(response.status === 401){
-
-      logout(
-        "Admin session expired."
-      );
-
-      return;
-    }
-
-    if(!response.ok){
-
-      throw new Error(
-        data.message ||
-        data.error ||
-        "WingoBot API failed"
+        data.error || "Invalid admin key"
       );
 
     }
 
-    status.className =
-      "api-status success";
+    ADMIN = key;
 
-    status.textContent =
-      "✓ WingoBot API connected successfully.";
-
-    const current =
-      data.current || {};
-
-    document
-      .getElementById(
-        "apiPeriod"
-      )
-      .textContent =
-      current.issueNumber ||
-      "—";
-
-    document
-      .getElementById(
-        "apiNumber"
-      )
-      .textContent =
-      current.number ??
-      "—";
-
-    currentBox.classList.remove(
-      "hidden"
-    );
-
-
-    /* STATS */
-
-    const stats =
-      data.stats || {};
-
-    statsBox.innerHTML =
-      "Fetched: <b>" +
-      escapeHTML(
-        String(
-          stats.fetched ??
-          "—"
-        )
-      ) +
-      "</b>" +
-      "<br>" +
-      "Last updated: <b>" +
-      escapeHTML(
-        String(
-          stats.last_updated ??
-          "—"
-        )
-      ) +
-      "</b>";
-
-    statsBox.classList.remove(
-      "hidden"
-    );
-
-
-    /* HISTORY */
-
-    const history =
-      Array.isArray(
-        data.history
-      )
-      ? data.history
-      : [];
-
-    renderHistory(
-      history
-    );
-
-  }
-  catch(error){
-
-    status.className =
-      "api-status error";
-
-    status.textContent =
-      "✕ API test failed: " +
-      error.message;
-
-  }
-  finally{
-
-    button.disabled = false;
-
-    button.textContent =
-      "🔎 TEST WINGOBOT API";
-
-  }
-
-}
-
-
-/* =========================================
-   HISTORY
-========================================= */
-
-function renderHistory(history){
-
-  const wrap =
-    document.getElementById(
-      "historyWrap"
-    );
-
-  const body =
-    document.getElementById(
-      "historyBody"
-    );
-
-  body.innerHTML = "";
-
-  if(!history.length){
-
-    body.innerHTML =
-      `
-      <tr>
-        <td colspan="5">
-          No history returned.
-        </td>
-      </tr>
-      `;
-
-    wrap.classList.remove(
-      "hidden"
-    );
-
-    return;
-  }
-
-
-  history.forEach(
-    function(row){
-
-      const tr =
-        document.createElement(
-          "tr"
-        );
-
-
-      const issue =
-        row.issueNumber ??
-        "—";
-
-      const number =
-        row.number ??
-        "—";
-
-      const colour =
-        row.colour ??
-        "—";
-
-      const premium =
-        row.premium ??
-        "—";
-
-      const sum =
-        row.sum ??
-        "—";
-
-
-      let colourClass = "";
-
-      const colourText =
-        String(
-          colour
-        ).toUpperCase();
-
-
-      if(
-        colourText.includes(
-          "BIG"
-        )
-      ){
-
-        colourClass =
-          "api-big";
-
-      }
-      else if(
-        colourText.includes(
-          "SMALL"
-        )
-      ){
-
-        colourClass =
-          "api-small";
-
-      }
-
-
-      tr.innerHTML =
-        `
-        <td>${escapeHTML(String(issue))}</td>
-        <td class="api-number">
-          ${escapeHTML(String(number))}
-        </td>
-        <td class="${colourClass}">
-          ${escapeHTML(String(colour))}
-        </td>
-        <td>${escapeHTML(String(premium))}</td>
-        <td>${escapeHTML(String(sum))}</td>
-        `;
-
-
-      body.appendChild(
-        tr
-      );
-
-    }
-  );
-
-
-  wrap.classList.remove(
-    "hidden"
-  );
-
-}
-
-
-/* =========================================
-   HTML ESCAPE
-========================================= */
-
-function escapeHTML(value){
-
-  return String(value)
-    .replace(/&/g,"&amp;")
-    .replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;")
-    .replace(/'/g,"&#039;");
-
-}
-
-
-/* =========================================
-   LOAD KEYS
-========================================= */
-
-async function loadKeys(){
-
-  try{
-
-    const response =
-      await fetch(
-        "/api/admin/keys",
-        {
-          method:"GET",
-          cache:"no-store",
-          headers:{
-            "X-Admin-Key":
-              adminKey
-          }
-        }
-      );
-
-    if(response.status === 401){
-
-      logout(
-        "Admin session expired."
-      );
-
-      return;
-    }
-
-    if(!response.ok){
-
-      throw new Error();
-    }
-
-    const data =
-      await response.json();
-
-    const keys =
-      Array.isArray(data.keys)
-      ? data.keys
-      : [];
-
-    renderKeys(keys);
-
-    document
-      .getElementById("totalKeys")
-      .textContent =
-      data.total ??
-      keys.length;
-
-    document
-      .getElementById("liveKeys")
-      .textContent =
-      data.live ??
-      keys.filter(
-        k => k.status === "LIVE"
-      ).length;
-
-    document
-      .getElementById("offlineKeys")
-      .textContent =
-      data.offline ??
-      keys.filter(
-        k => k.status === "OFFLINE"
-      ).length;
-
-    document
-      .getElementById("activeUsers")
-      .textContent =
-      data.live ??
-      0;
-
-  }
-  catch(error){
-
-    document
-      .getElementById("keyList")
-      .innerHTML =
-      "<p class='error'>Unable to load keys.</p>";
-
-  }
-
-}
-
-
-/* =========================================
-   RENDER KEYS
-========================================= */
-
-function renderKeys(keys){
-
-  const box =
-    document.getElementById(
-      "keyList"
-    );
-
-  if(!keys.length){
-
-    box.innerHTML =
-      "<div class='loading'>No prediction keys created.</div>";
-
-    return;
-  }
-
-  box.innerHTML = "";
-
-  keys.forEach(
-    function(item){
-
-      const key =
-        typeof item === "string"
-        ? item
-        : item.key;
-
-      const status =
-        typeof item === "string"
-        ? "OFFLINE"
-        : item.status ||
-          "OFFLINE";
-
-      const createdAt =
-        typeof item === "object"
-        ? item.createdAt
-        : null;
-
-      const lastSeen =
-        typeof item === "object"
-        ? item.lastSeen
-        : 0;
-
-
-      const row =
-        document.createElement(
-          "div"
-        );
-
-      row.className =
-        "key-row";
-
-
-      const top =
-        document.createElement(
-          "div"
-        );
-
-      top.className =
-        "key-top";
-
-
-      const keyText =
-        document.createElement(
-          "div"
-        );
-
-      keyText.className =
-        "key-text";
-
-      keyText.textContent =
-        key ||
-        "UNKNOWN";
-
-
-      const statusPill =
-        document.createElement(
-          "div"
-        );
-
-      statusPill.className =
-        "status-pill " +
-        (
-          status === "LIVE"
-          ? "status-live"
-          : "status-offline"
-        );
-
-      statusPill.textContent =
-        status === "LIVE"
-        ? "● LIVE"
-        : "● OFFLINE";
-
-
-      top.appendChild(
-        keyText
-      );
-
-      top.appendChild(
-        statusPill
-      );
-
-
-      const meta =
-        document.createElement(
-          "div"
-        );
-
-      meta.className =
-        "key-meta";
-
-      meta.innerHTML =
-        "Created: " +
-        formatDate(createdAt) +
-        "<br>" +
-        "Last seen: " +
-        formatLastSeen(
-          lastSeen
-        );
-
-
-      const actions =
-        document.createElement(
-          "div"
-        );
-
-      actions.className =
-        "key-actions";
-
-
-      const deleteButton =
-        document.createElement(
-          "button"
-        );
-
-      deleteButton.className =
-        "danger";
-
-      deleteButton.textContent =
-        "DELETE KEY";
-
-      deleteButton.onclick =
-        function(){
-
-          deleteKey(
-            key
-          );
-
-        };
-
-
-      actions.appendChild(
-        deleteButton
-      );
-
-
-      row.appendChild(
-        top
-      );
-
-      row.appendChild(
-        meta
-      );
-
-      row.appendChild(
-        actions
-      );
-
-      box.appendChild(
-        row
-      );
-
-    }
-  );
-
-}
-
-
-/* =========================================
-   CREATE KEY
-========================================= */
-
-async function createKey(){
-
-  const input =
-    document.getElementById(
-      "newKey"
-    );
-
-  const button =
-    document.getElementById(
-      "createBtn"
-    );
-
-  const message =
-    document.getElementById(
-      "createMessage"
-    );
-
-  const customKey =
-    input.value.trim();
-
-  button.disabled = true;
-
-  button.textContent =
-    "CREATING...";
-
-  message.textContent = "";
-
-  try{
-
-    const response =
-      await fetch(
-        "/api/admin/keys",
-        {
-          method:"POST",
-
-          headers:{
-            "Content-Type":
-              "application/json",
-
-            "X-Admin-Key":
-              adminKey
-          },
-
-          body:
-            JSON.stringify({
-              key:customKey
-            })
-        }
-      );
-
-
-    const data =
-      await response.json();
-
-
-    if(!response.ok){
-
-      if(
-        data.error ===
-        "KEY_ALREADY_EXISTS"
-      ){
-
-        throw new Error(
-          "KEY_ALREADY_EXISTS"
-        );
-
-      }
-
-      throw new Error(
-        "CREATE_FAILED"
-      );
-
-    }
-
-
-    input.value = "";
-
-    message.textContent =
-      "Key created: " +
-      data.key;
-
-    message.className =
-      "message success";
-
-
-    await loadKeys();
-
-  }
-  catch(error){
-
-    if(
-      error.message ===
-      "KEY_ALREADY_EXISTS"
-    ){
-
-      message.textContent =
-        "This key already exists.";
-
-    }
-    else{
-
-      message.textContent =
-        "Unable to create key.";
-
-    }
-
-    message.className =
-      "message error";
-
-  }
-  finally{
-
-    button.disabled = false;
-
-    button.textContent =
-      "CREATE ACCESS KEY";
-
-  }
-
-}
-
-
-/* =========================================
-   DELETE KEY
-========================================= */
-
-async function deleteKey(key){
-
-  if(!key){
-    return;
-  }
-
-  const confirmed =
-    confirm(
-      "Delete this prediction key?\n\n" +
+    sessionStorage.setItem(
+      "dy_admin_key",
       key
     );
 
-  if(!confirmed){
-    return;
-  }
+    document.getElementById(
+      "loginBox"
+    ).style.display = "none";
 
-  try{
+    document.getElementById(
+      "panel"
+    ).style.display = "block";
 
-    const response =
-      await fetch(
-        "/api/admin/keys",
-        {
-          method:"DELETE",
-
-          headers:{
-            "Content-Type":
-              "application/json",
-
-            "X-Admin-Key":
-              adminKey
-          },
-
-          body:
-            JSON.stringify({
-              key:key
-            })
-        }
-      );
-
-
-    if(!response.ok){
-
-      throw new Error();
-
-    }
-
-
+    await loadStatus();
     await loadKeys();
 
-  }
-  catch(error){
+  }catch(error){
 
-    alert(
-      "Unable to delete key."
-    );
+    msg.style.display = "block";
+    msg.className = "status error";
+    msg.textContent =
+      error.message ||
+      "Login failed";
 
   }
 
 }
 
 
-/* =========================================
-   LOAD SERVER STATUS
-========================================= */
+/* =========================
+   LOAD STATUS
+========================= */
 
 async function loadStatus(){
 
   try{
 
-    const response =
-      await fetch(
-        "/api/admin/status",
-        {
-          method:"GET",
-          cache:"no-store",
-          headers:{
-            "X-Admin-Key":
-              adminKey
-          }
+    const data = await api(
+      "/api/admin/status",
+      {
+        headers:{
+          "x-admin-key":ADMIN
         }
-      );
+      }
+    );
 
+    document.getElementById(
+      "systemStatus"
+    ).innerHTML = `
+      <span class="success">● ADMIN CONNECTED</span><br>
+      Server: <b>${data.ok ? "ONLINE" : "OFFLINE"}</b><br>
+      Time: ${new Date().toLocaleString()}
+    `;
 
-    if(response.status === 401){
+  }catch(error){
 
-      logout(
-        "Admin session expired."
-      );
-
-      return;
-    }
-
-
-    if(!response.ok){
-
-      throw new Error();
-
-    }
-
-
-    const data =
-      await response.json();
-
-
-    const round =
-      data.round || {};
-
-
-    document
-      .getElementById(
-        "serverStatus"
-      )
-      .textContent =
-      data.server ||
-      "LIVE";
-
-
-    document
-      .getElementById(
-        "prediction"
-      )
-      .textContent =
-      round.prediction ||
-      "—";
-
-
-    document
-      .getElementById(
-        "number"
-      )
-      .textContent =
-      round.number ??
-      "—";
-
-
-    document
-      .getElementById(
-        "confidence"
-      )
-      .textContent =
-      round.confidence !==
-      undefined
-      ? round.confidence + "%"
-      : "—";
-
-
-    document
-      .getElementById(
-        "countdown"
-      )
-      .textContent =
-      "00:" +
-      String(
-        round.countdown || 0
-      ).padStart(
-        2,
-        "0"
-      );
-
-
-    document
-      .getElementById(
-        "activeUsers"
-      )
-      .textContent =
-      data.live ??
-      data.users ??
-      0;
-
-
-    document
-      .getElementById(
-        "uptime"
-      )
-      .textContent =
-      formatUptime(
-        data.uptime || 0
-      );
-
-
-    const connection =
-      document.getElementById(
-        "connectionStatus"
-      );
-
-    connection.textContent =
-      "● Server connected • Updated just now";
-
-    connection.className =
-      "success";
-
-
-  }
-  catch(error){
-
-    const connection =
-      document.getElementById(
-        "connectionStatus"
-      );
-
-    connection.textContent =
-      "● Server connection unavailable";
-
-    connection.className =
-      "error";
+    document.getElementById(
+      "systemStatus"
+    ).innerHTML =
+      `<span class="error">● ${escapeHtml(error.message)}</span>`;
 
   }
 
 }
 
 
-/* =========================================
-   DATE HELPERS
-========================================= */
+/* =========================
+   LOAD KEYS
+========================= */
 
-function formatDate(timestamp){
+async function loadKeys(){
 
-  if(!timestamp){
-    return "—";
+  const box =
+    document.getElementById("keyList");
+
+  box.innerHTML =
+    `<div class="muted">Loading keys...</div>`;
+
+  try{
+
+    const data = await api(
+      "/api/admin/keys",
+      {
+        headers:{
+          "x-admin-key":ADMIN
+        }
+      }
+    );
+
+    const keys =
+      Array.isArray(data.keys)
+        ? data.keys
+        : [];
+
+    document.getElementById(
+      "totalKeys"
+    ).textContent = keys.length;
+
+    const used =
+      keys.filter(
+        k => k.device_id
+      ).length;
+
+    document.getElementById(
+      "usedKeys"
+    ).textContent = used;
+
+    document.getElementById(
+      "freeKeys"
+    ).textContent =
+      Math.max(0, keys.length - used);
+
+
+    if(!keys.length){
+
+      box.innerHTML =
+        `<div class="muted">
+          Abhi koi access key nahi hai.
+        </div>`;
+
+      return;
+
+    }
+
+
+    box.innerHTML = keys.map(k => {
+
+      const isUsed =
+        !!k.device_id;
+
+      const created =
+        k.created_at
+          ? new Date(
+              Number(k.created_at)
+            ).toLocaleString()
+          : "-";
+
+      const lastSeen =
+        k.last_seen
+          ? new Date(
+              Number(k.last_seen)
+            ).toLocaleString()
+          : "-";
+
+      return `
+
+        <div class="key-item">
+
+          <div class="key-top">
+
+            <div class="key-value">
+              ${escapeHtml(k.access_key || "")}
+            </div>
+
+            <span class="badge ${
+              isUsed
+                ? "badge-used"
+                : "badge-free"
+            }">
+              ${
+                isUsed
+                  ? "USED"
+                  : "FREE"
+              }
+            </span>
+
+          </div>
+
+          <div class="key-meta">
+
+            Device:
+            ${
+              isUsed
+                ? escapeHtml(
+                    String(k.device_id)
+                      .slice(0,18)
+                  ) + "..."
+                : "Not bound"
+            }
+
+            <br>
+
+            Created:
+            ${created}
+
+            <br>
+
+            Last Seen:
+            ${lastSeen}
+
+          </div>
+
+          <hr>
+
+          <div class="row">
+
+            <button
+              class="btn-gray"
+              onclick="resetDevice(${Number(k.id)})"
+            >
+              RESET DEVICE
+            </button>
+
+            <button
+              class="btn-red"
+              onclick="deleteKey(${Number(k.id)})"
+            >
+              DELETE
+            </button>
+
+          </div>
+
+        </div>
+
+      `;
+
+    }).join("");
+
+
+  }catch(error){
+
+    box.innerHTML =
+      `<div class="status error">
+        ${escapeHtml(error.message)}
+      </div>`;
+
+  }
+
+}
+
+
+/* =========================
+   GENERATE KEY
+========================= */
+
+async function generateKey(){
+
+  const custom =
+    document.getElementById(
+      "customKey"
+    ).value.trim();
+
+  const msg =
+    document.getElementById(
+      "generateMsg"
+    );
+
+  try{
+
+    const body = {};
+
+    if(custom){
+      body.access_key = custom;
+    }
+
+    const data = await api(
+      "/api/admin/keys",
+      {
+        method:"POST",
+        headers:{
+          "x-admin-key":ADMIN
+        },
+        body:JSON.stringify(body)
+      }
+    );
+
+    msg.style.display = "block";
+    msg.className = "status success";
+
+    msg.innerHTML =
+      `✅ Key created:
+       <b>${escapeHtml(
+         data.access_key || ""
+       )}</b>`;
+
+    document.getElementById(
+      "customKey"
+    ).value = "";
+
+    await loadKeys();
+
+  }catch(error){
+
+    msg.style.display = "block";
+    msg.className = "status error";
+
+    msg.textContent =
+      error.message ||
+      "Key generate failed";
+
+  }
+
+}
+
+
+/* =========================
+   RESET DEVICE
+========================= */
+
+async function resetDevice(id){
+
+  if(!confirm(
+    "Is key ka device binding reset karna hai?"
+  )){
+    return;
   }
 
   try{
 
-    return new Date(
-      timestamp
-    ).toLocaleString();
+    await api(
+      "/api/admin/reset-device",
+      {
+        method:"POST",
+        headers:{
+          "x-admin-key":ADMIN
+        },
+        body:JSON.stringify({
+          id:id
+        })
+      }
+    );
 
-  }
-  catch{
+    alert(
+      "Device reset ho gaya."
+    );
 
-    return "—";
+    await loadKeys();
+
+  }catch(error){
+
+    alert(
+      error.message ||
+      "Reset failed"
+    );
 
   }
 
 }
 
 
-function formatLastSeen(timestamp){
+/* =========================
+   DELETE KEY
+========================= */
 
-  if(!timestamp){
-    return "Never";
+async function deleteKey(id){
+
+  if(!confirm(
+    "Ye access key permanently delete karni hai?"
+  )){
+    return;
   }
 
-  const diff =
-    Date.now() -
-    Number(timestamp);
+  try{
 
-  if(diff < 60000){
+    await api(
+      "/api/admin/keys?id=" +
+      encodeURIComponent(id),
+      {
+        method:"DELETE",
+        headers:{
+          "x-admin-key":ADMIN
+        }
+      }
+    );
 
-    return (
-      Math.max(
-        1,
-        Math.floor(
-          diff / 1000
+    await loadKeys();
+
+  }catch(error){
+
+    alert(
+      error.message ||
+      "Delete failed"
+    );
+
+  }
+
+}
+
+
+/* =========================
+   PROVIDER TEST
+========================= */
+
+async function testProvider(){
+
+  const box =
+    document.getElementById(
+      "providerResult"
+    );
+
+  box.style.display = "block";
+  box.className = "status";
+  box.textContent =
+    "Provider connection test ho raha hai...";
+
+  try{
+
+    const data = await api(
+      "/api/admin/wingo-test",
+      {
+        headers:{
+          "x-admin-key":ADMIN
+        }
+      }
+    );
+
+    box.className =
+      "status success";
+
+    box.innerHTML = `
+      ✅ Provider connected<br>
+      Current Issue:
+      <b>${escapeHtml(
+        String(
+          data.currentIssue ||
+          data.issueNumber ||
+          "-"
         )
-      ) +
-      " sec ago"
-    );
+      )}</b>
+      <br>
+      History:
+      ${
+        Array.isArray(data.history)
+          ? data.history.length
+          : "-"
+      }
+    `;
+
+  }catch(error){
+
+    box.className =
+      "status error";
+
+    box.textContent =
+      "❌ " +
+      (
+        error.message ||
+        "Provider test failed"
+      );
 
   }
 
-  if(diff < 3600000){
+}
 
-    return (
-      Math.floor(
-        diff / 60000
-      ) +
-      " min ago"
-    );
 
-  }
+/* =========================
+   LOGOUT
+========================= */
 
-  return formatDate(
-    timestamp
+function adminLogout(){
+
+  ADMIN = "";
+
+  sessionStorage.removeItem(
+    "dy_admin_key"
   );
 
-}
-
-
-/* =========================================
-   UPTIME
-========================================= */
-
-function formatUptime(seconds){
-
-  seconds =
-    Math.floor(
-      Number(seconds) || 0
-    );
-
-  const days =
-    Math.floor(
-      seconds / 86400
-    );
-
-  seconds %= 86400;
-
-  const hours =
-    Math.floor(
-      seconds / 3600
-    );
-
-  seconds %= 3600;
-
-  const minutes =
-    Math.floor(
-      seconds / 60
-    );
-
-
-  if(days > 0){
-
-    return (
-      days + "d " +
-      hours + "h"
-    );
-
-  }
-
-  if(hours > 0){
-
-    return (
-      hours + "h " +
-      minutes + "m"
-    );
-
-  }
-
-  return minutes + "m";
+  location.reload();
 
 }
 
 
-/* =========================================
-   LOGOUT
-========================================= */
+/* =========================
+   HTML ESCAPE
+========================= */
 
-function logout(message){
+function escapeHtml(value){
 
-  adminKey = "";
-
-  if(statusTimer){
-
-    clearInterval(
-      statusTimer
-    );
-
-    statusTimer = null;
-
-  }
-
-
-  document
-    .getElementById(
-      "adminPanel"
-    )
-    .classList
-    .add("hidden");
-
-
-  document
-    .getElementById(
-      "loginBox"
-    )
-    .classList
-    .remove("hidden");
-
-
-  document
-    .getElementById(
-      "adminKey"
-    )
-    .value = "";
-
-
-  if(message){
-
-    document
-      .getElementById(
-        "loginMessage"
-      )
-      .textContent =
-      message;
-
-    document
-      .getElementById(
-        "loginMessage"
-      )
-      .className =
-      "message error";
-
-  }
+  return String(value)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
 
 }
 
 
-/* =========================================
-   ENTER KEY
-========================================= */
+/* =========================
+   AUTO LOGIN
+========================= */
 
-document
-  .getElementById(
-    "adminKey"
-  )
-  .addEventListener(
-    "keydown",
-    function(event){
+window.addEventListener(
+  "load",
+  async () => {
 
-      if(
-        event.key === "Enter"
-      ){
+    const saved =
+      sessionStorage.getItem(
+        "dy_admin_key"
+      );
 
-        login();
+    if(!saved){
+      return;
+    }
 
+    ADMIN = saved;
+
+    try{
+
+      const data = await api(
+        "/api/admin/status",
+        {
+          headers:{
+            "x-admin-key":ADMIN
+          }
+        }
+      );
+
+      if(!data.ok){
+        throw new Error("Session expired");
       }
 
+      document.getElementById(
+        "loginBox"
+      ).style.display = "none";
+
+      document.getElementById(
+        "panel"
+      ).style.display = "block";
+
+      await loadStatus();
+      await loadKeys();
+
+    }catch{
+
+      sessionStorage.removeItem(
+        "dy_admin_key"
+      );
+
+      ADMIN = "";
+
     }
-  );
+
+  }
+);
+
+
+/* Enter key login */
+
+document.getElementById(
+  "adminKey"
+).addEventListener(
+  "keydown",
+  e => {
+
+    if(e.key === "Enter"){
+      adminLogin();
+    }
+
+  }
+);
 
 </script>
 
