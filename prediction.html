@@ -1,1308 +1,1056 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<meta name="theme-color" content="#060914">
-<meta name="color-scheme" content="dark">
-<title>DY AI Wingo 30S</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DY AI Wingo 30S</title>
 
-<style>
-*{
-  box-sizing:border-box;
-  -webkit-tap-highlight-color:transparent;
-}
-html,body{margin:0;min-height:100%}
-body{
-  min-height:100vh;
-  color:#fff;
-  font-family:Arial,Helvetica,sans-serif;
-  background:
-    radial-gradient(circle at 50% -10%,#25346d 0,#111a38 20%,#070b16 52%),
-    #070b16;
-}
-body:before{
-  content:"";
-  position:fixed;
-  inset:0;
-  pointer-events:none;
-  background:linear-gradient(
-    120deg,
-    rgba(99,91,255,.06),
-    transparent 35%,
-    rgba(98,230,167,.035)
-  );
-}
-.container{
-  width:100%;
-  max-width:520px;
-  margin:auto;
-  padding:14px;
-  position:relative;
-  z-index:1;
-}
-.hidden{display:none!important}
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, Helvetica, sans-serif;
+    }
 
-.card{
-  position:relative;
-  overflow:hidden;
-  margin:12px 0;
-  padding:20px;
-  border:1px solid rgba(90,109,160,.42);
-  border-radius:22px;
-  background:linear-gradient(
-    145deg,
-    rgba(18,27,53,.96),
-    rgba(10,16,32,.96)
-  );
-  box-shadow:
-    0 18px 50px rgba(0,0,0,.38),
-    inset 0 1px 0 rgba(255,255,255,.035);
-}
-.card:after{
-  content:"";
-  position:absolute;
-  width:120px;
-  height:120px;
-  right:-70px;
-  top:-70px;
-  border-radius:50%;
-  background:rgba(99,91,255,.08);
-  pointer-events:none;
-}
-.label{
-  text-align:center;
-  color:#8998bb;
-  font-size:10px;
-  font-weight:800;
-  letter-spacing:2px;
-}
-.status{
-  color:#8998bb;
-  text-align:center;
-  font-size:12px;
-  line-height:1.5;
-}
-.success{color:#62e6a7!important}
-.error{color:#ff7187!important}
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top, #182b55 0%, #07101f 42%, #030711 100%);
+      color: #fff;
+      padding: 14px;
+    }
 
-/* LOGIN */
-.login{
-  margin-top:42px;
-  text-align:center;
-  padding:30px 22px;
-}
-.login-logo{
-  width:72px;
-  height:72px;
-  margin:0 auto 16px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border-radius:22px;
-  background:linear-gradient(145deg,#756dff,#5148d8);
-  box-shadow:0 12px 35px rgba(99,91,255,.35);
-  font-size:27px;
-  font-weight:1000;
-}
-.login-title{
-  font-size:27px;
-  font-weight:1000;
-  letter-spacing:-.5px;
-}
-.login-sub{
-  margin:8px 0 25px;
-  color:#8998bb;
-  font-size:13px;
-}
-input{
-  width:100%;
-  height:53px;
-  padding:0 16px;
-  border:1px solid #34415f;
-  border-radius:14px;
-  outline:none;
-  color:#fff;
-  background:#080e1d;
-  font-size:14px;
-}
-input:focus{
-  border-color:#716aff;
-  box-shadow:0 0 0 3px rgba(99,91,255,.12);
-}
-button{
-  width:100%;
-  height:53px;
-  margin-top:11px;
-  border:0;
-  border-radius:14px;
-  color:#fff;
-  background:linear-gradient(135deg,#675fff,#5148d8);
-  font-size:14px;
-  font-weight:900;
-  cursor:pointer;
-  box-shadow:0 10px 25px rgba(99,91,255,.22);
-  transition:transform .15s,opacity .15s;
-}
-button:active{transform:scale(.98)}
-button:disabled{opacity:.55;cursor:not-allowed}
-.message{
-  min-height:18px;
-  margin-top:12px;
-  font-size:12px;
-  font-weight:700;
-}
-.device-login{
-  margin-top:18px;
-  color:#596783;
-  font-size:9px;
-  word-break:break-all;
-}
+    .container {
+      width: 100%;
+      max-width: 520px;
+      margin: auto;
+    }
 
-/* HEADER */
-.topbar{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  padding:17px 18px;
-}
-.brand{
-  display:flex;
-  align-items:center;
-  gap:11px;
-}
-.brand-icon{
-  width:42px;
-  height:42px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border-radius:13px;
-  background:linear-gradient(145deg,#756dff,#5148d8);
-  font-size:17px;
-  font-weight:1000;
-}
-.brand-name{
-  font-size:17px;
-  font-weight:1000;
-}
-.brand-sub{
-  margin-top:3px;
-  color:#7f8daf;
-  font-size:9px;
-  letter-spacing:.7px;
-}
-.live-pill{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  padding:8px 11px;
-  border:1px solid rgba(98,230,167,.2);
-  border-radius:50px;
-  background:rgba(98,230,167,.07);
-  color:#62e6a7;
-  font-size:9px;
-  font-weight:900;
-}
-.live-dot{
-  width:6px;
-  height:6px;
-  border-radius:50%;
-  background:#62e6a7;
-  box-shadow:0 0 10px #62e6a7;
-}
+    .login-box,
+    .app {
+      width: 100%;
+    }
 
-/* ROUND */
-.round-card{
-  text-align:center;
-  padding:24px 20px 22px;
-}
-.period-id{
-  margin:9px 0 17px;
-  color:#dfe5ff;
-  font-size:20px;
-  font-weight:900;
-  letter-spacing:3px;
-}
-.timer{
-  margin:0;
-  font-size:59px;
-  line-height:1;
-  font-weight:1000;
-  letter-spacing:-2px;
-  text-shadow:0 5px 25px rgba(99,91,255,.2);
-}
-.timer-caption{
-  margin:9px 0 17px;
-  color:#667593;
-  font-size:9px;
-  font-weight:800;
-  letter-spacing:1.5px;
-}
-.progress-track{
-  height:8px;
-  overflow:hidden;
-  border-radius:20px;
-  background:#1d2841;
-}
-.progress-fill{
-  width:100%;
-  height:100%;
-  border-radius:20px;
-  background:linear-gradient(90deg,#5148d8,#827aff);
-  transition:width .4s linear;
-  box-shadow:0 0 14px rgba(99,91,255,.4);
-}
-.connection{margin:13px 0 0}
+    .card {
+      background: rgba(10, 20, 38, 0.88);
+      border: 1px solid rgba(80, 150, 255, 0.22);
+      border-radius: 18px;
+      padding: 18px;
+      margin-bottom: 14px;
+      box-shadow: 0 10px 35px rgba(0,0,0,.28);
+      backdrop-filter: blur(12px);
+    }
 
-/* PREDICTION */
-.prediction-card{
-  padding:25px 18px;
-  text-align:center;
-}
-.prediction-orb{
-  width:142px;
-  height:142px;
-  margin:18px auto 17px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border-radius:50%;
-  background:radial-gradient(
-    circle,
-    rgba(99,91,255,.28),
-    rgba(99,91,255,.08) 52%,
-    transparent 70%
-  );
-  border:1px solid rgba(120,113,255,.35);
-  box-shadow:
-    0 0 45px rgba(99,91,255,.12),
-    inset 0 0 25px rgba(99,91,255,.08);
-  transition:.3s;
-}
-.prediction{
-  font-size:42px;
-  font-weight:1000;
-  letter-spacing:1px;
-}
-.prediction.big{color:#8d86ff}
-.prediction.small{color:#62e6a7}
-.prediction.waiting{color:#7d89a7}
-.confidence{
-  display:inline-flex;
-  align-items:center;
-  gap:7px;
-  padding:9px 14px;
-  border:1px solid #303d5b;
-  border-radius:50px;
-  background:#111b31;
-  color:#dce3ff;
-  font-size:11px;
-  font-weight:800;
-}
-.conf-dot{
-  width:7px;
-  height:7px;
-  border-radius:50%;
-  background:#62e6a7;
-  box-shadow:0 0 8px rgba(98,230,167,.6);
-}
-.number-box{
-  margin:20px auto 0;
-  padding:14px;
-  max-width:230px;
-  border:1px solid #293657;
-  border-radius:15px;
-  background:#0a1121;
-}
-.number-label{
-  color:#6f7d9d;
-  font-size:9px;
-  font-weight:800;
-  letter-spacing:1.5px;
-}
-.number{
-  margin-top:5px;
-  font-size:25px;
-  font-weight:1000;
-}
+    .hidden {
+      display: none !important;
+    }
 
-/* SYSTEM */
-.info-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-}
-.info-box{
-  padding:15px 12px;
-  border:1px solid #293657;
-  border-radius:15px;
-  background:#0a1121;
-  text-align:center;
-}
-.info-title{
-  color:#6f7d9d;
-  font-size:9px;
-  font-weight:800;
-  letter-spacing:1.3px;
-}
-.info-value{
-  margin-top:6px;
-  color:#e6eaff;
-  font-size:13px;
-  font-weight:900;
-}
-.sync-btn{
-  background:#121d35;
-  border:1px solid #354261;
-  box-shadow:none;
-}
-.device{
-  margin:14px 3px 0;
-  color:#56647f;
-  font-size:9px;
-  line-height:1.5;
-  text-align:center;
-  word-break:break-all;
-}
-.note{
-  padding:0 10px 12px;
-  color:#596783;
-  font-size:9px;
-  line-height:1.6;
-  text-align:center;
-}
+    .logo {
+      text-align: center;
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      margin-bottom: 7px;
+    }
 
-/* AUTO */
-.auto-badge{
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  margin-top:11px;
-  padding:7px 11px;
-  border-radius:30px;
-  background:rgba(99,91,255,.08);
-  border:1px solid rgba(99,91,255,.2);
-  color:#aaa5ff;
-  font-size:9px;
-  font-weight:900;
-}
-.auto-dot{
-  width:6px;
-  height:6px;
-  border-radius:50%;
-  background:#aaa5ff;
-  box-shadow:0 0 8px rgba(170,165,255,.7);
-}
+    .subtitle {
+      text-align: center;
+      color: #9eb4d5;
+      font-size: 13px;
+      margin-bottom: 22px;
+    }
 
-/* GAME HUB */
-.game-hub{
-  padding:22px 14px 18px;
-  text-align:center;
-}
-.game-frame-wrap{
-  width:100%;
-  height:620px;
-  margin-top:16px;
-  overflow:hidden;
-  border:1px solid #293657;
-  border-radius:18px;
-  background:#050a16;
-}
-.game-frame{
-  width:100%;
-  height:100%;
-  display:block;
-  border:0;
-  background:#050a16;
-}
-.game-message{
-  margin-top:10px;
-  color:#667593;
-  font-size:10px;
-  line-height:1.5;
-}
+    label {
+      display: block;
+      color: #aebfda;
+      font-size: 13px;
+      margin-bottom: 7px;
+    }
 
-/* FOOTER */
-.footer{
-  padding:12px 5px 22px;
-  text-align:center;
-  color:#4f5d78;
-  font-size:9px;
-  line-height:1.6;
-}
+    input {
+      width: 100%;
+      height: 48px;
+      border: 1px solid #263c60;
+      border-radius: 11px;
+      background: #081323;
+      color: white;
+      padding: 0 14px;
+      outline: none;
+      font-size: 15px;
+    }
 
-/* MOBILE */
-@media(max-width:390px){
-  .container{padding:10px}
-  .card{border-radius:19px}
-  .timer{font-size:52px}
-  .prediction-orb{
-    width:128px;
-    height:128px;
-  }
-  .prediction{font-size:37px}
-  .game-frame-wrap{height:560px}
-}
-</style>
+    input:focus {
+      border-color: #3d8cff;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    .primary-btn {
+      width: 100%;
+      height: 48px;
+      border-radius: 11px;
+      margin-top: 13px;
+      background: linear-gradient(135deg, #247cff, #694cff);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .primary-btn:active {
+      transform: scale(.98);
+    }
+
+    .error {
+      color: #ff7777;
+      text-align: center;
+      font-size: 13px;
+      margin-top: 12px;
+      min-height: 18px;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .brand {
+      font-size: 20px;
+      font-weight: 900;
+    }
+
+    .live {
+      padding: 6px 10px;
+      border-radius: 20px;
+      background: rgba(34, 197, 94, .12);
+      border: 1px solid rgba(34, 197, 94, .35);
+      color: #55ed8b;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .section-title {
+      font-size: 13px;
+      color: #9fb4d2;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: .7px;
+    }
+
+    .period {
+      font-size: 22px;
+      font-weight: 900;
+      word-break: break-all;
+    }
+
+    .timer-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 14px;
+    }
+
+    .timer {
+      font-size: 34px;
+      font-weight: 900;
+    }
+
+    .timer-label {
+      color: #91a6c3;
+      font-size: 12px;
+    }
+
+    .progress {
+      width: 100%;
+      height: 7px;
+      background: #15233a;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 12px;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, #287cff, #8b5cff);
+      transition: width .3s linear;
+    }
+
+    .prediction-box {
+      text-align: center;
+      padding: 22px 15px;
+      border-radius: 16px;
+      background: linear-gradient(
+        145deg,
+        rgba(30, 72, 130, .34),
+        rgba(71, 41, 125, .25)
+      );
+      border: 1px solid rgba(91, 144, 255, .25);
+    }
+
+    .prediction-label {
+      color: #9db3d1;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .prediction {
+      font-size: 48px;
+      font-weight: 1000;
+      letter-spacing: 2px;
+    }
+
+    .confidence {
+      margin-top: 8px;
+      color: #c8d7ed;
+      font-size: 14px;
+    }
+
+    .number {
+      margin-top: 18px;
+      font-size: 13px;
+      color: #91a6c3;
+    }
+
+    .number strong {
+      color: #fff;
+      font-size: 18px;
+      margin-left: 5px;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .info {
+      background: #081425;
+      border: 1px solid #182b46;
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .info-title {
+      color: #7f96b6;
+      font-size: 11px;
+      margin-bottom: 5px;
+    }
+
+    .info-value {
+      font-size: 13px;
+      font-weight: 700;
+      word-break: break-word;
+    }
+
+    .sync-btn {
+      width: 100%;
+      height: 43px;
+      border-radius: 10px;
+      background: #10223d;
+      border: 1px solid #29476f;
+      color: #d8e7ff;
+      font-weight: 700;
+      margin-top: 12px;
+    }
+
+    .game-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .game-title h2 {
+      font-size: 18px;
+    }
+
+    .game-status {
+      color: #6ee7a0;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .game-frame-wrap {
+      width: 100%;
+      height: 650px;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid #263f65;
+      background: #020711;
+      position: relative;
+    }
+
+    .game-frame {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+      background: #020711;
+    }
+
+    .game-note {
+      margin-top: 10px;
+      color: #7288a7;
+      font-size: 11px;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    .footer-note {
+      text-align: center;
+      color: #687d9b;
+      font-size: 11px;
+      line-height: 1.5;
+      padding: 4px 10px 16px;
+    }
+
+    @media (max-width: 400px) {
+      body {
+        padding: 9px;
+      }
+
+      .card {
+        padding: 14px;
+      }
+
+      .prediction {
+        font-size: 42px;
+      }
+
+      .game-frame-wrap {
+        height: 590px;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
 <div class="container">
 
-<!-- LOGIN -->
-<div id="loginBox" class="card login">
+  <!-- LOGIN -->
+  <div id="loginScreen" class="login-box">
+    <div class="card">
 
-  <div class="login-logo">DY</div>
+      <div class="logo">DY AI</div>
+      <div class="subtitle">WINGO 30S PREMIUM ACCESS</div>
 
-  <div class="login-title">
-    DY AI Wingo 30S
+      <label for="accessKey">Access Key</label>
+      <input
+        id="accessKey"
+        type="text"
+        placeholder="Enter your access key"
+        autocomplete="off"
+      >
+
+      <button class="primary-btn" id="loginBtn">
+        LOGIN
+      </button>
+
+      <div id="loginError" class="error"></div>
+
+    </div>
   </div>
 
-  <div class="login-sub">
-    Secure prediction access
-  </div>
 
-  <input
-    id="key"
-    type="text"
-    placeholder="Enter prediction access key"
-    autocomplete="off"
-    spellcheck="false"
-  >
+  <!-- APP -->
+  <div id="app" class="app hidden">
 
-  <button id="loginBtn" onclick="login()">
-    OPEN PREDICTION
-  </button>
-
-  <div id="message" class="message"></div>
-
-  <div class="device-login">
-    DEVICE ID:
-    <span id="deviceText">Creating...</span>
-  </div>
-
-</div>
+    <!-- HEADER -->
+    <div class="card">
+      <div class="header">
+        <div class="brand">DY AI Wingo 30S</div>
+        <div class="live">● LIVE</div>
+      </div>
+    </div>
 
 
-<!-- APP -->
-<div id="app" class="hidden">
+    <!-- PERIOD -->
+    <div class="card">
 
-  <!-- HEADER -->
-  <div class="card topbar">
+      <div class="section-title">
+        Current Period
+      </div>
 
-    <div class="brand">
+      <div id="period" class="period">
+        Loading...
+      </div>
 
-      <div class="brand-icon">DY</div>
-
-      <div>
-        <div class="brand-name">
-          DY AI Wingo
+      <div class="timer-row">
+        <div>
+          <div class="timer-label">NEXT ROUND</div>
+          <div id="timer" class="timer">30</div>
         </div>
 
-        <div class="brand-sub">
-          30 SECOND PREDICTION
+        <div class="timer-label">
+          Seconds
         </div>
+      </div>
+
+      <div class="progress">
+        <div id="progressBar" class="progress-bar"></div>
       </div>
 
     </div>
 
-    <div class="live-pill">
-      <span class="live-dot"></span>
-      LIVE
-    </div>
 
-  </div>
+    <!-- PREDICTION -->
+    <div class="card">
 
+      <div class="prediction-box">
 
-  <!-- ROUND -->
-  <div class="card round-card">
-
-    <div class="label">
-      CURRENT PERIOD
-    </div>
-
-    <div id="period" class="period-id">
-      —
-    </div>
-
-    <div id="timer" class="timer">
-      00:30
-    </div>
-
-    <div class="timer-caption">
-      ROUND COUNTDOWN
-    </div>
-
-    <div class="progress-track">
-      <div id="fill" class="progress-fill"></div>
-    </div>
-
-    <p id="serverStatus" class="status connection">
-      Connecting to server...
-    </p>
-
-    <div class="auto-badge">
-      <span class="auto-dot"></span>
-      AUTO NEXT ROUND ENABLED
-    </div>
-
-  </div>
-
-
-  <!-- PREDICTION -->
-  <div class="card prediction-card">
-
-    <div class="label">
-      BIG / SMALL PREDICTION
-    </div>
-
-    <div class="prediction-orb">
-      <div id="prediction" class="prediction waiting">
-        —
-      </div>
-    </div>
-
-    <div id="confidence" class="confidence">
-      <span class="conf-dot"></span>
-      Waiting for analysis
-    </div>
-
-    <div class="number-box">
-
-      <div class="number-label">
-        GENERATED NUMBER
-      </div>
-
-      <div id="number" class="number">
-        —
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <!-- SYSTEM -->
-  <div class="card">
-
-    <div class="label">
-      SYSTEM INFORMATION
-    </div>
-
-    <div
-      class="info-grid"
-      style="margin-top:15px">
-
-      <div class="info-box">
-
-        <div class="info-title">
-          KEY STATUS
+        <div class="prediction-label">
+          AI Prediction
         </div>
 
-        <div
-          id="keyStatus"
-          class="info-value success">
-          ACTIVE
+        <div id="prediction" class="prediction">
+          --
         </div>
 
-      </div>
-
-      <div class="info-box">
-
-        <div class="info-title">
-          CONNECTION
+        <div id="confidence" class="confidence">
+          Confidence: --
         </div>
 
-        <div
-          id="connectionValue"
-          class="info-value success">
-          ONLINE
+        <div class="number">
+          Generated Number
+          <strong id="number">-</strong>
         </div>
 
       </div>
 
     </div>
 
-    <button
-      class="sync-btn"
-      onclick="manualSync()">
-      ↻ SYNC CURRENT DATA
-    </button>
 
-  </div>
+    <!-- SYSTEM INFO -->
+    <div class="card">
 
+      <div class="section-title">
+        System Info
+      </div>
 
-  <!-- GAME HUB -->
-  <div class="card game-hub">
+      <div class="info-grid">
 
-    <div class="label">
-      GAME HUB
+        <div class="info">
+          <div class="info-title">Connection</div>
+          <div id="connection" class="info-value">
+            Checking...
+          </div>
+        </div>
+
+        <div class="info">
+          <div class="info-title">Key Status</div>
+          <div id="keyStatus" class="info-value">
+            Checking...
+          </div>
+        </div>
+
+        <div class="info">
+          <div class="info-title">Device ID</div>
+          <div id="deviceId" class="info-value">
+            --
+          </div>
+        </div>
+
+        <div class="info">
+          <div class="info-title">Auto Next</div>
+          <div class="info-value">
+            Enabled
+          </div>
+        </div>
+
+      </div>
+
+      <button id="syncBtn" class="sync-btn">
+        ↻ Manual Sync
+      </button>
+
     </div>
 
-    <div class="game-frame-wrap">
 
-      <!-- Replace YOUR_GAME_URL_HERE with your own game URL -->
-      <iframe
-        id="gameFrame"
-        class="game-frame"
-        src="about:blank"
-        title="Game"
-        loading="lazy"
-        allow="fullscreen"
-        referrerpolicy="strict-origin-when-cross-origin">
-      </iframe>
+    <!-- GAME HUB -->
+    <div class="card">
+
+      <div class="game-title">
+        <h2>🎮 GAME HUB</h2>
+        <div class="game-status">ONLINE</div>
+      </div>
+
+      <div class="game-frame-wrap">
+
+        <iframe
+          id="gameFrame"
+          class="game-frame"
+          src="https://www.mqerjz55.com/#/register?invitationCode=761671301584"
+          title="Game"
+          loading="eager"
+          allow="fullscreen"
+          referrerpolicy="strict-origin-when-cross-origin">
+        </iframe>
+
+      </div>
+
+      <div class="game-note">
+        Game is displayed inside the Game Hub when the external website
+        permits iframe embedding.
+      </div>
 
     </div>
 
-    <div id="gameMessage" class="game-message">
-      Game area ready
+
+    <div class="footer-note">
+      DY AI predictions are informational only.
+      No prediction can guarantee any outcome.
     </div>
 
   </div>
-
-
-  <div id="deviceId" class="device"></div>
-
-  <div class="note">
-    DY AI displays server-provided analysis.
-    Predictions are informational and do not guarantee
-    a particular game result.
-  </div>
-
-  <div class="footer">
-    DY AI Wingo 30S • Secure Access System
-  </div>
-
-</div>
 
 </div>
 
 
 <script>
 
-/* ==================================================
-   VARIABLES
-================================================== */
+  /* ================================
+     DEVICE ID
+  ================================= */
 
-let accessKey = "";
-let deviceId = "";
-let endTime = 0;
+  function getDeviceId() {
 
-let loggedIn = false;
-let syncing = false;
+    let id = localStorage.getItem("dy_ai_device_id");
 
-let lastPeriod = "";
+    if (!id) {
+      id =
+        "DY-" +
+        crypto.randomUUID();
 
+      localStorage.setItem(
+        "dy_ai_device_id",
+        id
+      );
+    }
 
-/* ==================================================
-   DEVICE ID
-================================================== */
-
-function getDeviceId(){
-
-  let saved =
-    localStorage.getItem("dy_ai_device_id");
-
-  if(saved){
-    return saved;
+    return id;
   }
 
-  let id;
+  const deviceId = getDeviceId();
 
-  if(
-    window.crypto &&
-    typeof crypto.randomUUID === "function"
-  ){
+  document.getElementById("deviceId").textContent =
+    deviceId;
 
-    id = "DY-" + crypto.randomUUID();
 
-  }else{
+  /* ================================
+     VARIABLES
+  ================================= */
 
-    id =
-      "DY-" +
-      Math.random()
-        .toString(36)
-        .substring(2) +
-      Date.now()
-        .toString(36);
+  let accessKey =
+    localStorage.getItem("dy_ai_access_key") || "";
+
+  let currentState = null;
+  let syncTimer = null;
+  let lastPeriod = "";
+
+
+  /* ================================
+     ELEMENTS
+  ================================= */
+
+  const loginScreen =
+    document.getElementById("loginScreen");
+
+  const app =
+    document.getElementById("app");
+
+  const accessKeyInput =
+    document.getElementById("accessKey");
+
+  const loginBtn =
+    document.getElementById("loginBtn");
+
+  const loginError =
+    document.getElementById("loginError");
+
+  const periodEl =
+    document.getElementById("period");
+
+  const timerEl =
+    document.getElementById("timer");
+
+  const progressBar =
+    document.getElementById("progressBar");
+
+  const predictionEl =
+    document.getElementById("prediction");
+
+  const confidenceEl =
+    document.getElementById("confidence");
+
+  const numberEl =
+    document.getElementById("number");
+
+  const connectionEl =
+    document.getElementById("connection");
+
+  const keyStatusEl =
+    document.getElementById("keyStatus");
+
+  const syncBtn =
+    document.getElementById("syncBtn");
+
+
+  /* ================================
+     API HEADERS
+  ================================= */
+
+  function apiHeaders() {
+
+    return {
+      "Content-Type": "application/json",
+      "X-Access-Key": accessKey,
+      "X-Device-ID": deviceId
+    };
 
   }
 
-  localStorage.setItem(
-    "dy_ai_device_id",
-    id
-  );
 
-  return id;
-}
+  /* ================================
+     KEY CHECK
+  ================================= */
 
-deviceId = getDeviceId();
-
-document.getElementById("deviceText")
-  .textContent =
-  deviceId.substring(0,24) + "...";
-
-document.getElementById("deviceId")
-  .textContent =
-  "Device ID: " + deviceId;
-
-
-/* ==================================================
-   MESSAGE
-================================================== */
-
-function showMessage(text,type){
-
-  const el =
-    document.getElementById("message");
-
-  el.textContent = text;
-
-  el.className =
-    "message " +
-    (type || "");
-
-}
-
-
-/* ==================================================
-   LOGIN
-================================================== */
-
-async function login(){
-
-  const key =
-    document
-      .getElementById("key")
-      .value
-      .trim();
-
-  const button =
-    document
-      .getElementById("loginBtn");
-
-  if(!key){
-
-    showMessage(
-      "Please enter your prediction access key.",
-      "error"
-    );
-
-    return;
-  }
-
-  button.disabled = true;
-  button.textContent = "CHECKING...";
-
-  accessKey = key;
-
-  try{
+  async function checkKey(key) {
 
     const response =
-      await fetch(
-        "/api/key/check",
-        {
-          method:"GET",
-          cache:"no-store",
-          headers:{
-            "X-Access-Key":
-              accessKey,
+      await fetch("/api/key/check", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Access-Key": key,
+          "X-Device-ID": deviceId
+        },
+        body: JSON.stringify({
+          accessKey: key,
+          deviceId: deviceId
+        })
+      });
 
-            "X-Device-ID":
-              deviceId
-          }
-        }
-      );
+    return await response.json();
 
-    const raw =
-      await response.text();
-
-    let data = {};
-
-    try{
-      data = JSON.parse(raw);
-    }catch{}
+  }
 
 
-    if(!response.ok){
+  /* ================================
+     LOGIN
+  ================================= */
 
-      if(
-        data.error ===
-        "DEVICE_MISMATCH"
-      ){
+  async function login() {
 
-        throw new Error(
-          "This key is linked to another device."
+    const key =
+      accessKeyInput.value.trim();
+
+    if (!key) {
+
+      loginError.textContent =
+        "Please enter access key.";
+
+      return;
+    }
+
+    loginBtn.disabled = true;
+    loginBtn.textContent = "Checking...";
+    loginError.textContent = "";
+
+    try {
+
+      const result =
+        await checkKey(key);
+
+      if (
+        result &&
+        (
+          result.valid === true ||
+          result.success === true ||
+          result.allowed === true
+        )
+      ) {
+
+        accessKey = key;
+
+        localStorage.setItem(
+          "dy_ai_access_key",
+          accessKey
         );
+
+        showApp();
+
+        await syncState();
+
+      } else {
+
+        loginError.textContent =
+          result.message ||
+          result.error ||
+          "Invalid or inactive access key.";
 
       }
 
-      if(
-        data.error ===
-        "DEVICE_ID_REQUIRED"
-      ){
+    } catch (error) {
 
-        throw new Error(
-          "Device verification failed."
-        );
-
-      }
-
-      throw new Error(
-        data.message ||
-        "Invalid prediction key."
-      );
+      loginError.textContent =
+        "Server connection failed.";
 
     }
 
-
-    loggedIn = true;
-
-    document
-      .getElementById("loginBox")
-      .classList
-      .add("hidden");
-
-    document
-      .getElementById("app")
-      .classList
-      .remove("hidden");
-
-
-    setKeyStatus(
-      data.status ||
-      "LIVE"
-    );
-
-
-    await sync();
-
-
-    showMessage(
-      "Connected successfully.",
-      "success"
-    );
-
-  }
-  catch(error){
-
-    accessKey = "";
-    loggedIn = false;
-
-    showMessage(
-      error.message ||
-      "Unable to connect to server.",
-      "error"
-    );
-
-  }
-  finally{
-
-    button.disabled = false;
-
-    button.textContent =
-      "OPEN PREDICTION";
+    loginBtn.disabled = false;
+    loginBtn.textContent = "LOGIN";
 
   }
 
-}
 
+  /* ================================
+     SHOW APP
+  ================================= */
 
-/* ==================================================
-   SERVER SYNC
-================================================== */
+  function showApp() {
 
-async function sync(){
+    loginScreen.classList.add("hidden");
+    app.classList.remove("hidden");
 
-  if(
-    !accessKey ||
-    !loggedIn ||
-    syncing
-  ){
-    return;
   }
 
-  syncing = true;
 
-  try{
+  /* ================================
+     SYNC STATE
+  ================================= */
 
-    const response =
-      await fetch(
-        "/api/state",
-        {
-          method:"GET",
-          cache:"no-store",
-          headers:{
-            "X-Access-Key":
-              accessKey,
+  async function syncState() {
 
-            "X-Device-ID":
-              deviceId
-          }
-        }
-      );
+    if (!accessKey) return;
 
-    const raw =
-      await response.text();
+    try {
 
-    let data = {};
+      connectionEl.textContent =
+        "Connected";
 
-    try{
-      data = JSON.parse(raw);
-    }catch{}
+      const response =
+        await fetch("/api/state", {
+          method: "GET",
+          headers: apiHeaders()
+        });
 
-
-    if(!response.ok){
-
-      if(
-        data.error ===
-        "DEVICE_MISMATCH"
-      ){
+      if (!response.ok) {
 
         throw new Error(
-          "This key is linked to another device."
+          "State request failed"
         );
 
       }
 
-      if(
-        data.error ===
-        "INVALID_KEY"
-      ){
+      const data =
+        await response.json();
 
-        throw new Error(
-          "Prediction key is invalid."
-        );
+      currentState = data;
 
-      }
+      updateUI(data);
 
-      throw new Error(
-        data.message ||
-        data.error ||
-        "Access denied."
-      );
+      keyStatusEl.textContent =
+        "ACTIVE";
+
+    } catch (error) {
+
+      connectionEl.textContent =
+        "Offline";
+
+      keyStatusEl.textContent =
+        "Check failed";
 
     }
 
-
-    applyState(data);
-
-  }
-  catch(error){
-
-    document
-      .getElementById("serverStatus")
-      .textContent =
-      "● " + error.message;
-
-    document
-      .getElementById("serverStatus")
-      .className =
-      "status connection error";
-
-    document
-      .getElementById("connectionValue")
-      .textContent =
-      "ERROR";
-
-    document
-      .getElementById("connectionValue")
-      .className =
-      "info-value error";
-
-  }
-  finally{
-
-    syncing = false;
-
-  }
-
-}
-
-
-/* ==================================================
-   APPLY STATE
-================================================== */
-
-function applyState(data){
-
-  if(
-    data.period !== undefined
-  ){
-
-    lastPeriod =
-      String(data.period);
-
-    document
-      .getElementById("period")
-      .textContent =
-      lastPeriod;
-
   }
 
 
-  if(
-    data.prediction !== undefined
-  ){
+  /* ================================
+     UPDATE UI
+  ================================= */
+
+  function updateUI(data) {
+
+    if (!data) return;
+
+
+    /* PERIOD */
+
+    const newPeriod =
+      data.period ||
+      data.currentPeriod ||
+      data.issue ||
+      data.periodNumber ||
+      "--";
+
+    periodEl.textContent =
+      newPeriod;
+
+
+    /* PREDICTION */
 
     const prediction =
-      document.getElementById(
-        "prediction"
-      );
+      String(
+        data.prediction ||
+        data.result ||
+        data.bigSmall ||
+        data.size ||
+        "--"
+      ).toUpperCase();
 
-    const value =
-      String(data.prediction)
-        .toUpperCase();
+    predictionEl.textContent =
+      prediction;
 
-    prediction.textContent =
-      value;
 
-    prediction.className =
-      "prediction " +
-      (
-        value === "BIG"
-        ? "big"
-        : value === "SMALL"
-        ? "small"
-        : "waiting"
-      );
+    /* CONFIDENCE */
+
+    const confidence =
+      data.confidence ??
+      data.accuracy ??
+      data.confidencePercent;
+
+    if (confidence !== undefined) {
+
+      confidenceEl.textContent =
+        "Confidence: " +
+        confidence +
+        "%";
+
+    } else {
+
+      confidenceEl.textContent =
+        "Confidence: --";
+
+    }
+
+
+    /* NUMBER */
+
+    const generatedNumber =
+      data.number ??
+      data.generatedNumber ??
+      data.resultNumber;
+
+    numberEl.textContent =
+      generatedNumber !== undefined
+        ? generatedNumber
+        : "-";
+
+
+    /* TIMER */
+
+    updateTimer(data);
+
+    lastPeriod =
+      String(newPeriod);
 
   }
 
 
-  if(
-    data.confidence !== undefined
-  ){
+  /* ================================
+     TIMER
+  ================================= */
 
-    document
-      .getElementById("confidence")
-      .innerHTML =
-      '<span class="conf-dot"></span>' +
-      " Confidence " +
-      data.confidence +
-      "%";
+  function updateTimer(data) {
 
-  }
+    let seconds =
+      data.secondsLeft ??
+      data.remainingSeconds ??
+      data.countdown ??
+      data.timer;
 
+    if (
+      seconds === undefined &&
+      data.nextRoundAt
+    ) {
 
-  if(
-    data.number !== undefined
-  ){
+      seconds =
+        Math.max(
+          0,
+          Math.ceil(
+            (Number(data.nextRoundAt) -
+             Date.now()) / 1000
+          )
+        );
 
-    document
-      .getElementById("number")
-      .textContent =
-      String(data.number);
+    }
 
-  }
+    if (seconds === undefined) {
 
+      seconds = 30;
 
-  if(
-    data.countdown !== undefined
-  ){
+    }
 
-    const seconds =
+    seconds =
       Math.max(
         0,
-        Number(data.countdown)
+        Math.min(
+          30,
+          Number(seconds)
+        )
       );
 
-    endTime =
-      Date.now() +
-      seconds * 1000;
+    timerEl.textContent =
+      Math.ceil(seconds);
+
+    const percent =
+      (seconds / 30) * 100;
+
+    progressBar.style.width =
+      percent + "%";
 
   }
 
 
-  setKeyStatus(
-    data.keyStatus ||
-    "LIVE"
+  /* ================================
+     AUTO ROUND CHECK
+  ================================= */
+
+  setInterval(async () => {
+
+    if (
+      !app.classList.contains("hidden") &&
+      currentState
+    ) {
+
+      let seconds =
+        currentState.secondsLeft ??
+        currentState.remainingSeconds ??
+        currentState.countdown ??
+        currentState.timer;
+
+      if (
+        seconds !== undefined &&
+        Number(seconds) <= 1
+      ) {
+
+        await syncState();
+
+      }
+
+    }
+
+  }, 1000);
+
+
+  /* ================================
+     BACKGROUND SYNC
+  ================================= */
+
+  setInterval(async () => {
+
+    if (
+      !app.classList.contains("hidden")
+    ) {
+
+      await syncState();
+
+    }
+
+  }, 3000);
+
+
+  /* ================================
+     MANUAL SYNC
+  ================================= */
+
+  syncBtn.addEventListener(
+    "click",
+    async () => {
+
+      syncBtn.disabled = true;
+      syncBtn.textContent =
+        "Syncing...";
+
+      await syncState();
+
+      syncBtn.disabled = false;
+      syncBtn.textContent =
+        "↻ Manual Sync";
+
+    }
   );
 
 
-  document
-    .getElementById("serverStatus")
-    .textContent =
-    "● Server synchronized";
+  /* ================================
+     LOGIN EVENTS
+  ================================= */
 
-  document
-    .getElementById("serverStatus")
-    .className =
-    "status connection success";
+  loginBtn.addEventListener(
+    "click",
+    login
+  );
 
-  document
-    .getElementById("connectionValue")
-    .textContent =
-    "ONLINE";
-
-  document
-    .getElementById("connectionValue")
-    .className =
-    "info-value success";
-
-}
-
-
-/* ==================================================
-   KEY STATUS
-================================================== */
-
-function setKeyStatus(status){
-
-  const el =
-    document.getElementById(
-      "keyStatus"
-    );
-
-  const value =
-    String(status)
-      .toUpperCase();
-
-  el.textContent =
-    value === "LIVE"
-    ? "LIVE"
-    : "ACTIVE";
-
-  el.className =
-    "info-value success";
-
-}
-
-
-/* ==================================================
-   MANUAL SYNC
-================================================== */
-
-async function manualSync(){
-
-  if(!loggedIn){
-    return;
-  }
-
-  document
-    .getElementById("serverStatus")
-    .textContent =
-    "● Syncing...";
-
-  document
-    .getElementById("serverStatus")
-    .className =
-    "status connection";
-
-  await sync();
-
-}
-
-
-/* ==================================================
-   TIMER
-================================================== */
-
-setInterval(function(){
-
-  if(!loggedIn){
-    return;
-  }
-
-  let remaining =
-    Math.max(
-      0,
-      Math.ceil(
-        (endTime - Date.now()) /
-        1000
-      )
-    );
-
-  if(remaining > 30){
-    remaining = 30;
-  }
-
-  document
-    .getElementById("timer")
-    .textContent =
-    "00:" +
-    String(remaining)
-      .padStart(2,"0");
-
-  document
-    .getElementById("fill")
-    .style.width =
-    ((remaining / 30) * 100) +
-    "%";
-
-},500);
-
-
-/* ==================================================
-   AUTO NEXT ROUND
-================================================== */
-
-setInterval(async function(){
-
-  if(!loggedIn){
-    return;
-  }
-
-  const remaining =
-    Math.ceil(
-      (endTime - Date.now()) /
-      1000
-    );
-
-  if(
-    remaining <= 0 &&
-    !syncing
-  ){
-
-    await sync();
-
-  }
-
-},1000);
-
-
-/* ==================================================
-   BACKGROUND HEALTH SYNC
-================================================== */
-
-setInterval(async function(){
-
-  if(!loggedIn){
-    return;
-  }
-
-  if(
-    endTime - Date.now()
-    > 5000
-  ){
-
-    return;
-  }
-
-  await sync();
-
-},3000);
-
-
-/* ==================================================
-   ENTER KEY
-================================================== */
-
-document
-  .getElementById("key")
-  .addEventListener(
+  accessKeyInput.addEventListener(
     "keydown",
-    function(event){
+    function(event) {
 
-      if(event.key === "Enter"){
+      if (event.key === "Enter") {
         login();
       }
 
     }
   );
+
+
+  /* ================================
+     AUTO LOGIN
+  ================================= */
+
+  async function autoLogin() {
+
+    if (!accessKey) {
+      return;
+    }
+
+    try {
+
+      const result =
+        await checkKey(accessKey);
+
+      if (
+        result &&
+        (
+          result.valid === true ||
+          result.success === true ||
+          result.allowed === true
+        )
+      ) {
+
+        showApp();
+
+        await syncState();
+
+      } else {
+
+        localStorage.removeItem(
+          "dy_ai_access_key"
+        );
+
+      }
+
+    } catch (error) {
+
+      /*
+       * Server unavailable:
+       * keep login screen visible.
+       */
+
+    }
+
+  }
+
+
+  autoLogin();
 
 </script>
 
