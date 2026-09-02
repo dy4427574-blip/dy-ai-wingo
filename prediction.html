@@ -28,7 +28,7 @@ body{
 }
 
 .card{
-  background:rgba(10,20,38,.90);
+  background:rgba(10,20,38,.92);
   border:1px solid rgba(80,150,255,.22);
   border-radius:18px;
   padding:17px;
@@ -93,8 +93,8 @@ input:focus{
   font-weight:800;
 }
 
-.primary-btn:active{
-  transform:scale(.98);
+.primary-btn:disabled{
+  opacity:.7;
 }
 
 .error{
@@ -260,6 +260,10 @@ input:focus{
   color:#d8e7ff;
   font-weight:700;
   margin-top:12px;
+}
+
+.sync-btn:disabled{
+  opacity:.6;
 }
 
 /* GAME */
@@ -603,7 +607,7 @@ input:focus{
 
     <div class="game-note">
       Game loading depends on whether the external website
-      allows iframe embedding.
+      permits iframe embedding.
     </div>
 
   </div>
@@ -632,11 +636,14 @@ function getDeviceId(){
 
   if(!id){
 
-    if(window.crypto && crypto.randomUUID){
+    if(
+      window.crypto &&
+      typeof window.crypto.randomUUID === "function"
+    ){
 
       id =
         "DY-" +
-        crypto.randomUUID();
+        window.crypto.randomUUID();
 
     }else{
 
@@ -760,9 +767,24 @@ const syncBtn =
 
 
 /* =========================================
-   CHECK KEY
-   Uses /api/state because current
-   server.js verifies access keys there.
+   COMMON HEADERS
+   IMPORTANT:
+   X-ACCESS-KEY + X-DEVICE-ID
+========================================= */
+
+function getHeaders(){
+
+  return {
+    "X-Access-Key": accessKey,
+    "X-Device-ID": deviceId,
+    "Cache-Control": "no-cache"
+  };
+
+}
+
+
+/* =========================================
+   CHECK ACCESS KEY
 ========================================= */
 
 async function checkKey(key){
@@ -772,17 +794,30 @@ async function checkKey(key){
       "/api/state",
       {
         method:"GET",
+
         headers:{
-          "X-Access-Key":key
+          "X-Access-Key":key,
+          "X-Device-ID":deviceId
         },
+
         cache:"no-store"
       }
     );
 
-  if(response.ok){
+  let data = {};
 
-    const data =
+  try{
+
+    data =
       await response.json();
+
+  }catch(e){
+
+    data = {};
+
+  }
+
+  if(response.ok){
 
     return {
       valid:true,
@@ -791,19 +826,13 @@ async function checkKey(key){
 
   }
 
-  let data={};
-
-  try{
-    data =
-      await response.json();
-  }catch(e){}
-
   return {
     valid:false,
     message:
       data.error ||
       "Invalid access key"
   };
+
 }
 
 
@@ -874,6 +903,8 @@ async function login(){
 
   }catch(error){
 
+    console.error(error);
+
     loginError.textContent =
       "Server connection failed.";
 
@@ -883,6 +914,7 @@ async function login(){
 
   loginBtn.textContent =
     "LOGIN";
+
 }
 
 
@@ -899,6 +931,7 @@ function showApp(){
   app.classList.remove(
     "hidden"
   );
+
 }
 
 
@@ -908,40 +941,57 @@ function showApp(){
 
 async function syncState(){
 
-  if(!accessKey) return;
+  if(!accessKey){
 
-  if(syncInProgress) return;
+    return;
+
+  }
+
+  if(syncInProgress){
+
+    return;
+
+  }
 
   syncInProgress = true;
 
   try{
-
-    connectionEl.textContent =
-      "Connected";
 
     const response =
       await fetch(
         "/api/state",
         {
           method:"GET",
-          headers:{
-            "X-Access-Key":
-              accessKey
-          },
+
+          headers:getHeaders(),
+
           cache:"no-store"
         }
       );
 
+
+    /* KEY INVALID */
+
     if(response.status === 401){
+
+      let errorData = {};
+
+      try{
+        errorData =
+          await response.json();
+      }catch(e){}
 
       keyStatusEl.textContent =
         "INVALID";
+
+      connectionEl.textContent =
+        "Connected";
 
       localStorage.removeItem(
         "dy_ai_access_key"
       );
 
-      accessKey="";
+      accessKey = "";
 
       app.classList.add(
         "hidden"
@@ -952,20 +1002,24 @@ async function syncState(){
       );
 
       loginError.textContent =
+        errorData.error ||
         "Access key is invalid.";
 
-      syncInProgress=false;
+      syncInProgress = false;
 
       return;
     }
 
+
     if(!response.ok){
 
       throw new Error(
-        "State request failed"
+        "HTTP " +
+        response.status
       );
 
     }
+
 
     const data =
       await response.json();
@@ -973,19 +1027,31 @@ async function syncState(){
     currentState =
       data;
 
-    updateUI(data);
+    updateUI(
+      data
+    );
+
+    connectionEl.textContent =
+      "Connected";
 
     keyStatusEl.textContent =
       "ACTIVE";
 
+
   }catch(error){
+
+    console.error(
+      "SYNC ERROR:",
+      error
+    );
 
     connectionEl.textContent =
       "Offline";
 
   }
 
-  syncInProgress=false;
+  syncInProgress = false;
+
 }
 
 
@@ -995,7 +1061,10 @@ async function syncState(){
 
 function updateUI(data){
 
-  if(!data) return;
+  if(!data){
+
+    return;
+  }
 
 
   /* PERIOD */
@@ -1007,14 +1076,11 @@ function updateUI(data){
 
   /* PREDICTION */
 
-  const prediction =
+  predictionEl.textContent =
     String(
       data.prediction ||
       "--"
     ).toUpperCase();
-
-  predictionEl.textContent =
-    prediction;
 
 
   /* CONFIDENCE */
@@ -1081,7 +1147,7 @@ function updateUI(data){
 
 
 /* =========================================
-   TIMER RENDER
+   TIMER
 ========================================= */
 
 function renderTimer(){
@@ -1102,6 +1168,7 @@ function renderTimer(){
 
   progressBar.style.width =
     percent + "%";
+
 }
 
 
@@ -1117,14 +1184,16 @@ setInterval(
         "hidden"
       )
     ){
+
       return;
+
     }
 
     countdown--;
 
     if(countdown <= 0){
 
-      countdown=0;
+      countdown = 0;
 
       renderTimer();
 
@@ -1171,14 +1240,14 @@ syncBtn.addEventListener(
   "click",
   async function(){
 
-    syncBtn.disabled=true;
+    syncBtn.disabled = true;
 
     syncBtn.textContent =
       "Syncing...";
 
     await syncState();
 
-    syncBtn.disabled=false;
+    syncBtn.disabled = false;
 
     syncBtn.textContent =
       "↻ Manual Sync";
@@ -1195,6 +1264,7 @@ loginBtn.addEventListener(
   "click",
   login
 );
+
 
 accessKeyInput.addEventListener(
   "keydown",
@@ -1254,16 +1324,16 @@ async function autoLogin(){
         "dy_ai_access_key"
       );
 
-      accessKey="";
+      accessKey = "";
 
     }
 
   }catch(error){
 
-    /*
-      Server unavailable.
-      Login screen remains visible.
-    */
+    console.error(
+      "AUTO LOGIN ERROR:",
+      error
+    );
 
   }
 
