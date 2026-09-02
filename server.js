@@ -17,7 +17,6 @@ const WINGOBOT_URL =
 
 const ROUND_SECONDS = 30;
 
-
 /* =====================================================
    DATABASE
 ===================================================== */
@@ -28,6 +27,11 @@ const pool = new Pool({
     ? { rejectUnauthorized: false }
     : false
 });
+
+
+/* =====================================================
+   CACHE
+===================================================== */
 
 const cache = {
   history: [],
@@ -41,10 +45,13 @@ const cache = {
   analysis: null,
 
   lastUpdated: 0,
-  providerCountdown: null,
   anchorTime: 0,
 
-  error: null
+  providerCountdown: null,
+
+  error: null,
+
+  modelStats: {}
 };
 
 
@@ -53,6 +60,7 @@ const cache = {
 ===================================================== */
 
 async function initDatabase() {
+
   if (!process.env.DATABASE_URL) {
     console.log("DATABASE_URL not configured");
     return;
@@ -87,14 +95,20 @@ async function initDatabase() {
 
 
 /* =====================================================
-   JSON
+   JSON RESPONSE
 ===================================================== */
 
 function sendJSON(res, status, data) {
+
   res.writeHead(status, {
-    "Content-Type": "application/json; charset=utf-8",
-    "Cache-Control": "no-store",
-    "Access-Control-Allow-Origin": "*"
+    "Content-Type":
+      "application/json; charset=utf-8",
+
+    "Cache-Control":
+      "no-store",
+
+    "Access-Control-Allow-Origin":
+      "*"
   });
 
   res.end(JSON.stringify(data));
@@ -102,7 +116,9 @@ function sendJSON(res, status, data) {
 
 
 function readBody(req) {
+
   return new Promise(resolve => {
+
     let data = "";
 
     req.on("data", chunk => {
@@ -110,21 +126,37 @@ function readBody(req) {
     });
 
     req.on("end", () => {
+
       try {
-        resolve(data ? JSON.parse(data) : {});
+        resolve(
+          data
+            ? JSON.parse(data)
+            : {}
+        );
       } catch {
         resolve({});
       }
+
     });
+
   });
+
 }
 
 
 /* =====================================================
-   BIG / SMALL
+   BASIC HELPERS
 ===================================================== */
 
+function cleanIssue(value) {
+
+  return String(value || "").trim();
+
+}
+
+
 function classify(number) {
+
   const n = Number(number);
 
   if (!Number.isFinite(n)) {
@@ -135,17 +167,19 @@ function classify(number) {
 }
 
 
-/* =====================================================
-   ISSUE HELPERS
-===================================================== */
+function opposite(side) {
 
-function cleanIssue(value) {
-  return String(value || "").trim();
+  return side === "BIG"
+    ? "SMALL"
+    : "BIG";
+
 }
 
 
 function compareIssues(a, b) {
+
   try {
+
     const A = BigInt(a);
     const B = BigInt(b);
 
@@ -153,13 +187,19 @@ function compareIssues(a, b) {
     if (A < B) return -1;
 
     return 0;
+
   } catch {
-    return String(a).localeCompare(String(b));
+
+    return String(a)
+      .localeCompare(String(b));
+
   }
+
 }
 
 
 function nextIssue(value) {
+
   const s = cleanIssue(value);
 
   const match = s.match(/^(.*?)(\d+)$/);
@@ -168,63 +208,87 @@ function nextIssue(value) {
     return null;
   }
 
-  const prefix = match[1];
-  const digits = match[2];
-
   try {
-    const next = BigInt(digits) + 1n;
+
+    const prefix = match[1];
+    const digits = match[2];
+
+    const next =
+      BigInt(digits) + 1n;
 
     return (
       prefix +
-      next.toString().padStart(digits.length, "0")
+      next.toString().padStart(
+        digits.length,
+        "0"
+      )
     );
+
   } catch {
+
     return null;
+
   }
+
 }
 
 
 /* =====================================================
-   PROVIDER NORMALIZATION
+   NORMALIZE PROVIDER HISTORY
 ===================================================== */
 
 function normalizeHistory(data) {
+
   const rows =
     Array.isArray(data?.history)
       ? data.history
+
       : Array.isArray(data?.data?.history)
         ? data.data.history
+
         : Array.isArray(data?.data)
           ? data.data
+
           : [];
 
   return rows
-    .map(row => ({
-      issueNumber: cleanIssue(
-        row.issueNumber ??
-        row.issue ??
-        row.period
-      ),
+    .map(row => {
 
-      number: Number(row.number),
+      const number =
+        Number(row.number);
 
-      colour:
-        row.colour ??
-        row.color ??
-        "",
+      return {
 
-      premium:
-        row.premium ??
-        "",
+        issueNumber:
+          cleanIssue(
+            row.issueNumber ??
+            row.issue ??
+            row.period
+          ),
 
-      sum:
-        row.sum ??
-        ""
-    }))
+        number,
+
+        colour:
+          row.colour ??
+          row.color ??
+          "",
+
+        premium:
+          row.premium ??
+          "",
+
+        sum:
+          row.sum ??
+          ""
+
+      };
+
+    })
     .filter(row =>
       row.issueNumber &&
       Number.isFinite(row.number)
     );
+
 }
 
 
@@ -233,7 +297,9 @@ function normalizeHistory(data) {
 ===================================================== */
 
 function extractCountdown(data) {
+
   const values = [
+
     data?.countdown,
     data?.remainingSeconds,
     data?.seconds,
@@ -243,9 +309,11 @@ function extractCountdown(data) {
     data?.current?.remainingSeconds,
     data?.current?.seconds,
     data?.current?.timeLeft
+
   ];
 
   for (const value of values) {
+
     const n = Number(value);
 
     if (
@@ -253,8 +321,11 @@ function extractCountdown(data) {
       n >= 0 &&
       n <= 120
     ) {
+
       return Math.floor(n);
+
     }
+
   }
 
   return null;
@@ -262,32 +333,39 @@ function extractCountdown(data) {
 
 
 /* =====================================================
-   WINGOBOT
+   PROVIDER
 ===================================================== */
 
 async function fetchWingoData() {
+
   if (!WINGOBOT_TOKEN) {
+
     throw new Error(
       "WINGOBOT_TOKEN is not configured"
     );
+
   }
 
-  const response = await fetch(
-    WINGOBOT_URL,
-    {
-      headers: {
-        Authorization:
-          `Bearer ${WINGOBOT_TOKEN}`,
+  const response =
+    await fetch(
+      WINGOBOT_URL,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${WINGOBOT_TOKEN}`,
 
-        Accept: "application/json"
+          Accept:
+            "application/json"
+        }
       }
-    }
-  );
+    );
 
   if (!response.ok) {
+
     throw new Error(
       `WingoBot HTTP ${response.status}`
     );
+
   }
 
   return response.json();
@@ -295,244 +373,91 @@ async function fetchWingoData() {
 
 
 /* =====================================================
-   BASIC HELPERS
+   SEQUENCE
 ===================================================== */
 
-function sideOf(row) {
-  return classify(row.number);
-}
+function getSequence(history, limit = 80) {
 
-
-function sequenceFromHistory(history, limit = 80) {
   return history
     .slice(0, limit)
-    .map(sideOf)
+    .map(row => {
+
+      const side =
+        classify(row.number);
+
+      return side;
+
+    })
     .filter(Boolean);
+
 }
 
 
-function opposite(side) {
-  return side === "BIG"
-    ? "SMALL"
-    : "BIG";
-}
+/* =====================================================
+   NUMBER FEATURES
+===================================================== */
 
+function numberFeature(history) {
 
-function makeVote() {
+  if (!history.length) {
+    return null;
+  }
+
+  const n =
+    Number(history[0].number);
+
+  if (!Number.isFinite(n)) {
+    return null;
+  }
+
+  /*
+    Number itself is NOT used as a
+    direct "number prediction".
+
+    It is only converted into
+    structural features.
+  */
+
   return {
-    BIG: 0,
-    SMALL: 0
+
+    parity:
+      n % 2 === 0
+        ? "EVEN"
+        : "ODD",
+
+    low:
+      n <= 2,
+
+    middle:
+      n >= 3 &&
+      n <= 6,
+
+    high:
+      n >= 7
+
   };
-}
 
-
-function addVote(vote, side, weight) {
-  if (
-    side !== "BIG" &&
-    side !== "SMALL"
-  ) {
-    return;
-  }
-
-  if (
-    !Number.isFinite(weight) ||
-    weight <= 0
-  ) {
-    return;
-  }
-
-  vote[side] += weight;
 }
 
 
 /* =====================================================
    MODEL 1
-   EXACT HISTORICAL CONTEXT
-===================================================== */
-
-function exactContextModel(sequence, length) {
-  if (sequence.length < length + 2) {
-    return null;
-  }
-
-  const current =
-    sequence
-      .slice(0, length)
-      .join("");
-
-  const vote = makeVote();
-  let matches = 0;
-
-  for (
-    let i = length;
-    i < sequence.length - 1;
-    i++
-  ) {
-    const old =
-      sequence
-        .slice(i, i + length)
-        .join("");
-
-    if (old !== current) {
-      continue;
-    }
-
-    const next = sequence[i - 1];
-
-    const recency =
-      1 /
-      (1 + i * 0.055);
-
-    addVote(
-      vote,
-      next,
-      1.25 * recency
-    );
-
-    matches++;
-  }
-
-  if (!matches) {
-    return null;
-  }
-
-  const side =
-    vote.BIG >= vote.SMALL
-      ? "BIG"
-      : "SMALL";
-
-  const total =
-    vote.BIG +
-    vote.SMALL;
-
-  return {
-    name: `CTX-${length}`,
-    side,
-    matches,
-    rawWeight: total,
-    confidence:
-      total
-        ? Math.abs(
-            vote.BIG -
-            vote.SMALL
-          ) / total
-        : 0
-  };
-}
-
-
-/* =====================================================
-   MODEL 2
-   PARTIAL / SIMILAR CONTEXT
-===================================================== */
-
-function similarContextModel(sequence, length) {
-  if (sequence.length < length + 3) {
-    return null;
-  }
-
-  const current =
-    sequence.slice(0, length);
-
-  const vote = makeVote();
-
-  let matches = 0;
-
-  for (
-    let i = length;
-    i < sequence.length - 1;
-    i++
-  ) {
-    const old =
-      sequence.slice(
-        i,
-        i + length
-      );
-
-    let distance = 0;
-
-    for (
-      let j = 0;
-      j < length;
-      j++
-    ) {
-      if (
-        current[j] !== old[j]
-      ) {
-        distance++;
-      }
-    }
-
-    const allowed =
-      length <= 5 ? 1 : 2;
-
-    if (distance > allowed) {
-      continue;
-    }
-
-    const similarity =
-      1 -
-      distance / length;
-
-    const next =
-      sequence[i - 1];
-
-    const weight =
-      similarity *
-      0.65 /
-      (1 + i * 0.065);
-
-    addVote(
-      vote,
-      next,
-      weight
-    );
-
-    matches++;
-  }
-
-  if (!matches) {
-    return null;
-  }
-
-  const side =
-    vote.BIG >= vote.SMALL
-      ? "BIG"
-      : "SMALL";
-
-  const total =
-    vote.BIG +
-    vote.SMALL;
-
-  return {
-    name: `SIM-${length}`,
-    side,
-    matches,
-    rawWeight: total,
-    confidence:
-      total
-        ? Math.abs(
-            vote.BIG -
-            vote.SMALL
-          ) / total
-        : 0
-  };
-}
-
-
-/* =====================================================
-   MODEL 3
-   TRANSITION
+   RECENT TRANSITION
 ===================================================== */
 
 function transitionModel(sequence) {
+
   if (sequence.length < 10) {
     return null;
   }
 
-  const current = sequence[0];
+  const current =
+    sequence[0];
 
-  const vote = makeVote();
+  const votes = {
+    BIG: 0,
+    SMALL: 0
+  };
 
   let matches = 0;
 
@@ -541,6 +466,7 @@ function transitionModel(sequence) {
     i < sequence.length - 1;
     i++
   ) {
+
     if (
       sequence[i] !== current
     ) {
@@ -550,17 +476,14 @@ function transitionModel(sequence) {
     const next =
       sequence[i - 1];
 
-    const weight =
-      0.75 /
-      (1 + i * 0.06);
+    if (!next) continue;
 
-    addVote(
-      vote,
-      next,
-      weight
-    );
+    votes[next] +=
+      1 /
+      (1 + i * 0.04);
 
     matches++;
+
   }
 
   if (!matches) {
@@ -568,725 +491,776 @@ function transitionModel(sequence) {
   }
 
   const side =
-    vote.BIG >= vote.SMALL
+    votes.BIG >= votes.SMALL
       ? "BIG"
       : "SMALL";
 
   const total =
-    vote.BIG +
-    vote.SMALL;
+    votes.BIG +
+    votes.SMALL;
 
   return {
-    name: "TRANSITION",
+
+    name: "Transition",
     side,
-    matches,
-    rawWeight: total,
-    confidence:
+
+    strength:
       total
         ? Math.abs(
-            vote.BIG -
-            vote.SMALL
+            votes.BIG -
+            votes.SMALL
           ) / total
-        : 0
+        : 0,
+
+    matches
+
   };
+
+}
+
+
+/* =====================================================
+   MODEL 2
+   SEQUENCE MATCH
+===================================================== */
+
+function sequenceModel(sequence) {
+
+  if (sequence.length < 14) {
+    return null;
+  }
+
+  const lengths =
+    [3, 4, 5, 6, 7];
+
+  const votes = {
+    BIG: 0,
+    SMALL: 0
+  };
+
+  let matches = 0;
+
+  for (const len of lengths) {
+
+    if (
+      sequence.length <
+      len + 2
+    ) {
+      continue;
+    }
+
+    const current =
+      sequence
+        .slice(0, len)
+        .join("");
+
+    for (
+      let i = len + 1;
+      i < sequence.length;
+      i++
+    ) {
+
+      const old =
+        sequence
+          .slice(i, i + len)
+          .join("");
+
+      if (old !== current) {
+        continue;
+      }
+
+      const result =
+        sequence[i - 1];
+
+      if (!result) continue;
+
+      const weight =
+        1 /
+        (1 + i * 0.06);
+
+      votes[result] += weight;
+
+      matches++;
+
+    }
+
+  }
+
+  if (!matches) {
+    return null;
+  }
+
+  const total =
+    votes.BIG +
+    votes.SMALL;
+
+  return {
+
+    name: "Sequence",
+    side:
+      votes.BIG >= votes.SMALL
+        ? "BIG"
+        : "SMALL",
+
+    strength:
+      total
+        ? Math.abs(
+            votes.BIG -
+            votes.SMALL
+          ) / total
+        : 0,
+
+    matches
+
+  };
+
+}
+
+
+/* =====================================================
+   MODEL 3
+   RUN / REVERSAL
+===================================================== */
+
+function runModel(sequence) {
+
+  if (sequence.length < 8) {
+    return null;
+  }
+
+  let run = 1;
+
+  while (
+    run < sequence.length &&
+    sequence[run] === sequence[0]
+  ) {
+
+    run++;
+
+  }
+
+  const current =
+    sequence[0];
+
+  let sameRun = 0;
+  let oppositeAfter = 0;
+
+  for (
+    let i = 0;
+    i < sequence.length - 1;
+    i++
+  ) {
+
+    if (
+      sequence[i] !== current
+    ) {
+      continue;
+    }
+
+    let length = 1;
+
+    while (
+      i + length <
+        sequence.length &&
+      sequence[i + length] ===
+        current
+    ) {
+
+      length++;
+
+    }
+
+    if (
+      length === run &&
+      i > 0
+    ) {
+
+      sameRun++;
+
+      if (
+        sequence[i - 1] !==
+        current
+      ) {
+
+        oppositeAfter++;
+
+      }
+
+    }
+
+  }
+
+  if (!sameRun) {
+    return null;
+  }
+
+  /*
+    This model is intentionally cautious.
+    It does not simply assume every run
+    must reverse.
+  */
+
+  const reversalRate =
+    oppositeAfter / sameRun;
+
+  let side;
+
+  if (reversalRate >= 0.60) {
+
+    side = opposite(current);
+
+  } else {
+
+    side = current;
+
+  }
+
+  return {
+
+    name: "Run/Reversal",
+    side,
+
+    strength:
+      Math.abs(
+        reversalRate - 0.5
+      ) * 2,
+
+    matches: sameRun
+
+  };
+
 }
 
 
 /* =====================================================
    MODEL 4
-   RUN STRUCTURE
+   ALTERNATION / BREAK
 ===================================================== */
 
-function runStructureModel(sequence) {
+function alternationModel(sequence) {
+
   if (sequence.length < 10) {
     return null;
   }
 
-  let currentRun = 1;
-
-  while (
-    currentRun < sequence.length &&
-    sequence[currentRun] ===
-      sequence[0]
-  ) {
-    currentRun++;
-  }
-
-  const vote = makeVote();
-
-  let matches = 0;
+  let alternating = 0;
 
   for (
     let i = 0;
-    i < sequence.length - 2;
+    i < Math.min(8, sequence.length - 1);
     i++
   ) {
-    let run = 1;
-
-    while (
-      i + run < sequence.length &&
-      sequence[i + run] ===
-        sequence[i]
-    ) {
-      run++;
-    }
 
     if (
-      run !== currentRun
+      sequence[i] !==
+      sequence[i + 1]
     ) {
-      continue;
+
+      alternating++;
+
     }
 
-    if (i === 0) {
-      continue;
-    }
-
-    const next =
-      sequence[i - 1];
-
-    const weight =
-      0.7 /
-      (1 + i * 0.07);
-
-    addVote(
-      vote,
-      next,
-      weight
-    );
-
-    matches++;
   }
 
-  if (!matches) {
+  const rate =
+    alternating / 8;
+
+  if (rate < 0.625) {
     return null;
   }
 
-  const side =
-    vote.BIG >= vote.SMALL
-      ? "BIG"
-      : "SMALL";
-
-  const total =
-    vote.BIG +
-    vote.SMALL;
-
   return {
-    name: "RUN",
-    side,
-    matches,
-    rawWeight: total,
-    confidence:
-      total
-        ? Math.abs(
-            vote.BIG -
-            vote.SMALL
-          ) / total
-        : 0
+
+    name: "Alternation",
+    side:
+      opposite(sequence[0]),
+
+    strength:
+      rate,
+
+    matches: alternating
+
   };
+
 }
 
 
 /* =====================================================
    MODEL 5
-   REVERSAL / ALTERNATION
+   NUMBER STRUCTURE
 ===================================================== */
 
-function reversalModel(sequence) {
-  if (sequence.length < 8) {
-    return null;
-  }
+function numberStructureModel(history) {
 
-  let alternating = true;
-
-  for (
-    let i = 0;
-    i < 7;
-    i++
-  ) {
-    if (
-      sequence[i] ===
-      sequence[i + 1]
-    ) {
-      alternating = false;
-      break;
-    }
-  }
-
-  if (!alternating) {
-    return null;
-  }
-
-  return {
-    name: "REVERSAL",
-    side: opposite(sequence[0]),
-    matches: 1,
-    rawWeight: 0.45,
-    confidence: 0.35
-  };
-}
-
-
-/* =====================================================
-   MODEL 6
-   REPEATED BLOCK
-===================================================== */
-
-function repeatedBlockModel(sequence) {
-  if (sequence.length < 12) {
-    return null;
-  }
-
-  for (
-    const length of [2, 3, 4]
-  ) {
-    const block =
-      sequence.slice(
-        0,
-        length
-      );
-
-    const previous =
-      sequence.slice(
-        length,
-        length * 2
-      );
-
-    if (
-      block.join("") ===
-      previous.join("")
-    ) {
-      return {
-        name:
-          `BLOCK-${length}`,
-
-        side:
-          sequence[length - 1],
-
-        matches: 1,
-
-        rawWeight: 0.6,
-
-        confidence: 0.45
-      };
-    }
-  }
-
-  return null;
-}
-
-
-/* =====================================================
-   MODEL 7
-   MIRROR STRUCTURE
-===================================================== */
-
-function mirrorModel(sequence) {
-  if (sequence.length < 10) {
-    return null;
-  }
-
-  const a =
-    sequence.slice(0, 5);
-
-  const b =
-    sequence.slice(5, 10);
-
-  let same = 0;
-
-  for (
-    let i = 0;
-    i < 5;
-    i++
-  ) {
-    if (
-      a[i] ===
-      b[i]
-    ) {
-      same++;
-    }
-  }
-
-  if (same < 4) {
-    return null;
-  }
-
-  return {
-    name: "MIRROR",
-    side:
-      opposite(
-        sequence[0]
-      ),
-    matches: same,
-    rawWeight: 0.5,
-    confidence:
-      same / 5
-  };
-}
-
-
-/* =====================================================
-   MODEL 8
-   DIGIT STRUCTURE
-   Uses actual numbers, not only BIG/SMALL.
-===================================================== */
-
-function digitStructureModel(history) {
   if (history.length < 12) {
     return null;
   }
 
-  const nums =
-    history
-      .slice(0, 30)
-      .map(x => Number(x.number))
-      .filter(
-        n =>
-          Number.isInteger(n) &&
-          n >= 0 &&
-          n <= 9
-      );
+  const current =
+    numberFeature(history);
 
-  if (nums.length < 12) {
+  if (!current) {
     return null;
   }
 
-  const latest =
-    nums[0];
-
-  const recentPattern =
-    nums
-      .slice(0, 4)
-      .join("");
-
-  const vote = makeVote();
+  const votes = {
+    BIG: 0,
+    SMALL: 0
+  };
 
   let matches = 0;
 
   for (
-    let i = 4;
-    i < nums.length - 4;
+    let i = 1;
+    i < Math.min(history.length, 50);
     i++
   ) {
-    const pattern =
-      nums
-        .slice(i, i + 4)
-        .join("");
+
+    const feature =
+      numberFeature(
+        history.slice(i)
+      );
+
+    if (!feature) continue;
+
+    let similarity = 0;
 
     if (
-      pattern !==
-      recentPattern
+      feature.parity ===
+      current.parity
+    ) {
+      similarity += 0.25;
+    }
+
+    if (
+      feature.low ===
+      current.low
+    ) {
+      similarity += 0.25;
+    }
+
+    if (
+      feature.middle ===
+      current.middle
+    ) {
+      similarity += 0.25;
+    }
+
+    if (
+      feature.high ===
+      current.high
+    ) {
+      similarity += 0.25;
+    }
+
+    if (
+      similarity < 0.50
     ) {
       continue;
     }
 
-    const next =
+    const result =
       classify(
-        nums[i - 1]
+        history[i - 1].number
       );
 
-    addVote(
-      vote,
-      next,
-      0.8 /
-      (1 + i * 0.08)
-    );
+    if (!result) continue;
+
+    votes[result] +=
+      similarity /
+      (1 + i * 0.05);
 
     matches++;
+
   }
 
   if (!matches) {
     return null;
   }
 
-  const side =
-    vote.BIG >= vote.SMALL
-      ? "BIG"
-      : "SMALL";
-
   const total =
-    vote.BIG +
-    vote.SMALL;
+    votes.BIG +
+    votes.SMALL;
 
   return {
-    name: "DIGIT-PATTERN",
-    side,
-    matches,
-    rawWeight: total,
-    confidence:
+
+    name: "Number Structure",
+
+    side:
+      votes.BIG >= votes.SMALL
+        ? "BIG"
+        : "SMALL",
+
+    strength:
       total
         ? Math.abs(
-            vote.BIG -
-            vote.SMALL
+            votes.BIG -
+            votes.SMALL
           ) / total
-        : 0
+        : 0,
+
+    matches
+
   };
+
 }
 
 
 /* =====================================================
-   BUILD MODELS
+   MODEL 6
+   RECENCY WEIGHTED TRANSITIONS
 ===================================================== */
 
-function buildModels(history) {
+function recencyModel(sequence) {
+
+  if (sequence.length < 12) {
+    return null;
+  }
+
+  const windows =
+    [5, 8, 12, 20];
+
+  const votes = {
+    BIG: 0,
+    SMALL: 0
+  };
+
+  let used = 0;
+
+  for (const window of windows) {
+
+    if (
+      sequence.length <
+      window
+    ) {
+      continue;
+    }
+
+    const part =
+      sequence.slice(
+        0,
+        window
+      );
+
+    let big = 0;
+    let small = 0;
+
+    /*
+      Not used as raw frequency.
+      We compare directional transitions
+      inside the window.
+    */
+
+    for (
+      let i = 0;
+      i < part.length - 1;
+      i++
+    ) {
+
+      const a = part[i];
+      const b = part[i + 1];
+
+      if (a === b) {
+
+        if (a === "BIG") {
+          big += 0.25;
+        } else {
+          small += 0.25;
+        }
+
+      } else {
+
+        if (a === "BIG") {
+          small += 0.50;
+        } else {
+          big += 0.50;
+        }
+
+      }
+
+    }
+
+    const total =
+      big + small;
+
+    if (!total) continue;
+
+    const side =
+      big >= small
+        ? "BIG"
+        : "SMALL";
+
+    const confidence =
+      Math.abs(big - small) /
+      total;
+
+    votes[side] +=
+      confidence /
+      Math.sqrt(window);
+
+    used++;
+
+  }
+
+  if (!used) {
+    return null;
+  }
+
+  return {
+
+    name: "Multi Window",
+    side:
+      votes.BIG >= votes.SMALL
+        ? "BIG"
+        : "SMALL",
+
+    strength:
+      Math.abs(
+        votes.BIG -
+        votes.SMALL
+      ) /
+      Math.max(
+        0.0001,
+        votes.BIG +
+        votes.SMALL
+      ),
+
+    matches: used
+
+  };
+
+}
+
+
+/* =====================================================
+   MODEL LIST
+===================================================== */
+
+function generateModels(history) {
+
   const sequence =
-    sequenceFromHistory(
+    getSequence(
       history,
       80
     );
 
-  const models = [];
+  return [
 
-  for (
-    const length of
-    [2, 3, 4, 5, 6, 8]
-  ) {
-    const exact =
-      exactContextModel(
-        sequence,
-        length
-      );
-
-    if (exact) {
-      models.push(exact);
-    }
-
-    const similar =
-      similarContextModel(
-        sequence,
-        length
-      );
-
-    if (similar) {
-      models.push(similar);
-    }
-  }
-
-  const transition =
     transitionModel(
       sequence
-    );
+    ),
 
-  if (transition) {
-    models.push(transition);
-  }
-
-  const run =
-    runStructureModel(
+    sequenceModel(
       sequence
-    );
+    ),
 
-  if (run) {
-    models.push(run);
-  }
-
-  const reversal =
-    reversalModel(
+    runModel(
       sequence
-    );
+    ),
 
-  if (reversal) {
-    models.push(reversal);
-  }
-
-  const block =
-    repeatedBlockModel(
+    alternationModel(
       sequence
-    );
+    ),
 
-  if (block) {
-    models.push(block);
-  }
-
-  const mirror =
-    mirrorModel(
-      sequence
-    );
-
-  if (mirror) {
-    models.push(mirror);
-  }
-
-  const digit =
-    digitStructureModel(
+    numberStructureModel(
       history
-    );
+    ),
 
-  if (digit) {
-    models.push(digit);
-  }
+    recencyModel(
+      sequence
+    )
 
-  return models;
+  ].filter(Boolean);
+
 }
 
 
 /* =====================================================
-   WALK-FORWARD MODEL VALIDATION
-   ===================================================== */
+   WALK FORWARD BACKTEST
+===================================================== */
 
-function testModelAt(
+function backtestModel(
   history,
-  modelName,
-  index
+  modelName
 ) {
-  const slice =
-    history.slice(
-      index
-    );
+
+  const chronological =
+    [...history].reverse();
 
   if (
-    slice.length < 12
+    chronological.length < 30
   ) {
-    return null;
-  }
 
-  const sequence =
-    sequenceFromHistory(
-      slice,
-      80
-    );
-
-  if (
-    sequence.length < 8
-  ) {
-    return null;
-  }
-
-  let model = null;
-
-  if (
-    modelName.startsWith("CTX-")
-  ) {
-    const n =
-      Number(
-        modelName.split("-")[1]
-      );
-
-    model =
-      exactContextModel(
-        sequence,
-        n
-      );
-  }
-
-  else if (
-    modelName.startsWith("SIM-")
-  ) {
-    const n =
-      Number(
-        modelName.split("-")[1]
-      );
-
-    model =
-      similarContextModel(
-        sequence,
-        n
-      );
-  }
-
-  else if (
-    modelName ===
-    "TRANSITION"
-  ) {
-    model =
-      transitionModel(
-        sequence
-      );
-  }
-
-  else if (
-    modelName ===
-    "RUN"
-  ) {
-    model =
-      runStructureModel(
-        sequence
-      );
-  }
-
-  else if (
-    modelName ===
-    "REVERSAL"
-  ) {
-    model =
-      reversalModel(
-        sequence
-      );
-  }
-
-  else if (
-    modelName.startsWith(
-      "BLOCK-"
-    )
-  ) {
-    model =
-      repeatedBlockModel(
-        sequence
-      );
-  }
-
-  else if (
-    modelName ===
-    "MIRROR"
-  ) {
-    model =
-      mirrorModel(
-        sequence
-      );
-  }
-
-  else if (
-    modelName ===
-    "DIGIT-PATTERN"
-  ) {
-    model =
-      digitStructureModel(
-        slice
-      );
-  }
-
-  if (!model) {
-    return null;
-  }
-
-  return model;
-}
-
-
-function validateModels(history, models) {
-  const performance = {};
-
-  for (
-    const model of models
-  ) {
-    performance[model.name] = {
+    return {
       tested: 0,
       wins: 0,
       losses: 0,
-      accuracy: 0,
-      weight: 1
+      accuracy: 50
     };
+
   }
 
-  /*
-    Walk-forward testing:
-    prediction is generated only
-    from data before the tested result.
-  */
+  let wins = 0;
+  let losses = 0;
 
   const maxTests =
     Math.min(
-      24,
-      Math.max(
-        0,
-        history.length - 14
-      )
+      chronological.length - 12,
+      100
     );
 
   for (
-    let step = 1;
-    step <= maxTests;
-    step++
+    let i = 12;
+    i < chronological.length &&
+    i < 12 + maxTests;
+    i++
   ) {
-    const index = step;
+
+    const training =
+      chronological
+        .slice(0, i)
+        .reverse();
 
     const actual =
       classify(
-        history[index - 1]?.number
+        chronological[i].number
       );
 
     if (!actual) {
       continue;
     }
 
-    for (
-      const model of models
-    ) {
-      const result =
-        testModelAt(
-          history,
-          model.name,
-          index
-        );
+    const models =
+      generateModels(
+        training
+      );
 
-      if (!result) {
-        continue;
-      }
+    const model =
+      models.find(
+        x =>
+          x.name ===
+          modelName
+      );
 
-      if (
-        !performance[
-          model.name
-        ]
-      ) {
-        continue;
-      }
-
-      performance[
-        model.name
-      ].tested++;
-
-      if (
-        result.side === actual
-      ) {
-        performance[
-          model.name
-        ].wins++;
-      } else {
-        performance[
-          model.name
-        ].losses++;
-      }
+    if (!model) {
+      continue;
     }
-  }
-
-  for (
-    const name of
-    Object.keys(performance)
-  ) {
-    const p =
-      performance[name];
 
     if (
-      p.tested > 0
+      model.side ===
+      actual
     ) {
-      p.accuracy =
-        p.wins /
-        p.tested;
+
+      wins++;
+
+    } else {
+
+      losses++;
+
     }
 
-    /*
-      Adaptive weight.
+  }
 
-      No model gets unlimited influence.
-      Poor recent validation reduces its
-      contribution instead of forcing it
-      to keep predicting the same side.
+  const total =
+    wins + losses;
+
+  return {
+
+    tested: total,
+    wins,
+    losses,
+
+    accuracy:
+      total
+        ? Math.round(
+            wins * 1000 / total
+          ) / 10
+        : 50
+
+  };
+
+}
+
+
+/* =====================================================
+   ADAPTIVE MODEL WEIGHTS
+===================================================== */
+
+function getAdaptiveWeights(
+  history,
+  models
+) {
+
+  const result = {};
+
+  for (const model of models) {
+
+    const stats =
+      backtestModel(
+        history,
+        model.name
+      );
+
+    /*
+      Baseline weight.
+      Accuracy does NOT directly mean
+      future certainty.
+    */
+
+    const accuracy =
+      stats.accuracy;
+
+    const distance =
+      Math.abs(
+        accuracy - 50
+      );
+
+    let weight =
+      0.70 +
+      distance * 0.035;
+
+    /*
+      Weak sample size = lower influence.
     */
 
     if (
-      p.tested >= 3
+      stats.tested < 15
     ) {
-      p.weight =
-        0.55 +
-        Math.max(
-          0,
-          Math.min(
-            0.9,
-            (
-              p.accuracy -
-              0.5
-            ) * 2
-          )
-        );
 
-      if (
-        p.accuracy < 0.40
-      ) {
-        p.weight *= 0.55;
-      }
+      weight *= 0.80;
+
     }
+
+    if (
+      stats.tested < 8
+    ) {
+
+      weight *= 0.65;
+
+    }
+
+    result[model.name] = {
+
+      weight,
+
+      tested:
+        stats.tested,
+
+      wins:
+        stats.wins,
+
+      losses:
+        stats.losses,
+
+      accuracy:
+        stats.accuracy
+
+    };
+
   }
 
-  return performance;
+  return result;
+
 }
 
 
@@ -1297,232 +1271,222 @@ function validateModels(history, models) {
 function adaptiveEnsemble(
   history
 ) {
+
   const models =
-    buildModels(
+    generateModels(
       history
     );
 
   if (!models.length) {
-    return {
-      prediction:
-        sequenceFromHistory(
-          history,
-          2
-        )[0] === "BIG"
-          ? "SMALL"
-          : "BIG",
 
-      confidence: 51,
-      patternScore: 50,
+    return {
+
+      prediction: null,
+
+      confidence: 0,
+
+      patternScore: 0,
+
       agreement: 0,
+
       evidence: 0,
-      status: "LOW SIGNAL",
-      models: []
+
+      status:
+        "INSUFFICIENT DATA",
+
+      models: [],
+
+      modelStats: {}
+
     };
+
   }
 
-  const performance =
-    validateModels(
+  const weights =
+    getAdaptiveWeights(
       history,
       models
     );
 
-  const vote = makeVote();
+  let big = 0;
+  let small = 0;
 
   const details = [];
 
-  for (
-    const model of models
-  ) {
-    const p =
-      performance[
+  for (const model of models) {
+
+    const info =
+      weights[
         model.name
       ];
 
-    let adaptiveWeight =
-      p?.weight || 1;
+    const weight =
+      info?.weight || 0.5;
 
     /*
-      Stronger historical match gets
-      more influence, but capped.
+      Strength controls influence.
+      Weak model signals are not allowed
+      to dominate the ensemble.
     */
 
-    const confidenceBoost =
-      0.75 +
-      Math.min(
-        0.75,
-        model.confidence * 1.5
-      );
-
-    adaptiveWeight *=
-      confidenceBoost;
-
-    adaptiveWeight =
+    const strength =
       Math.max(
         0.15,
         Math.min(
-          1.8,
-          adaptiveWeight
+          1,
+          Number(model.strength) || 0
         )
       );
 
-    addVote(
-      vote,
-      model.side,
-      model.rawWeight *
-        adaptiveWeight
-    );
+    const contribution =
+      weight *
+      (
+        0.55 +
+        strength * 0.45
+      );
+
+    if (
+      model.side ===
+      "BIG"
+    ) {
+
+      big += contribution;
+
+    } else {
+
+      small += contribution;
+
+    }
 
     details.push({
-      name: model.name,
-      side: model.side,
-      matches: model.matches,
 
-      accuracy:
-        p
-          ? Math.round(
-              p.accuracy * 100
-            )
-          : null,
+      name:
+        model.name,
 
-      tested:
-        p
-          ? p.tested
-          : 0,
+      side:
+        model.side,
+
+      strength:
+        Math.round(
+          strength * 100
+        ),
 
       weight:
-        Number(
-          adaptiveWeight.toFixed(3)
-        )
+        Math.round(
+          weight * 100
+        ) / 100,
+
+      contribution:
+        Math.round(
+          contribution * 100
+        ) / 100,
+
+      accuracy:
+        info?.accuracy ??
+        50,
+
+      tested:
+        info?.tested ??
+        0,
+
+      matches:
+        model.matches
+
     });
+
   }
 
   const total =
-    vote.BIG +
-    vote.SMALL;
-
-  if (!total) {
-    return {
-      prediction: "BIG",
-      confidence: 51,
-      patternScore: 50,
-      agreement: 0,
-      evidence: models.length,
-      status: "LOW SIGNAL",
-      models: details
-    };
-  }
+    big + small;
 
   const prediction =
-    vote.BIG >= vote.SMALL
+    big >= small
       ? "BIG"
       : "SMALL";
 
   const margin =
-    Math.abs(
-      vote.BIG -
-      vote.SMALL
-    ) / total;
+    total
+      ? Math.abs(
+          big - small
+        ) / total
+      : 0;
 
-  let agreeWeight =
-    0;
-
-  let totalModelWeight =
-    0;
-
-  for (
-    const model of models
-  ) {
-    const p =
-      performance[
-        model.name
-      ];
-
-    const w =
-      Math.max(
-        0.15,
-        Math.min(
-          1.8,
-          (
-            p?.weight || 1
-          ) *
-          (
-            0.75 +
-            Math.min(
-              0.75,
-              model.confidence * 1.5
-            )
-          )
-        )
-      );
-
-    totalModelWeight += w;
-
-    if (
-      model.side ===
-      prediction
-    ) {
-      agreeWeight += w;
-    }
-  }
+  const predictionModels =
+    details.filter(
+      x =>
+        x.side ===
+        prediction
+    ).length;
 
   const agreement =
-    totalModelWeight
-      ? agreeWeight /
-        totalModelWeight
+    details.length
+      ? predictionModels /
+        details.length
       : 0;
 
   /*
-    Confidence intentionally stays moderate.
-    Statistical history cannot justify 90-100%.
+    Confidence deliberately capped.
+    Historical patterns cannot justify
+    fake 90-100% certainty.
   */
 
   let confidence =
-    Math.round(
-      50 +
-      margin * 22 +
-      Math.max(
-        0,
-        agreement - 0.5
-      ) * 22
-    );
+    50 +
+    margin * 24 +
+    Math.max(
+      0,
+      agreement - 0.5
+    ) * 24;
 
   confidence =
-    Math.max(
-      51,
-      Math.min(
-        74,
-        confidence
+    Math.round(
+      Math.max(
+        50,
+        Math.min(
+          76,
+          confidence
+        )
       )
     );
 
   /*
-    Conflicting models => lower confidence.
+    Strong agreement but weak backtest
+    should still remain cautious.
   */
 
-  if (
-    agreement < 0.58 ||
-    margin < 0.06
-  ) {
-    confidence =
-      Math.min(
-        confidence,
-        55
-      );
-  }
+  const tested =
+    details.reduce(
+      (sum, x) =>
+        sum + x.tested,
+      0
+    );
+
+  const avgAccuracy =
+    details.length
+      ? details.reduce(
+          (sum, x) =>
+            sum + Number(x.accuracy || 50),
+          0
+        ) / details.length
+      : 50;
+
+  /*
+    Pattern score measures structural
+    agreement, not probability of winning.
+  */
 
   const patternScore =
-    Math.max(
-      50,
-      Math.min(
-        90,
-        Math.round(
+    Math.round(
+      Math.max(
+        50,
+        Math.min(
+          90,
           50 +
-          margin * 40 +
+          margin * 35 +
           Math.max(
             0,
             agreement - 0.5
-          ) * 25
+          ) * 30
         )
       )
     );
@@ -1531,21 +1495,49 @@ function adaptiveEnsemble(
     "LOW SIGNAL";
 
   if (
-    agreement >= 0.68 &&
-    margin >= 0.12
+    agreement >= 0.67 &&
+    margin >= 0.12 &&
+    tested >= 30
   ) {
+
     status =
       "ADAPTIVE SIGNAL";
+
+  }
+
+  if (
+    agreement >= 0.80 &&
+    margin >= 0.20 &&
+    avgAccuracy >= 55
+  ) {
+
+    status =
+      "STRONG STRUCTURAL SIGNAL";
+
+  }
+
+  /*
+    If models are nearly tied, don't pretend
+    there is a strong directional signal.
+  */
+
+  if (
+    margin < 0.05 ||
+    agreement < 0.55
+  ) {
+
+    status =
+      "LOW SIGNAL";
+
   }
 
   return {
+
     prediction,
 
     confidence,
 
     patternScore,
-
-    status,
 
     agreement:
       Math.round(
@@ -1553,26 +1545,46 @@ function adaptiveEnsemble(
       ),
 
     evidence:
-      models.length,
+      details.length,
+
+    status,
 
     vote: {
+
       big:
-        Number(
-          vote.BIG.toFixed(3)
-        ),
+        Math.round(
+          big * 100
+        ) / 100,
 
       small:
-        Number(
-          vote.SMALL.toFixed(3)
-        )
+        Math.round(
+          small * 100
+        ) / 100
+
     },
 
+    avgModelAccuracy:
+      Math.round(
+        avgAccuracy * 10
+      ) / 10,
+
+    backtestSamples:
+      tested,
+
     models:
-      details.slice(
-        0,
-        20
+      details,
+
+    modelStats:
+      weights,
+
+    sequence:
+      getSequence(
+        history,
+        12
       )
+
   };
+
 }
 
 
@@ -1584,12 +1596,15 @@ async function savePrediction(
   targetIssue,
   analysis
 ) {
+
   if (
     !process.env.DATABASE_URL ||
     !targetIssue ||
-    !analysis
+    !analysis?.prediction
   ) {
+
     return;
+
   }
 
   await pool.query(
@@ -1602,7 +1617,6 @@ async function savePrediction(
       pattern_score,
       created_at
     )
-
     VALUES
     (
       $1,
@@ -1611,7 +1625,6 @@ async function savePrediction(
       $4,
       $5
     )
-
     ON CONFLICT
     (
       target_issue
@@ -1626,6 +1639,7 @@ async function savePrediction(
       Date.now()
     ]
   );
+
 }
 
 
@@ -1634,17 +1648,18 @@ async function savePrediction(
 ===================================================== */
 
 async function settlePrediction(row) {
+
   if (
     !process.env.DATABASE_URL ||
     !row
   ) {
+
     return;
+
   }
 
   const actual =
-    classify(
-      row.number
-    );
+    classify(row.number);
 
   if (!actual) {
     return;
@@ -1653,22 +1668,17 @@ async function settlePrediction(row) {
   await pool.query(
     `
     UPDATE predictions
-
     SET
       actual = $1,
-
       result =
         CASE
           WHEN prediction = $1
           THEN 'WIN'
           ELSE 'LOSS'
         END,
-
       settled_at = $2
-
     WHERE
       target_issue = $3
-
       AND result IS NULL
     `,
     [
@@ -1677,19 +1687,22 @@ async function settlePrediction(row) {
       row.issueNumber
     ]
   );
+
 }
 
 
 /* =====================================================
-   WIN LOSS
+   WIN / LOSS
 ===================================================== */
 
 async function getWinLoss() {
-  if (
-    !process.env.DATABASE_URL
-  ) {
+
+  if (!process.env.DATABASE_URL) {
+
     return {
+
       rows: [],
+
       stats: {
         total: 0,
         win: 0,
@@ -1697,7 +1710,9 @@ async function getWinLoss() {
         rate: 0,
         streak: "-"
       }
+
     };
+
   }
 
   const result =
@@ -1712,13 +1727,9 @@ async function getWinLoss() {
         actual,
         result,
         settled_at
-
       FROM predictions
-
       WHERE result IS NOT NULL
-
       ORDER BY id DESC
-
       LIMIT 100
       `
     );
@@ -1728,47 +1739,49 @@ async function getWinLoss() {
 
   const win =
     rows.filter(
-      x =>
-        x.result ===
-        "WIN"
+      x => x.result === "WIN"
     ).length;
 
   const loss =
     rows.filter(
-      x =>
-        x.result ===
-        "LOSS"
+      x => x.result === "LOSS"
     ).length;
 
   let streak = "-";
 
   if (rows.length) {
+
     const first =
       rows[0].result;
 
     let count = 0;
 
-    for (
-      const row of rows
-    ) {
+    for (const row of rows) {
+
       if (
         row.result !==
         first
       ) {
+
         break;
+
       }
 
       count++;
+
     }
 
     streak =
       `${first} ${count}`;
+
   }
 
   return {
+
     rows,
 
     stats: {
+
       total:
         win + loss,
 
@@ -1785,17 +1798,22 @@ async function getWinLoss() {
           : 0,
 
       streak
+
     }
+
   };
+
 }
 
 
 /* =====================================================
-   CACHE
+   UPDATE CACHE
 ===================================================== */
 
 async function updateCache() {
+
   try {
+
     const data =
       await fetchWingoData();
 
@@ -1804,12 +1822,12 @@ async function updateCache() {
         data
       );
 
-    if (
-      !history.length
-    ) {
+    if (!history.length) {
+
       throw new Error(
         "No history received"
       );
+
     }
 
     const settledIssue =
@@ -1827,14 +1845,16 @@ async function updateCache() {
         providerCurrent,
         settledIssue
       ) > 0
+
         ? providerCurrent
+
         : nextIssue(
             settledIssue
           );
 
     const signature =
       history
-        .slice(0, 10)
+        .slice(0, 8)
         .map(
           row =>
             `${row.issueNumber}:${row.number}`
@@ -1871,19 +1891,20 @@ async function updateCache() {
 
     /*
       IMPORTANT:
-      Prediction changes only after
-      a new settled result arrives.
+      Analysis changes only after a
+      genuinely new settled result.
     */
 
     if (changed) {
+
       cache.historySignature =
         signature;
 
       cache.historyVersion++;
 
       /*
-        First settle previous
-        target.
+        First settle the result that
+        just became available.
       */
 
       await settlePrediction(
@@ -1891,8 +1912,8 @@ async function updateCache() {
       );
 
       /*
-        Generate adaptive
-        statistical analysis.
+        Then calculate a completely new
+        adaptive analysis.
       */
 
       cache.analysis =
@@ -1900,21 +1921,39 @@ async function updateCache() {
           history
         );
 
+      cache.modelStats =
+        cache.analysis?.modelStats ||
+        {};
+
       cache.anchorTime =
         Date.now();
 
       /*
-        Save prediction for
-        next target.
+        Save prediction for next target.
       */
 
       await savePrediction(
         targetIssue,
         cache.analysis
       );
+
+      console.log(
+        "NEW RESULT:",
+        settledIssue,
+        "TARGET:",
+        targetIssue,
+        "PRED:",
+        cache.analysis?.prediction,
+        "CONF:",
+        cache.analysis?.confidence,
+        "STATUS:",
+        cache.analysis?.status
+      );
+
     }
 
   } catch (error) {
+
     cache.error =
       error.message;
 
@@ -1922,7 +1961,9 @@ async function updateCache() {
       "Provider error:",
       error.message
     );
+
   }
+
 }
 
 
@@ -1931,12 +1972,15 @@ async function updateCache() {
 ===================================================== */
 
 function getTiming() {
+
   if (
     Number.isFinite(
       cache.providerCountdown
     )
   ) {
+
     return {
+
       seconds:
         Math.min(
           30,
@@ -1944,16 +1988,20 @@ function getTiming() {
         ),
 
       exact: true
+
     };
+
   }
 
-  if (
-    !cache.anchorTime
-  ) {
+  if (!cache.anchorTime) {
+
     return {
+
       seconds: 30,
       exact: false
+
     };
+
   }
 
   const elapsed =
@@ -1971,17 +2019,17 @@ function getTiming() {
       ROUND_SECONDS
     );
 
-  if (
-    seconds === 0
-  ) {
-    seconds =
-      ROUND_SECONDS;
+  if (seconds === 0) {
+    seconds = ROUND_SECONDS;
   }
 
   return {
+
     seconds,
     exact: false
+
   };
+
 }
 
 
@@ -1989,11 +2037,13 @@ function getTiming() {
    ADMIN AUTH
 ===================================================== */
 
-function checkAdmin(req) {
+function isAdmin(req) {
+
   return (
     req.headers["x-admin-key"] ===
     ADMIN_KEY
   );
+
 }
 
 
@@ -2007,12 +2057,13 @@ async function handleAPI(
   url
 ) {
 
-  /* HEALTH */
+  /* ---------------- HEALTH ---------------- */
 
   if (
     url.pathname ===
     "/health"
   ) {
+
     return sendJSON(
       res,
       200,
@@ -2021,10 +2072,11 @@ async function handleAPI(
         time: Date.now()
       }
     );
+
   }
 
 
-  /* STATE */
+  /* ---------------- STATE ---------------- */
 
   if (
     url.pathname ===
@@ -2032,10 +2084,12 @@ async function handleAPI(
     req.method ===
       "GET"
   ) {
+
     return sendJSON(
       res,
       200,
       {
+
         ok: true,
 
         history:
@@ -2067,12 +2121,14 @@ async function handleAPI(
 
         error:
           cache.error
+
       }
     );
+
   }
 
 
-  /* WIN LOSS */
+  /* ---------------- WIN LOSS ---------------- */
 
   if (
     url.pathname ===
@@ -2080,15 +2136,17 @@ async function handleAPI(
     req.method ===
       "GET"
   ) {
+
     return sendJSON(
       res,
       200,
       await getWinLoss()
     );
+
   }
 
 
-  /* ACCESS KEY */
+  /* ---------------- KEY CHECK ---------------- */
 
   if (
     url.pathname ===
@@ -2096,10 +2154,9 @@ async function handleAPI(
     req.method ===
       "POST"
   ) {
+
     const data =
-      await readBody(
-        req
-      );
+      await readBody(req);
 
     const key =
       String(
@@ -2118,6 +2175,7 @@ async function handleAPI(
     if (
       !process.env.DATABASE_URL
     ) {
+
       return sendJSON(
         res,
         503,
@@ -2127,9 +2185,11 @@ async function handleAPI(
             "Database not configured"
         }
       );
+
     }
 
     if (!key) {
+
       return sendJSON(
         res,
         400,
@@ -2139,6 +2199,7 @@ async function handleAPI(
             "Access key required"
         }
       );
+
     }
 
     const result =
@@ -2151,9 +2212,8 @@ async function handleAPI(
         [key]
       );
 
-    if (
-      !result.rowCount
-    ) {
+    if (!result.rowCount) {
+
       return sendJSON(
         res,
         401,
@@ -2163,6 +2223,7 @@ async function handleAPI(
             "Invalid access key"
         }
       );
+
     }
 
     const row =
@@ -2170,9 +2231,9 @@ async function handleAPI(
 
     if (
       row.device_id &&
-      row.device_id !==
-        device
+      row.device_id !== device
     ) {
+
       return sendJSON(
         res,
         403,
@@ -2182,16 +2243,15 @@ async function handleAPI(
             "Key already bound to another device"
         }
       );
+
     }
 
     await pool.query(
       `
       UPDATE access_keys
-
       SET
         device_id = $1,
         last_seen = $2
-
       WHERE id = $3
       `,
       [
@@ -2210,6 +2270,7 @@ async function handleAPI(
           "Access granted"
       }
     );
+
   }
 
 
@@ -2223,9 +2284,8 @@ async function handleAPI(
     )
   ) {
 
-    if (
-      !checkAdmin(req)
-    ) {
+    if (!isAdmin(req)) {
+
       return sendJSON(
         res,
         401,
@@ -2235,36 +2295,45 @@ async function handleAPI(
             "Unauthorized"
         }
       );
+
     }
 
 
-    /* ADMIN PING */
+    /* ---------------- PING ---------------- */
 
     if (
       url.pathname ===
-        "/api/admin/ping"
+      "/api/admin/ping"
     ) {
+
       return sendJSON(
         res,
         200,
         {
           ok: true,
-          time: Date.now()
+          time: Date.now(),
+          provider:
+            !!WINGOBOT_TOKEN,
+          database:
+            !!process.env.DATABASE_URL
         }
       );
+
     }
 
 
-    /* STATUS */
+    /* ---------------- STATUS ---------------- */
 
     if (
       url.pathname ===
-        "/api/admin/status"
+      "/api/admin/status"
     ) {
+
       return sendJSON(
         res,
         200,
         {
+
           ok: true,
 
           database:
@@ -2276,23 +2345,30 @@ async function handleAPI(
           history:
             cache.history.length,
 
-          target:
+          historyVersion:
+            cache.historyVersion,
+
+          targetIssue:
             cache.targetIssue,
 
-          version:
-            cache.historyVersion
+          analysis:
+            cache.analysis
+
         }
       );
+
     }
 
 
-    /* WINGOBOT TEST */
+    /* ---------------- WINGOBOT TEST ---------------- */
 
     if (
       url.pathname ===
-        "/api/admin/wingo-test"
+      "/api/admin/wingo-test"
     ) {
+
       try {
+
         const data =
           await fetchWingoData();
 
@@ -2300,6 +2376,7 @@ async function handleAPI(
           res,
           200,
           {
+
             ok: true,
 
             current:
@@ -2313,10 +2390,12 @@ async function handleAPI(
                 0,
                 10
               )
+
           }
         );
 
       } catch (error) {
+
         return sendJSON(
           res,
           500,
@@ -2326,11 +2405,78 @@ async function handleAPI(
               error.message
           }
         );
+
       }
+
     }
 
 
-    /* LIST KEYS */
+    /* ---------------- MODEL TEST ---------------- */
+
+    if (
+      url.pathname ===
+      "/api/admin/model-test"
+    ) {
+
+      try {
+
+        const analysis =
+          adaptiveEnsemble(
+            cache.history
+          );
+
+        return sendJSON(
+          res,
+          200,
+          {
+
+            ok: true,
+
+            prediction:
+              analysis.prediction,
+
+            confidence:
+              analysis.confidence,
+
+            patternScore:
+              analysis.patternScore,
+
+            agreement:
+              analysis.agreement,
+
+            status:
+              analysis.status,
+
+            avgModelAccuracy:
+              analysis.avgModelAccuracy,
+
+            backtestSamples:
+              analysis.backtestSamples,
+
+            models:
+              analysis.models
+
+          }
+        );
+
+      } catch (error) {
+
+        return sendJSON(
+          res,
+          500,
+          {
+            ok: false,
+            message:
+              error.message
+          }
+        );
+
+      }
+
+    }
+
+
+    /* ---------------- LIST KEYS ---------------- */
 
     if (
       url.pathname ===
@@ -2338,6 +2484,23 @@ async function handleAPI(
       req.method ===
         "GET"
     ) {
+
+      if (
+        !process.env.DATABASE_URL
+      ) {
+
+        return sendJSON(
+          res,
+          503,
+          {
+            ok: false,
+            message:
+              "Database not configured"
+          }
+        );
+
+      }
+
       const result =
         await pool.query(
           `
@@ -2347,9 +2510,7 @@ async function handleAPI(
             device_id,
             created_at,
             last_seen
-
           FROM access_keys
-
           ORDER BY id DESC
           `
         );
@@ -2363,10 +2524,11 @@ async function handleAPI(
             result.rows
         }
       );
+
     }
 
 
-    /* CREATE KEYS */
+    /* ---------------- CREATE KEYS ---------------- */
 
     if (
       url.pathname ===
@@ -2374,10 +2536,25 @@ async function handleAPI(
       req.method ===
         "POST"
     ) {
-      const data =
-        await readBody(
-          req
+
+      if (
+        !process.env.DATABASE_URL
+      ) {
+
+        return sendJSON(
+          res,
+          503,
+          {
+            ok: false,
+            message:
+              "Database not configured"
+          }
         );
+
+      }
+
+      const data =
+        await readBody(req);
 
       const count =
         Math.max(
@@ -2397,17 +2574,16 @@ async function handleAPI(
         i < count;
         i++
       ) {
-        let created =
-          false;
+
+        let created = false;
 
         while (!created) {
+
           const key =
             "DY-" +
             crypto
               .randomBytes(5)
-              .toString(
-                "hex"
-              )
+              .toString("hex")
               .toUpperCase();
 
           const result =
@@ -2418,16 +2594,13 @@ async function handleAPI(
                 access_key,
                 created_at
               )
-
               VALUES
               (
                 $1,
                 $2
               )
-
               ON CONFLICT
               DO NOTHING
-
               RETURNING access_key
               `,
               [
@@ -2439,10 +2612,14 @@ async function handleAPI(
           if (
             result.rowCount
           ) {
+
             keys.push(key);
             created = true;
+
           }
+
         }
+
       }
 
       return sendJSON(
@@ -2453,10 +2630,11 @@ async function handleAPI(
           keys
         }
       );
+
     }
 
 
-    /* DELETE KEY */
+    /* ---------------- DELETE KEY ---------------- */
 
     if (
       url.pathname ===
@@ -2464,10 +2642,9 @@ async function handleAPI(
       req.method ===
         "DELETE"
     ) {
+
       const data =
-        await readBody(
-          req
-        );
+        await readBody(req);
 
       await pool.query(
         `
@@ -2484,10 +2661,11 @@ async function handleAPI(
           ok: true
         }
       );
+
     }
 
 
-    /* RESET DEVICE */
+    /* ---------------- RESET DEVICE ---------------- */
 
     if (
       url.pathname ===
@@ -2495,17 +2673,14 @@ async function handleAPI(
       req.method ===
         "POST"
     ) {
+
       const data =
-        await readBody(
-          req
-        );
+        await readBody(req);
 
       await pool.query(
         `
         UPDATE access_keys
-
         SET device_id = NULL
-
         WHERE id = $1
         `,
         [data.id]
@@ -2518,11 +2693,13 @@ async function handleAPI(
           ok: true
         }
       );
+
     }
+
   }
 
-
   return null;
+
 }
 
 
@@ -2544,6 +2721,7 @@ function serveStatic(
   if (
     filename.includes("..")
   ) {
+
     return sendJSON(
       res,
       400,
@@ -2551,6 +2729,7 @@ function serveStatic(
         ok: false
       }
     );
+
   }
 
   const filePath =
@@ -2564,6 +2743,7 @@ function serveStatic(
       filePath
     )
   ) {
+
     return sendJSON(
       res,
       404,
@@ -2573,6 +2753,7 @@ function serveStatic(
           "File not found"
       }
     );
+
   }
 
   const ext =
@@ -2583,6 +2764,7 @@ function serveStatic(
       .toLowerCase();
 
   const types = {
+
     ".html":
       "text/html; charset=utf-8",
 
@@ -2593,11 +2775,17 @@ function serveStatic(
       "application/javascript; charset=utf-8",
 
     ".json":
-      "application/json"
+      "application/json",
+
+    ".mp3":
+      "audio/mpeg"
+
   };
 
 
-  /* MP3 */
+  /* =================================================
+     MP3 RANGE SUPPORT
+  ================================================= */
 
   if (
     ext === ".mp3"
@@ -2621,26 +2809,29 @@ function serveStatic(
       if (match) {
 
         const start =
-          Number(
-            match[1]
-          );
+          Number(match[1]);
 
-        const end =
+        let end =
           match[2]
-            ? Number(
-                match[2]
-              )
+            ? Number(match[2])
             : stat.size - 1;
 
+        end =
+          Math.min(
+            end,
+            stat.size - 1
+          );
+
         if (
-          start <
-          stat.size &&
+          start >= 0 &&
+          start < stat.size &&
           end >= start
         ) {
 
           res.writeHead(
             206,
             {
+
               "Content-Type":
                 "audio/mpeg",
 
@@ -2654,6 +2845,7 @@ function serveStatic(
                 end -
                 start +
                 1
+
             }
           );
 
@@ -2666,13 +2858,17 @@ function serveStatic(
               }
             )
             .pipe(res);
+
         }
+
       }
+
     }
 
     res.writeHead(
       200,
       {
+
         "Content-Type":
           "audio/mpeg",
 
@@ -2681,6 +2877,7 @@ function serveStatic(
 
         "Content-Length":
           stat.size
+
       }
     );
 
@@ -2689,15 +2886,18 @@ function serveStatic(
         filePath
       )
       .pipe(res);
+
   }
 
 
   res.writeHead(
     200,
     {
+
       "Content-Type":
         types[ext] ||
         "application/octet-stream"
+
     }
   );
 
@@ -2706,6 +2906,7 @@ function serveStatic(
       filePath
     )
     .pipe(res);
+
 }
 
 
@@ -2715,10 +2916,7 @@ function serveStatic(
 
 const server =
   http.createServer(
-    async (
-      req,
-      res
-    ) => {
+    async (req, res) => {
 
       try {
 
@@ -2738,7 +2936,9 @@ const server =
         if (
           handled !== null
         ) {
+
           return;
+
         }
 
         serveStatic(
@@ -2750,6 +2950,7 @@ const server =
       } catch (error) {
 
         console.error(
+          "SERVER ERROR:",
           error
         );
 
@@ -2762,7 +2963,9 @@ const server =
               error.message
           }
         );
+
       }
+
     }
   );
 
@@ -2778,11 +2981,14 @@ const server =
     await initDatabase();
 
     /*
-      Server starts even if the first
-      provider request temporarily fails.
+      First provider fetch.
     */
 
     await updateCache();
+
+    /*
+      Keep provider data fresh.
+    */
 
     setInterval(
       updateCache,
@@ -2792,9 +2998,11 @@ const server =
     server.listen(
       PORT,
       () => {
+
         console.log(
           `DY AI server running on ${PORT}`
         );
+
       }
     );
 
@@ -2806,6 +3014,7 @@ const server =
     );
 
     process.exit(1);
+
   }
 
 })();
