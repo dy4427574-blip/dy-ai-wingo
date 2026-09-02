@@ -1,7 +1,9 @@
 <!doctype html>
 <html lang="en">
 <head>
+
 <meta charset="utf-8">
+
 <meta name="viewport"
       content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 
@@ -19,10 +21,16 @@
   --accent2:#21d4fd;
   --good:#28e38b;
   --bad:#ff5574;
+  --big:#ff5574;
+  --small:#4fa8ff;
 }
 
 *{
   box-sizing:border-box;
+}
+
+html{
+  scroll-behavior:smooth;
 }
 
 body{
@@ -117,10 +125,14 @@ body{
     rgba(0,0,0,.25);
 }
 
-/* LOGIN */
+
+/* =====================================================
+   LOGIN
+===================================================== */
 
 .login input,
 .login button{
+
   width:100%;
   height:48px;
 
@@ -143,7 +155,18 @@ body{
   outline:none;
 }
 
+.login input:focus{
+
+  border-color:
+    #6376ff;
+
+  box-shadow:
+    0 0 0 3px
+    rgba(99,118,255,.10);
+}
+
 .login button{
+
   margin-top:10px;
 
   background:
@@ -156,9 +179,18 @@ body{
   border:0;
 
   font-weight:800;
+
+  cursor:pointer;
+}
+
+.login button:active{
+
+  transform:
+    scale(.985);
 }
 
 .err{
+
   color:#ff7890;
 
   font-size:13px;
@@ -172,16 +204,24 @@ body{
   display:none!important;
 }
 
-/* HEADER */
+
+/* =====================================================
+   HEADER
+===================================================== */
 
 .headrow{
+
   display:flex;
+
   justify-content:space-between;
+
   gap:10px;
+
   align-items:flex-start;
 }
 
 .label{
+
   color:var(--muted);
 
   font-size:11px;
@@ -192,6 +232,7 @@ body{
 }
 
 .period{
+
   font-size:18px;
 
   font-weight:850;
@@ -202,6 +243,7 @@ body{
 }
 
 .timer{
+
   min-width:88px;
 
   text-align:center;
@@ -220,6 +262,7 @@ body{
 }
 
 .timer b{
+
   font-size:24px;
 
   font-variant-numeric:
@@ -227,6 +270,7 @@ body{
 }
 
 .timer small{
+
   display:block;
 
   color:#7f8da3;
@@ -237,6 +281,7 @@ body{
 }
 
 .sync{
+
   display:flex;
 
   gap:7px;
@@ -251,6 +296,7 @@ body{
 }
 
 .dot{
+
   width:8px;
   height:8px;
 
@@ -264,6 +310,7 @@ body{
 }
 
 .dot.off{
+
   background:var(--bad);
 
   box-shadow:
@@ -271,9 +318,13 @@ body{
     var(--bad);
 }
 
-/* ANALYSIS */
+
+/* =====================================================
+   ANALYSIS
+===================================================== */
 
 .analysis{
+
   min-height:250px;
 
   display:flex;
@@ -286,6 +337,7 @@ body{
 }
 
 .loader{
+
   width:62px;
   height:62px;
 
@@ -309,12 +361,15 @@ body{
 }
 
 @keyframes spin{
+
   to{
     transform:rotate(360deg);
   }
+
 }
 
 .ai-title{
+
   font-size:13px;
 
   font-weight:800;
@@ -323,25 +378,35 @@ body{
 }
 
 .ai-sub{
+
   font-size:11px;
 
   color:var(--muted);
 
   margin-top:7px;
+
+  line-height:1.5;
 }
 
-/* PREDICTION */
+
+/* =====================================================
+   PREDICTION
+===================================================== */
 
 .predTop{
+
   display:flex;
 
   justify-content:space-between;
 
   align-items:center;
+
+  gap:10px;
 }
 
 .pred{
-  font-size:42px;
+
+  font-size:46px;
 
   font-weight:950;
 
@@ -352,34 +417,39 @@ body{
     0
     2px;
 
-  background:
-    linear-gradient(
-      90deg,
-      #fff,
-      #8fa0ff
-    );
-
-  -webkit-background-clip:text;
-
-  color:transparent;
+  transition:
+    .25s ease;
 }
 
 .pred.big{
-  color:#ff718a;
-  -webkit-text-fill-color:#ff718a;
+
+  color:var(--big);
+
+  text-shadow:
+    0 0 25px
+    rgba(255,85,116,.25);
 }
 
 .pred.small{
-  color:#62b6ff;
-  -webkit-text-fill-color:#62b6ff;
+
+  color:var(--small);
+
+  text-shadow:
+    0 0 25px
+    rgba(79,168,255,.25);
 }
 
 .target{
+
   font-size:11px;
+
   color:#8f9db4;
+
+  word-break:break-all;
 }
 
 .conf{
+
   font-size:12px;
 
   padding:
@@ -395,17 +465,23 @@ body{
   border:
     1px solid
     #27365a;
+
+  white-space:nowrap;
 }
 
-/* NUMBER */
 
-.numberBox{
+/* =====================================================
+   BIG SMALL HERO
+===================================================== */
+
+.signalBox{
+
   margin:
     18px
     0
     12px;
 
-  padding:18px;
+  padding:22px 15px;
 
   border-radius:18px;
 
@@ -414,79 +490,134 @@ body{
     #27375a;
 
   background:
+
     radial-gradient(
-      circle at 50% 10%,
-      rgba(110,130,255,.20),
-      transparent 45%
+      circle at 50% 0%,
+      rgba(108,124,255,.18),
+      transparent 55%
     ),
 
     #080f1c;
 
   text-align:center;
+
+  position:relative;
+
+  overflow:hidden;
 }
 
-.numberBall{
-  width:108px;
-  height:108px;
+.signalBox::before{
 
-  margin:auto;
+  content:"";
 
-  border-radius:50%;
+  position:absolute;
 
-  display:flex;
-
-  align-items:center;
-
-  justify-content:center;
-
-  font-size:58px;
-
-  font-weight:950;
+  inset:0;
 
   background:
     linear-gradient(
-      145deg,
-      #263879,
-      #0c1427
+      120deg,
+      transparent,
+      rgba(255,255,255,.035),
+      transparent
     );
 
-  border:
-    3px solid
-    #6376ff;
+  transform:
+    translateX(-100%);
 
-  box-shadow:
-    0 0 35px
-    rgba(99,118,255,.35),
-
-    inset 0 0 25px
-    rgba(255,255,255,.06);
+  animation:
+    shine 3s infinite;
 }
 
-.numLabel{
-  margin-top:10px;
+@keyframes shine{
+
+  50%{
+    transform:
+      translateX(100%);
+  }
+
+  100%{
+    transform:
+      translateX(100%);
+  }
+
+}
+
+.signalIcon{
 
   font-size:12px;
 
-  color:#aeb9cd;
+  color:#8f9db4;
 
-  letter-spacing:.8px;
+  letter-spacing:2px;
+
+  margin-bottom:8px;
+
+  position:relative;
 }
 
-/* STATS */
+.signal{
 
-.grid{
+  font-size:58px;
+
+  line-height:1;
+
+  font-weight:1000;
+
+  letter-spacing:2px;
+
+  position:relative;
+}
+
+.signal.big{
+
+  color:var(--big);
+
+  text-shadow:
+    0 0 35px
+    rgba(255,85,116,.30);
+}
+
+.signal.small{
+
+  color:var(--small);
+
+  text-shadow:
+    0 0 35px
+    rgba(79,168,255,.30);
+}
+
+.signalStatus{
+
+  margin-top:11px;
+
+  font-size:11px;
+
+  color:#9eabc0;
+
+  position:relative;
+}
+
+
+/* =====================================================
+   AI DETAILS
+===================================================== */
+
+.aiDetails{
+
   display:grid;
 
   grid-template-columns:
-    repeat(3,1fr);
+    repeat(2,1fr);
 
   gap:8px;
 
   margin-top:12px;
 }
 
-.stat{
-  padding:11px;
+.detail{
+
+  padding:12px;
 
   border-radius:13px;
 
@@ -497,7 +628,8 @@ body{
     var(--line);
 }
 
-.stat span{
+.detail span{
+
   display:block;
 
   color:#718097;
@@ -509,17 +641,79 @@ body{
   letter-spacing:.7px;
 }
 
-.stat b{
+.detail b{
+
   display:block;
 
-  margin-top:4px;
+  margin-top:5px;
 
   font-size:14px;
 }
 
-/* HISTORY */
+
+/* =====================================================
+   SIGNAL BAR
+===================================================== */
+
+.signalBarWrap{
+
+  margin-top:13px;
+}
+
+.signalBarHead{
+
+  display:flex;
+
+  justify-content:space-between;
+
+  color:#7f8da3;
+
+  font-size:9px;
+
+  text-transform:uppercase;
+
+  letter-spacing:.8px;
+}
+
+.signalBar{
+
+  height:7px;
+
+  margin-top:7px;
+
+  border-radius:99px;
+
+  background:#111b2c;
+
+  overflow:hidden;
+}
+
+.signalFill{
+
+  height:100%;
+
+  width:0%;
+
+  border-radius:99px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #6878ff,
+      #22c8f2
+    );
+
+  transition:
+    width .45s ease;
+}
+
+
+/* =====================================================
+   HISTORY
+===================================================== */
 
 .historyTitle{
+
   display:flex;
 
   justify-content:space-between;
@@ -530,12 +724,14 @@ body{
 }
 
 .rows{
+
   display:grid;
 
   gap:7px;
 }
 
 .row{
+
   display:grid;
 
   grid-template-columns:
@@ -561,6 +757,7 @@ body{
 }
 
 .issue{
+
   font-size:11px;
 
   color:#8998b0;
@@ -571,6 +768,7 @@ body{
 }
 
 .n{
+
   font-size:17px;
 
   font-weight:900;
@@ -579,6 +777,7 @@ body{
 }
 
 .bs{
+
   font-size:10px;
 
   font-weight:800;
@@ -587,26 +786,36 @@ body{
 }
 
 .big{
-  color:#ff718a;
+  color:var(--big);
 }
 
 .small{
-  color:#62b6ff;
+  color:var(--small);
 }
 
+
+/* =====================================================
+   NOTE
+===================================================== */
+
 .note{
+
   font-size:10px;
 
-  line-height:1.5;
+  line-height:1.55;
 
   color:#65748c;
 
   margin-top:10px;
 }
 
-/* MUSIC */
+
+/* =====================================================
+   MUSIC
+===================================================== */
 
 .musicBtn{
+
   width:100%;
 
   height:44px;
@@ -622,11 +831,17 @@ body{
   color:#cbd5e8;
 
   font-weight:700;
+
+  cursor:pointer;
 }
 
-/* GAME */
+
+/* =====================================================
+   GAME
+===================================================== */
 
 iframe{
+
   width:100%;
 
   height:520px;
@@ -638,7 +853,13 @@ iframe{
   background:#05080e;
 }
 
+
+/* =====================================================
+   FOOTER
+===================================================== */
+
 .footer{
+
   text-align:center;
 
   color:#56647b;
@@ -650,6 +871,11 @@ iframe{
     0
     20px;
 }
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
 
 @media(max-width:430px){
 
@@ -666,14 +892,17 @@ iframe{
     font-size:15px;
   }
 
-  .numberBall{
-    width:94px;
-    height:94px;
-    font-size:50px;
+  .pred{
+    font-size:38px;
   }
 
-  .pred{
-    font-size:36px;
+  .signal{
+    font-size:52px;
+  }
+
+  .aiDetails{
+    grid-template-columns:
+      repeat(2,1fr);
   }
 
 }
@@ -681,382 +910,479 @@ iframe{
 </style>
 </head>
 
+
 <body>
 
 <div class="wrap">
 
-  <!-- TOP -->
 
-  <div class="top">
+<!-- =====================================================
+     TOP
+===================================================== -->
 
-    <div class="brand">
-      ⚡ DY AI
-      <span style="color:#7485ff">
-        30S
-      </span>
+<div class="top">
+
+  <div class="brand">
+
+    ⚡ DY AI
+
+    <span style="color:#7485ff">
+      30S
+    </span>
+
+  </div>
+
+  <div class="badge">
+    AI BIG / SMALL
+  </div>
+
+</div>
+
+
+<!-- =====================================================
+     LOGIN
+===================================================== -->
+
+<section
+  id="loginCard"
+  class="card login"
+>
+
+  <div class="label">
+    Premium access
+  </div>
+
+  <h2
+    style="
+      margin:7px 0 5px
+    "
+  >
+    Enter Access Key
+  </h2>
+
+  <div
+    style="
+      font-size:12px;
+      color:#8290a7
+    "
+  >
+    One key is bound to one browser device.
+  </div>
+
+  <input
+    id="key"
+    placeholder="Enter premium key"
+    autocomplete="off"
+    style="margin-top:13px"
+  >
+
+  <button
+    onclick="login()"
+  >
+    UNLOCK DY AI
+  </button>
+
+  <div
+    id="loginErr"
+    class="err"
+  ></div>
+
+</section>
+
+
+<!-- =====================================================
+     APP
+===================================================== -->
+
+<main
+  id="app"
+  class="hidden"
+>
+
+
+<!-- =====================================================
+     PERIOD
+===================================================== -->
+
+<section class="card">
+
+  <div class="headrow">
+
+    <div>
+
+      <div class="label">
+        Next prediction period
+      </div>
+
+      <div
+        id="period"
+        class="period"
+      >
+        SYNCING…
+      </div>
+
     </div>
 
-    <div class="badge">
-      AI STATISTICAL ENGINE
+
+    <div class="timer">
+
+      <b id="timer">
+        --
+      </b>
+
+      <small>
+        SYNC TIMER*
+      </small>
+
     </div>
 
   </div>
 
 
-  <!-- LOGIN -->
+  <div class="sync">
 
-  <section
-    id="loginCard"
-    class="card login"
-  >
+    <i
+      id="dot"
+      class="dot"
+    ></i>
+
+    <span id="syncText">
+      Connecting to live history…
+    </span>
+
+  </div>
+
+</section>
+
+
+<!-- =====================================================
+     ANALYSIS
+===================================================== -->
+
+<section
+  id="analysisCard"
+  class="card analysis"
+>
+
+  <div>
+
+    <div class="loader"></div>
+
+    <div class="ai-title">
+      ANALYZING LIVE HISTORY
+    </div>
+
+    <div
+      id="analysisText"
+      class="ai-sub"
+    >
+      Reading sequence patterns…
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- =====================================================
+     PREDICTION
+===================================================== -->
+
+<section
+  id="predictionCard"
+  class="card hidden"
+>
+
+
+  <div class="predTop">
+
+    <div>
+
+      <div class="label">
+        AI statistical estimate
+      </div>
+
+      <div
+        id="pred"
+        class="pred"
+      >
+        —
+      </div>
+
+      <div
+        id="target"
+        class="target"
+      >
+        Target: —
+      </div>
+
+    </div>
+
+
+    <div
+      id="conf"
+      class="conf"
+    >
+      —% confidence
+    </div>
+
+  </div>
+
+
+  <!-- ===================================================
+       BIG SMALL HERO
+  =================================================== -->
+
+  <div class="signalBox">
+
+    <div class="signalIcon">
+      AI SELECTED SIGNAL
+    </div>
+
+    <div
+      id="signal"
+      class="signal"
+    >
+      —
+    </div>
+
+    <div
+      id="signalStatus"
+      class="signalStatus"
+    >
+      Analyzing…
+    </div>
+
+  </div>
+
+
+  <!-- ===================================================
+       AI DETAILS
+  =================================================== -->
+
+  <div class="aiDetails">
+
+    <div class="detail">
+
+      <span>
+        Confidence
+      </span>
+
+      <b id="sConf">
+        —
+      </b>
+
+    </div>
+
+
+    <div class="detail">
+
+      <span>
+        Pattern score
+      </span>
+
+      <b id="sPattern">
+        —
+      </b>
+
+    </div>
+
+
+    <div class="detail">
+
+      <span>
+        History sample
+      </span>
+
+      <b id="sSample">
+        —
+      </b>
+
+    </div>
+
+
+    <div class="detail">
+
+      <span>
+        Signal match
+      </span>
+
+      <b id="sAgreement">
+        —
+      </b>
+
+    </div>
+
+  </div>
+
+
+  <!-- ===================================================
+       SIGNAL STRENGTH
+  =================================================== -->
+
+  <div class="signalBarWrap">
+
+    <div class="signalBarHead">
+
+      <span>
+        AI Signal Strength
+      </span>
+
+      <span id="signalPercent">
+        0%
+      </span>
+
+    </div>
+
+    <div class="signalBar">
+
+      <div
+        id="signalFill"
+        class="signalFill"
+      ></div>
+
+    </div>
+
+  </div>
+
+
+  <!-- ===================================================
+       NOTE
+  =================================================== -->
+
+  <div class="note">
+
+    AI decision is based on historical
+    sequence behaviour, transitions,
+    streaks, micro-patterns and
+    multi-window pattern analysis.
+
+    Individual number prediction is
+    completely disabled.
+
+  </div>
+
+  <div class="note">
+
+    *Timer is synchronized from observed
+    settled-result changes because the
+    history endpoint does not expose the
+    provider's exact countdown.
+
+    It is an estimate, not a guaranteed clock.
+
+    Random game outcomes cannot be guaranteed.
+
+  </div>
+
+</section>
+
+
+<!-- =====================================================
+     LIVE HISTORY
+===================================================== -->
+
+<section class="card">
+
+  <div class="historyTitle">
 
     <div class="label">
-      Premium access
+      Live settled history
     </div>
 
-    <h2
-      style="
-        margin:7px 0 5px
-      "
-    >
-      Enter Access Key
-    </h2>
-
     <div
-      style="
-        font-size:12px;
-        color:#8290a7
-      "
+      id="latest"
+      class="badge"
     >
-      One key is bound to one browser device.
+      —
     </div>
 
-    <input
-      id="key"
-      placeholder="Enter premium key"
-      autocomplete="off"
-      style="margin-top:13px"
-    >
-
-    <button
-      onclick="login()"
-    >
-      UNLOCK DY AI
-    </button>
-
-    <div
-      id="loginErr"
-      class="err"
-    ></div>
-
-  </section>
+  </div>
 
 
-  <!-- APP -->
+  <div
+    id="rows"
+    class="rows"
+  ></div>
 
-  <main
-    id="app"
-    class="hidden"
+</section>
+
+
+<!-- =====================================================
+     MUSIC
+===================================================== -->
+
+<section class="card">
+
+  <button
+    class="musicBtn"
+    id="musicBtn"
+    onclick="toggleMusic()"
   >
+    🔊 Music: OFF
+  </button>
 
-    <!-- PERIOD -->
+  <audio
+    id="music"
+    preload="none"
+    loop
+    src="/music.mp3"
+  ></audio>
 
-    <section class="card">
+</section>
 
-      <div class="headrow">
 
-        <div>
+<!-- =====================================================
+     LIVE GAME
+===================================================== -->
 
-          <div class="label">
-            Next prediction period
-          </div>
+<section class="card">
 
-          <div
-            id="period"
-            class="period"
-          >
-            SYNCING…
-          </div>
+  <div
+    class="label"
+    style="margin-bottom:9px"
+  >
+    Live game
+  </div>
 
-        </div>
+  <iframe
+    src="https://www.mqerjz55.com/#/register?invitationCode=761671301584"
+    allow="autoplay"
+  ></iframe>
 
-        <div class="timer">
+</section>
 
-          <b id="timer">
-            --
-          </b>
 
-          <small>
-            SYNC TIMER*
-          </small>
+<div class="footer">
 
-        </div>
+  DY AI • Live history refresh: 1 second
 
-      </div>
+</div>
 
-      <div class="sync">
 
-        <i
-          id="dot"
-          class="dot"
-        ></i>
-
-        <span id="syncText">
-          Connecting to live history…
-        </span>
-
-      </div>
-
-    </section>
-
-
-    <!-- ANALYSIS -->
-
-    <section
-      id="analysisCard"
-      class="card analysis"
-    >
-
-      <div>
-
-        <div class="loader"></div>
-
-        <div class="ai-title">
-          ANALYZING LIVE HISTORY
-        </div>
-
-        <div
-          id="analysisText"
-          class="ai-sub"
-        >
-          Building multi-window statistical signal…
-        </div>
-
-      </div>
-
-    </section>
-
-
-    <!-- PREDICTION -->
-
-    <section
-      id="predictionCard"
-      class="card hidden"
-    >
-
-      <div class="predTop">
-
-        <div>
-
-          <div class="label">
-            AI statistical estimate
-          </div>
-
-          <div
-            id="pred"
-            class="pred"
-          >
-            —
-          </div>
-
-          <div
-            id="target"
-            class="target"
-          >
-            Target: —
-          </div>
-
-        </div>
-
-        <div
-          id="conf"
-          class="conf"
-        >
-          —% confidence
-        </div>
-
-      </div>
-
-
-      <!-- NUMBER UI -->
-
-      <div class="numberBox">
-
-        <div
-          id="num"
-          class="numberBall"
-        >
-          ?
-        </div>
-
-        <div
-          id="numLabel"
-          class="numLabel"
-        >
-          MODEL SELECTED NUMBER
-        </div>
-
-      </div>
-
-
-      <!-- STATS -->
-
-      <div class="grid">
-
-        <div class="stat">
-
-          <span>
-            Confidence
-          </span>
-
-          <b id="sConf">
-            —
-          </b>
-
-        </div>
-
-        <div class="stat">
-
-          <span>
-            Pattern score
-          </span>
-
-          <b id="sPattern">
-            —
-          </b>
-
-        </div>
-
-        <div class="stat">
-
-          <span>
-            Sample
-          </span>
-
-          <b id="sSample">
-            —
-          </b>
-
-        </div>
-
-      </div>
-
-
-      <div
-        id="topNums"
-        class="note"
-      ></div>
-
-
-      <div class="note">
-
-        *Timer is synchronized from observed
-        settled-result changes because the
-        history endpoint does not expose the
-        provider's exact countdown.
-
-        It is an estimate, not a guaranteed clock.
-
-        Random game outcomes cannot be guaranteed.
-
-      </div>
-
-    </section>
-
-
-    <!-- HISTORY -->
-
-    <section class="card">
-
-      <div class="historyTitle">
-
-        <div class="label">
-          Live settled history
-        </div>
-
-        <div
-          id="latest"
-          class="badge"
-        >
-          —
-        </div>
-
-      </div>
-
-      <div
-        id="rows"
-        class="rows"
-      ></div>
-
-    </section>
-
-
-    <!-- MUSIC -->
-
-    <section class="card">
-
-      <button
-        class="musicBtn"
-        id="musicBtn"
-        onclick="toggleMusic()"
-      >
-        🔊 Music: OFF
-      </button>
-
-      <audio
-        id="music"
-        preload="none"
-        loop
-        src="/music.mp3"
-      ></audio>
-
-    </section>
-
-
-    <!-- LIVE GAME -->
-
-    <section class="card">
-
-      <div
-        class="label"
-        style="margin-bottom:9px"
-      >
-        Live game
-      </div>
-
-      <iframe
-        src="https://www.mqerjz55.com/#/register?invitationCode=761671301584"
-        allow="autoplay"
-      ></iframe>
-
-    </section>
-
-
-    <div class="footer">
-      DY AI • Live data refresh: 1 second
-    </div>
-
-  </main>
+</main>
 
 </div>
 
 
 <script>
 
-/* =========================
+/* =====================================================
    DEVICE
-========================= */
+===================================================== */
 
 const DEVICE_KEY =
-  "dy_ai_device_id_v5";
+  "dy_ai_device_id_v6";
 
 const ACCESS_KEY =
-  "dy_ai_access_key_v5";
+  "dy_ai_access_key_v6";
+
 
 let deviceId =
   localStorage.getItem(
     DEVICE_KEY
   );
+
 
 if(!deviceId){
 
@@ -1078,37 +1404,48 @@ if(!deviceId){
 }
 
 
-/* =========================
+/* =====================================================
    STATE
-========================= */
+===================================================== */
 
-let lastSettled = null;
+let lastSettled =
+  null;
 
-let lastVersion = -1;
+let lastVersion =
+  -1;
 
-let analyzing = false;
+let analyzing =
+  false;
 
-let analysisTimer = null;
+let analysisTimer =
+  null;
 
-let timerValue = null;
+let timerValue =
+  null;
 
-let timerStamp = 0;
+let timerStamp =
+  0;
 
-let audioOn = false;
+let audioOn =
+  false;
 
 
-/* =========================
+/* =====================================================
    SHORTCUT
-========================= */
+===================================================== */
 
 function $(id){
-  return document.getElementById(id);
+
+  return document.getElementById(
+    id
+  );
+
 }
 
 
-/* =========================
+/* =====================================================
    LOGIN
-========================= */
+===================================================== */
 
 async function login(){
 
@@ -1116,6 +1453,7 @@ async function login(){
     $("key")
       .value
       .trim();
+
 
   if(!key){
 
@@ -1126,9 +1464,11 @@ async function login(){
     return;
   }
 
+
   $("loginErr")
     .textContent =
     "Checking…";
+
 
   try{
 
@@ -1136,7 +1476,9 @@ async function login(){
       await fetch(
         "/api/key/check",
         {
-          method:"POST",
+
+          method:
+            "POST",
 
           headers:{
             "Content-Type":
@@ -1145,15 +1487,21 @@ async function login(){
 
           body:
             JSON.stringify({
+
               key,
+
               device_id:
                 deviceId
+
             })
+
         }
       );
 
+
     const data =
       await response.json();
+
 
     if(
       !response.ok ||
@@ -1166,33 +1514,40 @@ async function login(){
       );
     }
 
+
     localStorage.setItem(
       ACCESS_KEY,
       key
     );
 
+
     $("loginCard")
       .classList
       .add("hidden");
+
 
     $("app")
       .classList
       .remove("hidden");
 
+
     loadState(true);
+
 
   }catch(error){
 
     $("loginErr")
       .textContent =
       error.message;
+
   }
+
 }
 
 
-/* =========================
+/* =====================================================
    LOAD STATE
-========================= */
+===================================================== */
 
 async function loadState(
   first = false
@@ -1210,8 +1565,10 @@ async function loadState(
         }
       );
 
+
     const data =
       await response.json();
+
 
     if(!data.ok){
 
@@ -1221,7 +1578,11 @@ async function loadState(
       );
     }
 
-    updateHeader(data);
+
+    updateHeader(
+      data
+    );
+
 
     renderHistory(
       data.history ||
@@ -1230,20 +1591,16 @@ async function loadState(
 
 
     /*
-       IMPORTANT:
-
-       We compare actual settled
-       history, NOT the estimated timer.
-
-       So prediction will not
-       change every 30 seconds
-       while API has same result.
+      Prediction changes only when
+      REAL settled history changes.
     */
 
     const changed =
       first ||
+
       data.historyVersion !==
         lastVersion ||
+
       data.settledPeriod !==
         lastSettled;
 
@@ -1255,6 +1612,7 @@ async function loadState(
 
       lastSettled =
         data.settledPeriod;
+
 
       startAnalysis(
         data
@@ -1269,24 +1627,30 @@ async function loadState(
       );
     }
 
+
   }catch(error){
 
     $("syncText")
       .textContent =
       "Connection retrying…";
 
+
     $("dot")
       .classList
       .add("off");
+
   }
+
 }
 
 
-/* =========================
+/* =====================================================
    HEADER
-========================= */
+===================================================== */
 
-function updateHeader(data){
+function updateHeader(
+  data
+){
 
   $("period")
     .textContent =
@@ -1306,15 +1670,22 @@ function updateHeader(data){
   $("syncText")
     .textContent =
     data.error
+
       ? "API reconnecting…"
+
       :
+
       (
         data.timing &&
         data.timing.estimated
       )
+
       ?
+
       "LIVE HISTORY SYNCED • TIMER ESTIMATED"
+
       :
+
       "LIVE SYNC";
 
 
@@ -1329,56 +1700,67 @@ function updateHeader(data){
   $("latest")
     .textContent =
     data.latestResult
+
       ?
+
       "Latest: " +
       data.latestResult.number
+
       :
+
       "Waiting";
 
 
   timerValue =
     data.countdown;
 
+
   timerStamp =
     Date.now();
+
 }
 
 
-/* =========================
+/* =====================================================
    ANALYSIS ANIMATION
-========================= */
+===================================================== */
 
-function startAnalysis(data){
+function startAnalysis(
+  data
+){
 
-  if(analysisTimer){
+  if(
+    analysisTimer
+  ){
 
     clearTimeout(
       analysisTimer
     );
+
   }
 
-  analyzing = true;
+
+  analyzing =
+    true;
+
 
   $("analysisCard")
     .classList
     .remove("hidden");
+
 
   $("predictionCard")
     .classList
     .add("hidden");
 
 
-  const target =
-    data.targetPeriod ||
-    "next period";
-
-
-  let seconds = 6;
+  let seconds =
+    5;
 
 
   $("analysisText")
     .textContent =
-    "Checking 5 / 10 / 20 / 30 result windows… " +
+    "Reading sequence patterns… " +
     seconds +
     "s";
 
@@ -1389,13 +1771,41 @@ function startAnalysis(data){
 
         seconds--;
 
-        if(seconds > 0){
+
+        if(
+          seconds > 0
+        ){
+
+          const messages = [
+
+            "Checking micro-pattern behaviour…",
+
+            "Checking transition behaviour…",
+
+            "Checking streak behaviour…",
+
+            "Comparing multi-window patterns…"
+
+          ];
+
+
+          const index =
+            Math.max(
+              0,
+              Math.min(
+                messages.length - 1,
+                5 - seconds
+              )
+            );
+
 
           $("analysisText")
             .textContent =
-            "Checking micro-trend + number score… " +
+            messages[index] +
+            " " +
             seconds +
             "s";
+
         }
 
       },
@@ -1411,7 +1821,9 @@ function startAnalysis(data){
           interval
         );
 
-        analyzing = false;
+
+        analyzing =
+          false;
 
 
         try{
@@ -1426,15 +1838,14 @@ function startAnalysis(data){
               }
             );
 
+
           const fresh =
             await response.json();
 
 
           /*
-             New result arrived while
-             we were analyzing.
-
-             Don't show old prediction.
+            New actual result arrived
+            during analysis.
           */
 
           if(
@@ -1444,24 +1855,7 @@ function startAnalysis(data){
 
             $("analysisText")
               .textContent =
-              "New settled result detected. Re-syncing…";
-
-            return;
-          }
-
-
-          /*
-             Target changed?
-          */
-
-          if(
-            fresh.targetPeriod !==
-            target
-          ){
-
-            $("analysisText")
-              .textContent =
-              "Target changed. Re-syncing…";
+              "New result detected. Re-syncing…";
 
             return;
           }
@@ -1471,42 +1865,57 @@ function startAnalysis(data){
             fresh
           );
 
+
         }catch(error){
 
           $("analysisText")
             .textContent =
             "Refresh failed. Retrying…";
+
         }
 
       },
-      6000
+      5000
     );
+
 }
 
 
-/* =========================
+/* =====================================================
    SHOW PREDICTION
-========================= */
+===================================================== */
 
-function showPrediction(data){
+function showPrediction(
+  data
+){
+
+  /*
+    Server now sends number=null
+    intentionally.
+
+    Therefore prediction readiness
+    depends ONLY on BIG/SMALL.
+  */
 
   if(
     !data.analysisReady ||
-    !data.prediction ||
-    data.number == null
+    !data.prediction
   ){
 
     $("analysisCard")
       .classList
       .remove("hidden");
 
+
     $("predictionCard")
       .classList
       .add("hidden");
 
+
     $("analysisText")
       .textContent =
       "Waiting for enough settled history…";
+
 
     return;
   }
@@ -1516,23 +1925,30 @@ function showPrediction(data){
     .classList
     .add("hidden");
 
+
   $("predictionCard")
     .classList
     .remove("hidden");
 
 
-  /* BIG / SMALL */
+  /* ===================================================
+     MAIN PREDICTION
+  =================================================== */
+
+  const prediction =
+    data.prediction;
+
 
   $("pred")
     .textContent =
-    data.prediction;
+    prediction;
+
 
   $("pred")
     .className =
     "pred " +
     (
-      data.prediction ===
-      "BIG"
+      prediction === "BIG"
         ? "big"
         : "small"
     );
@@ -1541,157 +1957,274 @@ function showPrediction(data){
   $("target")
     .textContent =
     "Target: " +
-    data.targetPeriod;
+    (
+      data.targetPeriod ||
+      "—"
+    );
 
 
   $("conf")
     .textContent =
-    data.confidence +
+    (
+      data.confidence || 0
+    ) +
     "% confidence";
 
 
-  /* NUMBER */
+  /* ===================================================
+     HERO SIGNAL
+  =================================================== */
 
-  $("num")
+  $("signal")
     .textContent =
-    data.number;
+    prediction;
 
 
-  $("numLabel")
-    .textContent =
+  $("signal")
+    .className =
+    "signal " +
     (
-      data.prediction ===
-      "BIG"
-        ? "BIG RANGE • 5–9"
-        : "SMALL RANGE • 0–4"
-    ) +
-    " • MODEL NUMBER";
+      prediction === "BIG"
+        ? "big"
+        : "small"
+    );
 
 
-  /* STATS */
+  $("signalStatus")
+    .textContent =
+    data.modelStatus ||
+    "AI SIGNAL";
+
+
+  /* ===================================================
+     STATS
+  =================================================== */
 
   $("sConf")
     .textContent =
-    data.confidence +
+    (
+      data.confidence ||
+      0
+    ) +
     "%";
 
 
   $("sPattern")
     .textContent =
-    data.patternScore +
+    (
+      data.patternScore ||
+      0
+    ) +
     "/100";
 
 
   $("sSample")
     .textContent =
-    data.sampleSize;
+    data.sampleSize ||
+    "—";
 
 
-  $("topNums")
-    .textContent =
-    "Top model candidates: " +
-    (
-      data.topNumbers || []
-    ).join(" • ") +
-    " | Generated from settled: " +
-    (
-      data.predictionGeneratedFrom ||
-      "—"
+  /* ===================================================
+     AGREEMENT
+  =================================================== */
+
+  const agreement =
+    data.signalAgreement;
+
+
+  if(
+    agreement
+  ){
+
+    const value =
+      prediction === "BIG"
+        ? agreement.big
+        : agreement.small;
+
+
+    $("sAgreement")
+      .textContent =
+      value +
+      " signals";
+
+  }else{
+
+    $("sAgreement")
+      .textContent =
+      "—";
+  }
+
+
+  /* ===================================================
+     SIGNAL BAR
+  =================================================== */
+
+  const confidence =
+    Number(
+      data.confidence ||
+      0
     );
+
+
+  const strength =
+    Math.max(
+      5,
+      Math.min(
+        100,
+        Math.round(
+          (
+            confidence -
+            50
+          ) * 4.5
+        )
+      )
+    );
+
+
+  $("signalFill")
+    .style
+    .width =
+    strength +
+    "%";
+
+
+  $("signalPercent")
+    .textContent =
+    strength +
+    "%";
+
 }
 
 
-/* =========================
+/* =====================================================
    HISTORY
-========================= */
+===================================================== */
 
-function renderHistory(history){
+function renderHistory(
+  history
+){
 
   const box =
     $("rows");
 
-  box.innerHTML = "";
+
+  box.innerHTML =
+    "";
 
 
   history
     .slice(0,12)
-    .forEach(item => {
+    .forEach(
+      item => {
 
-      const row =
-        document.createElement(
-          "div"
+        const row =
+          document.createElement(
+            "div"
+          );
+
+
+        row.className =
+          "row";
+
+
+        const side =
+          Number(
+            item.number
+          ) >= 5
+
+            ? "BIG"
+
+            : "SMALL";
+
+
+        row.innerHTML =
+
+          '<div class="issue">' +
+
+          escapeHtml(
+            String(
+              item.issueNumber
+            )
+          ) +
+
+          '</div>' +
+
+
+          '<div class="n">' +
+
+          escapeHtml(
+            String(
+              item.number
+            )
+          ) +
+
+          '</div>' +
+
+
+          '<div class="bs ' +
+
+          side.toLowerCase() +
+
+          '">' +
+
+          side +
+
+          '</div>';
+
+
+        box.appendChild(
+          row
         );
 
-      row.className =
-        "row";
+      }
+    );
 
-
-      const side =
-        Number(item.number) >= 5
-          ? "BIG"
-          : "SMALL";
-
-
-      row.innerHTML =
-        '<div class="issue">' +
-        escapeHtml(
-          String(
-            item.issueNumber
-          )
-        ) +
-        '</div>' +
-
-        '<div class="n">' +
-        escapeHtml(
-          String(
-            item.number
-          )
-        ) +
-        '</div>' +
-
-        '<div class="bs ' +
-        side.toLowerCase() +
-        '">' +
-        side +
-        '</div>';
-
-
-      box.appendChild(
-        row
-      );
-
-    });
 }
 
 
-/* =========================
+/* =====================================================
    ESCAPE HTML
-========================= */
+===================================================== */
 
-function escapeHtml(text){
+function escapeHtml(
+  text
+){
 
   return text.replace(
     /[&<>"']/g,
     char => ({
-      "&":"&amp;",
-      "<":"&lt;",
-      ">":"&gt;",
-      '"':"&quot;",
-      "'":"&#39;"
+
+      "&":
+        "&amp;",
+
+      "<":
+        "&lt;",
+
+      ">":
+        "&gt;",
+
+      '"':
+        "&quot;",
+
+      "'":
+        "&#39;"
+
     }[char])
   );
+
 }
 
 
-/* =========================
+/* =====================================================
    SMOOTH TIMER
-========================= */
+===================================================== */
 
 function timerLoop(){
 
   if(
     timerValue == null
   ){
+
     return;
   }
 
@@ -1715,13 +2248,15 @@ function timerLoop(){
 
   $("timer")
     .textContent =
-    value + "s";
+    value +
+    "s";
+
 }
 
 
-/* =========================
+/* =====================================================
    MUSIC
-========================= */
+===================================================== */
 
 function toggleMusic(){
 
@@ -1733,39 +2268,48 @@ function toggleMusic(){
 
     music
       .play()
-      .then(() => {
+      .then(
+        () => {
 
-        audioOn = true;
+          audioOn =
+            true;
 
-        $("musicBtn")
-          .textContent =
-          "🔊 Music: ON";
 
-      })
-      .catch(() => {
+          $("musicBtn")
+            .textContent =
+            "🔊 Music: ON";
 
-        $("musicBtn")
-          .textContent =
-          "🔇 Tap again to start";
+        }
+      )
+      .catch(
+        () => {
 
-      });
+          $("musicBtn")
+            .textContent =
+            "🔇 Tap again to start";
+
+        }
+      );
 
   }else{
 
     music.pause();
 
-    audioOn = false;
+    audioOn =
+      false;
 
     $("musicBtn")
       .textContent =
       "🔊 Music: OFF";
+
   }
+
 }
 
 
-/* =========================
+/* =====================================================
    AUTO LOGIN
-========================= */
+===================================================== */
 
 const savedKey =
   localStorage.getItem(
@@ -1779,29 +2323,38 @@ if(savedKey){
     .classList
     .add("hidden");
 
+
   $("app")
     .classList
     .remove("hidden");
 
-  loadState(true);
+
+  loadState(
+    true
+  );
+
 }
 
 
-/* =========================
+/* =====================================================
    LIVE REFRESH
-========================= */
+===================================================== */
 
 setInterval(
   () => {
-    loadState(false);
+
+    loadState(
+      false
+    );
+
   },
   1000
 );
 
 
-/* =========================
-   TIMER REFRESH
-========================= */
+/* =====================================================
+   TIMER
+===================================================== */
 
 setInterval(
   timerLoop,
@@ -1809,9 +2362,9 @@ setInterval(
 );
 
 
-/* =========================
+/* =====================================================
    ENTER LOGIN
-========================= */
+===================================================== */
 
 $("key")
   .addEventListener(
@@ -1822,7 +2375,9 @@ $("key")
         event.key ===
         "Enter"
       ){
+
         login();
+
       }
 
     }
@@ -1831,4 +2386,4 @@ $("key")
 </script>
 
 </body>
-  </html>
+</html>
