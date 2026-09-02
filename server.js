@@ -1,5 +1,7 @@
 const http = require("http");
 const crypto = require("crypto");
+const fs = require("fs");
+const path = require("path");
 const { Pool } = require("pg");
 
 const PORT = process.env.PORT || 3000;
@@ -56,7 +58,7 @@ function getRound() {
 }
 
 /* --------------------------------------------------
-   HELPERS
+   JSON RESPONSE
 -------------------------------------------------- */
 
 function sendJSON(res, status, data) {
@@ -73,10 +75,11 @@ function sendJSON(res, status, data) {
   res.end(JSON.stringify(data));
 }
 
-function sendHTML(res, filename) {
-  const fs = require("fs");
-  const path = require("path");
+/* --------------------------------------------------
+   HTML
+-------------------------------------------------- */
 
+function sendHTML(res, filename) {
   const file = path.join(__dirname, filename);
 
   if (!fs.existsSync(file)) {
@@ -93,6 +96,97 @@ function sendHTML(res, filename) {
 
   fs.createReadStream(file).pipe(res);
 }
+
+/* --------------------------------------------------
+   MUSIC FILE
+   Supports MP3 + mobile range requests
+-------------------------------------------------- */
+
+function sendMusic(res, req) {
+  const file = path.join(__dirname, "music.mp3");
+
+  if (!fs.existsSync(file)) {
+    return sendJSON(res, 404, {
+      error: "MUSIC_NOT_FOUND",
+      path: "/music.mp3"
+    });
+  }
+
+  const stat = fs.statSync(file);
+  const fileSize = stat.size;
+
+  const range = req.headers.range;
+
+  /* Normal request */
+
+  if (!range) {
+    res.writeHead(200, {
+      "Content-Type": "audio/mpeg",
+      "Content-Length": fileSize,
+      "Accept-Ranges": "bytes",
+      "Cache-Control": "public, max-age=3600"
+    });
+
+    return fs.createReadStream(file).pipe(res);
+  }
+
+  /* Range request */
+
+  const match = range.match(/bytes=(\d*)-(\d*)/);
+
+  if (!match) {
+    res.writeHead(416, {
+      "Content-Range": `bytes */${fileSize}`
+    });
+
+    return res.end();
+  }
+
+  let start = match[1]
+    ? parseInt(match[1], 10)
+    : 0;
+
+  let end = match[2]
+    ? parseInt(match[2], 10)
+    : fileSize - 1;
+
+  if (Number.isNaN(start)) {
+    start = 0;
+  }
+
+  if (Number.isNaN(end) || end >= fileSize) {
+    end = fileSize - 1;
+  }
+
+  if (start > end || start >= fileSize) {
+    res.writeHead(416, {
+      "Content-Range": `bytes */${fileSize}`
+    });
+
+    return res.end();
+  }
+
+  const chunkSize =
+    end - start + 1;
+
+  res.writeHead(206, {
+    "Content-Type": "audio/mpeg",
+    "Content-Length": chunkSize,
+    "Content-Range":
+      `bytes ${start}-${end}/${fileSize}`,
+    "Accept-Ranges": "bytes",
+    "Cache-Control": "public, max-age=3600"
+  });
+
+  fs.createReadStream(file, {
+    start,
+    end
+  }).pipe(res);
+}
+
+/* --------------------------------------------------
+   BODY
+-------------------------------------------------- */
 
 function readBody(req) {
   return new Promise((resolve) => {
@@ -111,6 +205,10 @@ function readBody(req) {
     });
   });
 }
+
+/* --------------------------------------------------
+   ADMIN
+-------------------------------------------------- */
 
 function isAdmin(req) {
   return req.headers["x-admin-key"] === ADMIN_KEY;
@@ -182,7 +280,6 @@ async function checkAccessKey(req) {
 
   const item = result.rows[0];
 
-  /* First device automatically gets bound */
   if (!item.device_id) {
     await pool.query(
       `
@@ -201,7 +298,6 @@ async function checkAccessKey(req) {
     };
   }
 
-  /* Different device = reject */
   if (item.device_id !== deviceId) {
     return {
       ok: false,
@@ -272,6 +368,42 @@ const server = http.createServer(async (req, res) => {
     }
 
     /* ------------------------------------------------
+       MUSIC
+    ------------------------------------------------ */
+
+    if (
+      url.pathname === "/music.mp3" &&
+      (req.method === "GET" || req.method === "HEAD")
+    ) {
+
+      if (req.method === "HEAD") {
+
+        const file =
+          path.join(__dirname, "music.mp3");
+
+        if (!fs.existsSync(file)) {
+          return sendJSON(res, 404, {
+            error: "MUSIC_NOT_FOUND",
+            path: "/music.mp3"
+          });
+        }
+
+        const stat =
+          fs.statSync(file);
+
+        res.writeHead(200, {
+          "Content-Type": "audio/mpeg",
+          "Content-Length": stat.size,
+          "Accept-Ranges": "bytes"
+        });
+
+        return res.end();
+      }
+
+      return sendMusic(res, req);
+    }
+
+    /* ------------------------------------------------
        HEALTH
     ------------------------------------------------ */
 
@@ -279,12 +411,14 @@ const server = http.createServer(async (req, res) => {
       url.pathname === "/health" &&
       req.method === "GET"
     ) {
+
       return sendJSON(res, 200, {
         status: "ok",
         service: "DY AI",
         uptime: process.uptime(),
         time: Date.now()
       });
+
     }
 
     /* ------------------------------------------------
@@ -296,34 +430,42 @@ const server = http.createServer(async (req, res) => {
       req.method === "GET"
     ) {
 
-      const auth = await checkAccessKey(req);
+      const auth =
+        await checkAccessKey(req);
 
       if (!auth.ok) {
         return sendJSON(res, auth.status, {
           valid: false,
           error: auth.error,
-          message: auth.message || "Access denied"
+          message:
+            auth.message ||
+            "Access denied"
         });
       }
 
-      const result = await pool.query(
-        `
-        SELECT *
-        FROM access_keys
-        WHERE access_key = $1
-        `,
-        [auth.key]
-      );
+      const result =
+        await pool.query(
+          `
+          SELECT *
+          FROM access_keys
+          WHERE access_key = $1
+          `,
+          [auth.key]
+        );
 
-      const item = result.rows[0];
+      const item =
+        result.rows[0];
 
       return sendJSON(res, 200, {
         valid: true,
         status: keyStatus(item),
         deviceBound: !!item.device_id,
-        createdAt: Number(item.created_at),
-        lastSeen: Number(item.last_seen || 0)
+        createdAt:
+          Number(item.created_at),
+        lastSeen:
+          Number(item.last_seen || 0)
       });
+
     }
 
     /* ------------------------------------------------
@@ -335,38 +477,50 @@ const server = http.createServer(async (req, res) => {
       req.method === "GET"
     ) {
 
-      const auth = await checkAccessKey(req);
+      const auth =
+        await checkAccessKey(req);
 
       if (!auth.ok) {
         return sendJSON(res, auth.status, {
           success: false,
           error: auth.error,
-          message: auth.message || "Access denied"
+          message:
+            auth.message ||
+            "Access denied"
         });
       }
 
-      const current = getRound();
+      const current =
+        getRound();
 
       return sendJSON(res, 200, {
         success: true,
 
-        period: String(current.period),
+        period:
+          String(current.period),
 
-        countdown: Math.max(
-          0,
-          Math.ceil(
-            (current.endsAt - Date.now()) / 1000
-          )
-        ),
+        countdown:
+          Math.max(
+            0,
+            Math.ceil(
+              (current.endsAt -
+                Date.now()) / 1000
+            )
+          ),
 
-        prediction: current.prediction,
+        prediction:
+          current.prediction,
 
-        number: current.number,
+        number:
+          current.number,
 
-        confidence: current.confidence,
+        confidence:
+          current.confidence,
 
-        keyStatus: "LIVE"
+        keyStatus:
+          "LIVE"
       });
+
     }
 
     /* ------------------------------------------------
@@ -384,32 +538,58 @@ const server = http.createServer(async (req, res) => {
         });
       }
 
-      const result = await pool.query(`
-        SELECT
-          access_key,
-          device_id,
-          created_at,
-          last_seen
-        FROM access_keys
-        ORDER BY id DESC
-      `);
+      const result =
+        await pool.query(`
+          SELECT
+            access_key,
+            device_id,
+            created_at,
+            last_seen
+          FROM access_keys
+          ORDER BY id DESC
+        `);
 
-      const keys = result.rows.map(item => ({
-        key: item.access_key,
-        deviceId: item.device_id || null,
-        status: keyStatus(item),
-        createdAt: Number(item.created_at),
-        lastSeen: Number(item.last_seen || 0)
-      }));
+      const keys =
+        result.rows.map(item => ({
+          key:
+            item.access_key,
+
+          deviceId:
+            item.device_id || null,
+
+          status:
+            keyStatus(item),
+
+          createdAt:
+            Number(item.created_at),
+
+          lastSeen:
+            Number(item.last_seen || 0)
+        }));
 
       return sendJSON(res, 200, {
         success: true,
-        total: keys.length,
-        live: keys.filter(k => k.status === "LIVE").length,
-        offline: keys.filter(k => k.status === "OFFLINE").length,
-        unbound: keys.filter(k => k.status === "UNBOUND").length,
+        total:
+          keys.length,
+
+        live:
+          keys.filter(
+            k => k.status === "LIVE"
+          ).length,
+
+        offline:
+          keys.filter(
+            k => k.status === "OFFLINE"
+          ).length,
+
+        unbound:
+          keys.filter(
+            k => k.status === "UNBOUND"
+          ).length,
+
         keys
       });
+
     }
 
     /* ------------------------------------------------
@@ -427,13 +607,17 @@ const server = http.createServer(async (req, res) => {
         });
       }
 
-      const body = await readBody(req);
+      const body =
+        await readBody(req);
 
       let key =
-        String(body.key || "").trim();
+        String(
+          body.key || ""
+        ).trim();
 
       if (!key) {
-        key = generateKey();
+        key =
+          generateKey();
       }
 
       try {
@@ -447,7 +631,8 @@ const server = http.createServer(async (req, res) => {
             created_at,
             last_seen
           )
-          VALUES ($1, NULL, $2, 0)
+          VALUES
+          ($1, NULL, $2, 0)
           `,
           [key, Date.now()]
         );
@@ -456,7 +641,8 @@ const server = http.createServer(async (req, res) => {
 
         if (error.code === "23505") {
           return sendJSON(res, 409, {
-            error: "KEY_ALREADY_EXISTS"
+            error:
+              "KEY_ALREADY_EXISTS"
           });
         }
 
@@ -467,6 +653,7 @@ const server = http.createServer(async (req, res) => {
         success: true,
         key
       });
+
     }
 
     /* ------------------------------------------------
@@ -484,22 +671,27 @@ const server = http.createServer(async (req, res) => {
         });
       }
 
-      const body = await readBody(req);
+      const body =
+        await readBody(req);
 
       const key =
-        String(body.key || "").trim();
+        String(
+          body.key || ""
+        ).trim();
 
-      const result = await pool.query(
-        `
-        DELETE FROM access_keys
-        WHERE access_key = $1
-        `,
-        [key]
-      );
+      const result =
+        await pool.query(
+          `
+          DELETE FROM access_keys
+          WHERE access_key = $1
+          `,
+          [key]
+        );
 
       if (result.rowCount === 0) {
         return sendJSON(res, 404, {
-          error: "KEY_NOT_FOUND"
+          error:
+            "KEY_NOT_FOUND"
         });
       }
 
@@ -507,6 +699,7 @@ const server = http.createServer(async (req, res) => {
         success: true,
         deleted: key
       });
+
     }
 
     /* ------------------------------------------------
@@ -524,30 +717,36 @@ const server = http.createServer(async (req, res) => {
         });
       }
 
-      const body = await readBody(req);
+      const body =
+        await readBody(req);
 
       const key =
-        String(body.key || "").trim();
+        String(
+          body.key || ""
+        ).trim();
 
       if (!key) {
         return sendJSON(res, 400, {
-          error: "KEY_REQUIRED"
+          error:
+            "KEY_REQUIRED"
         });
       }
 
-      const result = await pool.query(
-        `
-        UPDATE access_keys
-        SET device_id = NULL,
-            last_seen = 0
-        WHERE access_key = $1
-        `,
-        [key]
-      );
+      const result =
+        await pool.query(
+          `
+          UPDATE access_keys
+          SET device_id = NULL,
+              last_seen = 0
+          WHERE access_key = $1
+          `,
+          [key]
+        );
 
       if (result.rowCount === 0) {
         return sendJSON(res, 404, {
-          error: "KEY_NOT_FOUND"
+          error:
+            "KEY_NOT_FOUND"
         });
       }
 
@@ -556,6 +755,7 @@ const server = http.createServer(async (req, res) => {
         message:
           "Device binding has been reset."
       });
+
     }
 
     /* ------------------------------------------------
@@ -569,35 +769,56 @@ const server = http.createServer(async (req, res) => {
 
       if (!isAdmin(req)) {
         return sendJSON(res, 401, {
-          error: "UNAUTHORIZED"
+          error:
+            "UNAUTHORIZED"
         });
       }
 
-      const result = await pool.query(`
-        SELECT *
-        FROM access_keys
-      `);
+      const result =
+        await pool.query(`
+          SELECT *
+          FROM access_keys
+        `);
 
-      const users = result.rows.length;
+      const users =
+        result.rows.length;
 
-      const live = result.rows.filter(
-        item => keyStatus(item) === "LIVE"
-      ).length;
+      const live =
+        result.rows.filter(
+          item =>
+            keyStatus(item) === "LIVE"
+        ).length;
 
-      const offline = result.rows.filter(
-        item => keyStatus(item) === "OFFLINE"
-      ).length;
+      const offline =
+        result.rows.filter(
+          item =>
+            keyStatus(item) === "OFFLINE"
+        ).length;
 
-      const unbound = result.rows.filter(
-        item => keyStatus(item) === "UNBOUND"
-      ).length;
+      const unbound =
+        result.rows.filter(
+          item =>
+            keyStatus(item) === "UNBOUND"
+        ).length;
 
-      const current = getRound();
+      const current =
+        getRound();
+
+      const countdown =
+        Math.max(
+          0,
+          Math.ceil(
+            (current.endsAt -
+              Date.now()) / 1000
+          )
+        );
 
       return sendJSON(res, 200, {
+
         success: true,
 
-        server: "LIVE",
+        server:
+          "LIVE",
 
         users,
 
@@ -605,33 +826,37 @@ const server = http.createServer(async (req, res) => {
         offline,
         unbound,
 
-        /* top-level fields for admin compatibility */
+        prediction:
+          current.prediction,
 
-        prediction: current.prediction,
-        number: current.number,
-        countdown: Math.max(
-          0,
-          Math.ceil(
-            (current.endsAt - Date.now()) / 1000
-          )
-        ),
+        number:
+          current.number,
+
+        countdown,
 
         round: {
-          period: current.period,
-          prediction: current.prediction,
-          number: current.number,
-          confidence: current.confidence,
-          countdown: Math.max(
-            0,
-            Math.ceil(
-              (current.endsAt - Date.now()) / 1000
-            )
-          )
+          period:
+            current.period,
+
+          prediction:
+            current.prediction,
+
+          number:
+            current.number,
+
+          confidence:
+            current.confidence,
+
+          countdown
         },
 
-        uptime: process.uptime(),
-        timestamp: Date.now()
+        uptime:
+          process.uptime(),
+
+        timestamp:
+          Date.now()
       });
+
     }
 
     /* ------------------------------------------------
@@ -645,15 +870,19 @@ const server = http.createServer(async (req, res) => {
 
       if (!isAdmin(req)) {
         return sendJSON(res, 401, {
-          error: "UNAUTHORIZED"
+          error:
+            "UNAUTHORIZED"
         });
       }
 
       return sendJSON(res, 200, {
         success: true,
-        message: "Admin connection active",
-        timestamp: Date.now()
+        message:
+          "Admin connection active",
+        timestamp:
+          Date.now()
       });
+
     }
 
     /* ------------------------------------------------
@@ -661,19 +890,28 @@ const server = http.createServer(async (req, res) => {
     ------------------------------------------------ */
 
     return sendJSON(res, 404, {
-      error: "NOT_FOUND",
-      path: url.pathname
+      error:
+        "NOT_FOUND",
+      path:
+        url.pathname
     });
 
   } catch (error) {
 
-    console.error("SERVER ERROR:", error);
+    console.error(
+      "SERVER ERROR:",
+      error
+    );
 
     return sendJSON(res, 500, {
-      error: "INTERNAL_SERVER_ERROR",
-      message: "Server error"
+      error:
+        "INTERNAL_SERVER_ERROR",
+      message:
+        "Server error"
     });
+
   }
+
 });
 
 /* --------------------------------------------------
@@ -699,7 +937,8 @@ async function start() {
       "0.0.0.0",
       () => {
         console.log(
-          "DY AI server running on port " + PORT
+          "DY AI server running on port " +
+          PORT
         );
       }
     );
