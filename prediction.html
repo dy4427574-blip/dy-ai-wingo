@@ -1,27 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
-<meta name="theme-color" content="#070b16">
 
-<title>DY AI Wingo 30S</title>
+<meta charset="UTF-8">
+
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+
+<meta
+  name="theme-color"
+  content="#070b16">
+
+<title>
+DY AI Wingo 30S
+</title>
 
 <style>
+
 *{
   box-sizing:border-box;
 }
 
-html{
-  scroll-behavior:smooth;
-}
-
 body{
   margin:0;
+
   background:
-    radial-gradient(circle at top,#172554 0%,#070b16 45%,#03050b 100%);
+    radial-gradient(
+      circle at top,
+      #172554 0%,
+      #070b16 45%,
+      #03050b 100%
+    );
+
   color:#fff;
-  font-family:Arial,Helvetica,sans-serif;
+
+  font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
+
   min-height:100vh;
 }
 
@@ -33,44 +51,72 @@ body{
 }
 
 .card{
-  background:rgba(15,23,42,.94);
-  border:1px solid #263451;
+  background:
+    rgba(15,23,42,.94);
+
+  border:
+    1px solid #263451;
+
   border-radius:20px;
+
   padding:18px;
+
   margin-bottom:14px;
-  box-shadow:0 10px 35px rgba(0,0,0,.35);
-  backdrop-filter:blur(8px);
+
+  box-shadow:
+    0 10px 35px
+    rgba(0,0,0,.35);
+
+  backdrop-filter:
+    blur(8px);
 }
 
 .logo{
   text-align:center;
+
   font-size:27px;
+
   font-weight:900;
+
   letter-spacing:1px;
 }
 
 .sub{
   text-align:center;
+
   color:#8fa1c3;
+
   font-size:12px;
+
   margin-top:5px;
 }
 
 label{
   display:block;
+
   color:#9eacc7;
+
   font-size:13px;
+
   margin-bottom:7px;
 }
 
 input{
   width:100%;
+
   padding:14px;
+
   border-radius:12px;
-  border:1px solid #33415f;
+
+  border:
+    1px solid #33415f;
+
   background:#080e1c;
+
   color:#fff;
+
   outline:none;
+
   font-size:15px;
 }
 
@@ -80,16 +126,24 @@ input:focus{
 
 button{
   border:0;
+
   cursor:pointer;
+
   width:100%;
+
   padding:14px;
+
   border-radius:12px;
+
   margin-top:10px;
+
   color:#fff;
+
   font-size:15px;
+
   font-weight:800;
+
   background:#4f46e5;
-  transition:.15s;
 }
 
 button:active{
@@ -98,6 +152,7 @@ button:active{
 
 button:disabled{
   opacity:.55;
+
   cursor:not-allowed;
 }
 
@@ -105,12 +160,13 @@ button:disabled{
   display:none!important;
 }
 
-/* LOGIN */
-
 .login-msg{
   text-align:center;
+
   margin-top:10px;
+
   font-size:13px;
+
   color:#ff7285;
 }
 
@@ -118,47 +174,71 @@ button:disabled{
 
 .period{
   text-align:center;
+
   color:#91a2c4;
+
   font-size:13px;
 }
 
 .period strong{
   display:block;
+
   color:#fff;
+
   font-size:18px;
+
   margin-top:5px;
+
   word-break:break-all;
 }
 
 .countdown{
   text-align:center;
+
   margin-top:12px;
+
   font-size:32px;
+
   font-weight:900;
-  font-variant-numeric:tabular-nums;
+
+  font-variant-numeric:
+    tabular-nums;
 }
 
 .progress{
   height:7px;
+
   background:#172238;
+
   border-radius:20px;
+
   overflow:hidden;
+
   margin-top:12px;
 }
 
 .progress span{
   display:block;
+
   height:100%;
+
   width:0%;
+
   background:#6366f1;
-  transition:width .8s linear;
+
+  transition:
+    width .8s linear;
 }
 
 .status{
   text-align:center;
+
   font-size:12px;
+
   color:#61e6a4;
+
   margin-top:8px;
+
   font-weight:700;
 }
 
@@ -166,10 +246,13 @@ button:disabled{
   color:#ff7285;
 }
 
-.sync-time{
+.sync{
   text-align:center;
+
   color:#64748b;
+
   font-size:10px;
+
   margin-top:5px;
 }
 
@@ -177,40 +260,63 @@ button:disabled{
 
 .game-title{
   font-size:18px;
+
   font-weight:900;
+
   margin-bottom:12px;
 }
 
 .game-frame{
   width:100%;
+
   height:470px;
+
   border:0;
+
   border-radius:15px;
+
   background:#000;
 }
 
 .open-box{
   text-align:center;
+
   padding:14px 0 4px;
 }
 
 .open-title{
   font-size:15px;
+
   color:#aab7d0;
 }
 
 .open-btn{
-  background:linear-gradient(135deg,#7c3aed,#4f46e5);
+  background:
+    linear-gradient(
+      135deg,
+      #7c3aed,
+      #4f46e5
+    );
+
   font-size:17px;
-  box-shadow:0 8px 25px rgba(79,70,229,.35);
+
+  box-shadow:
+    0 8px 25px
+    rgba(79,70,229,.35);
 }
 
 .opened{
   background:#0b1425;
-  border:1px solid #243653;
+
+  border:
+    1px solid #243653;
+
   border-radius:12px;
+
   padding:13px;
+
   color:#66e6a5;
+
   font-weight:800;
 }
 
@@ -218,61 +324,81 @@ button:disabled{
 
 .analysis{
   text-align:center;
-  padding:25px 10px;
+
+  padding:28px 10px;
 }
 
 .analysis-icon{
-  font-size:38px;
-  animation:pulse 1s infinite;
+  font-size:40px;
+
+  animation:
+    pulse 1s infinite;
 }
 
 .analysis-text{
   margin-top:12px;
+
   font-size:17px;
+
   font-weight:900;
+
   letter-spacing:1px;
 }
 
 .analysis-sub{
   color:#8292b1;
+
   font-size:12px;
+
   margin-top:7px;
 }
 
 .loader{
-  width:100%;
-  height:6px;
+  height:7px;
+
   background:#172238;
+
   border-radius:20px;
+
   overflow:hidden;
+
   margin-top:18px;
 }
 
 .loader span{
   display:block;
+
   height:100%;
+
   width:0%;
+
   background:#6366f1;
 }
 
-@keyframes load3{
+@keyframes load6{
+
   from{
-    width:0%
+    width:0%;
   }
+
   to{
-    width:100%
+    width:100%;
   }
+
 }
 
 @keyframes pulse{
+
   0%,100%{
     transform:scale(1);
     opacity:.7;
   }
+
   50%{
     transform:scale(1.18);
     opacity:1;
   }
+
 }
 
 /* PREDICTION */
@@ -283,39 +409,57 @@ button:disabled{
 
 .pred-label{
   color:#8fa1c3;
+
   font-size:12px;
+
   letter-spacing:1px;
 }
 
 .prediction-value{
   margin-top:8px;
+
   font-size:48px;
+
   font-weight:1000;
+
   letter-spacing:2px;
 }
 
 .big{
   color:#ff657b;
-  text-shadow:0 0 20px rgba(255,101,123,.2);
+
+  text-shadow:
+    0 0 20px
+    rgba(255,101,123,.2);
 }
 
 .small{
   color:#58a6ff;
-  text-shadow:0 0 20px rgba(88,166,255,.2);
+
+  text-shadow:
+    0 0 20px
+    rgba(88,166,255,.2);
 }
 
 .number{
   font-size:15px;
+
   color:#b9c5da;
+
   margin-top:5px;
 }
 
 .confidence{
   margin-top:15px;
+
   padding:11px;
+
   border-radius:12px;
+
   background:#0b1425;
+
   color:#b9c5da;
+
   font-size:13px;
 }
 
@@ -323,10 +467,16 @@ button:disabled{
 
 .info-row{
   display:flex;
+
   justify-content:space-between;
+
   gap:12px;
+
   padding:10px 0;
-  border-bottom:1px solid #202d45;
+
+  border-bottom:
+    1px solid #202d45;
+
   font-size:13px;
 }
 
@@ -340,8 +490,11 @@ button:disabled{
 
 .info-row span:last-child{
   color:#fff;
+
   font-weight:700;
+
   text-align:right;
+
   word-break:break-word;
 }
 
@@ -349,38 +502,54 @@ button:disabled{
 
 .history-title{
   display:flex;
+
   justify-content:space-between;
+
   align-items:center;
-  font-weight:900;
+
   gap:10px;
+
+  font-weight:900;
 }
 
 .live{
   color:#61e6a4;
+
   font-size:11px;
+
   font-weight:800;
+
   white-space:nowrap;
 }
 
-.live.offline{
+.live.off{
   color:#ff7285;
 }
 
 .history{
   display:grid;
-  grid-template-columns:repeat(5,1fr);
+
+  grid-template-columns:
+    repeat(5,1fr);
+
   gap:7px;
+
   margin-top:12px;
 }
 
 .history-item{
   background:#0b1425;
-  border:1px solid #263451;
+
+  border:
+    1px solid #263451;
+
   border-radius:10px;
+
   padding:10px 3px;
+
   text-align:center;
+
   font-weight:900;
-  transition:.2s;
 }
 
 .history-item:first-child{
@@ -389,17 +558,25 @@ button:disabled{
 
 .history-item small{
   display:block;
+
   color:#8292b1;
+
   font-size:9px;
+
   margin-top:4px;
 }
 
 .history-period{
   display:block;
+
   color:#53627d;
+
   font-size:8px;
+
   margin-top:3px;
+
   overflow:hidden;
+
   text-overflow:ellipsis;
 }
 
@@ -407,28 +584,41 @@ button:disabled{
 
 .stat-grid{
   display:grid;
-  grid-template-columns:1fr 1fr;
+
+  grid-template-columns:
+    1fr 1fr;
+
   gap:9px;
+
   margin-top:12px;
 }
 
 .stat-box{
   background:#0b1425;
-  border:1px solid #263451;
+
+  border:
+    1px solid #263451;
+
   border-radius:12px;
+
   padding:12px;
+
   text-align:center;
 }
 
 .stat-box small{
   display:block;
+
   color:#71819e;
+
   font-size:10px;
 }
 
 .stat-box strong{
   display:block;
+
   margin-top:5px;
+
   font-size:18px;
 }
 
@@ -436,18 +626,23 @@ button:disabled{
 
 .music-title{
   font-weight:900;
+
   margin-bottom:10px;
 }
 
 .music-controls{
   display:flex;
+
   gap:8px;
+
   align-items:center;
 }
 
 .music-controls button{
   width:auto;
+
   margin:0;
+
   padding:11px 16px;
 }
 
@@ -455,19 +650,23 @@ button:disabled{
   flex:1;
 }
 
-/* NOTE */
-
 .note{
   color:#71819e;
+
   font-size:11px;
+
   line-height:1.5;
+
   margin-top:10px;
 }
 
 .footer{
   text-align:center;
+
   color:#53627d;
+
   font-size:11px;
+
   padding:5px 0 15px;
 }
 
@@ -488,7 +687,9 @@ button:disabled{
   .card{
     padding:15px;
   }
+
 }
+
 </style>
 </head>
 
@@ -496,11 +697,11 @@ button:disabled{
 
 <div class="container">
 
-<!-- =================================================
-     LOGIN
-================================================== -->
+<!-- LOGIN -->
 
-<div id="loginCard" class="card">
+<div
+  id="loginCard"
+  class="card">
 
   <div class="logo">
     DY AI
@@ -510,7 +711,8 @@ button:disabled{
     WINGO 30S PREDICTION SYSTEM
   </div>
 
-  <div style="margin-top:22px">
+  <div
+    style="margin-top:22px">
 
     <label>
       Prediction Access Key
@@ -540,11 +742,11 @@ button:disabled{
 </div>
 
 
-<!-- =================================================
-     MAIN
-================================================== -->
+<!-- MAIN -->
 
-<div id="main" class="hidden">
+<div
+  id="main"
+  class="hidden">
 
 
 <!-- HEADER -->
@@ -556,9 +758,8 @@ button:disabled{
   </div>
 
   <div class="sub">
-    30 SECOND AI SYSTEM
+    30 SECOND PRO AI SYSTEM
   </div>
-
 
   <div
     class="period"
@@ -572,7 +773,6 @@ button:disabled{
 
   </div>
 
-
   <div class="countdown">
 
     <span id="countdown">
@@ -581,13 +781,12 @@ button:disabled{
 
   </div>
 
-
   <div class="progress">
 
-    <span id="progressBar"></span>
+    <span id="progressBar">
+    </span>
 
   </div>
-
 
   <div
     id="stateStatus"
@@ -597,10 +796,9 @@ button:disabled{
 
   </div>
 
-
   <div
-    id="syncTime"
-    class="sync-time">
+    id="sync"
+    class="sync">
 
     Waiting for live sync...
 
@@ -628,7 +826,6 @@ button:disabled{
       type="audio/mpeg">
 
   </audio>
-
 
   <div class="music-controls">
 
@@ -663,13 +860,15 @@ button:disabled{
     🎮 WINGO GAME
   </div>
 
-
   <div
     id="openBox"
     class="open-box">
 
     <div class="open-title">
-      Open Wingo Game to unlock AI prediction
+
+      Open Wingo Game to unlock
+      AI prediction
+
     </div>
 
     <button
@@ -682,7 +881,6 @@ button:disabled{
 
   </div>
 
-
   <iframe
     id="gameFrame"
     class="game-frame"
@@ -692,7 +890,6 @@ button:disabled{
     allow="fullscreen"
     referrerpolicy="strict-origin-when-cross-origin">
   </iframe>
-
 
   <div class="note">
 
@@ -706,7 +903,7 @@ button:disabled{
 </div>
 
 
-<!-- ANALYSIS -->
+<!-- 6 SECOND ANALYSIS -->
 
 <div
   id="analysisCard"
@@ -719,20 +916,21 @@ button:disabled{
     </div>
 
     <div class="analysis-text">
-      RESULT ANALYSIS...
+      PRO RESULT ANALYSIS...
     </div>
 
     <div
       id="analysisSub"
       class="analysis-sub">
 
-      Checking real WingoBot history
+      Checking real WingoBot history...
 
     </div>
 
     <div class="loader">
 
-      <span id="loaderBar"></span>
+      <span id="loaderBar">
+      </span>
 
     </div>
 
@@ -753,7 +951,6 @@ button:disabled{
       AI STATISTICAL ESTIMATE
     </div>
 
-
     <div
       id="prediction"
       class="prediction-value">
@@ -762,7 +959,6 @@ button:disabled{
 
     </div>
 
-
     <div
       id="number"
       class="number">
@@ -770,7 +966,6 @@ button:disabled{
       Number: --
 
     </div>
-
 
     <div
       id="confidence"
@@ -801,7 +996,6 @@ button:disabled{
 
   </div>
 
-
   <div class="info-row">
 
     <span>
@@ -813,7 +1007,6 @@ button:disabled{
     </span>
 
   </div>
-
 
   <div class="info-row">
 
@@ -827,7 +1020,6 @@ button:disabled{
 
   </div>
 
-
   <div class="info-row">
 
     <span>
@@ -839,7 +1031,6 @@ button:disabled{
     </span>
 
   </div>
-
 
   <div class="info-row">
 
@@ -853,7 +1044,6 @@ button:disabled{
 
   </div>
 
-
   <div class="info-row">
 
     <span>
@@ -865,7 +1055,6 @@ button:disabled{
     </span>
 
   </div>
-
 
   <div class="info-row">
 
@@ -902,7 +1091,6 @@ button:disabled{
 
   </div>
 
-
   <div class="stat-grid">
 
     <div class="stat-box">
@@ -911,12 +1099,14 @@ button:disabled{
         BIG
       </small>
 
-      <strong id="bigPercent">
+      <strong
+        id="bigPercent">
+
         --
+
       </strong>
 
     </div>
-
 
     <div class="stat-box">
 
@@ -924,12 +1114,14 @@ button:disabled{
         SMALL
       </small>
 
-      <strong id="smallPercent">
+      <strong
+        id="smallPercent">
+
         --
+
       </strong>
 
     </div>
-
 
     <div class="stat-box">
 
@@ -937,12 +1129,14 @@ button:disabled{
         BIG PROBABILITY
       </small>
 
-      <strong id="bigProbability">
+      <strong
+        id="bigProbability">
+
         --
+
       </strong>
 
     </div>
-
 
     <div class="stat-box">
 
@@ -950,8 +1144,11 @@ button:disabled{
         SMALL PROBABILITY
       </small>
 
-      <strong id="smallProbability">
+      <strong
+        id="smallProbability">
+
         --
+
       </strong>
 
     </div>
@@ -981,7 +1178,6 @@ button:disabled{
 
   </div>
 
-
   <div
     id="history"
     class="history">
@@ -1009,19 +1205,19 @@ button:disabled{
     id="note"
     class="note">
 
-    Historical results are used for statistical
-    analysis. Future outcomes are not guaranteed.
+    Historical results are used for
+    statistical analysis. Future outcomes
+    are not guaranteed.
 
   </div>
 
 </div>
 
-
 </div>
 
 
 <div class="footer">
-  DY AI • WINGO 30S SYSTEM
+  DY AI • WINGO 30S PRO SYSTEM
 </div>
 
 </div>
@@ -1034,6 +1230,7 @@ button:disabled{
 ===================================================== */
 
 let accessKeyValue = "";
+
 let deviceId = "";
 
 let gameOpened = false;
@@ -1042,11 +1239,13 @@ let analysisRunning = false;
 
 let lastPeriod = "";
 
-let lastHistoryIssue = "";
+let lastHistorySignature = "";
 
 let liveInterval = null;
 
 let analysisTimer = null;
+
+let analysisFinishTimer = null;
 
 let stateBusy = false;
 
@@ -1062,7 +1261,8 @@ const music =
     "bgMusic"
   );
 
-music.volume = 0.45;
+music.volume =
+  0.45;
 
 
 /* =====================================================
@@ -1076,37 +1276,28 @@ function getDeviceId(){
       "dy_ai_device_id"
     );
 
-
   if(!id){
 
-    let randomId;
-
-
-    if(
+    const randomId =
       window.crypto &&
       typeof window.crypto.randomUUID ===
       "function"
-    ){
 
-      randomId =
-        window.crypto.randomUUID();
+        ?
 
-    }else{
+        window.crypto.randomUUID()
 
-      randomId =
+        :
+
         Date.now() +
         "-" +
         Math.random()
           .toString(36)
           .slice(2);
 
-    }
-
-
     id =
       "device-" +
       randomId;
-
 
     localStorage.setItem(
       "dy_ai_device_id",
@@ -1115,13 +1306,12 @@ function getDeviceId(){
 
   }
 
-
   return id;
 }
 
 
 /* =====================================================
-   HEADERS
+   API HEADERS
 ===================================================== */
 
 function apiHeaders(){
@@ -1150,22 +1340,18 @@ async function login(){
       "accessKey"
     );
 
-
   const key =
     input.value.trim();
-
 
   const msg =
     document.getElementById(
       "loginMsg"
     );
 
-
   const btn =
     document.getElementById(
       "loginBtn"
     );
-
 
   if(!key){
 
@@ -1176,16 +1362,14 @@ async function login(){
 
   }
 
-
   deviceId =
     getDeviceId();
 
-
-  btn.disabled = true;
+  btn.disabled =
+    true;
 
   msg.textContent =
     "Checking access...";
-
 
   try{
 
@@ -1198,25 +1382,26 @@ async function login(){
           method:"GET",
 
           headers:{
+
             "X-Access-Key":
               key,
 
             "X-Device-ID":
               deviceId
+
           },
 
           cache:"no-store"
+
         }
       );
-
 
     const data =
       await response
         .json()
         .catch(
-          ()=>({})
+          () => ({})
         );
-
 
     if(
       !response.ok ||
@@ -1243,10 +1428,8 @@ async function login(){
 
     }
 
-
     accessKeyValue =
       key;
-
 
     document
       .getElementById(
@@ -1255,7 +1438,6 @@ async function login(){
       .classList
       .add("hidden");
 
-
     document
       .getElementById(
         "main"
@@ -1263,13 +1445,8 @@ async function login(){
       .classList
       .remove("hidden");
 
-
-    msg.textContent = "";
-
-
-    /*
-      Try music after user interaction.
-    */
+    msg.textContent =
+      "";
 
     try{
 
@@ -1282,40 +1459,25 @@ async function login(){
         .textContent =
         "⏸ PAUSE";
 
-    }catch{
-
-      /* Browser autoplay policy */
-    }
-
-
-    /*
-      First live request immediately.
-    */
+    }catch{}
 
     await loadState();
 
-
-    /*
-      Then EXACTLY every 1 second.
-    */
-
     startLiveSync();
 
-
-  }catch(error){
+  }catch(e){
 
     console.log(
-      "LOGIN:",
-      error
+      e
     );
-
 
     msg.textContent =
       "Server connection failed.";
 
   }finally{
 
-    btn.disabled = false;
+    btn.disabled =
+      false;
 
   }
 
@@ -1323,7 +1485,7 @@ async function login(){
 
 
 /* =====================================================
-   LIVE SYNC START
+   1 SECOND LIVE SYNC
 ===================================================== */
 
 function startLiveSync(){
@@ -1336,14 +1498,9 @@ function startLiveSync(){
 
   }
 
-
-  /*
-    One request every second.
-  */
-
   liveInterval =
     setInterval(
-      ()=>{
+      () => {
 
         loadState();
 
@@ -1355,7 +1512,7 @@ function startLiveSync(){
 
 
 /* =====================================================
-   STATE REQUEST
+   FETCH STATE
 ===================================================== */
 
 async function fetchState(){
@@ -1373,40 +1530,36 @@ async function fetchState(){
 
         cache:"no-store",
 
-        credentials:"same-origin"
+        credentials:
+          "same-origin"
+
       }
     );
-
 
   const data =
     await response
       .json()
       .catch(
-        ()=>({})
+        () => ({})
       );
-
 
   if(!response.ok){
 
-    const error =
+    const e =
       new Error(
         data.message ||
         data.error ||
         "STATE_REQUEST_FAILED"
       );
 
-
-    error.status =
+    e.status =
       response.status;
 
-
-    throw error;
+    throw e;
 
   }
 
-
   return data;
-
 }
 
 
@@ -1425,51 +1578,27 @@ async function loadState(){
 
   }
 
-
-  stateBusy = true;
-
+  stateBusy =
+    true;
 
   try{
 
     const data =
       await fetchState();
 
-
-    if(
-      !data ||
-      !data.success
-    ){
-
+    if(!data.success)
       return;
-
-    }
-
 
     latestState =
       data;
-
-
-    /*
-      ALWAYS update timing.
-    */
 
     updateTiming(
       data
     );
 
-
-    /*
-      ALWAYS update history.
-    */
-
     renderRealData(
       data
     );
-
-
-    /*
-      Determine period.
-    */
 
     const currentPeriod =
       String(
@@ -1477,11 +1606,6 @@ async function loadState(){
         data.current?.issueNumber ??
         ""
       );
-
-
-    /*
-      First state after opening/login.
-    */
 
     if(
       !lastPeriod &&
@@ -1493,12 +1617,14 @@ async function loadState(){
 
     }
 
-
     /*
-      NEW PERIOD DETECTED.
+      NEW PERIOD:
+      immediately hide old prediction
+      and start fresh 6 second analysis.
     */
 
     if(
+      gameOpened &&
       currentPeriod &&
       lastPeriod &&
       currentPeriod !==
@@ -1508,73 +1634,62 @@ async function loadState(){
       lastPeriod =
         currentPeriod;
 
-
-      /*
-        New period means latest API state
-        should immediately be used.
-      */
-
-      if(gameOpened){
-
-        startAnalysis(
-          data
-        );
-
-      }
-
-    }
-
-
-    /*
-      If game is open and there is no
-      analysis running, keep current
-      prediction updated.
-    */
-
-    if(
-      gameOpened &&
-      !analysisRunning
-    ){
-
-      updatePrediction(
+      startAnalysis(
         data
       );
 
     }
 
-
     /*
-      LIVE status.
+      If prediction isn't visible after
+      opening, start first analysis.
     */
 
-    if(data.stale){
+    if(
+      gameOpened &&
+      !analysisRunning &&
+      document
+        .getElementById(
+          "predictionCard"
+        )
+        .classList
+        .contains(
+          "hidden"
+        )
+    ){
 
-      setStateStatus(
-        "● SYNCING • LAST VALID DATA",
-        false
-      );
-
-    }else{
-
-      setStateStatus(
-        "● WINGOBOT LIVE • 1S SYNC",
-        true
+      startAnalysis(
+        data
       );
 
     }
 
+    setStateStatus(
 
-  }catch(error){
+      data.stale
+
+        ?
+
+        "● USING LAST VALID DATA • RETRYING"
+
+        :
+
+        "● WINGOBOT LIVE • 1S SYNC",
+
+      !data.stale
+
+    );
+
+  }catch(e){
 
     console.log(
       "STATE:",
-      error
+      e
     );
 
-
     if(
-      error.status === 401 ||
-      error.status === 403
+      e.status === 401 ||
+      e.status === 403
     ){
 
       logout();
@@ -1583,49 +1698,15 @@ async function loadState(){
 
     }
 
-
     setStateStatus(
       "● CONNECTION RETRYING...",
       false
     );
 
-
-    const stat =
-      document.getElementById(
-        "statLive"
-      );
-
-
-    const histLive =
-      document.getElementById(
-        "historyLive"
-      );
-
-
-    if(stat){
-
-      stat.textContent =
-        "● RETRYING";
-
-      stat.classList
-        .add("offline");
-
-    }
-
-
-    if(histLive){
-
-      histLive.textContent =
-        "● RETRYING";
-
-      histLive.classList
-        .add("offline");
-
-    }
-
   }finally{
 
-    stateBusy = false;
+    stateBusy =
+      false;
 
   }
 
@@ -1633,7 +1714,7 @@ async function loadState(){
 
 
 /* =====================================================
-   TIMING UPDATE
+   TIMING
 ===================================================== */
 
 function updateTiming(data){
@@ -1643,7 +1724,6 @@ function updateTiming(data){
     data.current?.issueNumber ??
     "---";
 
-
   document
     .getElementById(
       "period"
@@ -1651,12 +1731,10 @@ function updateTiming(data){
     .textContent =
     period;
 
-
   let countdown =
     Number(
       data.countdown
     );
-
 
   if(
     !Number.isFinite(
@@ -1664,10 +1742,10 @@ function updateTiming(data){
     )
   ){
 
-    countdown = 30;
+    countdown =
+      30;
 
   }
-
 
   countdown =
     Math.max(
@@ -1680,7 +1758,6 @@ function updateTiming(data){
       )
     );
 
-
   document
     .getElementById(
       "countdown"
@@ -1688,63 +1765,53 @@ function updateTiming(data){
     .textContent =
     countdown;
 
-
-  const percentage =
-    (
-      countdown /
-      30
-    ) * 100;
-
-
   document
     .getElementById(
       "progressBar"
     )
     .style
     .width =
-    percentage +
+    (
+      countdown /
+      30 *
+      100
+    ) +
     "%";
-
-
-  /*
-    Last sync display.
-  */
 
   const sync =
     document.getElementById(
-      "syncTime"
+      "sync"
     );
 
+  if(
+    data.lastSync
+  ){
 
-  if(sync){
+    const age =
+      Math.max(
+        0,
+        Math.floor(
+          (
+            Date.now() -
+            Number(
+              data.lastSync
+            )
+          ) / 1000
+        )
+      );
 
-    if(data.lastSync){
+    sync.textContent =
+      age <= 1
 
-      const secondsAgo =
-        Math.max(
-          0,
-          Math.floor(
-            (
-              Date.now() -
-              Number(data.lastSync)
-            ) / 1000
-          )
-        );
+        ?
 
+        "Last sync: just now"
 
-      sync.textContent =
-        secondsAgo <= 1
-          ? "Last sync: just now"
-          : "Last sync: " +
-            secondsAgo +
-            "s ago";
+        :
 
-    }else{
-
-      sync.textContent =
-        "Waiting for live sync...";
-
-    }
+        "Last sync: " +
+        age +
+        "s ago";
 
   }
 
@@ -1755,7 +1822,9 @@ function updateTiming(data){
    REAL DATA
 ===================================================== */
 
-function renderRealData(data){
+function renderRealData(
+  data
+){
 
   document
     .getElementById(
@@ -1763,9 +1832,10 @@ function renderRealData(data){
     )
     .textContent =
     data.stale
-      ? "WingoBot CACHE"
-      : "WingoBot LIVE";
-
+      ?
+      "WingoBot CACHE"
+      :
+      "WingoBot LIVE";
 
   document
     .getElementById(
@@ -1773,16 +1843,7 @@ function renderRealData(data){
     )
     .textContent =
     data.sampleSize ??
-    (
-      Array.isArray(
-        data.history
-      )
-        ?
-        data.history.length
-        :
-        "--"
-    );
-
+    "--";
 
   document
     .getElementById(
@@ -1791,12 +1852,15 @@ function renderRealData(data){
     .textContent =
     data.patternScore !==
     undefined
+
       ?
+
       data.patternScore +
       "%"
-      :
-      "--";
 
+      :
+
+      "--";
 
   document
     .getElementById(
@@ -1804,31 +1868,30 @@ function renderRealData(data){
     )
     .textContent =
     data.latestNumber !==
-    undefined &&
+      undefined &&
     data.latestNumber !==
-    null
+      null
+
       ?
+
       data.latestNumber +
       " • " +
       (
         data.latestPrediction ||
         ""
       )
-      :
-      "--";
 
+      :
+
+      "--";
 
   document
     .getElementById(
       "streak"
     )
     .textContent =
-    data.streak
-      ?
-      data.streak
-      :
-      "--";
-
+    data.streak ??
+    "--";
 
   document
     .getElementById(
@@ -1838,14 +1901,12 @@ function renderRealData(data){
     data.method ||
     "History Analysis";
 
-
   document
     .getElementById(
       "keyStatus"
     )
     .textContent =
     "LIVE";
-
 
   document
     .getElementById(
@@ -1855,11 +1916,9 @@ function renderRealData(data){
     data.note ||
     "Historical results are used for statistical analysis. Future outcomes are not guaranteed.";
 
-
-  renderStatistics(
+  renderStats(
     data
   );
-
 
   renderHistory(
     data.history
@@ -1872,12 +1931,13 @@ function renderRealData(data){
    STATISTICS
 ===================================================== */
 
-function renderStatistics(data){
+function renderStats(
+  data
+){
 
   const s =
     data.statistics ||
     {};
-
 
   document
     .getElementById(
@@ -1886,12 +1946,15 @@ function renderStatistics(data){
     .textContent =
     s.bigPercent !==
     undefined
+
       ?
+
       s.bigPercent +
       "%"
-      :
-      "--";
 
+      :
+
+      "--";
 
   document
     .getElementById(
@@ -1900,7 +1963,9 @@ function renderStatistics(data){
     .textContent =
     s.bigPercent !==
     undefined
+
       ?
+
       (
         100 -
         Number(
@@ -1908,9 +1973,10 @@ function renderStatistics(data){
         )
       ) +
       "%"
-      :
-      "--";
 
+      :
+
+      "--";
 
   document
     .getElementById(
@@ -1919,12 +1985,15 @@ function renderStatistics(data){
     .textContent =
     s.bigProbability !==
     undefined
+
       ?
+
       s.bigProbability +
       "%"
-      :
-      "--";
 
+      :
+
+      "--";
 
   document
     .getElementById(
@@ -1933,10 +2002,14 @@ function renderStatistics(data){
     .textContent =
     s.smallProbability !==
     undefined
+
       ?
+
       s.smallProbability +
       "%"
+
       :
+
       "--";
 
 }
@@ -1951,18 +2024,25 @@ function renderHistory(
 ){
 
   const list =
-    Array.isArray(history)
-      ?
-      history.slice(0,10)
-      :
-      [];
+    Array.isArray(
+      history
+    )
 
+      ?
+
+      history.slice(
+        0,
+        10
+      )
+
+      :
+
+      [];
 
   const box =
     document.getElementById(
       "history"
     );
-
 
   if(!list.length){
 
@@ -1980,12 +2060,6 @@ function renderHistory(
 
   }
 
-
-  /*
-    Create a small signature.
-    If it changes, the UI will redraw.
-  */
-
   const signature =
     list
       .map(
@@ -2002,84 +2076,91 @@ function renderHistory(
       )
       .join("|");
 
-
   if(
     signature ===
-    lastHistoryIssue
+    lastHistorySignature
   ){
 
     return;
 
   }
 
-
-  lastHistoryIssue =
+  lastHistorySignature =
     signature;
 
-
   box.innerHTML =
-    list.map(
-      item => {
+    list
+      .map(
+        item => {
 
-        const n =
-          Number(
-            item.number
-          );
+          const n =
+            Number(
+              item.number
+            );
 
+          const valid =
+            Number.isInteger(
+              n
+            ) &&
+            n >= 0 &&
+            n <= 9;
 
-        const valid =
-          Number.isInteger(n) &&
-          n >= 0 &&
-          n <= 9;
+          const label =
+            valid
 
+              ?
 
-        const label =
-          valid
-            ?
-            (
-              n >= 5
-                ?
-                "BIG"
-                :
-                "SMALL"
-            )
-            :
-            "—";
+              (
+                n >= 5
+                  ?
+                  "BIG"
+                  :
+                  "SMALL"
+              )
 
+              :
 
-        const issue =
-          String(
-            item.issueNumber ??
-            ""
-          );
+              "—";
 
+          const issue =
+            String(
+              item.issueNumber ??
+              ""
+            );
 
-        return `
-          <div class="history-item">
+          return `
 
-            ${valid ? n : "—"}
+            <div class="history-item">
 
-            <small>
-              ${label}
-            </small>
+              ${valid ? n : "—"}
 
-            ${
-              issue
-                ?
-                `
-                <span class="history-period">
-                  ${issue.slice(-6)}
-                </span>
-                `
-                :
-                ""
-            }
+              <small>
+                ${label}
+              </small>
 
-          </div>
-        `;
+              ${
+                issue
 
-      }
-    ).join("");
+                  ?
+
+                  `
+                  <span class="history-period">
+                    ${issue.slice(-6)}
+                  </span>
+                  `
+
+                  :
+
+                  ""
+              }
+
+            </div>
+
+          `;
+
+        }
+      )
+      .join("");
 
 }
 
@@ -2090,31 +2171,27 @@ function renderHistory(
 
 function openWingo(){
 
-  if(!accessKeyValue)
+  if(
+    !accessKeyValue
+  ){
+
     return;
 
+  }
 
   gameOpened =
     true;
 
-
-  const box =
-    document.getElementById(
+  document
+    .getElementById(
       "openBox"
-    );
-
-
-  box.innerHTML =
+    )
+    .innerHTML =
     `
     <div class="opened">
-      ✓ WINGO OPENED • AI ACTIVE
+      ✓ WINGO OPENED • PRO AI ACTIVE
     </div>
     `;
-
-
-  /*
-    Immediately use latest state.
-  */
 
   if(latestState){
 
@@ -2125,14 +2202,13 @@ function openWingo(){
         ""
       );
 
-
     startAnalysis(
       latestState
     );
 
   }else{
 
-    startAnalysisFromCurrentState();
+    loadState();
 
   }
 
@@ -2140,162 +2216,91 @@ function openWingo(){
 
 
 /* =====================================================
-   INITIAL ANALYSIS
-===================================================== */
-
-async function
-startAnalysisFromCurrentState(){
-
-  if(analysisRunning)
-    return;
-
-
-  try{
-
-    const data =
-      await fetchState();
-
-
-    if(
-      !data ||
-      !data.success
-    ){
-
-      return;
-
-    }
-
-
-    latestState =
-      data;
-
-
-    updateTiming(
-      data
-    );
-
-
-    renderRealData(
-      data
-    );
-
-
-    lastPeriod =
-      String(
-        data.period ??
-        data.current?.issueNumber ??
-        ""
-      );
-
-
-    startAnalysis(
-      data
-    );
-
-  }catch(error){
-
-    console.log(
-      "INITIAL ANALYSIS:",
-      error
-    );
-
-
-    setStateStatus(
-      "● WAITING FOR WINGOBOT DATA",
-      false
-    );
-
-  }
-
-}
-
-
-/* =====================================================
-   3 SECOND ANALYSIS
+   6 SECOND PRO ANALYSIS
 ===================================================== */
 
 function startAnalysis(
   data
 ){
 
-  if(analysisRunning)
+  if(
+    analysisRunning
+  ){
+
     return;
 
+  }
 
   analysisRunning =
     true;
-
 
   const analysis =
     document.getElementById(
       "analysisCard"
     );
 
-
   const prediction =
     document.getElementById(
       "predictionCard"
     );
-
-
-  prediction
-    .classList
-    .add("hidden");
-
-
-  analysis
-    .classList
-    .remove("hidden");
-
-
-  const sub =
-    document.getElementById(
-      "analysisSub"
-    );
-
 
   const loader =
     document.getElementById(
       "loaderBar"
     );
 
+  const sub =
+    document.getElementById(
+      "analysisSub"
+    );
+
+  /*
+    IMPORTANT:
+    OLD PREDICTION IS HIDDEN
+    DURING THE WHOLE 6 SECOND ANALYSIS.
+  */
+
+  prediction
+    .classList
+    .add("hidden");
+
+  analysis
+    .classList
+    .remove("hidden");
 
   loader.style.animation =
     "none";
 
-
-  /*
-    Force browser reflow.
-  */
-
   void loader.offsetWidth;
 
-
   loader.style.animation =
-    "load3 3s linear forwards";
-
+    "load6 6s linear forwards";
 
   const messages = [
 
-    "Checking real WingoBot history...",
+    "Reading latest WingoBot history...",
 
-    "Calculating BIG / SMALL trend...",
+    "Checking BIG / SMALL distribution...",
 
-    "Comparing recent number frequency...",
+    "Analyzing streak & transition pattern...",
 
-    "Finalizing statistical estimate..."
+    "Comparing short / medium / long momentum...",
+
+    "Scoring number frequency & recency...",
+
+    "Finalizing PRO statistical estimate..."
 
   ];
 
-
-  let index = 0;
-
+  let index =
+    0;
 
   sub.textContent =
     messages[0];
 
-
-  if(analysisTimer){
+  if(
+    analysisTimer
+  ){
 
     clearInterval(
       analysisTimer
@@ -2303,13 +2308,21 @@ function startAnalysis(
 
   }
 
+  if(
+    analysisFinishTimer
+  ){
+
+    clearTimeout(
+      analysisFinishTimer
+    );
+
+  }
 
   analysisTimer =
     setInterval(
       () => {
 
         index++;
-
 
         if(
           index <
@@ -2322,46 +2335,70 @@ function startAnalysis(
         }
 
       },
-      750
+      1000
     );
 
+  analysisFinishTimer =
+    setTimeout(
+      async () => {
 
-  setTimeout(
-    () => {
-
-      if(analysisTimer){
-
-        clearInterval(
+        if(
           analysisTimer
+        ){
+
+          clearInterval(
+            analysisTimer
+          );
+
+          analysisTimer =
+            null;
+
+        }
+
+        let finalData =
+          data;
+
+        /*
+          Fetch newest server state
+          before revealing result.
+        */
+
+        try{
+
+          finalData =
+            await fetchState();
+
+          latestState =
+            finalData;
+
+          updateTiming(
+            finalData
+          );
+
+          renderRealData(
+            finalData
+          );
+
+        }catch{}
+
+        analysis
+          .classList
+          .add("hidden");
+
+        updatePrediction(
+          finalData
         );
 
-        analysisTimer =
-          null;
+        prediction
+          .classList
+          .remove("hidden");
 
-      }
+        analysisRunning =
+          false;
 
-
-      analysis
-        .classList
-        .add("hidden");
-
-
-      updatePrediction(
-        data
-      );
-
-
-      prediction
-        .classList
-        .remove("hidden");
-
-
-      analysisRunning =
-        false;
-
-    },
-    3000
-  );
+      },
+      6000
+    );
 
 }
 
@@ -2374,34 +2411,34 @@ function updatePrediction(
   data
 ){
 
-  if(!gameOpened)
+  if(
+    !gameOpened
+  ){
+
     return;
 
+  }
 
   const pred =
     document.getElementById(
       "prediction"
     );
 
-
   const number =
     document.getElementById(
       "number"
     );
-
 
   const confidence =
     document.getElementById(
       "confidence"
     );
 
-
   const value =
     String(
       data.prediction ||
       ""
     ).toUpperCase();
-
 
   if(
     value === "BIG" ||
@@ -2411,14 +2448,18 @@ function updatePrediction(
     pred.textContent =
       value;
 
-
     pred.className =
       "prediction-value " +
       (
-        value === "BIG"
+        value ===
+        "BIG"
+
           ?
+
           "big"
+
           :
+
           "small"
       );
 
@@ -2432,39 +2473,40 @@ function updatePrediction(
 
   }
 
-
   number.textContent =
     "Number: " +
     (
       data.number !==
-      undefined &&
+        undefined &&
       data.number !==
-      null
+        null
+
         ?
+
         data.number
+
         :
+
         "--"
     );
-
 
   confidence.textContent =
     "Confidence: " +
     (
       data.confidence !==
-      undefined &&
+        undefined &&
       data.confidence !==
-      null
+        null
+
         ?
+
         data.confidence
+
         :
+
         "--"
     ) +
     "%";
-
-
-  renderRealData(
-    data
-  );
 
 }
 
@@ -2483,14 +2525,8 @@ function setStateStatus(
       "stateStatus"
     );
 
-
-  if(!el)
-    return;
-
-
   el.textContent =
     text;
-
 
   el.className =
     "status " +
@@ -2502,64 +2538,51 @@ function setStateStatus(
         "err"
     );
 
-
   const stat =
     document.getElementById(
       "statLive"
     );
 
-
-  const histLive =
+  const hist =
     document.getElementById(
       "historyLive"
     );
 
-
   if(ok){
 
-    if(stat){
+    stat.textContent =
+      "● LIVE";
 
-      stat.textContent =
-        "● LIVE";
+    stat.classList
+      .remove(
+        "off"
+      );
 
-      stat.classList
-        .remove("offline");
+    hist.textContent =
+      "● LIVE";
 
-    }
-
-
-    if(histLive){
-
-      histLive.textContent =
-        "● LIVE";
-
-      histLive.classList
-        .remove("offline");
-
-    }
+    hist.classList
+      .remove(
+        "off"
+      );
 
   }else{
 
-    if(stat){
+    stat.textContent =
+      "● SYNCING";
 
-      stat.textContent =
-        "● SYNCING";
+    stat.classList
+      .add(
+        "off"
+      );
 
-      stat.classList
-        .add("offline");
+    hist.textContent =
+      "● SYNCING";
 
-    }
-
-
-    if(histLive){
-
-      histLive.textContent =
-        "● SYNCING";
-
-      histLive.classList
-        .add("offline");
-
-    }
+    hist.classList
+      .add(
+        "off"
+      );
 
   }
 
@@ -2572,7 +2595,9 @@ function setStateStatus(
 
 function toggleMusic(){
 
-  if(music.paused){
+  if(
+    music.paused
+  ){
 
     music
       .play()
@@ -2596,7 +2621,6 @@ function toggleMusic(){
 
     music.pause();
 
-
     document
       .getElementById(
         "musicBtn"
@@ -2607,7 +2631,6 @@ function toggleMusic(){
   }
 
 }
-
 
 function changeVolume(){
 
@@ -2641,14 +2664,15 @@ function logout(){
   lastPeriod =
     "";
 
-  lastHistoryIssue =
+  lastHistorySignature =
     "";
 
   latestState =
     null;
 
-
-  if(liveInterval){
+  if(
+    liveInterval
+  ){
 
     clearInterval(
       liveInterval
@@ -2659,8 +2683,9 @@ function logout(){
 
   }
 
-
-  if(analysisTimer){
+  if(
+    analysisTimer
+  ){
 
     clearInterval(
       analysisTimer
@@ -2671,6 +2696,18 @@ function logout(){
 
   }
 
+  if(
+    analysisFinishTimer
+  ){
+
+    clearTimeout(
+      analysisFinishTimer
+    );
+
+    analysisFinishTimer =
+      null;
+
+  }
 
   document
     .getElementById(
@@ -2679,14 +2716,12 @@ function logout(){
     .classList
     .add("hidden");
 
-
   document
     .getElementById(
       "loginCard"
     )
     .classList
     .remove("hidden");
-
 
   document
     .getElementById(
@@ -2699,7 +2734,7 @@ function logout(){
 
 
 /* =====================================================
-   ENTER KEY LOGIN
+   ENTER KEY
 ===================================================== */
 
 document
@@ -2708,10 +2743,10 @@ document
   )
   .addEventListener(
     "keydown",
-    event => {
+    e => {
 
       if(
-        event.key ===
+        e.key ===
         "Enter"
       ){
 
@@ -2733,4 +2768,4 @@ deviceId =
 </script>
 
 </body>
-</html>
+  </html>
