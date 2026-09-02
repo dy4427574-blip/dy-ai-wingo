@@ -17,6 +17,10 @@ const WINGOBOT_URL =
 
 const ROUND_SECONDS = 30;
 
+/* =====================================================
+   DATABASE
+===================================================== */
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.DATABASE_URL
@@ -24,22 +28,31 @@ const pool = new Pool({
     : false
 });
 
+/* =====================================================
+   CACHE
+===================================================== */
+
 const cache = {
   history: [],
   currentIssue: null,
   settledIssue: null,
   targetIssue: null,
+
   historyVersion: 0,
   historySignature: "",
+
   analysis: null,
+
   lastUpdated: 0,
+
   providerCountdown: null,
   anchorTime: 0,
+
   error: null
 };
 
 /* =====================================================
-   DATABASE
+   DATABASE INIT
 ===================================================== */
 
 async function initDatabase() {
@@ -122,7 +135,7 @@ function classify(number) {
 }
 
 /* =====================================================
-   ISSUE
+   ISSUE HELPERS
 ===================================================== */
 
 function cleanIssue(value) {
@@ -145,9 +158,12 @@ function compareIssues(a, b) {
 
 function nextIssue(value) {
   const s = cleanIssue(value);
+
   const match = s.match(/^(.*?)(\d+)$/);
 
-  if (!match) return null;
+  if (!match) {
+    return null;
+  }
 
   const prefix = match[1];
   const digits = match[2];
@@ -165,7 +181,7 @@ function nextIssue(value) {
 }
 
 /* =====================================================
-   PROVIDER
+   PROVIDER NORMALIZER
 ===================================================== */
 
 function normalizeHistory(data) {
@@ -207,12 +223,17 @@ function normalizeHistory(data) {
     );
 }
 
+/* =====================================================
+   COUNTDOWN
+===================================================== */
+
 function extractCountdown(data) {
   const values = [
     data?.countdown,
     data?.remainingSeconds,
     data?.seconds,
     data?.timeLeft,
+
     data?.current?.countdown,
     data?.current?.remainingSeconds,
     data?.current?.seconds,
@@ -234,6 +255,10 @@ function extractCountdown(data) {
   return null;
 }
 
+/* =====================================================
+   WINGOBOT
+===================================================== */
+
 async function fetchWingoData() {
   if (!WINGOBOT_TOKEN) {
     throw new Error(
@@ -247,7 +272,9 @@ async function fetchWingoData() {
       headers: {
         Authorization:
           `Bearer ${WINGOBOT_TOKEN}`,
-        Accept: "application/json"
+
+        Accept:
+          "application/json"
       }
     }
   );
@@ -262,7 +289,7 @@ async function fetchWingoData() {
 }
 
 /* =====================================================
-   UTILITIES
+   WEIGHTED VOTE
 ===================================================== */
 
 function weightedVote(signals) {
@@ -282,194 +309,311 @@ function weightedVote(signals) {
     }
   }
 
-  return { big, small };
-}
-
-function sideFromVote(big, small) {
-  if (big === small) return null;
-  return big > small ? "BIG" : "SMALL";
-}
-
-/* =====================================================
-   RECENT WINDOW SIGNAL
-===================================================== */
-
-function recentSignal(sequence, size, weight) {
-  if (sequence.length < size) {
-    return null;
-  }
-
-  const data =
-    sequence.slice(0, size);
-
-  let big = 0;
-  let small = 0;
-
-  data.forEach((side, index) => {
-    const w =
-      weight *
-      (1 - index / (size * 1.8));
-
-    if (side === "BIG") big += w;
-    if (side === "SMALL") small += w;
-  });
-
-  const side =
-    sideFromVote(big, small);
-
-  if (!side) return null;
-
   return {
-    side,
-    weight: Math.abs(big - small),
-    matches: size,
-    type: `recent${size}`
+    big,
+    small
   };
 }
 
 /* =====================================================
-   TRANSITION MATRIX
+   RECENCY WEIGHT
 ===================================================== */
 
-function transitionMatrix(sequence) {
-  if (sequence.length < 12) {
+function recencyWeight(index) {
+  return 1 / (1 + index * 0.055);
+}
+
+/* =====================================================
+   EXACT SEQUENCE
+===================================================== */
+
+function exactPattern(sequence, length) {
+  if (sequence.length < length + 2) {
     return null;
   }
 
-  let BB = 0;
-  let BS = 0;
-  let SB = 0;
-  let SS = 0;
+  const current =
+    sequence.slice(0, length).join("");
+
+  const signals = [];
 
   for (
-    let i = 0;
-    i < sequence.length - 1;
+    let i = length + 1;
+    i < sequence.length;
     i++
   ) {
-    const a = sequence[i];
-    const b = sequence[i + 1];
+    const old =
+      sequence
+        .slice(i, i + length)
+        .join("");
 
-    if (a === "BIG" && b === "BIG") BB++;
-    if (a === "BIG" && b === "SMALL") BS++;
-    if (a === "SMALL" && b === "BIG") SB++;
-    if (a === "SMALL" && b === "SMALL") SS++;
+    if (old !== current) {
+      continue;
+    }
+
+    signals.push({
+      side: sequence[i - 1],
+
+      weight:
+        1.8 *
+        recencyWeight(i),
+
+      type: "exact"
+    });
+  }
+
+  if (!signals.length) {
+    return null;
+  }
+
+  const vote =
+    weightedVote(signals);
+
+  return {
+    side:
+      vote.big >= vote.small
+        ? "BIG"
+        : "SMALL",
+
+    matches: signals.length,
+
+    weight:
+      Math.min(
+        3,
+        vote.big + vote.small
+      ),
+
+    type: "exact"
+  };
+}
+
+/* =====================================================
+   SIMILAR SEQUENCE
+===================================================== */
+
+function similarPattern(sequence, length) {
+  if (sequence.length < length + 2) {
+    return null;
+  }
+
+  const current =
+    sequence.slice(0, length);
+
+  const maxDistance =
+    length <= 4 ? 1 : 2;
+
+  const signals = [];
+
+  for (
+    let i = length + 1;
+    i < sequence.length;
+    i++
+  ) {
+    const old =
+      sequence.slice(i, i + length);
+
+    let distance = 0;
+
+    for (
+      let j = 0;
+      j < length;
+      j++
+    ) {
+      if (
+        current[j] !== old[j]
+      ) {
+        distance++;
+      }
+    }
+
+    if (distance > maxDistance) {
+      continue;
+    }
+
+    const similarity =
+      1 - distance / length;
+
+    signals.push({
+      side: sequence[i - 1],
+
+      weight:
+        0.75 *
+        similarity *
+        recencyWeight(i),
+
+      type: "similar"
+    });
+  }
+
+  if (!signals.length) {
+    return null;
+  }
+
+  const vote =
+    weightedVote(signals);
+
+  return {
+    side:
+      vote.big >= vote.small
+        ? "BIG"
+        : "SMALL",
+
+    matches: signals.length,
+
+    weight:
+      Math.min(
+        2,
+        vote.big + vote.small
+      ),
+
+    type: "similar"
+  };
+}
+
+/* =====================================================
+   TRANSITION MODEL
+===================================================== */
+
+function transitionSignal(sequence) {
+  if (sequence.length < 10) {
+    return null;
   }
 
   const current = sequence[0];
 
-  let stay;
-  let change;
+  const signals = [];
 
-  if (current === "BIG") {
-    stay = BB;
-    change = BS;
-  } else {
-    stay = SS;
-    change = SB;
+  for (
+    let i = 1;
+    i < sequence.length - 1;
+    i++
+  ) {
+    if (sequence[i] !== current) {
+      continue;
+    }
+
+    signals.push({
+      side: sequence[i - 1],
+
+      weight:
+        1.15 *
+        recencyWeight(i),
+
+      type: "transition"
+    });
   }
 
-  const total = stay + change;
-
-  if (!total) return null;
-
-  /*
-    Only use this as a weak statistical signal.
-  */
-
-  if (stay === change) {
+  if (!signals.length) {
     return null;
   }
 
+  const vote =
+    weightedVote(signals);
+
   return {
     side:
-      stay > change
-        ? current
-        : current === "BIG"
-          ? "SMALL"
-          : "BIG",
+      vote.big >= vote.small
+        ? "BIG"
+        : "SMALL",
+
+    matches: signals.length,
 
     weight:
       Math.min(
-        1.8,
-        Math.abs(stay - change) /
-        Math.max(1, total)
+        2.2,
+        vote.big + vote.small
       ),
-
-    matches: total,
 
     type: "transition"
   };
 }
 
 /* =====================================================
-   STREAK / REVERSAL
+   RUN MODEL
 ===================================================== */
 
-function streakSignal(sequence) {
-  if (sequence.length < 6) {
+function runSignal(sequence) {
+  if (sequence.length < 10) {
     return null;
   }
 
-  const current =
-    sequence[0];
+  let currentRun = 1;
 
-  let streak = 0;
+  while (
+    currentRun < sequence.length &&
+    sequence[currentRun] === sequence[0]
+  ) {
+    currentRun++;
+  }
+
+  const signals = [];
 
   for (
-    const side of sequence
+    let i = currentRun + 1;
+    i < sequence.length;
+    i++
   ) {
-    if (side !== current) break;
-    streak++;
+    let run = 1;
+
+    while (
+      i + run < sequence.length &&
+      sequence[i + run] === sequence[i]
+    ) {
+      run++;
+    }
+
+    if (run !== currentRun) {
+      continue;
+    }
+
+    signals.push({
+      side: sequence[i - 1],
+
+      weight:
+        0.9 *
+        recencyWeight(i),
+
+      type: "run"
+    });
   }
 
-  if (streak < 2) {
+  if (!signals.length) {
     return null;
   }
 
-  /*
-    A streak is NOT treated as guaranteed
-    reversal. It only gets a small weight.
-  */
-
-  let side;
-
-  if (streak >= 4) {
-    side =
-      current === "BIG"
-        ? "SMALL"
-        : "BIG";
-  } else {
-    side = current;
-  }
+  const vote =
+    weightedVote(signals);
 
   return {
-    side,
+    side:
+      vote.big >= vote.small
+        ? "BIG"
+        : "SMALL",
+
+    matches: signals.length,
 
     weight:
-      streak >= 5
-        ? 0.9
-        : streak >= 4
-          ? 0.65
-          : 0.25,
+      Math.min(
+        1.8,
+        vote.big + vote.small
+      ),
 
-    matches: streak,
-
-    type: "streak"
+    type: "run"
   };
 }
 
 /* =====================================================
-   ALTERNATION
+   ALTERNATION MODEL
 ===================================================== */
 
 function alternationSignal(sequence) {
-  if (sequence.length < 7) {
+  if (sequence.length < 8) {
     return null;
   }
 
   let alternating = true;
 
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 7; i++) {
     if (
       sequence[i] ===
       sequence[i + 1]
@@ -489,246 +633,55 @@ function alternationSignal(sequence) {
         ? "SMALL"
         : "BIG",
 
-    weight: 0.45,
+    matches: 1,
 
-    matches: 6,
+    weight: 0.8,
 
     type: "alternation"
   };
 }
 
 /* =====================================================
-   EXACT PATTERN
+   RECENT CONTEXT MODEL
+   NOT SIMPLE FREQUENCY COUNT
 ===================================================== */
 
-function exactPattern(sequence, length) {
-  if (
-    sequence.length <
-    length + 3
-  ) {
+function contextSignal(sequence) {
+  if (sequence.length < 6) {
     return null;
   }
 
-  const current =
-    sequence
-      .slice(0, length)
-      .join("");
+  const windows = [
+    sequence.slice(0, 3),
+    sequence.slice(0, 5),
+    sequence.slice(0, 7)
+  ];
 
   const signals = [];
 
   for (
-    let i = length + 1;
-    i < sequence.length;
-    i++
+    const window of windows
   ) {
-    const old =
-      sequence
-        .slice(i, i + length)
-        .join("");
-
-    if (old !== current) {
+    if (window.length < 3) {
       continue;
     }
 
-    const side =
-      sequence[i - 1];
+    const last =
+      window[window.length - 1];
 
-    signals.push({
-      side,
+    const previous =
+      window[window.length - 2];
 
-      weight:
-        1 /
-        (1 + i * 0.08)
-    });
-  }
+    /*
+      Detect immediate direction
+      rather than raw BIG/SMALL count.
+    */
 
-  if (!signals.length) {
-    return null;
-  }
-
-  const vote =
-    weightedVote(signals);
-
-  const side =
-    sideFromVote(
-      vote.big,
-      vote.small
-    );
-
-  if (!side) return null;
-
-  return {
-    side,
-
-    matches:
-      signals.length,
-
-    weight:
-      Math.min(
-        2,
-        vote.big + vote.small
-      ),
-
-    type: "exact"
-  };
-}
-
-/* =====================================================
-   SIMILAR PATTERN
-===================================================== */
-
-function similarPattern(sequence, length) {
-  if (
-    sequence.length <
-    length + 3
-  ) {
-    return null;
-  }
-
-  const current =
-    sequence.slice(
-      0,
-      length
-    );
-
-  const maxDistance =
-    length <= 4 ? 1 : 2;
-
-  const signals = [];
-
-  for (
-    let i = length + 1;
-    i < sequence.length;
-    i++
-  ) {
-    const old =
-      sequence.slice(
-        i,
-        i + length
-      );
-
-    let distance = 0;
-
-    for (
-      let j = 0;
-      j < length;
-      j++
-    ) {
-      if (
-        current[j] !== old[j]
-      ) {
-        distance++;
-      }
-    }
-
-    if (
-      distance >
-      maxDistance
-    ) {
-      continue;
-    }
-
-    const similarity =
-      1 -
-      distance / length;
-
-    signals.push({
-      side:
-        sequence[i - 1],
-
-      weight:
-        similarity *
-        0.35 /
-        (1 + i * 0.08)
-    });
-  }
-
-  if (!signals.length) {
-    return null;
-  }
-
-  const vote =
-    weightedVote(signals);
-
-  const side =
-    sideFromVote(
-      vote.big,
-      vote.small
-    );
-
-  if (!side) return null;
-
-  return {
-    side,
-
-    matches:
-      signals.length,
-
-    weight:
-      Math.min(
-        1.4,
-        vote.big + vote.small
-      ),
-
-    type: "similar"
-  };
-}
-
-/* =====================================================
-   RUN PATTERN
-===================================================== */
-
-function runSignal(sequence) {
-  if (sequence.length < 10) {
-    return null;
-  }
-
-  const current =
-    sequence[0];
-
-  let currentRun = 0;
-
-  while (
-    currentRun <
-      sequence.length &&
-    sequence[currentRun] ===
-      current
-  ) {
-    currentRun++;
-  }
-
-  if (currentRun < 2) {
-    return null;
-  }
-
-  const signals = [];
-
-  for (
-    let i = currentRun + 1;
-    i < sequence.length - 1;
-    i++
-  ) {
-    let run = 1;
-
-    while (
-      i + run <
-        sequence.length &&
-      sequence[i + run] ===
-        sequence[i]
-    ) {
-      run++;
-    }
-
-    if (
-      run === currentRun
-    ) {
+    if (last !== previous) {
       signals.push({
-        side:
-          sequence[i - 1],
-
-        weight:
-          0.45 /
-          (1 + i * 0.07)
+        side: previous,
+        weight: 0.35,
+        type: "context"
       });
     }
   }
@@ -740,19 +693,13 @@ function runSignal(sequence) {
   const vote =
     weightedVote(signals);
 
-  const side =
-    sideFromVote(
-      vote.big,
-      vote.small
-    );
-
-  if (!side) return null;
-
   return {
-    side,
+    side:
+      vote.big >= vote.small
+        ? "BIG"
+        : "SMALL",
 
-    matches:
-      signals.length,
+    matches: signals.length,
 
     weight:
       Math.min(
@@ -760,77 +707,102 @@ function runSignal(sequence) {
         vote.big + vote.small
       ),
 
-    type: "run"
+    type: "context"
   };
 }
 
 /* =====================================================
-   SIGNAL CALIBRATION
+   BACKTEST
 ===================================================== */
 
-function signalCalibration(
-  tests,
-  signalType
-) {
-  const rows =
-    tests.filter(
-      x =>
-        x.signalTypes &&
-        x.signalTypes.includes(
-          signalType
-        )
+function calculateBacktest(history) {
+  if (history.length < 20) {
+    return {
+      samples: 0,
+      wins: 0,
+      losses: 0,
+      accuracy: 0
+    };
+  }
+
+  const maxSamples =
+    Math.min(
+      35,
+      history.length - 10
     );
 
-  if (rows.length < 5) {
-    return 1;
-  }
-
-  const wins =
-    rows.filter(
-      x =>
-        x.result === "WIN"
-    ).length;
-
-  const accuracy =
-    wins / rows.length;
+  let wins = 0;
+  let losses = 0;
 
   /*
-    Baseline weight = 1.
-    Poor historical performance
-    reduces influence.
+    history is newest -> oldest.
+    For each old point, only use data
+    that was already available at that point.
   */
 
-  if (accuracy < 0.40) {
-    return 0.55;
+  for (
+    let offset = 1;
+    offset <= maxSamples;
+    offset++
+  ) {
+    const targetIndex = offset;
+
+    const training =
+      history.slice(
+        targetIndex,
+        targetIndex + 60
+      );
+
+    if (training.length < 8) {
+      continue;
+    }
+
+    const target =
+      classify(
+        history[targetIndex - 1]?.number
+      );
+
+    if (!target) {
+      continue;
+    }
+
+    const result =
+      analyzeCore(training, false);
+
+    if (!result) {
+      continue;
+    }
+
+    if (
+      result.prediction === target
+    ) {
+      wins++;
+    } else {
+      losses++;
+    }
   }
 
-  if (accuracy < 0.45) {
-    return 0.70;
-  }
+  const total =
+    wins + losses;
 
-  if (accuracy < 0.50) {
-    return 0.85;
-  }
-
-  if (accuracy < 0.55) {
-    return 1.00;
-  }
-
-  if (accuracy < 0.60) {
-    return 1.08;
-  }
-
-  return 1.15;
+  return {
+    samples: total,
+    wins,
+    losses,
+    accuracy:
+      total
+        ? Math.round(
+            wins * 1000 / total
+          ) / 10
+        : 0
+  };
 }
 
 /* =====================================================
-   BASIC PREDICTION
+   CORE ANALYSIS
 ===================================================== */
 
-function rawAnalysis(
-  history,
-  calibration = null
-) {
+function analyzeCore(history, includeBacktest = true) {
   const sequence =
     history
       .slice(0, 60)
@@ -848,7 +820,9 @@ function rawAnalysis(
 
       confidence: 50,
       patternScore: 50,
+
       status: "LOW SIGNAL",
+
       agreement: 0,
       evidence: 0,
 
@@ -856,51 +830,28 @@ function rawAnalysis(
         exact: 0,
         similar: 0,
         transition: 0,
-        runs: 0
+        runs: 0,
+        alternation: 0,
+        context: 0
       },
 
-      signalTypes: []
+      backtest: {
+        samples: 0,
+        wins: 0,
+        losses: 0,
+        accuracy: 0
+      }
     };
   }
 
   const signals = [];
 
-  const recent5 =
-    recentSignal(
-      sequence,
-      5,
-      0.55
-    );
-
-  if (recent5) {
-    signals.push(recent5);
-  }
-
-  const recent10 =
-    recentSignal(
-      sequence,
-      10,
-      0.35
-    );
-
-  if (recent10) {
-    signals.push(recent10);
-  }
-
-  const recent20 =
-    recentSignal(
-      sequence,
-      20,
-      0.20
-    );
-
-  if (recent20) {
-    signals.push(recent20);
-  }
+  /* ---------------------------------------------
+     EXACT PATTERNS
+  --------------------------------------------- */
 
   for (
-    const length of
-    [2, 3, 4, 5, 6, 8]
+    const length of [2, 3, 4, 5, 6, 8]
   ) {
     const exact =
       exactPattern(
@@ -909,10 +860,15 @@ function rawAnalysis(
       );
 
     if (exact) {
-      exact.weight *=
-        length >= 4
-          ? 1.15
-          : 0.85;
+      /*
+        Longer exact patterns are more specific.
+      */
+
+      if (length >= 5) {
+        exact.weight *= 1.35;
+      } else if (length >= 3) {
+        exact.weight *= 1.1;
+      }
 
       signals.push(exact);
     }
@@ -928,204 +884,340 @@ function rawAnalysis(
     }
   }
 
+  /* ---------------------------------------------
+     TRANSITION
+  --------------------------------------------- */
+
   const transition =
-    transitionMatrix(
-      sequence
-    );
+    transitionSignal(sequence);
 
   if (transition) {
     signals.push(transition);
   }
 
-  const streak =
-    streakSignal(
-      sequence
-    );
-
-  if (streak) {
-    signals.push(streak);
-  }
+  /* ---------------------------------------------
+     RUN
+  --------------------------------------------- */
 
   const run =
-    runSignal(
-      sequence
-    );
+    runSignal(sequence);
 
   if (run) {
     signals.push(run);
   }
 
+  /* ---------------------------------------------
+     ALTERNATION
+  --------------------------------------------- */
+
   const alternating =
-    alternationSignal(
-      sequence
-    );
+    alternationSignal(sequence);
 
   if (alternating) {
     signals.push(alternating);
   }
 
-  /*
-    Apply historical signal calibration
-    only when enough backtest data exists.
-  */
+  /* ---------------------------------------------
+     CONTEXT
+  --------------------------------------------- */
 
-  for (const signal of signals) {
-    if (calibration) {
-      const factor =
-        calibration(
-          signal.type
-        );
+  const context =
+    contextSignal(sequence);
 
-      signal.weight *= factor;
-    }
+  if (context) {
+    signals.push(context);
   }
+
+  if (!signals.length) {
+    return {
+      prediction:
+        sequence[0] === "BIG"
+          ? "SMALL"
+          : "BIG",
+
+      confidence: 50,
+      patternScore: 50,
+
+      status: "LOW SIGNAL",
+
+      agreement: 0,
+      evidence: 0,
+
+      matches: {
+        exact: 0,
+        similar: 0,
+        transition: 0,
+        runs: 0,
+        alternation: 0,
+        context: 0
+      },
+
+      backtest: {
+        samples: 0,
+        wins: 0,
+        losses: 0,
+        accuracy: 0
+      }
+    };
+  }
+
+  /* ---------------------------------------------
+     WEIGHTED DECISION
+  --------------------------------------------- */
 
   const vote =
     weightedVote(signals);
 
   const total =
-    vote.big +
-    vote.small;
+    vote.big + vote.small;
 
   let prediction =
-    sideFromVote(
-      vote.big,
-      vote.small
-    );
-
-  if (!prediction) {
-    prediction =
-      sequence[0] === "BIG"
-        ? "SMALL"
-        : "BIG";
-  }
+    vote.big >= vote.small
+      ? "BIG"
+      : "SMALL";
 
   const margin =
     total
       ? Math.abs(
-          vote.big -
-          vote.small
+          vote.big - vote.small
         ) / total
       : 0;
 
   const sides =
     signals.map(
-      x => x.side
+      signal =>
+        signal.side
     );
+
+  const bigSignals =
+    sides.filter(
+      side =>
+        side === "BIG"
+    ).length;
+
+  const smallSignals =
+    sides.filter(
+      side =>
+        side === "SMALL"
+    ).length;
 
   const agreement =
     sides.length
       ? Math.max(
-          sides.filter(
-            x =>
-              x === "BIG"
-          ).length,
-
-          sides.filter(
-            x =>
-              x === "SMALL"
-          ).length
-        ) /
-        sides.length
+          bigSignals,
+          smallSignals
+        ) / sides.length
       : 0;
 
-  /*
-    Conservative confidence.
-  */
+  /* ---------------------------------------------
+     DIVERSITY
+     Different models agreeing is stronger
+     than same model repeating.
+  --------------------------------------------- */
 
-  let confidence =
-    Math.round(
-      50 +
-      margin * 13 +
-      Math.max(
-        0,
-        agreement - 0.5
-      ) * 12
-    );
-
-  confidence =
-    Math.max(
-      50,
-      Math.min(
-        68,
-        confidence
+  const modelTypes =
+    new Set(
+      signals.map(
+        signal =>
+          signal.type
       )
     );
 
+  const diversity =
+    Math.min(
+      1,
+      modelTypes.size / 5
+    );
+
+  /* ---------------------------------------------
+     BACKTEST
+  --------------------------------------------- */
+
+  const backtest =
+    includeBacktest
+      ? calculateBacktest(history)
+      : {
+          samples: 0,
+          wins: 0,
+          losses: 0,
+          accuracy: 0
+        };
+
+  /*
+    Backtest is a calibration signal,
+    not a guarantee.
+  */
+
+  let confidence =
+    50 +
+    margin * 18 +
+    Math.max(
+      0,
+      agreement - 0.5
+    ) * 12 +
+    diversity * 7;
+
   if (
-    agreement < 0.58 ||
+    backtest.samples >= 10
+  ) {
+    if (
+      backtest.accuracy >= 60
+    ) {
+      confidence += 3;
+    }
+
+    if (
+      backtest.accuracy < 45
+    ) {
+      confidence -= 4;
+    }
+  }
+
+  confidence =
+    Math.round(
+      Math.max(
+        50,
+        Math.min(
+          72,
+          confidence
+        )
+      )
+    );
+
+  /*
+    Avoid showing a high score when
+    signals disagree heavily.
+  */
+
+  if (
+    agreement < 0.55 ||
     margin < 0.07
   ) {
     confidence =
       Math.min(
         confidence,
-        54
+        55
       );
   }
 
-  const exactMatches =
-    signals
-      .filter(
-        x =>
-          x.type === "exact"
-      )
-      .reduce(
-        (sum, x) =>
-          sum + x.matches,
-        0
-      );
+  /* ---------------------------------------------
+     PATTERN SCORE
+  --------------------------------------------- */
 
-  const similarMatches =
-    signals
-      .filter(
-        x =>
-          x.type === "similar"
-      )
-      .reduce(
-        (sum, x) =>
-          sum + x.matches,
-        0
-      );
-
-  const transitionMatches =
-    signals
-      .filter(
-        x =>
-          x.type === "transition"
-      )
-      .reduce(
-        (sum, x) =>
-          sum + x.matches,
-        0
-      );
-
-  const runMatches =
-    signals
-      .filter(
-        x =>
-          x.type === "run"
-      )
-      .reduce(
-        (sum, x) =>
-          sum + x.matches,
-        0
-      );
-
-  const patternScore =
+  let patternScore =
+    50 +
+    margin * 28 +
     Math.max(
-      50,
-      Math.min(
-        90,
-        Math.round(
-          50 +
-          margin * 28 +
-          Math.max(
-            0,
-            agreement - 0.5
-          ) * 22
+      0,
+      agreement - 0.5
+    ) * 24 +
+    diversity * 8;
+
+  if (
+    backtest.samples >= 10
+  ) {
+    patternScore +=
+      (
+        backtest.accuracy - 50
+      ) * 0.15;
+  }
+
+  patternScore =
+    Math.round(
+      Math.max(
+        50,
+        Math.min(
+          90,
+          patternScore
         )
       )
     );
+
+  /* ---------------------------------------------
+     STATUS
+  --------------------------------------------- */
+
+  let status =
+    "LOW SIGNAL";
+
+  if (
+    agreement >= 0.65 &&
+    margin >= 0.12 &&
+    modelTypes.size >= 2
+  ) {
+    status =
+      "NORMAL SIGNAL";
+  }
+
+  if (
+    agreement >= 0.75 &&
+    margin >= 0.18 &&
+    modelTypes.size >= 3 &&
+    backtest.samples >= 10 &&
+    backtest.accuracy >= 50
+  ) {
+    status =
+      "STRONG PATTERN";
+  }
+
+  /* ---------------------------------------------
+     MATCH COUNTS
+  --------------------------------------------- */
+
+  const matches = {
+    exact: 0,
+    similar: 0,
+    transition: 0,
+    runs: 0,
+    alternation: 0,
+    context: 0
+  };
+
+  for (
+    const signal of signals
+  ) {
+    if (
+      signal.type === "exact"
+    ) {
+      matches.exact +=
+        signal.matches || 0;
+    }
+
+    if (
+      signal.type === "similar"
+    ) {
+      matches.similar +=
+        signal.matches || 0;
+    }
+
+    if (
+      signal.type === "transition"
+    ) {
+      matches.transition +=
+        signal.matches || 0;
+    }
+
+    if (
+      signal.type === "run"
+    ) {
+      matches.runs +=
+        signal.matches || 0;
+    }
+
+    if (
+      signal.type === "alternation"
+    ) {
+      matches.alternation +=
+        signal.matches || 0;
+    }
+
+    if (
+      signal.type === "context"
+    ) {
+      matches.context +=
+        signal.matches || 0;
+    }
+  }
 
   return {
     prediction,
@@ -1134,11 +1226,7 @@ function rawAnalysis(
 
     patternScore,
 
-    status:
-      agreement >= 0.64 &&
-      margin >= 0.10
-        ? "NORMAL SIGNAL"
-        : "LOW SIGNAL",
+    status,
 
     agreement:
       Math.round(
@@ -1148,24 +1236,9 @@ function rawAnalysis(
     evidence:
       signals.length,
 
-    matches: {
-      exact:
-        exactMatches,
+    matches,
 
-      similar:
-        similarMatches,
-
-      transition:
-        transitionMatches,
-
-      runs:
-        runMatches
-    },
-
-    signalTypes:
-      signals.map(
-        x => x.type
-      ),
+    backtest,
 
     sequence:
       sequence.slice(0, 12)
@@ -1173,346 +1246,14 @@ function rawAnalysis(
 }
 
 /* =====================================================
-   ROLLING BACKTEST
-===================================================== */
-
-function calculateBacktest(history) {
-  const rows =
-    history
-      .slice()
-      .sort(
-        (a, b) =>
-          compareIssues(
-            a.issueNumber,
-            b.issueNumber
-          )
-      );
-
-  if (rows.length < 15) {
-    return {
-      sample: 0,
-      wins: 0,
-      losses: 0,
-      accuracy: 0,
-      last20: 0,
-      last50: 0,
-      recent: []
-    };
-  }
-
-  const tests = [];
-
-  /*
-    First pass:
-    calculate predictions using
-    only information available
-    before each target.
-  */
-
-  for (
-    let i = 8;
-    i < rows.length;
-    i++
-  ) {
-    const past =
-      rows.slice(
-        0,
-        i
-      );
-
-    const target =
-      rows[i];
-
-    const analysis =
-      rawAnalysis(
-        past
-      );
-
-    const actual =
-      classify(
-        target.number
-      );
-
-    if (
-      !analysis ||
-      !analysis.prediction ||
-      !actual
-    ) {
-      continue;
-    }
-
-    tests.push({
-      issue:
-        target.issueNumber,
-
-      prediction:
-        analysis.prediction,
-
-      actual,
-
-      result:
-        analysis.prediction === actual
-          ? "WIN"
-          : "LOSS",
-
-      signalTypes:
-        analysis.signalTypes || []
-    });
-  }
-
-  const wins =
-    tests.filter(
-      x =>
-        x.result === "WIN"
-    ).length;
-
-  const losses =
-    tests.filter(
-      x =>
-        x.result === "LOSS"
-    ).length;
-
-  const accuracy =
-    tests.length
-      ? Math.round(
-          wins *
-          1000 /
-          tests.length
-        ) / 10
-      : 0;
-
-  const last20 =
-    tests.slice(-20);
-
-  const last50 =
-    tests.slice(-50);
-
-  const last20Wins =
-    last20.filter(
-      x =>
-        x.result === "WIN"
-    ).length;
-
-  const last50Wins =
-    last50.filter(
-      x =>
-        x.result === "WIN"
-    ).length;
-
-  /*
-    Per-signal calibration.
-  */
-
-  const signalAccuracy = {};
-
-  const types = [
-    "recent5",
-    "recent10",
-    "recent20",
-    "exact",
-    "similar",
-    "transition",
-    "streak",
-    "run",
-    "alternation"
-  ];
-
-  for (const type of types) {
-    const relevant =
-      tests.filter(
-        x =>
-          x.signalTypes.includes(
-            type
-          )
-      );
-
-    const signalWins =
-      relevant.filter(
-        x =>
-          x.result === "WIN"
-      ).length;
-
-    signalAccuracy[type] =
-      relevant.length
-        ? {
-            sample:
-              relevant.length,
-
-            wins:
-              signalWins,
-
-            accuracy:
-              Math.round(
-                signalWins *
-                1000 /
-                relevant.length
-              ) / 10
-          }
-        : {
-            sample: 0,
-            wins: 0,
-            accuracy: 0
-          };
-  }
-
-  return {
-    sample:
-      tests.length,
-
-    wins,
-
-    losses,
-
-    accuracy,
-
-    last20:
-      last20.length
-        ? Math.round(
-            last20Wins *
-            1000 /
-            last20.length
-          ) / 10
-        : 0,
-
-    last50:
-      last50.length
-        ? Math.round(
-            last50Wins *
-            1000 /
-            last50.length
-          ) / 10
-        : 0,
-
-    signalAccuracy,
-
-    recent:
-      tests.slice(-10)
-  };
-}
-
-/* =====================================================
-   FINAL ANALYSIS
+   PUBLIC ANALYSIS
 ===================================================== */
 
 function analyze(history) {
-  const backtest =
-    calculateBacktest(
-      history
-    );
-
-  let calibration =
-    null;
-
-  if (
-    backtest.sample >= 15
-  ) {
-    calibration =
-      type =>
-        signalCalibration(
-          backtest.recent.length >= 5
-            ? [
-                ...backtest.recent
-              ]
-            : [],
-          type
-        );
-
-    /*
-      Use complete reconstructed
-      backtest if available.
-    */
-
-    const allRows =
-      history
-        .slice()
-        .sort(
-          (a, b) =>
-            compareIssues(
-              a.issueNumber,
-              b.issueNumber
-            )
-        );
-
-    const tests = [];
-
-    for (
-      let i = 8;
-      i < allRows.length;
-      i++
-    ) {
-      const past =
-        allRows.slice(
-          0,
-          i
-        );
-
-      const target =
-        allRows[i];
-
-      const a =
-        rawAnalysis(
-          past
-        );
-
-      const actual =
-        classify(
-          target.number
-        );
-
-      if (
-        a &&
-        a.prediction &&
-        actual
-      ) {
-        tests.push({
-          prediction:
-            a.prediction,
-
-          actual,
-
-          result:
-            a.prediction === actual
-              ? "WIN"
-              : "LOSS",
-
-          signalTypes:
-            a.signalTypes || []
-        });
-      }
-    }
-
-    calibration =
-      type =>
-        signalCalibration(
-          tests,
-          type
-        );
-  }
-
-  const result =
-    rawAnalysis(
-      history,
-      calibration
-    );
-
-  result.backtest = {
-    sample:
-      backtest.sample,
-
-    accuracy:
-      backtest.accuracy,
-
-    last20:
-      backtest.last20,
-
-    last50:
-      backtest.last50,
-
-    signalAccuracy:
-      backtest.signalAccuracy
-  };
-
-  return result;
+  return analyzeCore(
+    history,
+    true
+  );
 }
 
 /* =====================================================
@@ -1549,7 +1290,10 @@ async function savePrediction(
       $4,
       $5
     )
-    ON CONFLICT(target_issue)
+    ON CONFLICT
+    (
+      target_issue
+    )
     DO NOTHING
     `,
     [
@@ -1563,7 +1307,7 @@ async function savePrediction(
 }
 
 /* =====================================================
-   SETTLE
+   SETTLE PREDICTION
 ===================================================== */
 
 async function settlePrediction(row) {
@@ -1577,7 +1321,9 @@ async function settlePrediction(row) {
   const actual =
     classify(row.number);
 
-  if (!actual) return;
+  if (!actual) {
+    return;
+  }
 
   await pool.query(
     `
@@ -1608,11 +1354,13 @@ async function settlePrediction(row) {
 }
 
 /* =====================================================
-   WIN LOSS
+   WIN / LOSS
 ===================================================== */
 
 async function getWinLoss() {
-  if (!process.env.DATABASE_URL) {
+  if (
+    !process.env.DATABASE_URL
+  ) {
     return {
       rows: [],
 
@@ -1638,13 +1386,9 @@ async function getWinLoss() {
         actual,
         result,
         settled_at
-
       FROM predictions
-
       WHERE result IS NOT NULL
-
       ORDER BY id DESC
-
       LIMIT 100
       `
     );
@@ -1654,14 +1398,14 @@ async function getWinLoss() {
 
   const win =
     rows.filter(
-      x =>
-        x.result === "WIN"
+      row =>
+        row.result === "WIN"
     ).length;
 
   const loss =
     rows.filter(
-      x =>
-        x.result === "LOSS"
+      row =>
+        row.result === "LOSS"
     ).length;
 
   let streak = "-";
@@ -1672,7 +1416,9 @@ async function getWinLoss() {
 
     let count = 0;
 
-    for (const row of rows) {
+    for (
+      const row of rows
+    ) {
       if (
         row.result !== first
       ) {
@@ -1700,8 +1446,7 @@ async function getWinLoss() {
       rate:
         win + loss
           ? Math.round(
-              win *
-              1000 /
+              win * 1000 /
               (win + loss)
             ) / 10
           : 0,
@@ -1721,9 +1466,7 @@ async function updateCache() {
       await fetchWingoData();
 
     const history =
-      normalizeHistory(
-        data
-      );
+      normalizeHistory(data);
 
     if (!history.length) {
       throw new Error(
@@ -1753,9 +1496,8 @@ async function updateCache() {
     const signature =
       history
         .slice(0, 8)
-        .map(
-          row =>
-            `${row.issueNumber}:${row.number}`
+        .map(row =>
+          `${row.issueNumber}:${row.number}`
         )
         .join("|");
 
@@ -1782,7 +1524,14 @@ async function updateCache() {
     cache.lastUpdated =
       Date.now();
 
-    cache.error = null;
+    cache.error =
+      null;
+
+    /*
+      IMPORTANT:
+      Prediction is regenerated only
+      when a new settled result appears.
+    */
 
     if (changed) {
       cache.historySignature =
@@ -1790,20 +1539,32 @@ async function updateCache() {
 
       cache.historyVersion++;
 
-      cache.analysis =
-        analyze(history);
-
-      cache.anchorTime =
-        Date.now();
-
       /*
-        Settle previous prediction
-        first, then create new one.
+        First settle previous target.
       */
 
       await settlePrediction(
         history[0]
       );
+
+      /*
+        Then calculate fresh analysis.
+      */
+
+      cache.analysis =
+        analyze(history);
+
+      /*
+        Start timer from new settled
+        result.
+      */
+
+      cache.anchorTime =
+        Date.now();
+
+      /*
+        Save prediction for target issue.
+      */
 
       await savePrediction(
         targetIssue,
@@ -1811,16 +1572,12 @@ async function updateCache() {
       );
 
       console.log(
-        "NEW RESULT",
+        "NEW RESULT:",
         settledIssue,
-        "| NEXT",
+        "TARGET:",
         targetIssue,
-        "| PRED",
-        cache.analysis.prediction,
-        "| CONF",
-        cache.analysis.confidence,
-        "| BACKTEST",
-        cache.analysis.backtest?.accuracy
+        "PRED:",
+        cache.analysis.prediction
       );
     }
   } catch (error) {
@@ -1888,18 +1645,28 @@ function getTiming() {
 }
 
 /* =====================================================
-   ADMIN
+   ADMIN PING
 ===================================================== */
 
-function isAdmin(req) {
-  return (
-    req.headers["x-admin-key"] ===
-    ADMIN_KEY
-  );
+function adminPing() {
+  return {
+    ok: true,
+    serverTime: Date.now(),
+    providerConnected:
+      !!WINGOBOT_TOKEN,
+    databaseConnected:
+      !!process.env.DATABASE_URL,
+    historyCount:
+      cache.history.length,
+    targetIssue:
+      cache.targetIssue,
+    settledIssue:
+      cache.settledIssue
+  };
 }
 
 /* =====================================================
-   API
+   API HANDLER
 ===================================================== */
 
 async function handleAPI(
@@ -1907,7 +1674,9 @@ async function handleAPI(
   res,
   url
 ) {
-  /* HEALTH */
+  /* ---------------------------------------------
+     HEALTH
+  --------------------------------------------- */
 
   if (
     url.pathname === "/health"
@@ -1917,16 +1686,14 @@ async function handleAPI(
       200,
       {
         ok: true,
-        time: Date.now(),
-        database:
-          !!process.env.DATABASE_URL,
-        wingobot:
-          !!WINGOBOT_TOKEN
+        time: Date.now()
       }
     );
   }
 
-  /* STATE */
+  /* ---------------------------------------------
+     STATE
+  --------------------------------------------- */
 
   if (
     url.pathname === "/api/state" &&
@@ -1971,11 +1738,12 @@ async function handleAPI(
     );
   }
 
-  /* WIN LOSS */
+  /* ---------------------------------------------
+     WIN LOSS
+  --------------------------------------------- */
 
   if (
-    url.pathname ===
-      "/api/history" &&
+    url.pathname === "/api/history" &&
     req.method === "GET"
   ) {
     return sendJSON(
@@ -1985,11 +1753,12 @@ async function handleAPI(
     );
   }
 
-  /* ACCESS KEY */
+  /* ---------------------------------------------
+     ACCESS KEY
+  --------------------------------------------- */
 
   if (
-    url.pathname ===
-      "/api/key/check" &&
+    url.pathname === "/api/key/check" &&
     req.method === "POST"
   ) {
     const data =
@@ -2002,9 +1771,7 @@ async function handleAPI(
 
     const device =
       String(
-        req.headers[
-          "x-device-id"
-        ] ||
+        req.headers["x-device-id"] ||
         data.device_id ||
         ""
       ).trim();
@@ -2101,16 +1868,21 @@ async function handleAPI(
     );
   }
 
-  /* ===================================================
+  /* ---------------------------------------------
      ADMIN
-  =================================================== */
+  --------------------------------------------- */
 
   if (
     url.pathname.startsWith(
       "/api/admin/"
     )
   ) {
-    if (!isAdmin(req)) {
+    const admin =
+      req.headers["x-admin-key"];
+
+    if (
+      admin !== ADMIN_KEY
+    ) {
       return sendJSON(
         res,
         401,
@@ -2122,7 +1894,7 @@ async function handleAPI(
       );
     }
 
-    /* PING */
+    /* ADMIN PING */
 
     if (
       url.pathname ===
@@ -2131,16 +1903,11 @@ async function handleAPI(
       return sendJSON(
         res,
         200,
-        {
-          ok: true,
-          message:
-            "Admin API working",
-          time: Date.now()
-        }
+        adminPing()
       );
     }
 
-    /* STATUS */
+    /* ADMIN STATUS */
 
     if (
       url.pathname ===
@@ -2158,20 +1925,14 @@ async function handleAPI(
           wingobot:
             !!WINGOBOT_TOKEN,
 
-          currentIssue:
-            cache.currentIssue,
-
-          settledIssue:
-            cache.settledIssue,
+          history:
+            cache.history.length,
 
           targetIssue:
             cache.targetIssue,
 
-          lastUpdated:
-            cache.lastUpdated,
-
-          error:
-            cache.error
+          settledIssue:
+            cache.settledIssue
         }
       );
     }
@@ -2195,11 +1956,6 @@ async function handleAPI(
             current:
               data.current ||
               null,
-
-            countdown:
-              extractCountdown(
-                data
-              ),
 
             history:
               normalizeHistory(
@@ -2236,6 +1992,7 @@ async function handleAPI(
           ok: true,
 
           backtest:
+            cache.analysis?.backtest ||
             calculateBacktest(
               cache.history
             )
@@ -2313,14 +2070,23 @@ async function handleAPI(
       const data =
         await readBody(req);
 
+      const requested =
+        Number(
+          data.count || 1
+        );
+
       const count =
         Math.max(
           1,
           Math.min(
             100,
-            Number(
-              data.count || 1
+            Number.isFinite(
+              requested
             )
+              ? Math.floor(
+                  requested
+                )
+              : 1
           )
         );
 
@@ -2390,20 +2156,6 @@ async function handleAPI(
         "/api/admin/keys" &&
       req.method === "DELETE"
     ) {
-      if (
-        !process.env.DATABASE_URL
-      ) {
-        return sendJSON(
-          res,
-          503,
-          {
-            ok: false,
-            message:
-              "Database not configured"
-          }
-        );
-      }
-
       const data =
         await readBody(req);
 
@@ -2431,20 +2183,6 @@ async function handleAPI(
         "/api/admin/reset-device" &&
       req.method === "POST"
     ) {
-      if (
-        !process.env.DATABASE_URL
-      ) {
-        return sendJSON(
-          res,
-          503,
-          {
-            ok: false,
-            message:
-              "Database not configured"
-          }
-        );
-      }
-
       const data =
         await readBody(req);
 
@@ -2461,9 +2199,7 @@ async function handleAPI(
         res,
         200,
         {
-          ok: true,
-          message:
-            "Device reset"
+          ok: true
         }
       );
     }
@@ -2534,25 +2270,12 @@ function serveStatic(
       "application/javascript; charset=utf-8",
 
     ".json":
-      "application/json; charset=utf-8",
-
-    ".svg":
-      "image/svg+xml",
-
-    ".png":
-      "image/png",
-
-    ".jpg":
-      "image/jpeg",
-
-    ".jpeg":
-      "image/jpeg",
-
-    ".webp":
-      "image/webp"
+      "application/json"
   };
 
-  /* MP3 */
+  /* ---------------------------------------------
+     MP3 RANGE SUPPORT
+  --------------------------------------------- */
 
   if (
     ext === ".mp3"
@@ -2634,9 +2357,7 @@ function serveStatic(
     );
 
     return fs
-      .createReadStream(
-        filePath
-      )
+      .createReadStream(filePath)
       .pipe(res);
   }
 
@@ -2650,9 +2371,7 @@ function serveStatic(
   );
 
   fs
-    .createReadStream(
-      filePath
-    )
+    .createReadStream(filePath)
     .pipe(res);
 }
 
@@ -2662,10 +2381,7 @@ function serveStatic(
 
 const server =
   http.createServer(
-    async (
-      req,
-      res
-    ) => {
+    async (req, res) => {
       try {
         const url =
           new URL(
@@ -2692,20 +2408,19 @@ const server =
           url
         );
       } catch (error) {
-        console.error(
-          "SERVER ERROR:",
-          error
-        );
+        console.error(error);
 
-        sendJSON(
-          res,
-          500,
-          {
-            ok: false,
-            message:
-              error.message
-          }
-        );
+        if (!res.headersSent) {
+          sendJSON(
+            res,
+            500,
+            {
+              ok: false,
+              message:
+                error.message
+            }
+          );
+        }
       }
     }
   );
@@ -2718,11 +2433,16 @@ const server =
   try {
     await initDatabase();
 
+    /*
+      Provider unavailable होने पर server
+      बंद नहीं होगा.
+    */
+
     try {
       await updateCache();
     } catch (error) {
       console.error(
-        "Initial provider error:",
+        "Initial provider update:",
         error.message
       );
     }
@@ -2734,7 +2454,6 @@ const server =
 
     server.listen(
       PORT,
-      "0.0.0.0",
       () => {
         console.log(
           `DY AI server running on ${PORT}`
@@ -2743,9 +2462,15 @@ const server =
     );
   } catch (error) {
     console.error(
-      "START ERROR:",
+      "STARTUP ERROR:",
       error
     );
+
+    /*
+      Render पर useful error देने के लिए
+      process exit केवल database/server
+      initialization failure पर होगा.
+    */
 
     process.exit(1);
   }
