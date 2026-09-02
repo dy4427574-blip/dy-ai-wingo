@@ -1,11 +1,12 @@
 <!doctype html>
 <html lang="en">
+
 <head>
 
 <meta charset="utf-8">
 
 <meta name="viewport"
-      content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 
 <title>DY AI • Wingo 30S</title>
 
@@ -17,8 +18,6 @@
   --line:#1e2b42;
   --text:#f5f7fb;
   --muted:#91a0b7;
-  --accent:#6c7cff;
-  --accent2:#21d4fd;
   --good:#28e38b;
   --bad:#ff5574;
   --big:#ff5574;
@@ -27,10 +26,6 @@
 
 *{
   box-sizing:border-box;
-}
-
-html{
-  scroll-behavior:smooth;
 }
 
 body{
@@ -42,13 +37,11 @@ body{
       rgba(108,124,255,.20),
       transparent 35%
     ),
-
     radial-gradient(
       circle at 100% 20%,
       rgba(33,212,253,.12),
       transparent 30%
     ),
-
     var(--bg);
 
   color:var(--text);
@@ -71,11 +64,7 @@ body{
   align-items:center;
   justify-content:space-between;
   gap:10px;
-
-  padding:
-    14px
-    4px
-    12px;
+  padding:14px 4px 12px;
 }
 
 .brand{
@@ -86,19 +75,10 @@ body{
 
 .badge{
   font-size:10px;
-
-  padding:
-    7px
-    10px;
-
-  border:
-    1px solid
-    var(--line);
-
+  padding:7px 10px;
+  border:1px solid var(--line);
   border-radius:99px;
-
   color:#b8c3d7;
-
   background:#0b1220;
 }
 
@@ -110,14 +90,9 @@ body{
       rgba(10,16,28,.96)
     );
 
-  border:
-    1px solid
-    var(--line);
-
+  border:1px solid var(--line);
   border-radius:20px;
-
   padding:16px;
-
   margin-bottom:12px;
 
   box-shadow:
@@ -125,48 +100,27 @@ body{
     rgba(0,0,0,.25);
 }
 
+.hidden{
+  display:none!important;
+}
 
-/* =====================================================
-   LOGIN
-===================================================== */
+
+/* LOGIN */
 
 .login input,
 .login button{
-
   width:100%;
   height:48px;
-
   border-radius:13px;
-
-  border:
-    1px solid
-    var(--line);
-
-  padding:
-    0
-    14px;
-
+  border:1px solid var(--line);
+  padding:0 14px;
   background:#080e19;
-
   color:white;
-
   font-size:15px;
-
   outline:none;
 }
 
-.login input:focus{
-
-  border-color:
-    #6376ff;
-
-  box-shadow:
-    0 0 0 3px
-    rgba(99,118,255,.10);
-}
-
 .login button{
-
   margin-top:10px;
 
   background:
@@ -177,131 +131,74 @@ body{
     );
 
   border:0;
-
   font-weight:800;
-
-  cursor:pointer;
-}
-
-.login button:active{
-
-  transform:
-    scale(.985);
 }
 
 .err{
-
   color:#ff7890;
-
   font-size:13px;
-
   margin-top:9px;
-
   min-height:18px;
 }
 
-.hidden{
-  display:none!important;
-}
 
-
-/* =====================================================
-   HEADER
-===================================================== */
+/* HEADER */
 
 .headrow{
-
   display:flex;
-
   justify-content:space-between;
-
   gap:10px;
-
   align-items:flex-start;
 }
 
 .label{
-
   color:var(--muted);
-
   font-size:11px;
-
   text-transform:uppercase;
-
   letter-spacing:1.2px;
 }
 
 .period{
-
   font-size:18px;
-
   font-weight:850;
-
   margin-top:4px;
-
   word-break:break-all;
 }
 
 .timer{
-
   min-width:88px;
-
   text-align:center;
-
-  padding:
-    9px
-    10px;
-
+  padding:9px 10px;
   border-radius:14px;
-
   background:#080e19;
-
-  border:
-    1px solid
-    var(--line);
+  border:1px solid var(--line);
 }
 
 .timer b{
-
   font-size:24px;
-
-  font-variant-numeric:
-    tabular-nums;
+  font-variant-numeric:tabular-nums;
 }
 
 .timer small{
-
   display:block;
-
   color:#7f8da3;
-
   font-size:9px;
-
   margin-top:2px;
 }
 
 .sync{
-
   display:flex;
-
   gap:7px;
-
   align-items:center;
-
   margin-top:12px;
-
   color:#8f9db4;
-
   font-size:11px;
 }
 
 .dot{
-
   width:8px;
   height:8px;
-
   border-radius:50%;
-
   background:var(--good);
 
   box-shadow:
@@ -310,7 +207,6 @@ body{
 }
 
 .dot.off{
-
   background:var(--bad);
 
   box-shadow:
@@ -319,36 +215,27 @@ body{
 }
 
 
-/* =====================================================
-   ANALYSIS
-===================================================== */
+/* ANALYSIS */
 
 .analysis{
-
-  min-height:250px;
+  min-height:180px;
 
   display:flex;
-
   align-items:center;
-
   justify-content:center;
-
   text-align:center;
 }
 
 .loader{
-
-  width:62px;
-  height:62px;
-
+  width:52px;
+  height:52px;
   border-radius:50%;
 
   border:
     4px solid
     #1c2940;
 
-  border-top-color:
-    #7181ff;
+  border-top-color:#7181ff;
 
   animation:
     spin .85s
@@ -361,127 +248,77 @@ body{
 }
 
 @keyframes spin{
-
   to{
     transform:rotate(360deg);
   }
-
 }
 
 .ai-title{
-
   font-size:13px;
-
   font-weight:800;
-
   letter-spacing:1px;
 }
 
 .ai-sub{
-
   font-size:11px;
-
   color:var(--muted);
-
   margin-top:7px;
-
   line-height:1.5;
 }
 
 
-/* =====================================================
-   PREDICTION
-===================================================== */
+/* PREDICTION */
 
 .predTop{
-
   display:flex;
-
   justify-content:space-between;
-
   align-items:center;
-
   gap:10px;
 }
 
 .pred{
-
   font-size:46px;
-
   font-weight:950;
-
   letter-spacing:1px;
-
-  margin:
-    5px
-    0
-    2px;
-
-  transition:
-    .25s ease;
+  margin:5px 0 2px;
 }
 
 .pred.big{
-
   color:var(--big);
-
   text-shadow:
     0 0 25px
     rgba(255,85,116,.25);
 }
 
 .pred.small{
-
   color:var(--small);
-
   text-shadow:
     0 0 25px
     rgba(79,168,255,.25);
 }
 
 .target{
-
   font-size:11px;
-
   color:#8f9db4;
-
   word-break:break-all;
 }
 
 .conf{
-
   font-size:12px;
-
-  padding:
-    7px
-    9px;
-
+  padding:7px 9px;
   border-radius:10px;
-
   background:#121c30;
-
   color:#aebcff;
-
-  border:
-    1px solid
-    #27365a;
-
+  border:1px solid #27365a;
   white-space:nowrap;
 }
 
 
-/* =====================================================
-   BIG SMALL HERO
-===================================================== */
+/* BIG SMALL */
 
 .signalBox{
-
-  margin:
-    18px
-    0
-    12px;
-
-  padding:22px 15px;
+  margin:18px 0 12px;
+  padding:25px 15px;
 
   border-radius:18px;
 
@@ -490,208 +327,107 @@ body{
     #27375a;
 
   background:
-
     radial-gradient(
       circle at 50% 0%,
       rgba(108,124,255,.18),
       transparent 55%
     ),
-
     #080f1c;
 
   text-align:center;
-
-  position:relative;
-
-  overflow:hidden;
-}
-
-.signalBox::before{
-
-  content:"";
-
-  position:absolute;
-
-  inset:0;
-
-  background:
-    linear-gradient(
-      120deg,
-      transparent,
-      rgba(255,255,255,.035),
-      transparent
-    );
-
-  transform:
-    translateX(-100%);
-
-  animation:
-    shine 3s infinite;
-}
-
-@keyframes shine{
-
-  50%{
-    transform:
-      translateX(100%);
-  }
-
-  100%{
-    transform:
-      translateX(100%);
-  }
-
 }
 
 .signalIcon{
-
-  font-size:12px;
-
+  font-size:11px;
   color:#8f9db4;
-
   letter-spacing:2px;
-
-  margin-bottom:8px;
-
-  position:relative;
+  margin-bottom:9px;
 }
 
 .signal{
-
   font-size:58px;
-
   line-height:1;
-
   font-weight:1000;
-
   letter-spacing:2px;
-
-  position:relative;
 }
 
 .signal.big{
-
   color:var(--big);
-
   text-shadow:
     0 0 35px
     rgba(255,85,116,.30);
 }
 
 .signal.small{
-
   color:var(--small);
-
   text-shadow:
     0 0 35px
     rgba(79,168,255,.30);
 }
 
 .signalStatus{
-
   margin-top:11px;
-
   font-size:11px;
-
   color:#9eabc0;
-
-  position:relative;
 }
 
 
-/* =====================================================
-   AI DETAILS
-===================================================== */
+/* DETAILS */
 
 .aiDetails{
-
   display:grid;
-
-  grid-template-columns:
-    repeat(2,1fr);
-
+  grid-template-columns:repeat(2,1fr);
   gap:8px;
-
   margin-top:12px;
 }
 
 .detail{
-
   padding:12px;
-
   border-radius:13px;
-
   background:#080e19;
-
-  border:
-    1px solid
-    var(--line);
+  border:1px solid var(--line);
 }
 
 .detail span{
-
   display:block;
-
   color:#718097;
-
   font-size:9px;
-
   text-transform:uppercase;
-
   letter-spacing:.7px;
 }
 
 .detail b{
-
   display:block;
-
   margin-top:5px;
-
   font-size:14px;
 }
 
 
-/* =====================================================
-   SIGNAL BAR
-===================================================== */
+/* SIGNAL BAR */
 
 .signalBarWrap{
-
   margin-top:13px;
 }
 
 .signalBarHead{
-
   display:flex;
-
   justify-content:space-between;
-
   color:#7f8da3;
-
   font-size:9px;
-
   text-transform:uppercase;
-
   letter-spacing:.8px;
 }
 
 .signalBar{
-
   height:7px;
-
   margin-top:7px;
-
   border-radius:99px;
-
   background:#111b2c;
-
   overflow:hidden;
 }
 
 .signalFill{
-
   height:100%;
-
   width:0%;
 
   border-radius:99px;
@@ -704,34 +440,25 @@ body{
     );
 
   transition:
-    width .45s ease;
+    width .35s ease;
 }
 
 
-/* =====================================================
-   HISTORY
-===================================================== */
+/* HISTORY */
 
 .historyTitle{
-
   display:flex;
-
   justify-content:space-between;
-
   align-items:center;
-
   margin-bottom:8px;
 }
 
 .rows{
-
   display:grid;
-
   gap:7px;
 }
 
 .row{
-
   display:grid;
 
   grid-template-columns:
@@ -743,13 +470,9 @@ body{
 
   align-items:center;
 
-  padding:
-    10px
-    11px;
+  padding:10px 11px;
 
-  border:
-    1px solid
-    #18243a;
+  border:1px solid #18243a;
 
   background:#090f1b;
 
@@ -757,31 +480,22 @@ body{
 }
 
 .issue{
-
   font-size:11px;
-
   color:#8998b0;
 
   overflow:hidden;
-
   text-overflow:ellipsis;
 }
 
 .n{
-
   font-size:17px;
-
   font-weight:900;
-
   text-align:center;
 }
 
 .bs{
-
   font-size:10px;
-
   font-weight:800;
-
   text-align:right;
 }
 
@@ -794,35 +508,23 @@ body{
 }
 
 
-/* =====================================================
-   NOTE
-===================================================== */
+/* NOTE */
 
 .note{
-
   font-size:10px;
-
   line-height:1.55;
-
   color:#65748c;
-
   margin-top:10px;
 }
 
 
-/* =====================================================
-   MUSIC
-===================================================== */
+/* MUSIC */
 
 .musicBtn{
-
   width:100%;
-
   height:44px;
 
-  border:
-    1px solid
-    var(--line);
+  border:1px solid var(--line);
 
   border-radius:12px;
 
@@ -831,51 +533,29 @@ body{
   color:#cbd5e8;
 
   font-weight:700;
-
-  cursor:pointer;
 }
 
 
-/* =====================================================
-   GAME
-===================================================== */
+/* GAME */
 
 iframe{
-
   width:100%;
-
   height:520px;
-
   border:0;
-
   border-radius:18px;
-
   background:#05080e;
 }
 
 
-/* =====================================================
-   FOOTER
-===================================================== */
+/* FOOTER */
 
 .footer{
-
   text-align:center;
-
   color:#56647b;
-
   font-size:10px;
-
-  padding:
-    6px
-    0
-    20px;
+  padding:6px 0 20px;
 }
 
-
-/* =====================================================
-   MOBILE
-===================================================== */
 
 @media(max-width:430px){
 
@@ -900,14 +580,10 @@ iframe{
     font-size:52px;
   }
 
-  .aiDetails{
-    grid-template-columns:
-      repeat(2,1fr);
-  }
-
 }
 
 </style>
+
 </head>
 
 
@@ -916,9 +592,7 @@ iframe{
 <div class="wrap">
 
 
-<!-- =====================================================
-     TOP
-===================================================== -->
+<!-- TOP -->
 
 <div class="top">
 
@@ -939,9 +613,7 @@ iframe{
 </div>
 
 
-<!-- =====================================================
-     LOGIN
-===================================================== -->
+<!-- LOGIN -->
 
 <section
   id="loginCard"
@@ -952,11 +624,7 @@ iframe{
     Premium access
   </div>
 
-  <h2
-    style="
-      margin:7px 0 5px
-    "
-  >
+  <h2 style="margin:7px 0 5px">
     Enter Access Key
   </h2>
 
@@ -990,9 +658,7 @@ iframe{
 </section>
 
 
-<!-- =====================================================
-     APP
-===================================================== -->
+<!-- APP -->
 
 <main
   id="app"
@@ -1000,9 +666,7 @@ iframe{
 >
 
 
-<!-- =====================================================
-     PERIOD
-===================================================== -->
+<!-- PERIOD -->
 
 <section class="card">
 
@@ -1022,7 +686,6 @@ iframe{
       </div>
 
     </div>
-
 
     <div class="timer">
 
@@ -1055,9 +718,7 @@ iframe{
 </section>
 
 
-<!-- =====================================================
-     ANALYSIS
-===================================================== -->
+<!-- FAST ANALYSIS -->
 
 <section
   id="analysisCard"
@@ -1069,14 +730,14 @@ iframe{
     <div class="loader"></div>
 
     <div class="ai-title">
-      ANALYZING LIVE HISTORY
+      LIVE AI ANALYSIS
     </div>
 
     <div
       id="analysisText"
       class="ai-sub"
     >
-      Reading sequence patterns…
+      Waiting for settled history…
     </div>
 
   </div>
@@ -1084,15 +745,12 @@ iframe{
 </section>
 
 
-<!-- =====================================================
-     PREDICTION
-===================================================== -->
+<!-- PREDICTION -->
 
 <section
   id="predictionCard"
   class="card hidden"
 >
-
 
   <div class="predTop">
 
@@ -1123,15 +781,13 @@ iframe{
       id="conf"
       class="conf"
     >
-      —% confidence
+      —% signal
     </div>
 
   </div>
 
 
-  <!-- ===================================================
-       BIG SMALL HERO
-  =================================================== -->
+  <!-- BIG SMALL HERO -->
 
   <div class="signalBox">
 
@@ -1150,22 +806,20 @@ iframe{
       id="signalStatus"
       class="signalStatus"
     >
-      Analyzing…
+      Waiting…
     </div>
 
   </div>
 
 
-  <!-- ===================================================
-       AI DETAILS
-  =================================================== -->
+  <!-- DETAILS -->
 
   <div class="aiDetails">
 
     <div class="detail">
 
       <span>
-        Confidence
+        Signal strength
       </span>
 
       <b id="sConf">
@@ -1204,7 +858,7 @@ iframe{
     <div class="detail">
 
       <span>
-        Signal match
+        Pattern matches
       </span>
 
       <b id="sAgreement">
@@ -1216,9 +870,7 @@ iframe{
   </div>
 
 
-  <!-- ===================================================
-       SIGNAL STRENGTH
-  =================================================== -->
+  <!-- SIGNAL BAR -->
 
   <div class="signalBarWrap">
 
@@ -1246,41 +898,31 @@ iframe{
   </div>
 
 
-  <!-- ===================================================
-       NOTE
-  =================================================== -->
-
   <div class="note">
 
-    AI decision is based on historical
-    sequence behaviour, transitions,
-    streaks, micro-patterns and
-    multi-window pattern analysis.
+    Prediction engine analyzes sequence
+    patterns, historical matching sequences,
+    transitions and streak behaviour.
 
-    Individual number prediction is
-    completely disabled.
+    Individual number prediction is disabled.
 
   </div>
+
 
   <div class="note">
 
     *Timer is synchronized from observed
-    settled-result changes because the
-    history endpoint does not expose the
-    provider's exact countdown.
-
-    It is an estimate, not a guaranteed clock.
-
-    Random game outcomes cannot be guaranteed.
+    settled-result changes. The history API
+    does not expose the provider's exact
+    countdown, so the displayed timer is
+    an estimate.
 
   </div>
 
 </section>
 
 
-<!-- =====================================================
-     LIVE HISTORY
-===================================================== -->
+<!-- HISTORY -->
 
 <section class="card">
 
@@ -1299,7 +941,6 @@ iframe{
 
   </div>
 
-
   <div
     id="rows"
     class="rows"
@@ -1308,9 +949,7 @@ iframe{
 </section>
 
 
-<!-- =====================================================
-     MUSIC
-===================================================== -->
+<!-- MUSIC -->
 
 <section class="card">
 
@@ -1332,9 +971,7 @@ iframe{
 </section>
 
 
-<!-- =====================================================
-     LIVE GAME
-===================================================== -->
+<!-- LIVE GAME -->
 
 <section class="card">
 
@@ -1372,10 +1009,10 @@ iframe{
 ===================================================== */
 
 const DEVICE_KEY =
-  "dy_ai_device_id_v6";
+  "dy_ai_device_id_v7";
 
 const ACCESS_KEY =
-  "dy_ai_access_key_v6";
+  "dy_ai_access_key_v7";
 
 
 let deviceId =
@@ -1408,26 +1045,15 @@ if(!deviceId){
    STATE
 ===================================================== */
 
-let lastSettled =
-  null;
+let lastSettled = null;
 
-let lastVersion =
-  -1;
+let lastVersion = -1;
 
-let analyzing =
-  false;
+let timerValue = null;
 
-let analysisTimer =
-  null;
+let timerStamp = 0;
 
-let timerValue =
-  null;
-
-let timerStamp =
-  0;
-
-let audioOn =
-  false;
+let audioOn = false;
 
 
 /* =====================================================
@@ -1435,11 +1061,7 @@ let audioOn =
 ===================================================== */
 
 function $(id){
-
-  return document.getElementById(
-    id
-  );
-
+  return document.getElementById(id);
 }
 
 
@@ -1476,9 +1098,7 @@ async function login(){
       await fetch(
         "/api/key/check",
         {
-
-          method:
-            "POST",
+          method:"POST",
 
           headers:{
             "Content-Type":
@@ -1487,14 +1107,10 @@ async function login(){
 
           body:
             JSON.stringify({
-
               key,
-
               device_id:
                 deviceId
-
             })
-
         }
       );
 
@@ -1531,8 +1147,7 @@ async function login(){
       .remove("hidden");
 
 
-    loadState(true);
-
+    loadState();
 
   }catch(error){
 
@@ -1549,9 +1164,7 @@ async function login(){
    LOAD STATE
 ===================================================== */
 
-async function loadState(
-  first = false
-){
+async function loadState(){
 
   try{
 
@@ -1560,8 +1173,7 @@ async function loadState(
         "/api/state?t=" +
         Date.now(),
         {
-          cache:
-            "no-store"
+          cache:"no-store"
         }
       );
 
@@ -1573,31 +1185,29 @@ async function loadState(
     if(!data.ok){
 
       throw new Error(
-        data.error ||
         "State error"
       );
     }
 
 
-    updateHeader(
-      data
-    );
+    updateHeader(data);
 
 
     renderHistory(
-      data.history ||
-      []
+      data.history || []
     );
 
 
     /*
-      Prediction changes only when
-      REAL settled history changes.
+      IMPORTANT:
+
+      No artificial 5-second delay.
+
+      Prediction updates immediately
+      after real settled history changes.
     */
 
     const changed =
-      first ||
-
       data.historyVersion !==
         lastVersion ||
 
@@ -1614,26 +1224,34 @@ async function loadState(
         data.settledPeriod;
 
 
-      startAnalysis(
-        data
-      );
-
-    }else if(
-      !analyzing
-    ){
-
       showPrediction(
         data
       );
-    }
 
+    }else{
+
+      /*
+        Keep current prediction alive.
+        Do not regenerate it every second.
+      */
+
+      if(
+        data.analysisReady
+      ){
+
+        updatePredictionNumbers(
+          data
+        );
+
+      }
+
+    }
 
   }catch(error){
 
     $("syncText")
       .textContent =
       "Connection retrying…";
-
 
     $("dot")
       .classList
@@ -1648,9 +1266,7 @@ async function loadState(
    HEADER
 ===================================================== */
 
-function updateHeader(
-  data
-){
+function updateHeader(data){
 
   $("period")
     .textContent =
@@ -1675,18 +1291,7 @@ function updateHeader(
 
       :
 
-      (
-        data.timing &&
-        data.timing.estimated
-      )
-
-      ?
-
-      "LIVE HISTORY SYNCED • TIMER ESTIMATED"
-
-      :
-
-      "LIVE SYNC";
+      "LIVE HISTORY SYNCED";
 
 
   $("dot")
@@ -1722,180 +1327,10 @@ function updateHeader(
 
 
 /* =====================================================
-   ANALYSIS ANIMATION
-===================================================== */
-
-function startAnalysis(
-  data
-){
-
-  if(
-    analysisTimer
-  ){
-
-    clearTimeout(
-      analysisTimer
-    );
-
-  }
-
-
-  analyzing =
-    true;
-
-
-  $("analysisCard")
-    .classList
-    .remove("hidden");
-
-
-  $("predictionCard")
-    .classList
-    .add("hidden");
-
-
-  let seconds =
-    5;
-
-
-  $("analysisText")
-    .textContent =
-    "Reading sequence patterns… " +
-    seconds +
-    "s";
-
-
-  const interval =
-    setInterval(
-      () => {
-
-        seconds--;
-
-
-        if(
-          seconds > 0
-        ){
-
-          const messages = [
-
-            "Checking micro-pattern behaviour…",
-
-            "Checking transition behaviour…",
-
-            "Checking streak behaviour…",
-
-            "Comparing multi-window patterns…"
-
-          ];
-
-
-          const index =
-            Math.max(
-              0,
-              Math.min(
-                messages.length - 1,
-                5 - seconds
-              )
-            );
-
-
-          $("analysisText")
-            .textContent =
-            messages[index] +
-            " " +
-            seconds +
-            "s";
-
-        }
-
-      },
-      1000
-    );
-
-
-  analysisTimer =
-    setTimeout(
-      async () => {
-
-        clearInterval(
-          interval
-        );
-
-
-        analyzing =
-          false;
-
-
-        try{
-
-          const response =
-            await fetch(
-              "/api/state?t=" +
-              Date.now(),
-              {
-                cache:
-                  "no-store"
-              }
-            );
-
-
-          const fresh =
-            await response.json();
-
-
-          /*
-            New actual result arrived
-            during analysis.
-          */
-
-          if(
-            fresh.settledPeriod !==
-            lastSettled
-          ){
-
-            $("analysisText")
-              .textContent =
-              "New result detected. Re-syncing…";
-
-            return;
-          }
-
-
-          showPrediction(
-            fresh
-          );
-
-
-        }catch(error){
-
-          $("analysisText")
-            .textContent =
-            "Refresh failed. Retrying…";
-
-        }
-
-      },
-      5000
-    );
-
-}
-
-
-/* =====================================================
    SHOW PREDICTION
 ===================================================== */
 
-function showPrediction(
-  data
-){
-
-  /*
-    Server now sends number=null
-    intentionally.
-
-    Therefore prediction readiness
-    depends ONLY on BIG/SMALL.
-  */
+function showPrediction(data){
 
   if(
     !data.analysisReady ||
@@ -1931,9 +1366,20 @@ function showPrediction(
     .remove("hidden");
 
 
-  /* ===================================================
-     MAIN PREDICTION
-  =================================================== */
+  updatePredictionNumbers(
+    data
+  );
+
+}
+
+
+/* =====================================================
+   UPDATE PREDICTION UI
+===================================================== */
+
+function updatePredictionNumbers(
+  data
+){
 
   const prediction =
     data.prediction;
@@ -1966,14 +1412,11 @@ function showPrediction(
   $("conf")
     .textContent =
     (
-      data.confidence || 0
+      data.confidence ||
+      0
     ) +
-    "% confidence";
+    "% signal";
 
-
-  /* ===================================================
-     HERO SIGNAL
-  =================================================== */
 
   $("signal")
     .textContent =
@@ -1995,10 +1438,6 @@ function showPrediction(
     data.modelStatus ||
     "AI SIGNAL";
 
-
-  /* ===================================================
-     STATS
-  =================================================== */
 
   $("sConf")
     .textContent =
@@ -2024,28 +1463,38 @@ function showPrediction(
     "—";
 
 
-  /* ===================================================
-     AGREEMENT
-  =================================================== */
-
-  const agreement =
-    data.signalAgreement;
+  const matches =
+    data.matches;
 
 
-  if(
-    agreement
-  ){
+  if(matches){
 
-    const value =
-      prediction === "BIG"
-        ? agreement.big
-        : agreement.small;
+    const total =
+      Number(
+        matches.pattern3 || 0
+      ) +
+
+      Number(
+        matches.pattern4 || 0
+      ) +
+
+      Number(
+        matches.pattern5 || 0
+      ) +
+
+      Number(
+        matches.transition || 0
+      ) +
+
+      Number(
+        matches.runs || 0
+      );
 
 
     $("sAgreement")
       .textContent =
-      value +
-      " signals";
+      total +
+      " matches";
 
   }else{
 
@@ -2054,10 +1503,6 @@ function showPrediction(
       "—";
   }
 
-
-  /* ===================================================
-     SIGNAL BAR
-  =================================================== */
 
   const confidence =
     Number(
@@ -2131,9 +1576,7 @@ function renderHistory(
           Number(
             item.number
           ) >= 5
-
             ? "BIG"
-
             : "SMALL";
 
 
@@ -2149,7 +1592,6 @@ function renderHistory(
 
           '</div>' +
 
-
           '<div class="n">' +
 
           escapeHtml(
@@ -2159,7 +1601,6 @@ function renderHistory(
           ) +
 
           '</div>' +
-
 
           '<div class="bs ' +
 
@@ -2183,31 +1624,20 @@ function renderHistory(
 
 
 /* =====================================================
-   ESCAPE HTML
+   ESCAPE
 ===================================================== */
 
-function escapeHtml(
-  text
-){
+function escapeHtml(text){
 
   return text.replace(
     /[&<>"']/g,
     char => ({
 
-      "&":
-        "&amp;",
-
-      "<":
-        "&lt;",
-
-      ">":
-        "&gt;",
-
-      '"':
-        "&quot;",
-
-      "'":
-        "&#39;"
+      "&":"&amp;",
+      "<":"&lt;",
+      ">":"&gt;",
+      '"':"&quot;",
+      "'":"&#39;"
 
     }[char])
   );
@@ -2216,7 +1646,7 @@ function escapeHtml(
 
 
 /* =====================================================
-   SMOOTH TIMER
+   TIMER
 ===================================================== */
 
 function timerLoop(){
@@ -2224,7 +1654,6 @@ function timerLoop(){
   if(
     timerValue == null
   ){
-
     return;
   }
 
@@ -2268,28 +1697,23 @@ function toggleMusic(){
 
     music
       .play()
-      .then(
-        () => {
+      .then(() => {
 
-          audioOn =
-            true;
+        audioOn =
+          true;
 
+        $("musicBtn")
+          .textContent =
+          "🔊 Music: ON";
 
-          $("musicBtn")
-            .textContent =
-            "🔊 Music: ON";
+      })
+      .catch(() => {
 
-        }
-      )
-      .catch(
-        () => {
+        $("musicBtn")
+          .textContent =
+          "🔇 Tap again to start";
 
-          $("musicBtn")
-            .textContent =
-            "🔇 Tap again to start";
-
-        }
-      );
+      });
 
   }else{
 
@@ -2323,15 +1747,11 @@ if(savedKey){
     .classList
     .add("hidden");
 
-
   $("app")
     .classList
     .remove("hidden");
 
-
-  loadState(
-    true
-  );
+  loadState();
 
 }
 
@@ -2341,19 +1761,13 @@ if(savedKey){
 ===================================================== */
 
 setInterval(
-  () => {
-
-    loadState(
-      false
-    );
-
-  },
+  loadState,
   1000
 );
 
 
 /* =====================================================
-   TIMER
+   SMOOTH TIMER
 ===================================================== */
 
 setInterval(
@@ -2363,7 +1777,7 @@ setInterval(
 
 
 /* =====================================================
-   ENTER LOGIN
+   ENTER
 ===================================================== */
 
 $("key")
@@ -2375,9 +1789,7 @@ $("key")
         event.key ===
         "Enter"
       ){
-
         login();
-
       }
 
     }
