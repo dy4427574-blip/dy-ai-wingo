@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta name="theme-color" content="#060914">
 <meta name="color-scheme" content="dark">
-
 <title>DY AI Wingo 30S</title>
 
 <style>
@@ -13,40 +12,27 @@
   box-sizing:border-box;
   -webkit-tap-highlight-color:transparent;
 }
-
-html,body{
-  margin:0;
-  min-height:100%;
-}
-
+html,body{margin:0;min-height:100%}
 body{
   min-height:100vh;
   color:#fff;
   font-family:Arial,Helvetica,sans-serif;
   background:
-    radial-gradient(
-      circle at 50% -10%,
-      #25346d 0,
-      #111a38 20%,
-      #070b16 52%
-    ),
+    radial-gradient(circle at 50% -10%,#25346d 0,#111a38 20%,#070b16 52%),
     #070b16;
 }
-
 body:before{
   content:"";
   position:fixed;
   inset:0;
   pointer-events:none;
-  background:
-    linear-gradient(
-      120deg,
-      rgba(99,91,255,.06),
-      transparent 35%,
-      rgba(98,230,167,.035)
-    );
+  background:linear-gradient(
+    120deg,
+    rgba(99,91,255,.06),
+    transparent 35%,
+    rgba(98,230,167,.035)
+  );
 }
-
 .container{
   width:100%;
   max-width:520px;
@@ -55,12 +41,7 @@ body:before{
   position:relative;
   z-index:1;
 }
-
-.hidden{
-  display:none!important;
-}
-
-/* ================= COMMON ================= */
+.hidden{display:none!important}
 
 .card{
   position:relative;
@@ -69,17 +50,15 @@ body:before{
   padding:20px;
   border:1px solid rgba(90,109,160,.42);
   border-radius:22px;
-  background:
-    linear-gradient(
-      145deg,
-      rgba(18,27,53,.96),
-      rgba(10,16,32,.96)
-    );
+  background:linear-gradient(
+    145deg,
+    rgba(18,27,53,.96),
+    rgba(10,16,32,.96)
+  );
   box-shadow:
     0 18px 50px rgba(0,0,0,.38),
     inset 0 1px 0 rgba(255,255,255,.035);
 }
-
 .card:after{
   content:"";
   position:absolute;
@@ -91,7 +70,6 @@ body:before{
   background:rgba(99,91,255,.08);
   pointer-events:none;
 }
-
 .label{
   text-align:center;
   color:#8998bb;
@@ -99,36 +77,21 @@ body:before{
   font-weight:800;
   letter-spacing:2px;
 }
-
-.muted{
-  color:#8998bb;
-  font-size:12px;
-  line-height:1.5;
-}
-
 .status{
   color:#8998bb;
   text-align:center;
   font-size:12px;
   line-height:1.5;
 }
+.success{color:#62e6a7!important}
+.error{color:#ff7187!important}
 
-.success{
-  color:#62e6a7!important;
-}
-
-.error{
-  color:#ff7187!important;
-}
-
-/* ================= LOGIN ================= */
-
+/* LOGIN */
 .login{
   margin-top:42px;
   text-align:center;
   padding:30px 22px;
 }
-
 .login-logo{
   width:72px;
   height:72px;
@@ -137,26 +100,21 @@ body:before{
   align-items:center;
   justify-content:center;
   border-radius:22px;
-  background:
-    linear-gradient(145deg,#756dff,#5148d8);
-  box-shadow:
-    0 12px 35px rgba(99,91,255,.35);
+  background:linear-gradient(145deg,#756dff,#5148d8);
+  box-shadow:0 12px 35px rgba(99,91,255,.35);
   font-size:27px;
   font-weight:1000;
 }
-
 .login-title{
   font-size:27px;
   font-weight:1000;
   letter-spacing:-.5px;
 }
-
 .login-sub{
   margin:8px 0 25px;
   color:#8998bb;
   font-size:13px;
 }
-
 input{
   width:100%;
   height:53px;
@@ -168,12 +126,10 @@ input{
   background:#080e1d;
   font-size:14px;
 }
-
 input:focus{
   border-color:#716aff;
   box-shadow:0 0 0 3px rgba(99,91,255,.12);
 }
-
 button{
   width:100%;
   height:53px;
@@ -181,38 +137,21 @@ button{
   border:0;
   border-radius:14px;
   color:#fff;
-  background:
-    linear-gradient(
-      135deg,
-      #675fff,
-      #5148d8
-    );
+  background:linear-gradient(135deg,#675fff,#5148d8);
   font-size:14px;
   font-weight:900;
   cursor:pointer;
-  box-shadow:
-    0 10px 25px rgba(99,91,255,.22);
-  transition:
-    transform .15s,
-    opacity .15s;
+  box-shadow:0 10px 25px rgba(99,91,255,.22);
+  transition:transform .15s,opacity .15s;
 }
-
-button:active{
-  transform:scale(.98);
-}
-
-button:disabled{
-  opacity:.55;
-  cursor:not-allowed;
-}
-
+button:active{transform:scale(.98)}
+button:disabled{opacity:.55;cursor:not-allowed}
 .message{
   min-height:18px;
   margin-top:12px;
   font-size:12px;
   font-weight:700;
 }
-
 .device-login{
   margin-top:18px;
   color:#596783;
@@ -220,8 +159,7 @@ button:disabled{
   word-break:break-all;
 }
 
-/* ================= HEADER ================= */
-
+/* HEADER */
 .topbar{
   display:flex;
   align-items:center;
@@ -229,13 +167,11 @@ button:disabled{
   gap:12px;
   padding:17px 18px;
 }
-
 .brand{
   display:flex;
   align-items:center;
   gap:11px;
 }
-
 .brand-icon{
   width:42px;
   height:42px;
@@ -243,28 +179,20 @@ button:disabled{
   align-items:center;
   justify-content:center;
   border-radius:13px;
-  background:
-    linear-gradient(
-      145deg,
-      #756dff,
-      #5148d8
-    );
+  background:linear-gradient(145deg,#756dff,#5148d8);
   font-size:17px;
   font-weight:1000;
 }
-
 .brand-name{
   font-size:17px;
   font-weight:1000;
 }
-
 .brand-sub{
   margin-top:3px;
   color:#7f8daf;
   font-size:9px;
   letter-spacing:.7px;
 }
-
 .live-pill{
   display:flex;
   align-items:center;
@@ -277,23 +205,19 @@ button:disabled{
   font-size:9px;
   font-weight:900;
 }
-
 .live-dot{
   width:6px;
   height:6px;
   border-radius:50%;
   background:#62e6a7;
-  box-shadow:
-    0 0 10px #62e6a7;
+  box-shadow:0 0 10px #62e6a7;
 }
 
-/* ================= ROUND ================= */
-
+/* ROUND */
 .round-card{
   text-align:center;
   padding:24px 20px 22px;
 }
-
 .period-id{
   margin:9px 0 17px;
   color:#dfe5ff;
@@ -301,17 +225,14 @@ button:disabled{
   font-weight:900;
   letter-spacing:3px;
 }
-
 .timer{
   margin:0;
   font-size:59px;
   line-height:1;
   font-weight:1000;
   letter-spacing:-2px;
-  text-shadow:
-    0 5px 25px rgba(99,91,255,.2);
+  text-shadow:0 5px 25px rgba(99,91,255,.2);
 }
-
 .timer-caption{
   margin:9px 0 17px;
   color:#667593;
@@ -319,40 +240,27 @@ button:disabled{
   font-weight:800;
   letter-spacing:1.5px;
 }
-
 .progress-track{
   height:8px;
   overflow:hidden;
   border-radius:20px;
   background:#1d2841;
 }
-
 .progress-fill{
   width:100%;
   height:100%;
   border-radius:20px;
-  background:
-    linear-gradient(
-      90deg,
-      #5148d8,
-      #827aff
-    );
+  background:linear-gradient(90deg,#5148d8,#827aff);
   transition:width .4s linear;
-  box-shadow:
-    0 0 14px rgba(99,91,255,.4);
+  box-shadow:0 0 14px rgba(99,91,255,.4);
 }
+.connection{margin:13px 0 0}
 
-.connection{
-  margin:13px 0 0;
-}
-
-/* ================= PREDICTION ================= */
-
+/* PREDICTION */
 .prediction-card{
   padding:25px 18px;
   text-align:center;
 }
-
 .prediction-orb{
   width:142px;
   height:142px;
@@ -361,38 +269,26 @@ button:disabled{
   align-items:center;
   justify-content:center;
   border-radius:50%;
-  background:
-    radial-gradient(
-      circle,
-      rgba(99,91,255,.28),
-      rgba(99,91,255,.08) 52%,
-      transparent 70%
-    );
+  background:radial-gradient(
+    circle,
+    rgba(99,91,255,.28),
+    rgba(99,91,255,.08) 52%,
+    transparent 70%
+  );
   border:1px solid rgba(120,113,255,.35);
   box-shadow:
     0 0 45px rgba(99,91,255,.12),
     inset 0 0 25px rgba(99,91,255,.08);
   transition:.3s;
 }
-
 .prediction{
   font-size:42px;
   font-weight:1000;
   letter-spacing:1px;
 }
-
-.prediction.big{
-  color:#8d86ff;
-}
-
-.prediction.small{
-  color:#62e6a7;
-}
-
-.prediction.waiting{
-  color:#7d89a7;
-}
-
+.prediction.big{color:#8d86ff}
+.prediction.small{color:#62e6a7}
+.prediction.waiting{color:#7d89a7}
 .confidence{
   display:inline-flex;
   align-items:center;
@@ -405,16 +301,13 @@ button:disabled{
   font-size:11px;
   font-weight:800;
 }
-
 .conf-dot{
   width:7px;
   height:7px;
   border-radius:50%;
   background:#62e6a7;
-  box-shadow:
-    0 0 8px rgba(98,230,167,.6);
+  box-shadow:0 0 8px rgba(98,230,167,.6);
 }
-
 .number-box{
   margin:20px auto 0;
   padding:14px;
@@ -423,28 +316,24 @@ button:disabled{
   border-radius:15px;
   background:#0a1121;
 }
-
 .number-label{
   color:#6f7d9d;
   font-size:9px;
   font-weight:800;
   letter-spacing:1.5px;
 }
-
 .number{
   margin-top:5px;
   font-size:25px;
   font-weight:1000;
 }
 
-/* ================= INFO ================= */
-
+/* SYSTEM */
 .info-grid{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:10px;
 }
-
 .info-box{
   padding:15px 12px;
   border:1px solid #293657;
@@ -452,27 +341,23 @@ button:disabled{
   background:#0a1121;
   text-align:center;
 }
-
 .info-title{
   color:#6f7d9d;
   font-size:9px;
   font-weight:800;
   letter-spacing:1.3px;
 }
-
 .info-value{
   margin-top:6px;
   color:#e6eaff;
   font-size:13px;
   font-weight:900;
 }
-
 .sync-btn{
   background:#121d35;
   border:1px solid #354261;
   box-shadow:none;
 }
-
 .device{
   margin:14px 3px 0;
   color:#56647f;
@@ -481,7 +366,6 @@ button:disabled{
   text-align:center;
   word-break:break-all;
 }
-
 .note{
   padding:0 10px 12px;
   color:#596783;
@@ -490,8 +374,7 @@ button:disabled{
   text-align:center;
 }
 
-/* ================= AUTO UPDATE ================= */
-
+/* AUTO */
 .auto-badge{
   display:inline-flex;
   align-items:center;
@@ -505,7 +388,6 @@ button:disabled{
   font-size:9px;
   font-weight:900;
 }
-
 .auto-dot{
   width:6px;
   height:6px;
@@ -514,69 +396,35 @@ button:disabled{
   box-shadow:0 0 8px rgba(170,165,255,.7);
 }
 
-/* ================= GAME HUB ================= */
-
+/* GAME HUB */
 .game-hub{
-  padding:22px 18px;
+  padding:22px 14px 18px;
   text-align:center;
 }
-
-.game-box{
-  margin-top:15px;
-  padding:24px 16px;
+.game-frame-wrap{
+  width:100%;
+  height:620px;
+  margin-top:16px;
+  overflow:hidden;
   border:1px solid #293657;
   border-radius:18px;
-  background:
-    linear-gradient(
-      145deg,
-      #0c1428,
-      #09101f
-    );
+  background:#050a16;
 }
-
-.game-icon{
-  width:62px;
-  height:62px;
-  margin:0 auto 13px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border-radius:18px;
-  background:
-    linear-gradient(
-      145deg,
-      #756dff,
-      #5148d8
-    );
-  font-size:27px;
-  box-shadow:
-    0 10px 28px rgba(99,91,255,.25);
+.game-frame{
+  width:100%;
+  height:100%;
+  display:block;
+  border:0;
+  background:#050a16;
 }
-
-.game-title{
-  font-size:19px;
-  font-weight:1000;
-}
-
-.game-sub{
-  margin-top:7px;
-  color:#6f7d9d;
-  font-size:11px;
-}
-
-.game-btn{
-  margin-top:18px;
-}
-
 .game-message{
-  min-height:16px;
   margin-top:10px;
   color:#667593;
-  font-size:9px;
+  font-size:10px;
+  line-height:1.5;
 }
 
-/* ================= FOOTER ================= */
-
+/* FOOTER */
 .footer{
   padding:12px 5px 22px;
   text-align:center;
@@ -585,35 +433,17 @@ button:disabled{
   line-height:1.6;
 }
 
-/* ================= MOBILE ================= */
-
+/* MOBILE */
 @media(max-width:390px){
-
-  .container{
-    padding:10px;
-  }
-
-  .card{
-    border-radius:19px;
-  }
-
-  .timer{
-    font-size:52px;
-  }
-
+  .container{padding:10px}
+  .card{border-radius:19px}
+  .timer{font-size:52px}
   .prediction-orb{
     width:128px;
     height:128px;
   }
-
-  .prediction{
-    font-size:37px;
-  }
-
-  .game-box{
-    padding:21px 14px;
-  }
-
+  .prediction{font-size:37px}
+  .game-frame-wrap{height:560px}
 }
 </style>
 </head>
@@ -622,13 +452,10 @@ button:disabled{
 
 <div class="container">
 
-<!-- ================= LOGIN ================= -->
-
+<!-- LOGIN -->
 <div id="loginBox" class="card login">
 
-  <div class="login-logo">
-    DY
-  </div>
+  <div class="login-logo">DY</div>
 
   <div class="login-title">
     DY AI Wingo 30S
@@ -654,30 +481,23 @@ button:disabled{
 
   <div class="device-login">
     DEVICE ID:
-    <span id="deviceText">
-      Creating...
-    </span>
+    <span id="deviceText">Creating...</span>
   </div>
 
 </div>
 
 
-<!-- ================= APP ================= -->
-
+<!-- APP -->
 <div id="app" class="hidden">
 
   <!-- HEADER -->
-
   <div class="card topbar">
 
     <div class="brand">
 
-      <div class="brand-icon">
-        DY
-      </div>
+      <div class="brand-icon">DY</div>
 
       <div>
-
         <div class="brand-name">
           DY AI Wingo
         </div>
@@ -685,7 +505,6 @@ button:disabled{
         <div class="brand-sub">
           30 SECOND PREDICTION
         </div>
-
       </div>
 
     </div>
@@ -699,20 +518,17 @@ button:disabled{
 
 
   <!-- ROUND -->
-
   <div class="card round-card">
 
     <div class="label">
       CURRENT PERIOD
     </div>
 
-    <div id="period"
-         class="period-id">
+    <div id="period" class="period-id">
       —
     </div>
 
-    <div id="timer"
-         class="timer">
+    <div id="timer" class="timer">
       00:30
     </div>
 
@@ -721,15 +537,10 @@ button:disabled{
     </div>
 
     <div class="progress-track">
-
-      <div id="fill"
-           class="progress-fill">
-      </div>
-
+      <div id="fill" class="progress-fill"></div>
     </div>
 
-    <p id="serverStatus"
-       class="status connection">
+    <p id="serverStatus" class="status connection">
       Connecting to server...
     </p>
 
@@ -742,7 +553,6 @@ button:disabled{
 
 
   <!-- PREDICTION -->
-
   <div class="card prediction-card">
 
     <div class="label">
@@ -750,21 +560,14 @@ button:disabled{
     </div>
 
     <div class="prediction-orb">
-
-      <div id="prediction"
-           class="prediction waiting">
+      <div id="prediction" class="prediction waiting">
         —
       </div>
-
     </div>
 
-    <div id="confidence"
-         class="confidence">
-
+    <div id="confidence" class="confidence">
       <span class="conf-dot"></span>
-
       Waiting for analysis
-
     </div>
 
     <div class="number-box">
@@ -773,8 +576,7 @@ button:disabled{
         GENERATED NUMBER
       </div>
 
-      <div id="number"
-           class="number">
+      <div id="number" class="number">
         —
       </div>
 
@@ -784,15 +586,15 @@ button:disabled{
 
 
   <!-- SYSTEM -->
-
   <div class="card">
 
     <div class="label">
       SYSTEM INFORMATION
     </div>
 
-    <div class="info-grid"
-         style="margin-top:15px">
+    <div
+      class="info-grid"
+      style="margin-top:15px">
 
       <div class="info-box">
 
@@ -800,8 +602,9 @@ button:disabled{
           KEY STATUS
         </div>
 
-        <div id="keyStatus"
-             class="info-value success">
+        <div
+          id="keyStatus"
+          class="info-value success">
           ACTIVE
         </div>
 
@@ -813,8 +616,9 @@ button:disabled{
           CONNECTION
         </div>
 
-        <div id="connectionValue"
-             class="info-value success">
+        <div
+          id="connectionValue"
+          class="info-value success">
           ONLINE
         </div>
 
@@ -831,46 +635,36 @@ button:disabled{
   </div>
 
 
-  <!-- ================= GAME HUB ================= -->
-
+  <!-- GAME HUB -->
   <div class="card game-hub">
 
     <div class="label">
       GAME HUB
     </div>
 
-    <div class="game-box">
+    <div class="game-frame-wrap">
 
-      <div class="game-icon">
-        🎮
-      </div>
+      <!-- Replace YOUR_GAME_URL_HERE with your own game URL -->
+      <iframe
+        id="gameFrame"
+        class="game-frame"
+        src="about:blank"
+        title="Game"
+        loading="lazy"
+        allow="fullscreen"
+        referrerpolicy="strict-origin-when-cross-origin">
+      </iframe>
 
-      <div class="game-title">
-        PLAY GAME
-      </div>
+    </div>
 
-      <div class="game-sub">
-        Your game area
-      </div>
-
-      <button
-        class="game-btn"
-        onclick="openGame()">
-        OPEN GAME
-      </button>
-
-      <div id="gameMessage"
-           class="game-message">
-      </div>
-
+    <div id="gameMessage" class="game-message">
+      Game area ready
     </div>
 
   </div>
 
 
-  <div id="deviceId"
-       class="device">
-  </div>
+  <div id="deviceId" class="device"></div>
 
   <div class="note">
     DY AI displays server-provided analysis.
@@ -910,9 +704,7 @@ let lastPeriod = "";
 function getDeviceId(){
 
   let saved =
-    localStorage.getItem(
-      "dy_ai_device_id"
-    );
+    localStorage.getItem("dy_ai_device_id");
 
   if(saved){
     return saved;
@@ -925,9 +717,7 @@ function getDeviceId(){
     typeof crypto.randomUUID === "function"
   ){
 
-    id =
-      "DY-" +
-      crypto.randomUUID();
+    id = "DY-" + crypto.randomUUID();
 
   }else{
 
@@ -967,9 +757,7 @@ document.getElementById("deviceId")
 function showMessage(text,type){
 
   const el =
-    document.getElementById(
-      "message"
-    );
+    document.getElementById("message");
 
   el.textContent = text;
 
@@ -1007,8 +795,7 @@ async function login(){
   }
 
   button.disabled = true;
-  button.textContent =
-    "CHECKING...";
+  button.textContent = "CHECKING...";
 
   accessKey = key;
 
@@ -1126,7 +913,6 @@ async function login(){
 
 /* ==================================================
    SERVER SYNC
-   AUTO NEXT ROUND ENABLED
 ================================================== */
 
 async function sync(){
@@ -1434,14 +1220,12 @@ setInterval(function(){
     remaining = 30;
   }
 
-
   document
     .getElementById("timer")
     .textContent =
     "00:" +
     String(remaining)
       .padStart(2,"0");
-
 
   document
     .getElementById("fill")
@@ -1501,23 +1285,6 @@ setInterval(async function(){
   await sync();
 
 },3000);
-
-
-/* ==================================================
-   GAME
-================================================== */
-
-function openGame(){
-
-  const message =
-    document.getElementById(
-      "gameMessage"
-    );
-
-  message.textContent =
-    "Your own game can be connected here.";
-
-}
 
 
 /* ==================================================
