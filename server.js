@@ -20,7 +20,6 @@ const ROUND_SECONDS = 30;
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-
   ssl: process.env.DATABASE_URL
     ? { rejectUnauthorized: false }
     : false
@@ -28,25 +27,15 @@ const pool = new Pool({
 
 const cache = {
   history: [],
-
   currentIssue: null,
-
   settledIssue: null,
-
   targetIssue: null,
-
   historyVersion: 0,
-
   historySignature: "",
-
   analysis: null,
-
   lastUpdated: 0,
-
   providerCountdown: null,
-
   anchorTime: 0,
-
   error: null
 };
 
@@ -58,129 +47,89 @@ const cache = {
 async function initDatabase() {
 
   if (!process.env.DATABASE_URL) {
-    console.log(
-      "DATABASE_URL not configured"
-    );
-
+    console.log("DATABASE_URL not configured");
     return;
   }
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS access_keys (
-
       id SERIAL PRIMARY KEY,
-
       access_key TEXT UNIQUE NOT NULL,
-
       device_id TEXT,
-
       created_at BIGINT NOT NULL,
-
       last_seen BIGINT DEFAULT 0
-
     )
   `);
-
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS predictions (
-
       id SERIAL PRIMARY KEY,
-
       target_issue TEXT UNIQUE NOT NULL,
-
       prediction TEXT NOT NULL,
-
       confidence INTEGER DEFAULT 0,
-
       pattern_score INTEGER DEFAULT 0,
-
       created_at BIGINT NOT NULL,
-
       actual TEXT,
-
       result TEXT,
-
       settled_at BIGINT DEFAULT 0
-
     )
   `);
 
-  console.log(
-    "Database ready"
-  );
+  console.log("Database ready");
 }
 
 
 /* =====================================================
-   RESPONSE HELPERS
+   RESPONSE
 ===================================================== */
 
-function sendJSON(
-  res,
-  status,
-  data
-) {
+function sendJSON(res, status, data) {
 
-  res.writeHead(
-    status,
-    {
-      "Content-Type":
-        "application/json; charset=utf-8",
+  res.writeHead(status, {
+    "Content-Type":
+      "application/json; charset=utf-8",
 
-      "Cache-Control":
-        "no-store",
+    "Cache-Control":
+      "no-store",
 
-      "Access-Control-Allow-Origin":
-        "*"
-    }
-  );
+    "Access-Control-Allow-Origin":
+      "*"
+  });
 
-  res.end(
-    JSON.stringify(data)
-  );
+  res.end(JSON.stringify(data));
 }
 
 
 function readBody(req) {
 
-  return new Promise(
-    resolve => {
+  return new Promise(resolve => {
 
-      let data = "";
+    let data = "";
 
-      req.on(
-        "data",
-        chunk => {
+    req.on("data", chunk => {
+      data += chunk;
+    });
 
-          data += chunk;
+    req.on("end", () => {
 
-        }
-      );
+      try {
 
-      req.on(
-        "end",
-        () => {
+        resolve(
+          data
+            ? JSON.parse(data)
+            : {}
+        );
 
-          try {
+      } catch {
 
-            resolve(
-              data
-                ? JSON.parse(data)
-                : {}
-            );
+        resolve({});
 
-          } catch {
+      }
 
-            resolve({});
+    });
 
-          }
+  });
 
-        }
-      );
-
-    }
-  );
 }
 
 
@@ -190,12 +139,9 @@ function readBody(req) {
 
 function classify(number) {
 
-  const n =
-    Number(number);
+  const n = Number(number);
 
-  if (
-    !Number.isFinite(n)
-  ) {
+  if (!Number.isFinite(n)) {
     return null;
   }
 
@@ -218,21 +164,14 @@ function cleanIssue(value) {
 }
 
 
-function compareIssues(
-  a,
-  b
-) {
+function compareIssues(a, b) {
 
   try {
 
-    const A =
-      BigInt(a);
-
-    const B =
-      BigInt(b);
+    const A = BigInt(a);
+    const B = BigInt(b);
 
     if (A > B) return 1;
-
     if (A < B) return -1;
 
     return 0;
@@ -240,9 +179,7 @@ function compareIssues(
   } catch {
 
     return String(a)
-      .localeCompare(
-        String(b)
-      );
+      .localeCompare(String(b));
 
   }
 
@@ -251,23 +188,17 @@ function compareIssues(
 
 function nextIssue(value) {
 
-  const s =
-    cleanIssue(value);
+  const s = cleanIssue(value);
 
   const match =
-    s.match(
-      /^(.*?)(\d+)$/
-    );
+    s.match(/^(.*?)(\d+)$/);
 
   if (!match) {
     return null;
   }
 
-  const prefix =
-    match[1];
-
-  const digits =
-    match[2];
+  const prefix = match[1];
+  const digits = match[2];
 
   try {
 
@@ -289,86 +220,69 @@ function nextIssue(value) {
     return null;
 
   }
+
 }
 
 
 /* =====================================================
-   PROVIDER HISTORY
+   NORMALIZE HISTORY
 ===================================================== */
 
-function normalizeHistory(
-  data
-) {
+function normalizeHistory(data) {
 
   const rows =
-    Array.isArray(
-      data?.history
-    )
+    Array.isArray(data?.history)
       ? data.history
 
-      : Array.isArray(
-          data?.data?.history
-        )
+      : Array.isArray(data?.data?.history)
         ? data.data.history
 
-        : Array.isArray(
-            data?.data
-          )
+        : Array.isArray(data?.data)
           ? data.data
 
           : [];
 
-
   return rows
-    .map(
-      row => ({
+    .map(row => ({
 
-        issueNumber:
-          cleanIssue(
-            row.issueNumber ??
-            row.issue ??
-            row.period
-          ),
+      issueNumber:
+        cleanIssue(
+          row.issueNumber ??
+          row.issue ??
+          row.period
+        ),
 
-        number:
-          Number(
-            row.number
-          ),
+      number:
+        Number(row.number),
 
-        colour:
-          row.colour ??
-          row.color ??
-          "",
+      colour:
+        row.colour ??
+        row.color ??
+        "",
 
-        premium:
-          row.premium ??
-          "",
+      premium:
+        row.premium ??
+        "",
 
-        sum:
-          row.sum ??
-          ""
+      sum:
+        row.sum ??
+        ""
 
-      })
-    )
+    }))
 
-    .filter(
-      row =>
-        row.issueNumber &&
-        Number.isFinite(
-          row.number
-        )
+    .filter(row =>
+      row.issueNumber &&
+      Number.isFinite(row.number)
     );
 
 }
 
 
 /* =====================================================
-   PROVIDER COUNTDOWN
+   COUNTDOWN
 ===================================================== */
 
-function extractCountdown(
-  data
-) {
+function extractCountdown(data) {
 
   const values = [
 
@@ -390,13 +304,9 @@ function extractCountdown(
 
   ];
 
+  for (const value of values) {
 
-  for (
-    const value of values
-  ) {
-
-    const n =
-      Number(value);
+    const n = Number(value);
 
     if (
       Number.isFinite(n) &&
@@ -410,14 +320,12 @@ function extractCountdown(
 
   }
 
-
   return null;
-
 }
 
 
 /* =====================================================
-   WINGOBOT API
+   WINGOBOT
 ===================================================== */
 
 async function fetchWingoData() {
@@ -429,7 +337,6 @@ async function fetchWingoData() {
     );
 
   }
-
 
   const response =
     await fetch(
@@ -447,7 +354,6 @@ async function fetchWingoData() {
       }
     );
 
-
   if (!response.ok) {
 
     throw new Error(
@@ -455,7 +361,6 @@ async function fetchWingoData() {
     );
 
   }
-
 
   return response.json();
 
@@ -466,44 +371,25 @@ async function fetchWingoData() {
    WEIGHTED VOTE
 ===================================================== */
 
-function weightedVote(
-  signals
-) {
+function weightedVote(signals) {
 
   let big = 0;
-
   let small = 0;
 
-
-  for (
-    const signal of signals
-  ) {
+  for (const signal of signals) {
 
     const weight =
-      Number(
-        signal.weight
-      ) || 0;
+      Number(signal.weight) || 0;
 
-
-    if (
-      signal.side === "BIG"
-    ) {
-
+    if (signal.side === "BIG") {
       big += weight;
-
     }
 
-
-    if (
-      signal.side === "SMALL"
-    ) {
-
+    if (signal.side === "SMALL") {
       small += weight;
-
     }
 
   }
-
 
   return {
     big,
@@ -517,32 +403,21 @@ function weightedVote(
    EXACT PATTERN
 ===================================================== */
 
-function exactPattern(
-  sequence,
-  length
-) {
+function exactPattern(sequence, length) {
 
   if (
     sequence.length <
     length + 2
   ) {
-
     return null;
-
   }
-
 
   const current =
     sequence
-      .slice(
-        0,
-        length
-      )
+      .slice(0, length)
       .join("");
 
-
   const signals = [];
-
 
   for (
     let i = length + 1;
@@ -552,21 +427,12 @@ function exactPattern(
 
     const old =
       sequence
-        .slice(
-          i,
-          i + length
-        )
+        .slice(i, i + length)
         .join("");
 
-
-    if (
-      old !== current
-    ) {
-
+    if (old !== current) {
       continue;
-
     }
-
 
     signals.push({
 
@@ -584,27 +450,17 @@ function exactPattern(
 
   }
 
-
-  if (
-    !signals.length
-  ) {
-
+  if (!signals.length) {
     return null;
-
   }
 
-
   const vote =
-    weightedVote(
-      signals
-    );
-
+    weightedVote(signals);
 
   return {
 
     side:
-      vote.big >=
-      vote.small
+      vote.big >= vote.small
         ? "BIG"
         : "SMALL",
 
@@ -630,36 +486,24 @@ function exactPattern(
    SIMILAR PATTERN
 ===================================================== */
 
-function similarPattern(
-  sequence,
-  length
-) {
+function similarPattern(sequence, length) {
 
   if (
     sequence.length <
     length + 2
   ) {
-
     return null;
-
   }
 
-
   const current =
-    sequence.slice(
-      0,
-      length
-    );
-
+    sequence.slice(0, length);
 
   const maxDistance =
     length <= 5
       ? 1
       : 2;
 
-
   const signals = [];
-
 
   for (
     let i = length + 1;
@@ -673,9 +517,7 @@ function similarPattern(
         i + length
       );
 
-
     let distance = 0;
-
 
     for (
       let j = 0;
@@ -694,22 +536,16 @@ function similarPattern(
 
     }
 
-
     if (
       distance >
       maxDistance
     ) {
-
       continue;
-
     }
-
 
     const similarity =
       1 -
-      distance /
-      length;
-
+      distance / length;
 
     signals.push({
 
@@ -728,27 +564,17 @@ function similarPattern(
 
   }
 
-
-  if (
-    !signals.length
-  ) {
-
+  if (!signals.length) {
     return null;
-
   }
 
-
   const vote =
-    weightedVote(
-      signals
-    );
-
+    weightedVote(signals);
 
   return {
 
     side:
-      vote.big >=
-      vote.small
+      vote.big >= vote.small
         ? "BIG"
         : "SMALL",
 
@@ -774,30 +600,20 @@ function similarPattern(
    TRANSITION
 ===================================================== */
 
-function transitionSignal(
-  sequence
-) {
+function transitionSignal(sequence) {
 
-  if (
-    sequence.length < 8
-  ) {
-
+  if (sequence.length < 8) {
     return null;
-
   }
-
 
   const current =
     sequence[0];
 
-
   const signals = [];
-
 
   for (
     let i = 1;
-    i <
-    sequence.length - 1;
+    i < sequence.length - 1;
     i++
   ) {
 
@@ -824,27 +640,17 @@ function transitionSignal(
 
   }
 
-
-  if (
-    !signals.length
-  ) {
-
+  if (!signals.length) {
     return null;
-
   }
 
-
   const vote =
-    weightedVote(
-      signals
-    );
-
+    weightedVote(signals);
 
   return {
 
     side:
-      vote.big >=
-      vote.small
+      vote.big >= vote.small
         ? "BIG"
         : "SMALL",
 
@@ -867,24 +673,16 @@ function transitionSignal(
 
 
 /* =====================================================
-   RUN ANALYSIS
+   RUN
 ===================================================== */
 
-function runSignal(
-  sequence
-) {
+function runSignal(sequence) {
 
-  if (
-    sequence.length < 8
-  ) {
-
+  if (sequence.length < 8) {
     return null;
-
   }
 
-
   let currentRun = 1;
-
 
   while (
     currentRun <
@@ -897,22 +695,15 @@ function runSignal(
 
   }
 
-
   const signals = [];
 
-
   for (
-    let i =
-      currentRun + 1;
-
-    i <
-      sequence.length;
-
+    let i = currentRun + 1;
+    i < sequence.length;
     i++
   ) {
 
     let run = 1;
-
 
     while (
       i + run <
@@ -925,11 +716,7 @@ function runSignal(
 
     }
 
-
-    if (
-      run ===
-      currentRun
-    ) {
+    if (run === currentRun) {
 
       signals.push({
 
@@ -949,27 +736,17 @@ function runSignal(
 
   }
 
-
-  if (
-    !signals.length
-  ) {
-
+  if (!signals.length) {
     return null;
-
   }
 
-
   const vote =
-    weightedVote(
-      signals
-    );
-
+    weightedVote(signals);
 
   return {
 
     side:
-      vote.big >=
-      vote.small
+      vote.big >= vote.small
         ? "BIG"
         : "SMALL",
 
@@ -995,18 +772,11 @@ function runSignal(
    ALTERNATION
 ===================================================== */
 
-function alternationSignal(
-  sequence
-) {
+function alternationSignal(sequence) {
 
-  if (
-    sequence.length < 7
-  ) {
-
+  if (sequence.length < 7) {
     return null;
-
   }
-
 
   for (
     let i = 0;
@@ -1025,12 +795,10 @@ function alternationSignal(
 
   }
 
-
   return {
 
     side:
-      sequence[0] ===
-      "BIG"
+      sequence[0] === "BIG"
         ? "SMALL"
         : "BIG",
 
@@ -1047,31 +815,20 @@ function alternationSignal(
 
 
 /* =====================================================
-   MAIN ANALYSIS ENGINE
+   ANALYSIS
 ===================================================== */
 
-function analyze(
-  history
-) {
+function analyze(history) {
 
   const sequence =
     history
-      .slice(
-        0,
-        60
-      )
-      .map(
-        row =>
-          classify(
-            row.number
-          )
+      .slice(0, 60)
+      .map(row =>
+        classify(row.number)
       )
       .filter(Boolean);
 
-
-  if (
-    sequence.length < 8
-  ) {
+  if (sequence.length < 8) {
 
     return {
 
@@ -1094,11 +851,8 @@ function analyze(
       matches: {
 
         exact: 0,
-
         similar: 0,
-
         transition: 0,
-
         runs: 0
 
       }
@@ -1107,13 +861,11 @@ function analyze(
 
   }
 
-
   const signals = [];
-
 
   for (
     const length of
-    [2,3,4,5,6,8]
+    [2, 3, 4, 5, 6, 8]
   ) {
 
     const exact =
@@ -1122,7 +874,6 @@ function analyze(
         length
       );
 
-
     if (exact) {
 
       exact.weight *=
@@ -1130,12 +881,9 @@ function analyze(
           ? 1.25
           : 0.9;
 
-      signals.push(
-        exact
-      );
+      signals.push(exact);
 
     }
-
 
     const similar =
       similarPattern(
@@ -1143,77 +891,44 @@ function analyze(
         length
       );
 
-
     if (similar) {
-
-      signals.push(
-        similar
-      );
-
+      signals.push(similar);
     }
 
   }
 
-
   const transition =
-    transitionSignal(
-      sequence
-    );
+    transitionSignal(sequence);
 
   if (transition) {
-
-    signals.push(
-      transition
-    );
-
+    signals.push(transition);
   }
-
 
   const run =
-    runSignal(
-      sequence
-    );
+    runSignal(sequence);
 
   if (run) {
-
-    signals.push(
-      run
-    );
-
+    signals.push(run);
   }
-
 
   const alternating =
-    alternationSignal(
-      sequence
-    );
+    alternationSignal(sequence);
 
   if (alternating) {
-
-    signals.push(
-      alternating
-    );
-
+    signals.push(alternating);
   }
 
-
   const vote =
-    weightedVote(
-      signals
-    );
-
+    weightedVote(signals);
 
   const total =
     vote.big +
     vote.small;
 
-
   const prediction =
-    vote.big >=
-    vote.small
+    vote.big >= vote.small
       ? "BIG"
       : "SMALL";
-
 
   const margin =
     total
@@ -1223,48 +938,37 @@ function analyze(
         ) / total
       : 0;
 
-
   const sides =
     signals.map(
-      x =>
-        x.side
+      x => x.side
     );
-
 
   const agreement =
     sides.length
       ? Math.max(
 
           sides.filter(
-            x =>
-              x === "BIG"
+            x => x === "BIG"
           ).length,
 
           sides.filter(
-            x =>
-              x === "SMALL"
+            x => x === "SMALL"
           ).length
 
-        ) /
-        sides.length
-
+        ) / sides.length
       : 0;
-
 
   let confidence =
     Math.round(
 
       51 +
-
       margin * 18 +
-
       Math.max(
         0,
         agreement - 0.5
       ) * 18
 
     );
-
 
   confidence =
     Math.max(
@@ -1274,7 +978,6 @@ function analyze(
         confidence
       )
     );
-
 
   if (
     agreement < 0.55 ||
@@ -1289,78 +992,49 @@ function analyze(
 
   }
 
-
   const exactMatches =
     signals
       .filter(
-        x =>
-          x.type ===
-          "exact"
+        x => x.type === "exact"
       )
       .reduce(
-        (
-          total,
-          x
-        ) =>
-          total +
-          x.matches,
+        (total, x) =>
+          total + x.matches,
         0
       );
-
 
   const similarMatches =
     signals
       .filter(
-        x =>
-          x.type ===
-          "similar"
+        x => x.type === "similar"
       )
       .reduce(
-        (
-          total,
-          x
-        ) =>
-          total +
-          x.matches,
+        (total, x) =>
+          total + x.matches,
         0
       );
-
 
   const transitionMatches =
     signals
       .filter(
-        x =>
-          x.type ===
-          "transition"
+        x => x.type === "transition"
       )
       .reduce(
-        (
-          total,
-          x
-        ) =>
-          total +
-          x.matches,
+        (total, x) =>
+          total + x.matches,
         0
       );
-
 
   const runMatches =
     signals
       .filter(
-        x =>
-          x.type ===
-          "run"
+        x => x.type === "run"
       )
       .reduce(
-        (
-          total,
-          x
-        ) =>
-          total +
-          x.matches,
+        (total, x) =>
+          total + x.matches,
         0
       );
-
 
   const patternScore =
     Math.max(
@@ -1374,9 +1048,7 @@ function analyze(
         Math.round(
 
           50 +
-
           margin * 35 +
-
           Math.max(
             0,
             agreement - 0.5
@@ -1387,7 +1059,6 @@ function analyze(
       )
 
     );
-
 
   return {
 
@@ -1428,10 +1099,7 @@ function analyze(
     },
 
     sequence:
-      sequence.slice(
-        0,
-        12
-      )
+      sequence.slice(0, 12)
 
   };
 
@@ -1456,7 +1124,6 @@ async function savePrediction(
     return;
 
   }
-
 
   await pool.query(
     `
@@ -1484,33 +1151,23 @@ async function savePrediction(
     )
     DO NOTHING
     `,
-
     [
-
       targetIssue,
-
       analysis.prediction,
-
       analysis.confidence,
-
       analysis.patternScore,
-
       Date.now()
-
     ]
-
   );
 
 }
 
 
 /* =====================================================
-   SETTLE PREDICTION
+   SETTLE
 ===================================================== */
 
-async function settlePrediction(
-  row
-) {
+async function settlePrediction(row) {
 
   if (
     !process.env.DATABASE_URL ||
@@ -1521,26 +1178,18 @@ async function settlePrediction(
 
   }
 
-
   const actual =
-    classify(
-      row.number
-    );
-
+    classify(row.number);
 
   if (!actual) {
-
     return;
-
   }
-
 
   await pool.query(
     `
     UPDATE predictions
 
     SET
-
       actual = $1,
 
       result =
@@ -1557,24 +1206,18 @@ async function settlePrediction(
 
       AND result IS NULL
     `,
-
     [
-
       actual,
-
       Date.now(),
-
       row.issueNumber
-
     ]
-
   );
 
 }
 
 
 /* =====================================================
-   WIN / LOSS HISTORY
+   WIN LOSS
 ===================================================== */
 
 async function getWinLoss() {
@@ -1590,13 +1233,9 @@ async function getWinLoss() {
       stats: {
 
         total: 0,
-
         win: 0,
-
         loss: 0,
-
         rate: 0,
-
         streak: "-"
 
       }
@@ -1605,26 +1244,17 @@ async function getWinLoss() {
 
   }
 
-
   const result =
     await pool.query(
       `
       SELECT
-
         target_issue,
-
         prediction,
-
         confidence,
-
         pattern_score,
-
         created_at,
-
         actual,
-
         result,
-
         settled_at
 
       FROM predictions
@@ -1637,65 +1267,46 @@ async function getWinLoss() {
       `
     );
 
-
   const rows =
     result.rows;
 
-
   const win =
     rows.filter(
-      x =>
-        x.result ===
-        "WIN"
+      x => x.result === "WIN"
     ).length;
-
 
   const loss =
     rows.filter(
-      x =>
-        x.result ===
-        "LOSS"
+      x => x.result === "LOSS"
     ).length;
-
 
   let streak = "-";
 
-
-  if (
-    rows.length
-  ) {
+  if (rows.length) {
 
     const first =
       rows[0].result;
 
-
     let count = 0;
 
-
-    for (
-      const row of rows
-    ) {
+    for (const row of rows) {
 
       if (
-        row.result !==
-        first
+        row.result !== first
       ) {
 
         break;
 
       }
 
-
       count++;
 
     }
-
 
     streak =
       `${first} ${count}`;
 
   }
-
 
   return {
 
@@ -1704,8 +1315,7 @@ async function getWinLoss() {
     stats: {
 
       total:
-        win +
-        loss,
+        win + loss,
 
       win,
 
@@ -1714,8 +1324,7 @@ async function getWinLoss() {
       rate:
         win + loss
           ? Math.round(
-              win *
-              1000 /
+              win * 1000 /
               (win + loss)
             ) / 10
           : 0,
@@ -1730,7 +1339,7 @@ async function getWinLoss() {
 
 
 /* =====================================================
-   CACHE UPDATE
+   CACHE
 ===================================================== */
 
 async function updateCache() {
@@ -1740,16 +1349,10 @@ async function updateCache() {
     const data =
       await fetchWingoData();
 
-
     const history =
-      normalizeHistory(
-        data
-      );
+      normalizeHistory(data);
 
-
-    if (
-      !history.length
-    ) {
+    if (!history.length) {
 
       throw new Error(
         "No history received"
@@ -1757,18 +1360,13 @@ async function updateCache() {
 
     }
 
-
     const settledIssue =
-      history[0]
-        .issueNumber;
-
+      history[0].issueNumber;
 
     const providerCurrent =
       cleanIssue(
-        data?.current
-          ?.issueNumber
+        data?.current?.issueNumber
       );
-
 
     const targetIssue =
       providerCurrent &&
@@ -1783,94 +1381,56 @@ async function updateCache() {
             settledIssue
           );
 
-
     const signature =
       history
-        .slice(
-          0,
-          8
-        )
+        .slice(0, 8)
         .map(
           row =>
             `${row.issueNumber}:${row.number}`
         )
         .join("|");
 
-
     const changed =
       signature !==
       cache.historySignature;
 
-
     cache.history =
       history;
-
 
     cache.currentIssue =
       providerCurrent ||
       settledIssue;
 
-
     cache.settledIssue =
       settledIssue;
-
 
     cache.targetIssue =
       targetIssue;
 
-
     cache.providerCountdown =
-      extractCountdown(
-        data
-      );
-
+      extractCountdown(data);
 
     cache.lastUpdated =
       Date.now();
 
-
-    cache.error =
-      null;
-
-
-    /*
-      Prediction changes ONLY
-      when settled result changes.
-    */
+    cache.error = null;
 
     if (changed) {
 
       cache.historySignature =
         signature;
 
-
       cache.historyVersion++;
 
-
       cache.analysis =
-        analyze(
-          history
-        );
-
+        analyze(history);
 
       cache.anchorTime =
         Date.now();
 
-
-      /*
-        First settle old
-        prediction.
-      */
-
       await settlePrediction(
         history[0]
       );
-
-
-      /*
-        Then save next
-        prediction.
-      */
 
       await savePrediction(
         targetIssue,
@@ -1920,32 +1480,24 @@ function getTiming() {
 
   }
 
-
-  if (
-    !cache.anchorTime
-  ) {
+  if (!cache.anchorTime) {
 
     return {
 
       seconds: 30,
-
       exact: false
 
     };
 
   }
 
-
   const elapsed =
     Math.floor(
-
       (
         Date.now() -
         cache.anchorTime
       ) / 1000
-
     );
-
 
   let seconds =
     ROUND_SECONDS -
@@ -1954,16 +1506,9 @@ function getTiming() {
       ROUND_SECONDS
     );
 
-
-  if (
-    seconds === 0
-  ) {
-
-    seconds =
-      ROUND_SECONDS;
-
+  if (seconds === 0) {
+    seconds = ROUND_SECONDS;
   }
-
 
   return {
 
@@ -2057,7 +1602,7 @@ async function handleAPI(
   }
 
 
-  /* WIN LOSS */
+  /* HISTORY */
 
   if (
     url.pathname ===
@@ -2075,7 +1620,11 @@ async function handleAPI(
   }
 
 
-  /* ACCESS KEY */
+  /* =================================================
+     ACCESS KEY CHECK
+     FIXED:
+     accepts both access_key and key
+  ================================================= */
 
   if (
     url.pathname ===
@@ -2085,25 +1634,57 @@ async function handleAPI(
   ) {
 
     const data =
-      await readBody(
-        req
-      );
+      await readBody(req);
 
+
+    /*
+      IMPORTANT FIX
+    */
 
     const key =
       String(
-        data.key || ""
+        data.access_key ||
+        data.key ||
+        ""
       ).trim();
 
 
     const device =
       String(
-        req.headers[
-          "x-device-id"
-        ] ||
+        req.headers["x-device-id"] ||
         data.device_id ||
         ""
       ).trim();
+
+
+    if (!key) {
+
+      return sendJSON(
+        res,
+        400,
+        {
+          ok: false,
+          error:
+            "Access key is required"
+        }
+      );
+
+    }
+
+
+    if (!device) {
+
+      return sendJSON(
+        res,
+        400,
+        {
+          ok: false,
+          error:
+            "Device ID is required"
+        }
+      );
+
+    }
 
 
     if (
@@ -2115,7 +1696,7 @@ async function handleAPI(
         503,
         {
           ok: false,
-          message:
+          error:
             "Database not configured"
         }
       );
@@ -2143,7 +1724,7 @@ async function handleAPI(
         401,
         {
           ok: false,
-          message:
+          error:
             "Invalid access key"
         }
       );
@@ -2155,10 +1736,14 @@ async function handleAPI(
       result.rows[0];
 
 
+    /*
+      If key is already bound,
+      only same device can use it.
+    */
+
     if (
       row.device_id &&
-      row.device_id !==
-        device
+      row.device_id !== device
     ) {
 
       return sendJSON(
@@ -2166,7 +1751,7 @@ async function handleAPI(
         403,
         {
           ok: false,
-          message:
+          error:
             "Key already bound to another device"
         }
       );
@@ -2179,14 +1764,11 @@ async function handleAPI(
       UPDATE access_keys
 
       SET
-
         device_id = $1,
-
         last_seen = $2
 
       WHERE id = $3
       `,
-
       [
         device,
         Date.now(),
@@ -2199,16 +1781,24 @@ async function handleAPI(
       res,
       200,
       {
+
         ok: true,
+
         message:
-          "Access granted"
+          "Access granted",
+
+        access_key:
+          row.access_key
+
       }
     );
 
   }
 
 
-  /* ADMIN */
+  /* =================================================
+     ADMIN
+  ================================================= */
 
   if (
     url.pathname.startsWith(
@@ -2232,7 +1822,7 @@ async function handleAPI(
         401,
         {
           ok: false,
-          message:
+          error:
             "Unauthorized"
         }
       );
@@ -2266,18 +1856,39 @@ async function handleAPI(
     }
 
 
+    /* PING */
+
+    if (
+      url.pathname ===
+      "/api/admin/ping"
+    ) {
+
+      return sendJSON(
+        res,
+        200,
+        {
+          ok: true,
+          message:
+            "Admin API online",
+          time:
+            Date.now()
+        }
+      );
+
+    }
+
+
     /* WINGOBOT TEST */
 
     if (
       url.pathname ===
-        "/api/admin/wingo-test"
+      "/api/admin/wingo-test"
     ) {
 
       try {
 
         const data =
           await fetchWingoData();
-
 
         return sendJSON(
           res,
@@ -2290,13 +1901,15 @@ async function handleAPI(
               data.current ||
               null,
 
+            currentIssue:
+              data?.current
+                ?.issueNumber ||
+              null,
+
             history:
               normalizeHistory(
                 data
-              ).slice(
-                0,
-                5
-              )
+              ).slice(0, 5)
 
           }
         );
@@ -2308,7 +1921,7 @@ async function handleAPI(
           500,
           {
             ok: false,
-            message:
+            error:
               error.message
           }
         );
@@ -2331,7 +1944,6 @@ async function handleAPI(
         await pool.query(
           `
           SELECT
-
             id,
             access_key,
             device_id,
@@ -2343,7 +1955,6 @@ async function handleAPI(
           ORDER BY id DESC
           `
         );
-
 
       return sendJSON(
         res,
@@ -2358,7 +1969,7 @@ async function handleAPI(
     }
 
 
-    /* CREATE KEYS */
+    /* CREATE KEY */
 
     if (
       url.pathname ===
@@ -2368,9 +1979,103 @@ async function handleAPI(
     ) {
 
       const data =
-        await readBody(
-          req
+        await readBody(req);
+
+
+      /*
+        Custom key supported.
+        If no custom key, random key.
+      */
+
+      const customKey =
+        String(
+          data.access_key ||
+          data.key ||
+          ""
+        ).trim();
+
+
+      if (customKey) {
+
+        if (
+          customKey.length < 4 ||
+          customKey.length > 100
+        ) {
+
+          return sendJSON(
+            res,
+            400,
+            {
+              ok: false,
+              error:
+                "Invalid custom key"
+            }
+          );
+
+        }
+
+
+        const result =
+          await pool.query(
+            `
+            INSERT INTO access_keys
+            (
+              access_key,
+              created_at
+            )
+
+            VALUES
+            (
+              $1,
+              $2
+            )
+
+            ON CONFLICT
+            DO NOTHING
+
+            RETURNING
+              access_key
+            `,
+            [
+              customKey,
+              Date.now()
+            ]
+          );
+
+
+        if (!result.rowCount) {
+
+          return sendJSON(
+            res,
+            409,
+            {
+              ok: false,
+              error:
+                "Key already exists"
+            }
+          );
+
+        }
+
+
+        return sendJSON(
+          res,
+          200,
+          {
+
+            ok: true,
+
+            access_key:
+              customKey,
+
+            keys: [
+              customKey
+            ]
+
+          }
         );
+
+      }
 
 
       const count =
@@ -2398,19 +2103,13 @@ async function handleAPI(
           false;
 
 
-        while (
-          !created
-        ) {
+        while (!created) {
 
           const key =
             "DY-" +
             crypto
-              .randomBytes(
-                5
-              )
-              .toString(
-                "hex"
-              )
+              .randomBytes(5)
+              .toString("hex")
               .toUpperCase();
 
 
@@ -2432,9 +2131,9 @@ async function handleAPI(
               ON CONFLICT
               DO NOTHING
 
-              RETURNING access_key
+              RETURNING
+                access_key
               `,
-
               [
                 key,
                 Date.now()
@@ -2446,12 +2145,9 @@ async function handleAPI(
             result.rowCount
           ) {
 
-            keys.push(
-              key
-            );
+            keys.push(key);
 
-            created =
-              true;
+            created = true;
 
           }
 
@@ -2481,10 +2177,34 @@ async function handleAPI(
         "DELETE"
     ) {
 
-      const data =
-        await readBody(
-          req
+      const id =
+        url.searchParams.get(
+          "id"
         );
+
+
+      const body =
+        await readBody(req);
+
+
+      const finalId =
+        id ||
+        body.id;
+
+
+      if (!finalId) {
+
+        return sendJSON(
+          res,
+          400,
+          {
+            ok: false,
+            error:
+              "Key ID required"
+          }
+        );
+
+      }
 
 
       await pool.query(
@@ -2492,7 +2212,7 @@ async function handleAPI(
         DELETE FROM access_keys
         WHERE id = $1
         `,
-        [data.id]
+        [finalId]
       );
 
 
@@ -2517,16 +2237,31 @@ async function handleAPI(
     ) {
 
       const data =
-        await readBody(
-          req
+        await readBody(req);
+
+
+      if (!data.id) {
+
+        return sendJSON(
+          res,
+          400,
+          {
+            ok: false,
+            error:
+              "Key ID required"
+          }
         );
+
+      }
 
 
       await pool.query(
         `
         UPDATE access_keys
 
-        SET device_id = NULL
+        SET
+          device_id = NULL,
+          last_seen = 0
 
         WHERE id = $1
         `,
@@ -2538,7 +2273,9 @@ async function handleAPI(
         res,
         200,
         {
-          ok: true
+          ok: true,
+          message:
+            "Device binding reset"
         }
       );
 
@@ -2601,7 +2338,7 @@ function serveStatic(
       404,
       {
         ok: false,
-        message:
+        error:
           "File not found"
       }
     );
@@ -2629,12 +2366,12 @@ function serveStatic(
       "application/javascript; charset=utf-8",
 
     ".json":
-      "application/json"
+      "application/json; charset=utf-8"
 
   };
 
 
-  /* MP3 RANGE SUPPORT */
+  /* MP3 */
 
   if (
     ext === ".mp3"
@@ -2644,7 +2381,6 @@ function serveStatic(
       fs.statSync(
         filePath
       );
-
 
     const range =
       req.headers.range;
@@ -2661,21 +2397,19 @@ function serveStatic(
       if (match) {
 
         const start =
-          Number(
-            match[1]
-          );
+          Number(match[1]);
 
 
         const end =
           match[2]
-            ? Number(
-                match[2]
-              )
+            ? Number(match[2])
             : stat.size - 1;
 
 
         if (
           start <
+          stat.size &&
+          end <
           stat.size
         ) {
 
@@ -2781,7 +2515,10 @@ const server =
         const url =
           new URL(
             req.url,
-            `http://${req.headers.host || "localhost"}`
+            `http://${
+              req.headers.host ||
+              "localhost"
+            }`
           );
 
 
@@ -2808,11 +2545,10 @@ const server =
           url
         );
 
-      } catch (
-        error
-      ) {
+      } catch (error) {
 
         console.error(
+          "Server error:",
           error
         );
 
@@ -2824,7 +2560,7 @@ const server =
 
             ok: false,
 
-            message:
+            error:
               error.message
 
           }
@@ -2860,23 +2596,20 @@ const server =
       () => {
 
         console.log(
-          `DY AI server running on ${PORT}`
+          `DY AI server running on port ${PORT}`
         );
 
       }
     );
 
-  } catch (
-    error
-  ) {
+  } catch (error) {
 
     console.error(
+      "Startup error:",
       error
     );
 
-    process.exit(
-      1
-    );
+    process.exit(1);
 
   }
 
