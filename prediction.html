@@ -3,11 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<meta name="theme-color" content="#070b16">
+
 <title>DY AI Wingo 30S</title>
 
 <style>
 *{
   box-sizing:border-box;
+}
+
+html{
+  scroll-behavior:smooth;
 }
 
 body{
@@ -27,12 +33,13 @@ body{
 }
 
 .card{
-  background:rgba(15,23,42,.92);
+  background:rgba(15,23,42,.94);
   border:1px solid #263451;
   border-radius:20px;
   padding:18px;
   margin-bottom:14px;
   box-shadow:0 10px 35px rgba(0,0,0,.35);
+  backdrop-filter:blur(8px);
 }
 
 .logo{
@@ -67,6 +74,10 @@ input{
   font-size:15px;
 }
 
+input:focus{
+  border-color:#6366f1;
+}
+
 button{
   border:0;
   cursor:pointer;
@@ -78,6 +89,7 @@ button{
   font-size:15px;
   font-weight:800;
   background:#4f46e5;
+  transition:.15s;
 }
 
 button:active{
@@ -93,12 +105,16 @@ button:disabled{
   display:none!important;
 }
 
+/* LOGIN */
+
 .login-msg{
   text-align:center;
   margin-top:10px;
   font-size:13px;
   color:#ff7285;
 }
+
+/* HEADER */
 
 .period{
   text-align:center;
@@ -117,12 +133,13 @@ button:disabled{
 .countdown{
   text-align:center;
   margin-top:12px;
-  font-size:28px;
+  font-size:32px;
   font-weight:900;
+  font-variant-numeric:tabular-nums;
 }
 
 .progress{
-  height:6px;
+  height:7px;
   background:#172238;
   border-radius:20px;
   overflow:hidden;
@@ -132,21 +149,31 @@ button:disabled{
 .progress span{
   display:block;
   height:100%;
-  width:100%;
+  width:0%;
   background:#6366f1;
-  transition:width .4s linear;
+  transition:width .8s linear;
 }
 
 .status{
   text-align:center;
   font-size:12px;
   color:#61e6a4;
-  margin-top:7px;
+  margin-top:8px;
+  font-weight:700;
 }
 
 .status.err{
   color:#ff7285;
 }
+
+.sync-time{
+  text-align:center;
+  color:#64748b;
+  font-size:10px;
+  margin-top:5px;
+}
+
+/* GAME */
 
 .game-title{
   font-size:18px;
@@ -187,6 +214,8 @@ button:disabled{
   font-weight:800;
 }
 
+/* ANALYSIS */
+
 .analysis{
   text-align:center;
   padding:25px 10px;
@@ -224,12 +253,15 @@ button:disabled{
   height:100%;
   width:0%;
   background:#6366f1;
-  animation:load3 3s linear forwards;
 }
 
 @keyframes load3{
-  from{width:0%}
-  to{width:100%}
+  from{
+    width:0%
+  }
+  to{
+    width:100%
+  }
 }
 
 @keyframes pulse{
@@ -242,6 +274,8 @@ button:disabled{
     opacity:1;
   }
 }
+
+/* PREDICTION */
 
 .prediction{
   text-align:center;
@@ -262,10 +296,12 @@ button:disabled{
 
 .big{
   color:#ff657b;
+  text-shadow:0 0 20px rgba(255,101,123,.2);
 }
 
 .small{
   color:#58a6ff;
+  text-shadow:0 0 20px rgba(88,166,255,.2);
 }
 
 .number{
@@ -282,6 +318,8 @@ button:disabled{
   color:#b9c5da;
   font-size:13px;
 }
+
+/* INFO */
 
 .info-row{
   display:flex;
@@ -307,17 +345,25 @@ button:disabled{
   word-break:break-word;
 }
 
+/* HISTORY */
+
 .history-title{
   display:flex;
   justify-content:space-between;
   align-items:center;
   font-weight:900;
+  gap:10px;
 }
 
 .live{
   color:#61e6a4;
   font-size:11px;
   font-weight:800;
+  white-space:nowrap;
+}
+
+.live.offline{
+  color:#ff7285;
 }
 
 .history{
@@ -334,6 +380,11 @@ button:disabled{
   padding:10px 3px;
   text-align:center;
   font-weight:900;
+  transition:.2s;
+}
+
+.history-item:first-child{
+  border-color:#6366f1;
 }
 
 .history-item small{
@@ -342,6 +393,46 @@ button:disabled{
   font-size:9px;
   margin-top:4px;
 }
+
+.history-period{
+  display:block;
+  color:#53627d;
+  font-size:8px;
+  margin-top:3px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* STATS */
+
+.stat-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
+  margin-top:12px;
+}
+
+.stat-box{
+  background:#0b1425;
+  border:1px solid #263451;
+  border-radius:12px;
+  padding:12px;
+  text-align:center;
+}
+
+.stat-box small{
+  display:block;
+  color:#71819e;
+  font-size:10px;
+}
+
+.stat-box strong{
+  display:block;
+  margin-top:5px;
+  font-size:18px;
+}
+
+/* MUSIC */
 
 .music-title{
   font-weight:900;
@@ -363,6 +454,8 @@ button:disabled{
 .volume{
   flex:1;
 }
+
+/* NOTE */
 
 .note{
   color:#71819e;
@@ -391,6 +484,10 @@ button:disabled{
   .prediction-value{
     font-size:44px;
   }
+
+  .card{
+    padding:15px;
+  }
 }
 </style>
 </head>
@@ -399,402 +496,566 @@ button:disabled{
 
 <div class="container">
 
-  <!-- LOGIN -->
-  <div id="loginCard" class="card">
+<!-- =================================================
+     LOGIN
+================================================== -->
 
-    <div class="logo">
-      DY AI
-    </div>
+<div id="loginCard" class="card">
 
-    <div class="sub">
-      WINGO 30S PREDICTION SYSTEM
-    </div>
+  <div class="logo">
+    DY AI
+  </div>
 
-    <div style="margin-top:22px">
+  <div class="sub">
+    WINGO 30S PREDICTION SYSTEM
+  </div>
 
-      <label>
-        Prediction Access Key
-      </label>
+  <div style="margin-top:22px">
 
-      <input
-        id="accessKey"
-        type="password"
-        placeholder="Enter access key"
-        autocomplete="off">
+    <label>
+      Prediction Access Key
+    </label>
 
+    <input
+      id="accessKey"
+      type="password"
+      placeholder="Enter access key"
+      autocomplete="off">
+
+  </div>
+
+  <button
+    id="loginBtn"
+    onclick="login()">
+
+    UNLOCK SYSTEM
+
+  </button>
+
+  <div
+    id="loginMsg"
+    class="login-msg">
+  </div>
+
+</div>
+
+
+<!-- =================================================
+     MAIN
+================================================== -->
+
+<div id="main" class="hidden">
+
+
+<!-- HEADER -->
+
+<div class="card">
+
+  <div class="logo">
+    DY AI WINGO
+  </div>
+
+  <div class="sub">
+    30 SECOND AI SYSTEM
+  </div>
+
+
+  <div
+    class="period"
+    style="margin-top:18px">
+
+    CURRENT PERIOD
+
+    <strong id="period">
+      ---
+    </strong>
+
+  </div>
+
+
+  <div class="countdown">
+
+    <span id="countdown">
+      --
+    </span>s
+
+  </div>
+
+
+  <div class="progress">
+
+    <span id="progressBar"></span>
+
+  </div>
+
+
+  <div
+    id="stateStatus"
+    class="status">
+
+    ● CONNECTING TO WINGOBOT
+
+  </div>
+
+
+  <div
+    id="syncTime"
+    class="sync-time">
+
+    Waiting for live sync...
+
+  </div>
+
+</div>
+
+
+<!-- MUSIC -->
+
+<div class="card">
+
+  <div class="music-title">
+    🎵 Background Music
+  </div>
+
+  <audio
+    id="bgMusic"
+    preload="auto"
+    loop
+    playsinline>
+
+    <source
+      src="/music.mp3"
+      type="audio/mpeg">
+
+  </audio>
+
+
+  <div class="music-controls">
+
+    <button
+      id="musicBtn"
+      onclick="toggleMusic()">
+
+      ▶ PLAY
+
+    </button>
+
+    <input
+      class="volume"
+      id="volume"
+      type="range"
+      min="0"
+      max="1"
+      step="0.01"
+      value="0.45"
+      oninput="changeVolume()">
+
+  </div>
+
+</div>
+
+
+<!-- GAME -->
+
+<div class="card">
+
+  <div class="game-title">
+    🎮 WINGO GAME
+  </div>
+
+
+  <div
+    id="openBox"
+    class="open-box">
+
+    <div class="open-title">
+      Open Wingo Game to unlock AI prediction
     </div>
 
     <button
-      id="loginBtn"
-      onclick="login()">
-      UNLOCK SYSTEM
+      class="open-btn"
+      onclick="openWingo()">
+
+      OPEN WINGO
+
     </button>
 
-    <div
-      id="loginMsg"
-      class="login-msg">
-    </div>
-
   </div>
 
 
-  <!-- MAIN -->
-  <div id="main" class="hidden">
+  <iframe
+    id="gameFrame"
+    class="game-frame"
+    src="https://www.mqerjz55.com/#/register?invitationCode=761671301584"
+    title="Wingo Game"
+    loading="eager"
+    allow="fullscreen"
+    referrerpolicy="strict-origin-when-cross-origin">
+  </iframe>
 
-    <!-- HEADER -->
-    <div class="card">
 
-      <div class="logo">
-        DY AI WINGO
-      </div>
+  <div class="note">
 
-      <div class="sub">
-        30 SECOND AI SYSTEM
-      </div>
+    The game is provided by an external service.
+    This page does not read the external game's internal
+    results. Analysis uses the authorized WingoBot history
+    feed on the server.
 
-      <div
-        class="period"
-        style="margin-top:18px">
+  </div>
 
-        CURRENT PERIOD
+</div>
 
-        <strong id="period">
-          ---
-        </strong>
 
-      </div>
+<!-- ANALYSIS -->
 
-      <div class="countdown">
-        <span id="countdown">
-          --
-        </span>s
-      </div>
+<div
+  id="analysisCard"
+  class="card hidden">
 
-      <div class="progress">
-        <span id="progressBar"></span>
-      </div>
+  <div class="analysis">
 
-      <div
-        id="stateStatus"
-        class="status">
-
-        ● CONNECTING TO WINGOBOT
-
-      </div>
-
+    <div class="analysis-icon">
+      ⚡
     </div>
 
-
-    <!-- MUSIC -->
-    <div class="card">
-
-      <div class="music-title">
-        🎵 Background Music
-      </div>
-
-      <audio
-        id="bgMusic"
-        preload="auto"
-        loop
-        playsinline>
-
-        <source
-          src="/music.mp3"
-          type="audio/mpeg">
-
-      </audio>
-
-      <div class="music-controls">
-
-        <button
-          id="musicBtn"
-          onclick="toggleMusic()">
-
-          ▶ PLAY
-
-        </button>
-
-        <input
-          class="volume"
-          id="volume"
-          type="range"
-          min="0"
-          max="1"
-          step="0.01"
-          value="0.45"
-          oninput="changeVolume()">
-
-      </div>
-
+    <div class="analysis-text">
+      RESULT ANALYSIS...
     </div>
 
-
-    <!-- WINGO GAME -->
-    <div class="card">
-
-      <div class="game-title">
-        🎮 WINGO GAME
-      </div>
-
-      <div
-        id="openBox"
-        class="open-box">
-
-        <div class="open-title">
-          Open Wingo Game to unlock AI prediction
-        </div>
-
-        <button
-          class="open-btn"
-          onclick="openWingo()">
-
-          OPEN WINGO
-
-        </button>
-
-      </div>
-
-      <iframe
-        id="gameFrame"
-        class="game-frame"
-        src="https://www.mqerjz55.com/#/register?invitationCode=761671301584"
-        title="Wingo Game"
-        loading="eager"
-        allow="fullscreen"
-        referrerpolicy="strict-origin-when-cross-origin">
-      </iframe>
-
-      <div class="note">
-
-        The game is provided by an external service.
-        This page does not read the external game's internal
-        results. Analysis uses the authorized WingoBot history
-        feed on the server.
-
-      </div>
-
-    </div>
-
-
-    <!-- ANALYSIS -->
     <div
-      id="analysisCard"
-      class="card hidden">
+      id="analysisSub"
+      class="analysis-sub">
 
-      <div class="analysis">
-
-        <div class="analysis-icon">
-          ⚡
-        </div>
-
-        <div class="analysis-text">
-          RESULT ANALYSIS...
-        </div>
-
-        <div
-          id="analysisSub"
-          class="analysis-sub">
-
-          Checking real WingoBot history
-
-        </div>
-
-        <div class="loader">
-
-          <span id="loaderBar"></span>
-
-        </div>
-
-      </div>
+      Checking real WingoBot history
 
     </div>
 
+    <div class="loader">
 
-    <!-- PREDICTION -->
-    <div
-      id="predictionCard"
-      class="card hidden">
-
-      <div class="prediction">
-
-        <div class="pred-label">
-          AI PREDICTION
-        </div>
-
-        <div
-          id="prediction"
-          class="prediction-value">
-
-          ---
-
-        </div>
-
-        <div
-          id="number"
-          class="number">
-
-          Number: --
-
-        </div>
-
-        <div
-          id="confidence"
-          class="confidence">
-
-          Confidence: --
-
-        </div>
-
-      </div>
-
-    </div>
-
-
-    <!-- REAL API INFO -->
-    <div class="card">
-
-      <div class="info-row">
-
-        <span>
-          Data Source
-        </span>
-
-        <span id="dataSource">
-          WingoBot
-        </span>
-
-      </div>
-
-      <div class="info-row">
-
-        <span>
-          History Sample
-        </span>
-
-        <span id="sampleSize">
-          --
-        </span>
-
-      </div>
-
-      <div class="info-row">
-
-        <span>
-          Pattern Score
-        </span>
-
-        <span id="patternScore">
-          --
-        </span>
-
-      </div>
-
-      <div class="info-row">
-
-        <span>
-          Analysis Method
-        </span>
-
-        <span id="method">
-          --
-        </span>
-
-      </div>
-
-      <div class="info-row">
-
-        <span>
-          Key Status
-        </span>
-
-        <span id="keyStatus">
-          LIVE
-        </span>
-
-      </div>
-
-    </div>
-
-
-    <!-- REAL HISTORY -->
-    <div class="card">
-
-      <div class="history-title">
-
-        <span>
-          RECENT WINGOBOT RESULTS
-        </span>
-
-        <span class="live">
-          ● LIVE
-        </span>
-
-      </div>
-
-      <div
-        id="history"
-        class="history">
-
-        <div class="history-item">
-
-          —
-          <small>
-            WAIT
-          </small>
-
-        </div>
-
-      </div>
-
-    </div>
-
-
-    <div class="card">
-
-      <div
-        id="note"
-        class="note">
-
-        Historical results are used for
-        statistical analysis. Future outcomes
-        are not guaranteed.
-
-      </div>
+      <span id="loaderBar"></span>
 
     </div>
 
   </div>
 
+</div>
 
-  <div class="footer">
-    DY AI • WINGO 30S SYSTEM
+
+<!-- PREDICTION -->
+
+<div
+  id="predictionCard"
+  class="card hidden">
+
+  <div class="prediction">
+
+    <div class="pred-label">
+      AI STATISTICAL ESTIMATE
+    </div>
+
+
+    <div
+      id="prediction"
+      class="prediction-value">
+
+      ---
+
+    </div>
+
+
+    <div
+      id="number"
+      class="number">
+
+      Number: --
+
+    </div>
+
+
+    <div
+      id="confidence"
+      class="confidence">
+
+      Confidence: --
+
+    </div>
+
   </div>
+
+</div>
+
+
+<!-- API INFO -->
+
+<div class="card">
+
+  <div class="info-row">
+
+    <span>
+      Data Source
+    </span>
+
+    <span id="dataSource">
+      WingoBot
+    </span>
+
+  </div>
+
+
+  <div class="info-row">
+
+    <span>
+      History Sample
+    </span>
+
+    <span id="sampleSize">
+      --
+    </span>
+
+  </div>
+
+
+  <div class="info-row">
+
+    <span>
+      Pattern Score
+    </span>
+
+    <span id="patternScore">
+      --
+    </span>
+
+  </div>
+
+
+  <div class="info-row">
+
+    <span>
+      Latest Result
+    </span>
+
+    <span id="latestResult">
+      --
+    </span>
+
+  </div>
+
+
+  <div class="info-row">
+
+    <span>
+      Current Streak
+    </span>
+
+    <span id="streak">
+      --
+    </span>
+
+  </div>
+
+
+  <div class="info-row">
+
+    <span>
+      Analysis Method
+    </span>
+
+    <span id="method">
+      --
+    </span>
+
+  </div>
+
+
+  <div class="info-row">
+
+    <span>
+      Key Status
+    </span>
+
+    <span id="keyStatus">
+      LIVE
+    </span>
+
+  </div>
+
+</div>
+
+
+<!-- STATISTICS -->
+
+<div class="card">
+
+  <div class="history-title">
+
+    <span>
+      📊 LIVE STATISTICS
+    </span>
+
+    <span
+      id="statLive"
+      class="live">
+
+      ● LIVE
+
+    </span>
+
+  </div>
+
+
+  <div class="stat-grid">
+
+    <div class="stat-box">
+
+      <small>
+        BIG
+      </small>
+
+      <strong id="bigPercent">
+        --
+      </strong>
+
+    </div>
+
+
+    <div class="stat-box">
+
+      <small>
+        SMALL
+      </small>
+
+      <strong id="smallPercent">
+        --
+      </strong>
+
+    </div>
+
+
+    <div class="stat-box">
+
+      <small>
+        BIG PROBABILITY
+      </small>
+
+      <strong id="bigProbability">
+        --
+      </strong>
+
+    </div>
+
+
+    <div class="stat-box">
+
+      <small>
+        SMALL PROBABILITY
+      </small>
+
+      <strong id="smallProbability">
+        --
+      </strong>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- HISTORY -->
+
+<div class="card">
+
+  <div class="history-title">
+
+    <span>
+      RECENT WINGOBOT RESULTS
+    </span>
+
+    <span
+      id="historyLive"
+      class="live">
+
+      ● LIVE
+
+    </span>
+
+  </div>
+
+
+  <div
+    id="history"
+    class="history">
+
+    <div class="history-item">
+
+      —
+
+      <small>
+        WAIT
+      </small>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- NOTE -->
+
+<div class="card">
+
+  <div
+    id="note"
+    class="note">
+
+    Historical results are used for statistical
+    analysis. Future outcomes are not guaranteed.
+
+  </div>
+
+</div>
+
+
+</div>
+
+
+<div class="footer">
+  DY AI • WINGO 30S SYSTEM
+</div>
 
 </div>
 
 
 <script>
 
-/* =========================
+/* =====================================================
    VARIABLES
-========================= */
+===================================================== */
 
 let accessKeyValue = "";
 let deviceId = "";
 
 let gameOpened = false;
+
 let analysisRunning = false;
 
 let lastPeriod = "";
 
-let countdownTimer = null;
+let lastHistoryIssue = "";
+
+let liveInterval = null;
+
+let analysisTimer = null;
 
 let stateBusy = false;
 
+let latestState = null;
 
-/* =========================
+
+/* =====================================================
    MUSIC
-========================= */
+===================================================== */
 
 const music =
   document.getElementById(
@@ -804,9 +1065,9 @@ const music =
 music.volume = 0.45;
 
 
-/* =========================
+/* =====================================================
    DEVICE ID
-========================= */
+===================================================== */
 
 function getDeviceId(){
 
@@ -815,17 +1076,20 @@ function getDeviceId(){
       "dy_ai_device_id"
     );
 
+
   if(!id){
 
     let randomId;
 
+
     if(
       window.crypto &&
-      crypto.randomUUID
+      typeof window.crypto.randomUUID ===
+      "function"
     ){
 
       randomId =
-        crypto.randomUUID();
+        window.crypto.randomUUID();
 
     }else{
 
@@ -838,9 +1102,11 @@ function getDeviceId(){
 
     }
 
+
     id =
       "device-" +
       randomId;
+
 
     localStorage.setItem(
       "dy_ai_device_id",
@@ -849,14 +1115,14 @@ function getDeviceId(){
 
   }
 
-  return id;
 
+  return id;
 }
 
 
-/* =========================
-   API HEADERS
-========================= */
+/* =====================================================
+   HEADERS
+===================================================== */
 
 function apiHeaders(){
 
@@ -873,31 +1139,32 @@ function apiHeaders(){
 }
 
 
-/* =========================
+/* =====================================================
    LOGIN
-========================= */
+===================================================== */
 
 async function login(){
 
+  const input =
+    document.getElementById(
+      "accessKey"
+    );
+
+
   const key =
-    document
-      .getElementById(
-        "accessKey"
-      )
-      .value
-      .trim();
+    input.value.trim();
+
 
   const msg =
-    document
-      .getElementById(
-        "loginMsg"
-      );
+    document.getElementById(
+      "loginMsg"
+    );
+
 
   const btn =
-    document
-      .getElementById(
-        "loginBtn"
-      );
+    document.getElementById(
+      "loginBtn"
+    );
 
 
   if(!key){
@@ -924,8 +1191,10 @@ async function login(){
 
     const response =
       await fetch(
-        "/api/key/check",
+        "/api/key/check?t=" +
+        Date.now(),
         {
+
           method:"GET",
 
           headers:{
@@ -999,9 +1268,7 @@ async function login(){
 
 
     /*
-      Mobile browser:
-      login button is a user action,
-      so music can normally start here.
+      Try music after user interaction.
     */
 
     try{
@@ -1015,35 +1282,33 @@ async function login(){
         .textContent =
         "⏸ PAUSE";
 
-    }catch(e){
+    }catch{
 
-      console.log(
-        "Autoplay blocked"
-      );
-
+      /* Browser autoplay policy */
     }
 
+
+    /*
+      First live request immediately.
+    */
 
     await loadState();
 
 
-    if(!countdownTimer){
+    /*
+      Then EXACTLY every 1 second.
+    */
 
-      countdownTimer =
-        setInterval(
-          clockTick,
-          1000
-        );
-
-    }
+    startLiveSync();
 
 
   }catch(error){
 
     console.log(
-      "Login error:",
+      "LOGIN:",
       error
     );
+
 
     msg.textContent =
       "Server connection failed.";
@@ -1057,22 +1322,58 @@ async function login(){
 }
 
 
-/* =========================
-   FETCH REAL STATE
-========================= */
+/* =====================================================
+   LIVE SYNC START
+===================================================== */
+
+function startLiveSync(){
+
+  if(liveInterval){
+
+    clearInterval(
+      liveInterval
+    );
+
+  }
+
+
+  /*
+    One request every second.
+  */
+
+  liveInterval =
+    setInterval(
+      ()=>{
+
+        loadState();
+
+      },
+      1000
+    );
+
+}
+
+
+/* =====================================================
+   STATE REQUEST
+===================================================== */
 
 async function fetchState(){
 
   const response =
     await fetch(
-      "/api/state",
+      "/api/state?t=" +
+      Date.now(),
       {
+
         method:"GET",
 
         headers:
           apiHeaders(),
 
-        cache:"no-store"
+        cache:"no-store",
+
+        credentials:"same-origin"
       }
     );
 
@@ -1094,8 +1395,10 @@ async function fetchState(){
         "STATE_REQUEST_FAILED"
       );
 
+
     error.status =
       response.status;
+
 
     throw error;
 
@@ -1107,9 +1410,9 @@ async function fetchState(){
 }
 
 
-/* =========================
+/* =====================================================
    LOAD STATE
-========================= */
+===================================================== */
 
 async function loadState(){
 
@@ -1132,95 +1435,104 @@ async function loadState(){
       await fetchState();
 
 
-    if(!data.success)
-      return;
-
-
-    /*
-      Real WingoBot period.
-    */
-
-    document
-      .getElementById(
-        "period"
-      )
-      .textContent =
-      data.period ||
-      data.current?.issueNumber ||
-      "---";
-
-
-    /*
-      Backend may provide countdown
-      in future versions.
-    */
-
     if(
-      data.countdown !==
-        undefined &&
-      data.countdown !==
-        null
+      !data ||
+      !data.success
     ){
 
-      document
-        .getElementById(
-          "countdown"
-        )
-        .textContent =
-        data.countdown;
-
-    }
-
-
-    /*
-      Before OPEN WINGO:
-      prediction stays hidden.
-    */
-
-    if(!gameOpened){
-
-      renderRealData(
-        data
-      );
-
-      setStateStatus(
-        "● WINGOBOT CONNECTED • OPEN WINGO",
-        true
-      );
-
       return;
 
     }
 
 
+    latestState =
+      data;
+
+
     /*
-      New period:
-      run 3 second analysis.
+      ALWAYS update timing.
+    */
+
+    updateTiming(
+      data
+    );
+
+
+    /*
+      ALWAYS update history.
+    */
+
+    renderRealData(
+      data
+    );
+
+
+    /*
+      Determine period.
     */
 
     const currentPeriod =
       String(
-        data.period ||
-        data.current?.issueNumber ||
+        data.period ??
+        data.current?.issueNumber ??
         ""
       );
 
 
+    /*
+      First state after opening/login.
+    */
+
     if(
-      currentPeriod &&
-      currentPeriod !==
-        lastPeriod &&
-      !analysisRunning
+      !lastPeriod &&
+      currentPeriod
     ){
 
       lastPeriod =
         currentPeriod;
 
-      startAnalysis(
-        data
-      );
+    }
 
-    }else if(
+
+    /*
+      NEW PERIOD DETECTED.
+    */
+
+    if(
+      currentPeriod &&
+      lastPeriod &&
+      currentPeriod !==
+      lastPeriod
+    ){
+
+      lastPeriod =
+        currentPeriod;
+
+
+      /*
+        New period means latest API state
+        should immediately be used.
+      */
+
+      if(gameOpened){
+
+        startAnalysis(
+          data
+        );
+
+      }
+
+    }
+
+
+    /*
+      If game is open and there is no
+      analysis running, keep current
+      prediction updated.
+    */
+
+    if(
+      gameOpened &&
       !analysisRunning
     ){
 
@@ -1230,10 +1542,32 @@ async function loadState(){
 
     }
 
+
+    /*
+      LIVE status.
+    */
+
+    if(data.stale){
+
+      setStateStatus(
+        "● SYNCING • LAST VALID DATA",
+        false
+      );
+
+    }else{
+
+      setStateStatus(
+        "● WINGOBOT LIVE • 1S SYNC",
+        true
+      );
+
+    }
+
+
   }catch(error){
 
     console.log(
-      "State error:",
+      "STATE:",
       error
     );
 
@@ -1251,9 +1585,43 @@ async function loadState(){
 
 
     setStateStatus(
-      "● WINGOBOT CONNECTION LOST • RETRYING",
+      "● CONNECTION RETRYING...",
       false
     );
+
+
+    const stat =
+      document.getElementById(
+        "statLive"
+      );
+
+
+    const histLive =
+      document.getElementById(
+        "historyLive"
+      );
+
+
+    if(stat){
+
+      stat.textContent =
+        "● RETRYING";
+
+      stat.classList
+        .add("offline");
+
+    }
+
+
+    if(histLive){
+
+      histLive.textContent =
+        "● RETRYING";
+
+      histLive.classList
+        .add("offline");
+
+    }
 
   }finally{
 
@@ -1264,9 +1632,128 @@ async function loadState(){
 }
 
 
-/* =========================
+/* =====================================================
+   TIMING UPDATE
+===================================================== */
+
+function updateTiming(data){
+
+  const period =
+    data.period ??
+    data.current?.issueNumber ??
+    "---";
+
+
+  document
+    .getElementById(
+      "period"
+    )
+    .textContent =
+    period;
+
+
+  let countdown =
+    Number(
+      data.countdown
+    );
+
+
+  if(
+    !Number.isFinite(
+      countdown
+    )
+  ){
+
+    countdown = 30;
+
+  }
+
+
+  countdown =
+    Math.max(
+      1,
+      Math.min(
+        30,
+        Math.floor(
+          countdown
+        )
+      )
+    );
+
+
+  document
+    .getElementById(
+      "countdown"
+    )
+    .textContent =
+    countdown;
+
+
+  const percentage =
+    (
+      countdown /
+      30
+    ) * 100;
+
+
+  document
+    .getElementById(
+      "progressBar"
+    )
+    .style
+    .width =
+    percentage +
+    "%";
+
+
+  /*
+    Last sync display.
+  */
+
+  const sync =
+    document.getElementById(
+      "syncTime"
+    );
+
+
+  if(sync){
+
+    if(data.lastSync){
+
+      const secondsAgo =
+        Math.max(
+          0,
+          Math.floor(
+            (
+              Date.now() -
+              Number(data.lastSync)
+            ) / 1000
+          )
+        );
+
+
+      sync.textContent =
+        secondsAgo <= 1
+          ? "Last sync: just now"
+          : "Last sync: " +
+            secondsAgo +
+            "s ago";
+
+    }else{
+
+      sync.textContent =
+        "Waiting for live sync...";
+
+    }
+
+  }
+
+}
+
+
+/* =====================================================
    REAL DATA
-========================= */
+===================================================== */
 
 function renderRealData(data){
 
@@ -1275,9 +1762,9 @@ function renderRealData(data){
       "dataSource"
     )
     .textContent =
-    data.realHistory
-      ? "WingoBot LIVE"
-      : "WingoBot";
+    data.stale
+      ? "WingoBot CACHE"
+      : "WingoBot LIVE";
 
 
   document
@@ -1290,10 +1777,10 @@ function renderRealData(data){
       Array.isArray(
         data.history
       )
-      ?
-      data.history.length
-      :
-      "--"
+        ?
+        data.history.length
+        :
+        "--"
     );
 
 
@@ -1303,10 +1790,42 @@ function renderRealData(data){
     )
     .textContent =
     data.patternScore !==
-      undefined
+    undefined
       ?
       data.patternScore +
       "%"
+      :
+      "--";
+
+
+  document
+    .getElementById(
+      "latestResult"
+    )
+    .textContent =
+    data.latestNumber !==
+    undefined &&
+    data.latestNumber !==
+    null
+      ?
+      data.latestNumber +
+      " • " +
+      (
+        data.latestPrediction ||
+        ""
+      )
+      :
+      "--";
+
+
+  document
+    .getElementById(
+      "streak"
+    )
+    .textContent =
+    data.streak
+      ?
+      data.streak
       :
       "--";
 
@@ -1322,11 +1841,24 @@ function renderRealData(data){
 
   document
     .getElementById(
+      "keyStatus"
+    )
+    .textContent =
+    "LIVE";
+
+
+  document
+    .getElementById(
       "note"
     )
     .textContent =
     data.note ||
     "Historical results are used for statistical analysis. Future outcomes are not guaranteed.";
+
+
+  renderStatistics(
+    data
+  );
 
 
   renderHistory(
@@ -1336,9 +1868,83 @@ function renderRealData(data){
 }
 
 
-/* =========================
+/* =====================================================
+   STATISTICS
+===================================================== */
+
+function renderStatistics(data){
+
+  const s =
+    data.statistics ||
+    {};
+
+
+  document
+    .getElementById(
+      "bigPercent"
+    )
+    .textContent =
+    s.bigPercent !==
+    undefined
+      ?
+      s.bigPercent +
+      "%"
+      :
+      "--";
+
+
+  document
+    .getElementById(
+      "smallPercent"
+    )
+    .textContent =
+    s.bigPercent !==
+    undefined
+      ?
+      (
+        100 -
+        Number(
+          s.bigPercent
+        )
+      ) +
+      "%"
+      :
+      "--";
+
+
+  document
+    .getElementById(
+      "bigProbability"
+    )
+    .textContent =
+    s.bigProbability !==
+    undefined
+      ?
+      s.bigProbability +
+      "%"
+      :
+      "--";
+
+
+  document
+    .getElementById(
+      "smallProbability"
+    )
+    .textContent =
+    s.smallProbability !==
+    undefined
+      ?
+      s.smallProbability +
+      "%"
+      :
+      "--";
+
+}
+
+
+/* =====================================================
    HISTORY
-========================= */
+===================================================== */
 
 function renderHistory(
   history
@@ -1375,9 +1981,45 @@ function renderHistory(
   }
 
 
+  /*
+    Create a small signature.
+    If it changes, the UI will redraw.
+  */
+
+  const signature =
+    list
+      .map(
+        x =>
+          String(
+            x.issueNumber ??
+            ""
+          ) +
+          ":" +
+          String(
+            x.number ??
+            ""
+          )
+      )
+      .join("|");
+
+
+  if(
+    signature ===
+    lastHistoryIssue
+  ){
+
+    return;
+
+  }
+
+
+  lastHistoryIssue =
+    signature;
+
+
   box.innerHTML =
     list.map(
-      item=>{
+      item => {
 
         const n =
           Number(
@@ -1387,15 +2029,15 @@ function renderHistory(
 
         const valid =
           Number.isInteger(n) &&
-          n>=0 &&
-          n<=9;
+          n >= 0 &&
+          n <= 9;
 
 
         const label =
           valid
             ?
             (
-              n>=5
+              n >= 5
                 ?
                 "BIG"
                 :
@@ -1405,12 +2047,34 @@ function renderHistory(
             "—";
 
 
+        const issue =
+          String(
+            item.issueNumber ??
+            ""
+          );
+
+
         return `
           <div class="history-item">
+
             ${valid ? n : "—"}
+
             <small>
               ${label}
             </small>
+
+            ${
+              issue
+                ?
+                `
+                <span class="history-period">
+                  ${issue.slice(-6)}
+                </span>
+                `
+                :
+                ""
+            }
+
           </div>
         `;
 
@@ -1420,9 +2084,9 @@ function renderHistory(
 }
 
 
-/* =========================
+/* =====================================================
    OPEN WINGO
-========================= */
+===================================================== */
 
 function openWingo(){
 
@@ -1430,7 +2094,8 @@ function openWingo(){
     return;
 
 
-  gameOpened = true;
+  gameOpened =
+    true;
 
 
   const box =
@@ -1442,19 +2107,41 @@ function openWingo(){
   box.innerHTML =
     `
     <div class="opened">
-      ✓ WINGO OPENED
+      ✓ WINGO OPENED • AI ACTIVE
     </div>
     `;
 
 
-  startAnalysisFromCurrentState();
+  /*
+    Immediately use latest state.
+  */
+
+  if(latestState){
+
+    lastPeriod =
+      String(
+        latestState.period ??
+        latestState.current?.issueNumber ??
+        ""
+      );
+
+
+    startAnalysis(
+      latestState
+    );
+
+  }else{
+
+    startAnalysisFromCurrentState();
+
+  }
 
 }
 
 
-/* =========================
-   FIRST ANALYSIS
-========================= */
+/* =====================================================
+   INITIAL ANALYSIS
+===================================================== */
 
 async function
 startAnalysisFromCurrentState(){
@@ -1469,20 +2156,23 @@ startAnalysisFromCurrentState(){
       await fetchState();
 
 
-    if(!data.success)
+    if(
+      !data ||
+      !data.success
+    ){
+
       return;
 
-
-    const currentPeriod =
-      String(
-        data.period ||
-        data.current?.issueNumber ||
-        ""
-      );
+    }
 
 
-    lastPeriod =
-      currentPeriod;
+    latestState =
+      data;
+
+
+    updateTiming(
+      data
+    );
 
 
     renderRealData(
@@ -1490,15 +2180,22 @@ startAnalysisFromCurrentState(){
     );
 
 
+    lastPeriod =
+      String(
+        data.period ??
+        data.current?.issueNumber ??
+        ""
+      );
+
+
     startAnalysis(
       data
     );
 
-
   }catch(error){
 
     console.log(
-      "Initial analysis error:",
+      "INITIAL ANALYSIS:",
       error
     );
 
@@ -1513,9 +2210,9 @@ startAnalysisFromCurrentState(){
 }
 
 
-/* =========================
+/* =====================================================
    3 SECOND ANALYSIS
-========================= */
+===================================================== */
 
 function startAnalysis(
   data
@@ -1525,7 +2222,8 @@ function startAnalysis(
     return;
 
 
-  analysisRunning = true;
+  analysisRunning =
+    true;
 
 
   const analysis =
@@ -1556,6 +2254,27 @@ function startAnalysis(
     );
 
 
+  const loader =
+    document.getElementById(
+      "loaderBar"
+    );
+
+
+  loader.style.animation =
+    "none";
+
+
+  /*
+    Force browser reflow.
+  */
+
+  void loader.offsetWidth;
+
+
+  loader.style.animation =
+    "load3 3s linear forwards";
+
+
   const messages = [
 
     "Checking real WingoBot history...",
@@ -1576,11 +2295,21 @@ function startAnalysis(
     messages[0];
 
 
-  const messageTimer =
+  if(analysisTimer){
+
+    clearInterval(
+      analysisTimer
+    );
+
+  }
+
+
+  analysisTimer =
     setInterval(
-      ()=>{
+      () => {
 
         index++;
+
 
         if(
           index <
@@ -1597,16 +2326,19 @@ function startAnalysis(
     );
 
 
-  /*
-    Exactly 3 seconds.
-  */
-
   setTimeout(
-    ()=>{
+    () => {
 
-      clearInterval(
-        messageTimer
-      );
+      if(analysisTimer){
+
+        clearInterval(
+          analysisTimer
+        );
+
+        analysisTimer =
+          null;
+
+      }
 
 
       analysis
@@ -1634,9 +2366,9 @@ function startAnalysis(
 }
 
 
-/* =========================
-   SHOW PREDICTION
-========================= */
+/* =====================================================
+   PREDICTION
+===================================================== */
 
 function updatePrediction(
   data
@@ -1664,7 +2396,7 @@ function updatePrediction(
     );
 
 
-  const predictionValue =
+  const value =
     String(
       data.prediction ||
       ""
@@ -1672,21 +2404,18 @@ function updatePrediction(
 
 
   if(
-    predictionValue ===
-      "BIG" ||
-    predictionValue ===
-      "SMALL"
+    value === "BIG" ||
+    value === "SMALL"
   ){
 
     pred.textContent =
-      predictionValue;
+      value;
 
 
     pred.className =
       "prediction-value " +
       (
-        predictionValue ===
-        "BIG"
+        value === "BIG"
           ?
           "big"
           :
@@ -1708,9 +2437,9 @@ function updatePrediction(
     "Number: " +
     (
       data.number !==
-        undefined &&
+      undefined &&
       data.number !==
-        null
+      null
         ?
         data.number
         :
@@ -1722,9 +2451,9 @@ function updatePrediction(
     "Confidence: " +
     (
       data.confidence !==
-        undefined &&
+      undefined &&
       data.confidence !==
-        null
+      null
         ?
         data.confidence
         :
@@ -1740,9 +2469,9 @@ function updatePrediction(
 }
 
 
-/* =========================
+/* =====================================================
    STATUS
-========================= */
+===================================================== */
 
 function setStateStatus(
   text,
@@ -1753,6 +2482,10 @@ function setStateStatus(
     document.getElementById(
       "stateStatus"
     );
+
+
+  if(!el)
+    return;
 
 
   el.textContent =
@@ -1769,84 +2502,73 @@ function setStateStatus(
         "err"
     );
 
-}
+
+  const stat =
+    document.getElementById(
+      "statLive"
+    );
 
 
-/* =========================
-   30 SECOND CLOCK
-========================= */
-
-function clockTick(){
-
-  if(
-    !accessKeyValue ||
-    document
-      .getElementById(
-        "main"
-      )
-      .classList
-      .contains(
-        "hidden"
-      )
-  ){
-
-    return;
-
-  }
+  const histLive =
+    document.getElementById(
+      "historyLive"
+    );
 
 
-  const now =
-    new Date();
+  if(ok){
+
+    if(stat){
+
+      stat.textContent =
+        "● LIVE";
+
+      stat.classList
+        .remove("offline");
+
+    }
 
 
-  const seconds =
-    now.getSeconds();
+    if(histLive){
+
+      histLive.textContent =
+        "● LIVE";
+
+      histLive.classList
+        .remove("offline");
+
+    }
+
+  }else{
+
+    if(stat){
+
+      stat.textContent =
+        "● SYNCING";
+
+      stat.classList
+        .add("offline");
+
+    }
 
 
-  const left =
-    30 -
-    (seconds % 30);
+    if(histLive){
 
+      histLive.textContent =
+        "● SYNCING";
 
-  document
-    .getElementById(
-      "countdown"
-    )
-    .textContent =
-    left;
+      histLive.classList
+        .add("offline");
 
-
-  document
-    .getElementById(
-      "progressBar"
-    )
-    .style
-    .width =
-    (
-      left /
-      30 *
-      100
-    ) +
-    "%";
-
-
-  /*
-    At every new 30-second boundary,
-    request fresh real API data.
-  */
-
-  if(left === 30){
-
-    loadState();
+    }
 
   }
 
 }
 
 
-/* =========================
+/* =====================================================
    MUSIC
-========================= */
+===================================================== */
 
 function toggleMusic(){
 
@@ -1855,7 +2577,7 @@ function toggleMusic(){
     music
       .play()
       .then(
-        ()=>{
+        () => {
 
           document
             .getElementById(
@@ -1867,7 +2589,7 @@ function toggleMusic(){
         }
       )
       .catch(
-        ()=>{}
+        () => {}
       );
 
   }else{
@@ -1901,28 +2623,50 @@ function changeVolume(){
 }
 
 
-/* =========================
+/* =====================================================
    LOGOUT
-========================= */
+===================================================== */
 
 function logout(){
 
-  accessKeyValue = "";
+  accessKeyValue =
+    "";
 
-  gameOpened = false;
+  gameOpened =
+    false;
 
-  analysisRunning = false;
+  analysisRunning =
+    false;
 
-  lastPeriod = "";
+  lastPeriod =
+    "";
+
+  lastHistoryIssue =
+    "";
+
+  latestState =
+    null;
 
 
-  if(countdownTimer){
+  if(liveInterval){
 
     clearInterval(
-      countdownTimer
+      liveInterval
     );
 
-    countdownTimer =
+    liveInterval =
+      null;
+
+  }
+
+
+  if(analysisTimer){
+
+    clearInterval(
+      analysisTimer
+    );
+
+    analysisTimer =
       null;
 
   }
@@ -1954,9 +2698,34 @@ function logout(){
 }
 
 
-/* =========================
-   INITIAL DEVICE
-========================= */
+/* =====================================================
+   ENTER KEY LOGIN
+===================================================== */
+
+document
+  .getElementById(
+    "accessKey"
+  )
+  .addEventListener(
+    "keydown",
+    event => {
+
+      if(
+        event.key ===
+        "Enter"
+      ){
+
+        login();
+
+      }
+
+    }
+  );
+
+
+/* =====================================================
+   DEVICE
+===================================================== */
 
 deviceId =
   getDeviceId();
