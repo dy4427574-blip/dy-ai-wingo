@@ -25,33 +25,19 @@ const pool = new Pool({
   connectionTimeoutMillis: 10000
 });
 
-
-/* =====================================================
-   LIVE CACHE
-===================================================== */
-
 const cache = {
   data: null,
   history: [],
   analysis: null,
-
   apiIssue: null,
   apiNumber: null,
-
   lastSuccessAt: 0,
   syncedAt: 0,
-
   anchorIssue: null,
   anchorTime: 0,
-
   fetching: false,
   error: null
 };
-
-
-/* =====================================================
-   RESPONSE
-===================================================== */
 
 function send(res, code, data) {
   if (res.headersSent) return;
@@ -65,11 +51,9 @@ function send(res, code, data) {
   res.end(JSON.stringify(data));
 }
 
-
 function admin(req) {
   return req.headers["x-admin-key"] === ADMIN_KEY;
 }
-
 
 function body(req) {
   return new Promise((resolve, reject) => {
@@ -96,11 +80,6 @@ function body(req) {
   });
 }
 
-
-/* =====================================================
-   DATABASE
-===================================================== */
-
 async function init() {
   if (!DB) {
     throw new Error("DATABASE_URL is not configured");
@@ -116,7 +95,6 @@ async function init() {
     )
   `);
 }
-
 
 /* =====================================================
    WINGOBOT
@@ -176,9 +154,8 @@ async function fetchWingoBot() {
   }
 }
 
-
 /* =====================================================
-   HISTORY CLEAN
+   HISTORY
 ===================================================== */
 
 function hist(data) {
@@ -212,17 +189,11 @@ function hist(data) {
     );
 }
 
-
-/* =====================================================
-   BIG SMALL
-===================================================== */
-
 function bs(n) {
   return Number(n) >= 5
     ? "BIG"
     : "SMALL";
 }
-
 
 /* =====================================================
    ISSUE
@@ -239,7 +210,6 @@ function issueValue(value) {
     : null;
 }
 
-
 function nextIssue(issue, rounds = 1) {
   const n = issueValue(issue);
 
@@ -250,27 +220,9 @@ function nextIssue(issue, rounds = 1) {
   return String(n + rounds);
 }
 
-
 /* =====================================================
    TIMING
 ===================================================== */
-
-function syncAnchor(issue) {
-  if (issue === null || issue === undefined) {
-    return;
-  }
-
-  const normalized = String(issue);
-
-  if (
-    !cache.anchorIssue ||
-    cache.anchorIssue !== normalized
-  ) {
-    cache.anchorIssue = normalized;
-    cache.anchorTime = Date.now();
-  }
-}
-
 
 function getTiming() {
   if (
@@ -310,27 +262,30 @@ function getTiming() {
 
   let countdown =
     ROUND_SECONDS -
-    Math.floor(inside / 1000);
+    Math.floor(
+      inside / 1000
+    );
 
-  if (countdown < 1) {
-    countdown = 1;
-  }
-
-  if (countdown > ROUND_SECONDS) {
-    countdown = ROUND_SECONDS;
-  }
+  countdown =
+    Math.max(
+      1,
+      Math.min(
+        ROUND_SECONDS,
+        countdown
+      )
+    );
 
   return {
     period,
     countdown,
     roundsPassed,
-    estimated: roundsPassed > 0
+    estimated:
+      roundsPassed > 0
   };
 }
 
-
 /* =====================================================
-   REAL HISTORY AI
+   PRO HISTORY AI
 ===================================================== */
 
 function analyze(history) {
@@ -338,41 +293,61 @@ function analyze(history) {
   const nums =
     history
       .slice(0, 50)
-      .map(x => x.number);
+      .map(x => x.number)
+      .filter(
+        n =>
+          Number.isInteger(n) &&
+          n >= 0 &&
+          n <= 9
+      );
 
   if (nums.length < 5) {
+
     return {
       prediction: null,
       number: null,
       confidence: 0,
       patternScore: 0,
       sampleSize: nums.length,
-      method: "INSUFFICIENT_HISTORY",
+      method:
+        "INSUFFICIENT_HISTORY",
       note:
         "Not enough history for analysis."
     };
   }
 
+  const r10 =
+    nums.slice(0, 10);
 
-  const r10 = nums.slice(0, 10);
-  const r20 = nums.slice(0, 20);
-  const r30 = nums.slice(0, 30);
+  const r20 =
+    nums.slice(0, 20);
 
+  const r30 =
+    nums.slice(0, 30);
 
-  const ratioBig = arr =>
-    arr.length
-      ? arr.filter(n => n >= 5).length / arr.length
-      : 0.5;
+  const ratioBig =
+    arr =>
+      arr.length
+        ?
+        arr.filter(
+          n => n >= 5
+        ).length / arr.length
+        :
+        0.5;
 
+  const overall =
+    ratioBig(r30);
 
-  const overall = ratioBig(r30);
-  const medium = ratioBig(r20);
-  const recent = ratioBig(r10);
+  const medium =
+    ratioBig(r20);
 
+  const recent =
+    ratioBig(r10);
 
   /* STREAK */
 
-  const latestType = bs(nums[0]);
+  const latestType =
+    bs(nums[0]);
 
   let streak = 1;
 
@@ -381,15 +356,20 @@ function analyze(history) {
     i < nums.length;
     i++
   ) {
+
     if (
-      bs(nums[i]) === latestType
+      bs(nums[i]) ===
+      latestType
     ) {
+
       streak++;
+
     } else {
+
       break;
+
     }
   }
-
 
   /* SAME / FLIP */
 
@@ -401,43 +381,57 @@ function analyze(history) {
     i < nums.length - 1;
     i++
   ) {
+
     if (
       bs(nums[i]) ===
       bs(nums[i + 1])
     ) {
+
       same++;
+
     } else {
+
       flip++;
+
     }
   }
 
-  const totalTransition =
+  const transitionTotal =
     same + flip;
 
   const sameRatio =
-    totalTransition
-      ? same / totalTransition
-      : 0.5;
-
+    transitionTotal
+      ?
+      same / transitionTotal
+      :
+      0.5;
 
   /* MOMENTUM */
 
   let bigMomentum = 0;
   let smallMomentum = 0;
 
-  r20.forEach((n, i) => {
+  r20.forEach(
+    (n, i) => {
 
-    const weight =
-      (r20.length - i) /
-      r20.length;
+      const weight =
+        (r20.length - i) /
+        r20.length;
 
-    if (n >= 5) {
-      bigMomentum += weight;
-    } else {
-      smallMomentum += weight;
+      if (n >= 5) {
+
+        bigMomentum +=
+          weight;
+
+      } else {
+
+        smallMomentum +=
+          weight;
+
+      }
+
     }
-  });
-
+  );
 
   let bigProbability = 0.5;
 
@@ -450,28 +444,43 @@ function analyze(history) {
   bigProbability +=
     (recent - 0.5) * 0.35;
 
-
   const momentumTotal =
     bigMomentum +
     smallMomentum;
 
   if (momentumTotal > 0) {
+
     bigProbability +=
       (
-        bigMomentum / momentumTotal -
+        bigMomentum /
+        momentumTotal -
         0.5
       ) * 0.25;
+
   }
 
+  if (
+    latestType === "BIG"
+  ) {
 
-  if (latestType === "BIG") {
     bigProbability +=
       (sameRatio - 0.5) * 0.12;
+
   } else {
+
     bigProbability -=
       (sameRatio - 0.5) * 0.12;
+
   }
 
+  if (streak >= 4) {
+
+    bigProbability +=
+      latestType === "BIG"
+        ? 0.015
+        : -0.015;
+
+  }
 
   bigProbability =
     Math.max(
@@ -482,48 +491,55 @@ function analyze(history) {
       )
     );
 
-
   const prediction =
     bigProbability >= 0.5
       ? "BIG"
       : "SMALL";
 
-
   /* AGREEMENT */
 
   const signals = [
+
     overall >= 0.5,
+
     medium >= 0.5,
+
     recent >= 0.5,
-    bigMomentum >= smallMomentum
+
+    bigMomentum >=
+      smallMomentum
+
   ];
 
   const yes =
-    signals.filter(Boolean).length;
+    signals.filter(
+      Boolean
+    ).length;
 
   const no =
     signals.length - yes;
 
   const agreement =
-    Math.max(yes, no) /
+    Math.max(
+      yes,
+      no
+    ) /
     signals.length;
-
 
   let confidence =
     50 +
     Math.abs(
-      bigProbability - 0.5
+      bigProbability -
+      0.5
     ) * 75;
 
   confidence *=
     0.82 +
     agreement * 0.18;
 
-
   if (streak >= 4) {
     confidence -= 4;
   }
-
 
   confidence =
     Math.round(
@@ -536,96 +552,165 @@ function analyze(history) {
       )
     );
 
-
-  /* NUMBER */
-
-  const freq =
-    Array(10).fill(0);
-
-  const rec =
-    Array(10).fill(0);
-
-  r30.forEach(n => {
-    freq[n]++;
-  });
-
-  r10.forEach((n, i) => {
-    rec[n] +=
-      (r10.length - i) /
-      r10.length;
-  });
-
-
-  const candidates =
-    Array
-      .from(
-        { length: 10 },
-        (_, n) => ({
-
-          n,
-
-          score:
-            (
-              freq[n] /
-              Math.max(1, r30.length)
-            ) * 0.55 +
-
-            (
-              rec[n] /
-              Math.max(1, r10.length)
-            ) * 0.45
-        })
-      )
-
-      .filter(x =>
-        bs(x.n) === prediction
-      )
-
-      .sort(
-        (a, b) =>
-          b.score - a.score ||
-          a.n - b.n
-      );
-
-
-  const number =
-    candidates[0]?.n ??
-    (
-      prediction === "BIG"
-        ? 5
-        : 0
-    );
-
-
   /* PATTERN */
 
-  let patternScore =
-    45 +
-    Math.abs(overall - 0.5) * 80 +
-    Math.abs(recent - 0.5) * 80 +
-    Math.abs(agreement - 0.5) * 30;
+  const separation =
+    Math.abs(
+      bigProbability -
+      0.5
+    ) * 2;
 
-  if (streak >= 3) {
-    patternScore -= 5;
-  }
+  let patternScore =
+    50 +
+    separation * 30 +
+    Math.abs(
+      recent - medium
+    ) * -10 +
+    (agreement - 0.5) * 30;
 
   patternScore =
     Math.round(
       Math.max(
         0,
         Math.min(
-          100,
+          96,
           patternScore
         )
       )
     );
 
+  /* NUMBER MODEL */
+
+  const freq =
+    Array(10).fill(0);
+
+  const lastSeen =
+    Array(10).fill(999);
+
+  r30.forEach(
+    (n, i) => {
+
+      freq[n]++;
+
+      if (
+        lastSeen[n] ===
+        999
+      ) {
+
+        lastSeen[n] = i;
+
+      }
+
+    }
+  );
+
+  const candidates =
+    Array.from(
+      { length: 10 },
+      (_, n) => {
+
+        if (
+          bs(n) !==
+          prediction
+        ) {
+
+          return null;
+
+        }
+
+        let score = 50;
+
+        score -=
+          freq[n] * 5;
+
+        if (
+          lastSeen[n] === 0
+        ) {
+
+          score -= 25;
+
+        } else if (
+          lastSeen[n] <= 2
+        ) {
+
+          score -= 16;
+
+        } else if (
+          lastSeen[n] <= 5
+        ) {
+
+          score -= 8;
+
+        }
+
+        if (
+          lastSeen[n] !==
+          999
+        ) {
+
+          score +=
+            Math.min(
+              lastSeen[n],
+              12
+            ) * 1.7;
+
+        } else {
+
+          score += 8;
+
+        }
+
+        score +=
+          (10 - n) * 0.01;
+
+        return {
+          n,
+          score
+        };
+
+      }
+    )
+    .filter(Boolean);
+
+  candidates.sort(
+    (a, b) =>
+      b.score -
+      a.score
+  );
+
+  const recentTwo =
+    nums.slice(0, 2);
+
+  let selected =
+    candidates[0]?.n ??
+    (
+      prediction ===
+      "BIG"
+        ? 5
+        : 0
+    );
+
+  const alternative =
+    candidates.find(
+      c =>
+        !recentTwo.includes(
+          c.n
+        )
+    );
+
+  if (alternative) {
+
+    selected =
+      alternative.n;
+
+  }
 
   return {
 
     prediction,
 
-    number,
+    number:
+      selected,
 
     confidence,
 
@@ -666,7 +751,8 @@ function analyze(history) {
 
       flipPercent:
         Math.round(
-          (1 - sameRatio) * 100
+          (1 - sameRatio) *
+          100
         ),
 
       bigProbability:
@@ -676,21 +762,61 @@ function analyze(history) {
 
       smallProbability:
         Math.round(
-          (1 - bigProbability) * 100
+          (1 - bigProbability) *
+          100
         )
+
     },
 
     method:
-      "DY_AI_REAL_HISTORY_STATISTICAL",
+      "DY_AI_PRO_HISTORY_STATISTICAL",
+
+    signals: {
+
+      shortTrend:
+        recent > 0.5
+          ? "BIG"
+          : recent < 0.5
+            ? "SMALL"
+            : "BALANCED",
+
+      mediumTrend:
+        medium > 0.5
+          ? "BIG"
+          : medium < 0.5
+            ? "SMALL"
+            : "BALANCED",
+
+      longTrend:
+        overall > 0.5
+          ? "BIG"
+          : overall < 0.5
+            ? "SMALL"
+            : "BALANCED",
+
+      transition:
+        sameRatio > 0.5
+          ? "SAME"
+          : sameRatio < 0.5
+            ? "FLIP"
+            : "BALANCED",
+
+      streak:
+        `${latestType} x${streak}`,
+
+      selectedNumber:
+        selected
+
+    },
 
     note:
-      "Statistical estimate from historical results only. Future results are not guaranteed."
+      "Statistical estimate from historical WingoBot results only. Future results are not guaranteed."
+
   };
 }
 
-
 /* =====================================================
-   CACHE UPDATE
+   CACHE
 ===================================================== */
 
 function updateCache(data) {
@@ -703,30 +829,29 @@ function updateCache(data) {
     history[0]?.issueNumber ??
     null;
 
-
   const apiNumber =
     Number.isInteger(
-      Number(data?.current?.number)
+      Number(
+        data?.current?.number
+      )
     )
-      ? Number(data.current.number)
-      : (
-          history[0]?.number ??
-          null
-        );
-
-
-  /*
-    IMPORTANT:
-
-    New API issue = new timing anchor.
-
-    We never permanently add +2.
-  */
+      ?
+      Number(
+        data.current.number
+      )
+      :
+      (
+        history[0]?.number ??
+        null
+      );
 
   if (
     apiIssue !== null &&
     String(apiIssue) !==
-      String(cache.apiIssue ?? "")
+      String(
+        cache.apiIssue ??
+        ""
+      )
   ) {
 
     cache.apiIssue =
@@ -737,8 +862,8 @@ function updateCache(data) {
 
     cache.anchorTime =
       Date.now();
-  }
 
+  }
 
   if (
     !cache.anchorIssue &&
@@ -753,12 +878,17 @@ function updateCache(data) {
 
     cache.anchorTime =
       Date.now();
+
   }
 
+  cache.data =
+    data;
 
-  cache.data = data;
-  cache.history = history;
-  cache.apiNumber = apiNumber;
+  cache.history =
+    history;
+
+  cache.apiNumber =
+    apiNumber;
 
   cache.analysis =
     analyze(history);
@@ -769,9 +899,9 @@ function updateCache(data) {
   cache.lastSuccessAt =
     Date.now();
 
-  cache.error = null;
+  cache.error =
+    null;
 }
-
 
 /* =====================================================
    REFRESH
@@ -783,7 +913,8 @@ async function refreshWingo() {
     return cache.data;
   }
 
-  cache.fetching = true;
+  cache.fetching =
+    true;
 
   try {
 
@@ -808,22 +939,21 @@ async function refreshWingo() {
 
   } finally {
 
-    cache.fetching = false;
+    cache.fetching =
+      false;
+
   }
 }
 
+setInterval(
+  () => {
 
-/*
-  EXACTLY 1 SECOND REFRESH
-*/
+    refreshWingo()
+      .catch(() => {});
 
-setInterval(() => {
-
-  refreshWingo()
-    .catch(() => {});
-
-}, API_REFRESH_MS);
-
+  },
+  API_REFRESH_MS
+);
 
 /* =====================================================
    AUTH
@@ -833,18 +963,22 @@ async function auth(req, res) {
 
   const key =
     String(
-      req.headers["x-access-key"] ||
-      ""
+      req.headers[
+        "x-access-key"
+      ] || ""
     ).trim();
 
   const device =
     String(
-      req.headers["x-device-id"] ||
-      ""
+      req.headers[
+        "x-device-id"
+      ] || ""
     ).trim();
 
-
-  if (!key || !device) {
+  if (
+    !key ||
+    !device
+  ) {
 
     send(res, 401, {
       success: false,
@@ -854,7 +988,6 @@ async function auth(req, res) {
 
     return null;
   }
-
 
   const q =
     await pool.query(
@@ -867,7 +1000,6 @@ async function auth(req, res) {
       [key]
     );
 
-
   if (!q.rows.length) {
 
     send(res, 401, {
@@ -879,10 +1011,8 @@ async function auth(req, res) {
     return null;
   }
 
-
   const row =
     q.rows[0];
-
 
   if (
     row.device_id &&
@@ -898,12 +1028,15 @@ async function auth(req, res) {
     return null;
   }
 
-
   await pool.query(
     `
     UPDATE access_keys
     SET
-      device_id=COALESCE(device_id,$1),
+      device_id=
+        COALESCE(
+          device_id,
+          $1
+        ),
       last_seen=$2
     WHERE id=$3
     `,
@@ -914,10 +1047,8 @@ async function auth(req, res) {
     ]
   );
 
-
   return row;
 }
-
 
 /* =====================================================
    STATE
@@ -930,8 +1061,9 @@ function makeState() {
 
   const a =
     cache.analysis ||
-    analyze(cache.history);
-
+    analyze(
+      cache.history
+    );
 
   return {
 
@@ -941,21 +1073,25 @@ function makeState() {
       "WingoBot",
 
     realHistory:
-      cache.history.length > 0,
-
-    synced:
-      cache.lastSuccessAt > 0,
+      cache.history.length >
+      0,
 
     stale:
       cache.lastSuccessAt
-        ? (
-            Date.now() -
-            cache.lastSuccessAt
-          ) > 5000
-        : true,
+        ?
+        (
+          Date.now() -
+          cache.lastSuccessAt
+        ) > 5000
+        :
+        true,
 
     lastSync:
-      cache.lastSuccessAt || null,
+      cache.lastSuccessAt ||
+      null,
+
+    serverTime:
+      Date.now(),
 
     period:
       timing.period,
@@ -970,6 +1106,7 @@ function makeState() {
 
       number:
         cache.apiNumber
+
     },
 
     apiPeriod:
@@ -1000,16 +1137,25 @@ function makeState() {
       a.streak,
 
     statistics:
-      a.statistics || null,
+      a.statistics ||
+      null,
+
+    signals:
+      a.signals ||
+      null,
 
     method:
       a.method,
 
     history:
-      cache.history.slice(0, 30),
+      cache.history.slice(
+        0,
+        30
+      ),
 
     stats:
-      cache.data?.stats || null,
+      cache.data?.stats ||
+      null,
 
     timing: {
 
@@ -1017,31 +1163,39 @@ function makeState() {
         ROUND_SECONDS,
 
       roundsPassed:
-        timing.roundsPassed || 0,
+        timing.roundsPassed ||
+        0,
 
       estimated:
         timing.estimated,
 
       status:
         cache.error
-          ? "USING_LAST_VALID_DATA"
-          : "LIVE"
+          ?
+          "USING_LAST_VALID_DATA"
+          :
+          "LIVE"
+
     },
 
     apiError:
-      cache.error || null,
+      cache.error ||
+      null,
 
     note:
       a.note
+
   };
 }
 
-
 /* =====================================================
-   SERVER
+   REQUEST HANDLER
 ===================================================== */
 
-async function handle(req, res) {
+async function handle(
+  req,
+  res
+) {
 
   const u =
     new URL(
@@ -1049,147 +1203,186 @@ async function handle(req, res) {
       "http://localhost"
     );
 
+  if (
+    req.method ===
+    "OPTIONS"
+  ) {
 
-  /* OPTIONS */
+    res.writeHead(
+      204,
+      {
 
-  if (req.method === "OPTIONS") {
+        "Access-Control-Allow-Origin":
+          "*",
 
-    res.writeHead(204, {
+        "Access-Control-Allow-Headers":
+          "Content-Type,X-Admin-Key,X-Access-Key,X-Device-ID",
 
-      "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods":
+          "GET,POST,DELETE,OPTIONS"
 
-      "Access-Control-Allow-Headers":
-        "Content-Type,X-Admin-Key,X-Access-Key,X-Device-ID",
-
-      "Access-Control-Allow-Methods":
-        "GET,POST,DELETE,OPTIONS"
-    });
+      }
+    );
 
     return res.end();
   }
 
-
   /* HEALTH */
 
   if (
-    u.pathname === "/health" ||
-    u.pathname === "/api/health"
+    u.pathname ===
+      "/health" ||
+    u.pathname ===
+      "/api/health"
   ) {
 
-    return send(res, 200, {
+    return send(
+      res,
+      200,
+      {
 
-      success: true,
+        success: true,
 
-      ok: true,
+        ok: true,
 
-      service:
-        "DY AI Wingo 30S",
+        service:
+          "DY AI Wingo 30S",
 
-      wingobot:
-        !!TOKEN,
+        wingobot:
+          !!TOKEN,
 
-      realHistory:
-        cache.history.length > 0,
+        realHistory:
+          cache.history.length >
+          0,
 
-      lastSync:
-        cache.lastSuccessAt || null
-    });
+        lastSync:
+          cache.lastSuccessAt ||
+          null
+
+      }
+    );
   }
-
 
   /* ADMIN PING */
 
   if (
-    u.pathname === "/api/admin/ping" &&
+    u.pathname ===
+      "/api/admin/ping" &&
     req.method === "GET"
   ) {
 
     if (!admin(req)) {
 
-      return send(res, 401, {
-        success: false,
-        error: "UNAUTHORIZED"
-      });
+      return send(
+        res,
+        401,
+        {
+          success: false,
+          error:
+            "UNAUTHORIZED"
+        }
+      );
     }
 
-    return send(res, 200, {
-      success: true
-    });
+    return send(
+      res,
+      200,
+      {
+        success: true
+      }
+    );
   }
-
 
   /* ADMIN STATUS */
 
   if (
-    u.pathname === "/api/admin/status" &&
+    u.pathname ===
+      "/api/admin/status" &&
     req.method === "GET"
   ) {
 
     if (!admin(req)) {
 
-      return send(res, 401, {
-        success: false,
-        error: "UNAUTHORIZED"
-      });
+      return send(
+        res,
+        401,
+        {
+          success: false,
+          error:
+            "UNAUTHORIZED"
+        }
+      );
     }
 
-
-    let database = false;
+    let database =
+      false;
 
     try {
 
-      await pool.query("SELECT 1");
+      await pool.query(
+        "SELECT 1"
+      );
 
-      database = true;
+      database =
+        true;
 
     } catch {}
 
+    return send(
+      res,
+      200,
+      {
 
-    return send(res, 200, {
+        success: true,
 
-      success: true,
+        database,
 
-      database,
+        wingobot:
+          !!TOKEN,
 
-      wingobot:
-        !!TOKEN,
+        realHistory:
+          cache.history.length >
+          0,
 
-      realHistory:
-        cache.history.length > 0,
+        apiPeriod:
+          cache.apiIssue,
 
-      apiPeriod:
-        cache.apiIssue,
+        lastSync:
+          cache.lastSuccessAt,
 
-      lastSync:
-        cache.lastSuccessAt,
+        apiError:
+          cache.error,
 
-      apiError:
-        cache.error,
+        uptime:
+          process.uptime(),
 
-      uptime:
-        process.uptime(),
+        timing:
+          getTiming()
 
-      timing:
-        getTiming()
-    });
+      }
+    );
   }
-
 
   /* ADMIN KEYS GET */
 
   if (
-    u.pathname === "/api/admin/keys" &&
+    u.pathname ===
+      "/api/admin/keys" &&
     req.method === "GET"
   ) {
 
     if (!admin(req)) {
 
-      return send(res, 401, {
-        success: false,
-        error: "UNAUTHORIZED"
-      });
+      return send(
+        res,
+        401,
+        {
+          success: false,
+          error:
+            "UNAUTHORIZED"
+        }
+      );
     }
-
 
     const q =
       await pool.query(`
@@ -1203,48 +1396,63 @@ async function handle(req, res) {
         ORDER BY id DESC
       `);
 
+    return send(
+      res,
+      200,
+      {
 
-    return send(res, 200, {
+        success: true,
 
-      success: true,
+        keys:
+          q.rows.map(
+            x => ({
 
-      keys:
-        q.rows.map(x => ({
+              ...x,
 
-          ...x,
+              key:
+                x.access_key,
 
-          key:
-            x.access_key,
+              live:
+                Number(
+                  x.last_seen ||
+                  0
+                ) > 0 &&
+                Date.now() -
+                Number(
+                  x.last_seen ||
+                  0
+                ) <= 90000
 
-          live:
-            Number(x.last_seen || 0) > 0 &&
-            Date.now() -
-            Number(x.last_seen || 0)
-            <= 90000
-        }))
-    });
+            })
+          )
+
+      }
+    );
   }
-
 
   /* CREATE KEY */
 
   if (
-    u.pathname === "/api/admin/keys" &&
+    u.pathname ===
+      "/api/admin/keys" &&
     req.method === "POST"
   ) {
 
     if (!admin(req)) {
 
-      return send(res, 401, {
-        success: false,
-        error: "UNAUTHORIZED"
-      });
+      return send(
+        res,
+        401,
+        {
+          success: false,
+          error:
+            "UNAUTHORIZED"
+        }
+      );
     }
-
 
     const b =
       await body(req);
-
 
     const k =
       String(
@@ -1261,7 +1469,6 @@ async function handle(req, res) {
           .toString("hex")
           .toUpperCase()
       );
-
 
     try {
 
@@ -1283,54 +1490,70 @@ async function handle(req, res) {
           ]
         );
 
+      return send(
+        res,
+        200,
+        {
 
-      return send(res, 200, {
+          success: true,
 
-        success: true,
+          key:
+            k,
 
-        key: k,
+          access_key:
+            k,
 
-        access_key: k,
+          item:
+            q.rows[0]
 
-        item:
-          q.rows[0]
-      });
+        }
+      );
 
     } catch (e) {
 
-      if (e.code === "23505") {
+      if (
+        e.code ===
+        "23505"
+      ) {
 
-        return send(res, 409, {
-          success: false,
-          error:
-            "KEY_ALREADY_EXISTS"
-        });
+        return send(
+          res,
+          409,
+          {
+            success: false,
+            error:
+              "KEY_ALREADY_EXISTS"
+          }
+        );
       }
 
       throw e;
     }
   }
 
-
   /* DELETE KEY */
 
   if (
-    u.pathname === "/api/admin/keys" &&
+    u.pathname ===
+      "/api/admin/keys" &&
     req.method === "DELETE"
   ) {
 
     if (!admin(req)) {
 
-      return send(res, 401, {
-        success: false,
-        error: "UNAUTHORIZED"
-      });
+      return send(
+        res,
+        401,
+        {
+          success: false,
+          error:
+            "UNAUTHORIZED"
+        }
+      );
     }
-
 
     const b =
       await body(req);
-
 
     const k =
       String(
@@ -1338,7 +1561,6 @@ async function handle(req, res) {
         b.access_key ??
         ""
       ).trim();
-
 
     await pool.query(
       `
@@ -1348,32 +1570,38 @@ async function handle(req, res) {
       [k]
     );
 
-
-    return send(res, 200, {
-      success: true
-    });
+    return send(
+      res,
+      200,
+      {
+        success: true
+      }
+    );
   }
-
 
   /* RESET DEVICE */
 
   if (
-    u.pathname === "/api/admin/reset-device" &&
+    u.pathname ===
+      "/api/admin/reset-device" &&
     req.method === "POST"
   ) {
 
     if (!admin(req)) {
 
-      return send(res, 401, {
-        success: false,
-        error: "UNAUTHORIZED"
-      });
+      return send(
+        res,
+        401,
+        {
+          success: false,
+          error:
+            "UNAUTHORIZED"
+        }
+      );
     }
-
 
     const b =
       await body(req);
-
 
     if (b.id) {
 
@@ -1385,7 +1613,9 @@ async function handle(req, res) {
           last_seen=0
         WHERE id=$1
         `,
-        [Number(b.id)]
+        [
+          Number(b.id)
+        ]
       );
 
     } else {
@@ -1399,160 +1629,188 @@ async function handle(req, res) {
         WHERE access_key=$1
         `,
         [
-          String(b.key || "")
+          String(
+            b.key || ""
+          )
         ]
       );
     }
 
-
-    return send(res, 200, {
-      success: true
-    });
+    return send(
+      res,
+      200,
+      {
+        success: true
+      }
+    );
   }
-
 
   /* WINGOBOT TEST */
 
   if (
-    u.pathname === "/api/admin/wingo-test" &&
+    u.pathname ===
+      "/api/admin/wingo-test" &&
     req.method === "GET"
   ) {
 
     if (!admin(req)) {
 
-      return send(res, 401, {
-        success: false,
-        error: "UNAUTHORIZED"
-      });
+      return send(
+        res,
+        401,
+        {
+          success: false,
+          error:
+            "UNAUTHORIZED"
+        }
+      );
     }
-
 
     await refreshWingo();
 
-
     if (!cache.data) {
 
-      return send(res, 502, {
+      return send(
+        res,
+        502,
+        {
 
-        success: false,
+          success: false,
 
-        error:
-          "WINGOBOT_API_FAILED",
+          error:
+            "WINGOBOT_API_FAILED",
 
-        message:
-          cache.error ||
-          "No WingoBot data"
-      });
+          message:
+            cache.error ||
+            "No WingoBot data"
+
+        }
+      );
     }
 
+    return send(
+      res,
+      200,
+      {
 
-    return send(res, 200, {
+        success: true,
 
-      success: true,
+        source:
+          "WingoBot",
 
-      source:
-        "WingoBot",
+        current:
+          cache.data.current ||
+          null,
 
-      current:
-        cache.data.current ||
-        null,
+        apiPeriod:
+          cache.apiIssue,
 
-      apiPeriod:
-        cache.apiIssue,
+        activePeriod:
+          getTiming().period,
 
-      activePeriod:
-        getTiming().period,
+        countdown:
+          getTiming().countdown,
 
-      countdown:
-        getTiming().countdown,
+        history:
+          cache.history.slice(
+            0,
+            20
+          ),
 
-      history:
-        cache.history.slice(0, 20),
+        stats:
+          cache.data.stats ||
+          null,
 
-      stats:
-        cache.data.stats ||
-        null,
+        analysis:
+          cache.analysis,
 
-      analysis:
-        cache.analysis,
+        lastSync:
+          cache.lastSuccessAt
 
-      lastSync:
-        cache.lastSuccessAt
-    });
+      }
+    );
   }
-
 
   /* KEY CHECK */
 
   if (
-    u.pathname === "/api/key/check" &&
+    u.pathname ===
+      "/api/key/check" &&
     req.method === "GET"
   ) {
 
     const r =
-      await auth(req, res);
+      await auth(
+        req,
+        res
+      );
 
     if (!r) return;
 
+    return send(
+      res,
+      200,
+      {
 
-    return send(res, 200, {
+        success: true,
 
-      success: true,
+        valid: true,
 
-      valid: true,
+        status:
+          "LIVE",
 
-      status:
-        r.device_id
-          ? "LIVE"
-          : "UNBOUND",
+        key:
+          r.access_key
 
-      key:
-        r.access_key
-    });
+      }
+    );
   }
 
-
-  /* =================================================
-     LIVE STATE
-  ================================================= */
+  /* STATE */
 
   if (
-    u.pathname === "/api/state" &&
+    u.pathname ===
+      "/api/state" &&
     req.method === "GET"
   ) {
 
     const r =
-      await auth(req, res);
+      await auth(
+        req,
+        res
+      );
 
     if (!r) return;
-
 
     if (!cache.data) {
       await refreshWingo();
     }
 
-
     if (!cache.data) {
 
-      return send(res, 502, {
+      return send(
+        res,
+        502,
+        {
 
-        success: false,
+          success: false,
 
-        source:
-          "WingoBot",
+          source:
+            "WingoBot",
 
-        realHistory:
-          false,
+          realHistory:
+            false,
 
-        error:
-          "WINGOBOT_API_FAILED",
+          error:
+            "WINGOBOT_API_FAILED",
 
-        message:
-          cache.error ||
-          "No valid data"
-      });
+          message:
+            cache.error ||
+            "No valid data"
+
+        }
+      );
     }
-
 
     return send(
       res,
@@ -1561,84 +1819,98 @@ async function handle(req, res) {
     );
   }
 
-
   /* HISTORY */
 
   if (
-    u.pathname === "/api/history" &&
+    u.pathname ===
+      "/api/history" &&
     req.method === "GET"
   ) {
 
     const r =
-      await auth(req, res);
+      await auth(
+        req,
+        res
+      );
 
     if (!r) return;
-
 
     if (!cache.data) {
       await refreshWingo();
     }
 
+    return send(
+      res,
+      200,
+      {
 
-    return send(res, 200, {
+        success: true,
 
-      success: true,
+        source:
+          "WingoBot",
 
-      source:
-        "WingoBot",
+        realHistory:
+          cache.history.length >
+          0,
 
-      realHistory:
-        true,
+        history:
+          cache.history.slice(
+            0,
+            30
+          ),
 
-      history:
-        cache.history.slice(0, 30),
+        current:
+          cache.data?.current ||
+          null,
 
-      current:
-        cache.data?.current ||
-        null,
+        activePeriod:
+          getTiming().period,
 
-      activePeriod:
-        getTiming().period,
+        apiPeriod:
+          cache.apiIssue,
 
-      apiPeriod:
-        cache.apiIssue,
+        stats:
+          cache.data?.stats ||
+          null,
 
-      stats:
-        cache.data?.stats ||
-        null,
+        lastSync:
+          cache.lastSuccessAt
 
-      lastSync:
-        cache.lastSuccessAt
-    });
+      }
+    );
   }
 
-
-  /* =================================================
+  /* =====================================================
      STATIC FILES
-  ================================================= */
+  ===================================================== */
 
   let file;
 
-
   if (
     u.pathname === "/" ||
-    u.pathname === "/prediction.html"
+    u.pathname ===
+      "/prediction.html"
   ) {
 
-    file = "prediction.html";
+    file =
+      "prediction.html";
 
   } else if (
     u.pathname === "/admin" ||
-    u.pathname === "/admin.html"
+    u.pathname ===
+      "/admin.html"
   ) {
 
-    file = "admin.html";
+    file =
+      "admin.html";
 
   } else if (
-    u.pathname === "/music.mp3"
+    u.pathname ===
+      "/music.mp3"
   ) {
 
-    file = "music.mp3";
+    file =
+      "music.mp3";
 
   } else {
 
@@ -1649,7 +1921,6 @@ async function handle(req, res) {
       );
   }
 
-
   const root =
     path.resolve(ROOT);
 
@@ -1659,7 +1930,6 @@ async function handle(req, res) {
       file
     );
 
-
   if (
     file !== root &&
     !file.startsWith(
@@ -1667,12 +1937,16 @@ async function handle(req, res) {
     )
   ) {
 
-    return send(res, 403, {
-      success: false,
-      error: "FORBIDDEN"
-    });
+    return send(
+      res,
+      403,
+      {
+        success: false,
+        error:
+          "FORBIDDEN"
+      }
+    );
   }
-
 
   fs.stat(
     file,
@@ -1683,18 +1957,21 @@ async function handle(req, res) {
         !s.isFile()
       ) {
 
-        return send(res, 404, {
-          success: false,
-          error: "NOT_FOUND"
-        });
+        return send(
+          res,
+          404,
+          {
+            success: false,
+            error:
+              "NOT_FOUND"
+          }
+        );
       }
-
 
       const ext =
         path
           .extname(file)
           .toLowerCase();
-
 
       const types = {
 
@@ -1724,10 +2001,8 @@ async function handle(req, res) {
 
         ".mp3":
           "audio/mpeg"
+
       };
-
-
-      /* MP3 */
 
       if (
         ext === ".mp3" &&
@@ -1739,7 +2014,6 @@ async function handle(req, res) {
             /bytes=(\d+)-(\d*)/
           );
 
-
         if (!range) {
 
           res.writeHead(416);
@@ -1747,15 +2021,15 @@ async function handle(req, res) {
           return res.end();
         }
 
-
         const start =
           Number(range[1]);
 
         const end =
           range[2]
-            ? Number(range[2])
-            : s.size - 1;
-
+            ?
+            Number(range[2])
+            :
+            s.size - 1;
 
         if (
           start >= s.size ||
@@ -1773,13 +2047,11 @@ async function handle(req, res) {
           return res.end();
         }
 
-
         const safeEnd =
           Math.min(
             end,
             s.size - 1
           );
-
 
         res.writeHead(
           206,
@@ -1799,21 +2071,21 @@ async function handle(req, res) {
 
             "Cache-Control":
               "public, max-age=3600"
+
           }
         );
-
 
         return fs
           .createReadStream(
             file,
             {
               start,
-              end: safeEnd
+              end:
+                safeEnd
             }
           )
           .pipe(res);
       }
-
 
       res.writeHead(
         200,
@@ -1825,19 +2097,21 @@ async function handle(req, res) {
 
           "Cache-Control":
             ext === ".mp3"
-              ? "public, max-age=3600"
-              : "no-store"
+              ?
+              "public, max-age=3600"
+              :
+              "no-store"
+
         }
       );
-
 
       fs
         .createReadStream(file)
         .pipe(res);
+
     }
   );
 }
-
 
 /* =====================================================
    START
@@ -1849,41 +2123,48 @@ async function handle(req, res) {
 
     await init();
 
-    /*
-      Initial API load.
-    */
-
     await refreshWingo();
-
 
     http
       .createServer(
         (req, res) => {
 
-          handle(req, res)
-            .catch(e => {
+          handle(
+            req,
+            res
+          ).catch(e => {
 
-              console.error(
-                "SERVER ERROR:",
-                e
-              );
+            console.error(
+              "SERVER ERROR:",
+              e
+            );
 
-              if (!res.headersSent) {
+            if (
+              !res.headersSent
+            ) {
 
-                send(res, 500, {
+              send(
+                res,
+                500,
+                {
 
                   success: false,
 
                   error:
                     e.message ||
                     "SERVER_ERROR"
-                });
 
-              } else {
+                }
+              );
 
-                res.end();
-              }
-            });
+            } else {
+
+              res.end();
+
+            }
+
+          });
+
         }
       )
       .listen(
@@ -1914,7 +2195,8 @@ async function handle(req, res) {
 
           console.log(
             "REAL HISTORY:",
-            cache.history.length > 0
+            cache.history.length >
+            0
           );
 
           console.log(
@@ -1925,6 +2207,7 @@ async function handle(req, res) {
           console.log(
             "================================"
           );
+
         }
       );
 
@@ -1936,6 +2219,7 @@ async function handle(req, res) {
     );
 
     process.exit(1);
+
   }
 
 })();
