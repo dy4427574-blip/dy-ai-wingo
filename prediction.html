@@ -1,2131 +1,2876 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-
-<title>DY AI • Wingo 30S</title>
-
-<style>
-*{
-  box-sizing:border-box;
-  margin:0;
-  padding:0;
-  -webkit-tap-highlight-color:transparent;
-}
-
-html,body{
-  width:100%;
-  min-height:100%;
-}
-
-body{
-  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  color:#f8fafc;
-  background:
-    radial-gradient(circle at 50% -10%,#172554 0,#080d1b 38%,#03050b 100%);
-  overflow-x:hidden;
-}
-
-button,input{
-  font:inherit;
-}
-
-.hidden{
-  display:none!important;
-}
-
-.app{
-  width:100%;
-  max-width:650px;
-  margin:auto;
-  padding:10px;
-}
-
-
-/* =====================================================
-   LOGIN
-===================================================== */
-
-.login-page{
-  min-height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:18px;
-}
-
-.login-box{
-  width:100%;
-  max-width:390px;
-  padding:25px;
-  border-radius:24px;
-  background:rgba(8,13,27,.94);
-  border:1px solid rgba(148,163,184,.12);
-  box-shadow:0 25px 80px rgba(0,0,0,.5);
-}
-
-.logo{
-  width:66px;
-  height:66px;
-  margin:auto;
-  display:grid;
-  place-items:center;
-  border-radius:20px;
-  background:linear-gradient(135deg,#22d3ee,#6366f1,#8b5cf6);
-  font-size:25px;
-  font-weight:1000;
-  box-shadow:0 15px 45px rgba(59,130,246,.3);
-}
-
-.login-title{
-  text-align:center;
-  margin-top:15px;
-}
-
-.login-title h1{
-  font-size:23px;
-}
-
-.login-title p{
-  margin-top:5px;
-  color:#64748b;
-  font-size:10px;
-}
-
-.input-wrap{
-  margin-top:22px;
-}
-
-.input-wrap label{
-  display:block;
-  margin-bottom:7px;
-  color:#94a3b8;
-  font-size:9px;
-  font-weight:800;
-}
-
-.input{
-  width:100%;
-  padding:14px;
-  outline:none;
-  color:#fff;
-  background:#050a14;
-  border:1px solid #1e293b;
-  border-radius:13px;
-}
-
-.input:focus{
-  border-color:#6366f1;
-  box-shadow:0 0 0 3px rgba(99,102,241,.1);
-}
-
-.login-btn{
-  width:100%;
-  margin-top:12px;
-  padding:14px;
-  border:0;
-  border-radius:13px;
-  color:#fff;
-  font-weight:900;
-  background:linear-gradient(135deg,#2563eb,#6366f1);
-}
-
-.login-error{
-  display:none;
-  margin-top:10px;
-  padding:10px;
-  border-radius:10px;
-  color:#fca5a5;
-  background:rgba(239,68,68,.08);
-  border:1px solid rgba(239,68,68,.15);
-  font-size:10px;
-}
-
-.login-error.show{
-  display:block;
-}
-
-
-/* =====================================================
-   HEADER
-===================================================== */
-
-.header{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:4px 3px 12px;
-}
-
-.brand{
-  display:flex;
-  align-items:center;
-  gap:9px;
-}
-
-.brand-logo{
-  width:38px;
-  height:38px;
-  display:grid;
-  place-items:center;
-  border-radius:12px;
-  background:linear-gradient(135deg,#22d3ee,#6366f1);
-  font-size:14px;
-  font-weight:1000;
-}
-
-.brand-name{
-  font-size:16px;
-  font-weight:950;
-}
-
-.brand-sub{
-  color:#64748b;
-  font-size:8px;
-  margin-top:2px;
-}
-
-.live{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  padding:7px 9px;
-  border-radius:99px;
-  background:rgba(15,23,42,.75);
-  border:1px solid rgba(148,163,184,.12);
-  color:#94a3b8;
-  font-size:8px;
-  font-weight:800;
-}
-
-.live-dot{
-  width:6px;
-  height:6px;
-  border-radius:50%;
-  background:#22c55e;
-  box-shadow:0 0 10px #22c55e;
-}
-
-
-/* =====================================================
-   GAME
-===================================================== */
-
-.game-card{
-  position:relative;
-  height:350px;
-  overflow:hidden;
-  border-radius:22px;
-  background:#02050a;
-  border:1px solid rgba(148,163,184,.12);
-  box-shadow:0 20px 60px rgba(0,0,0,.35);
-}
-
-.game-card iframe{
-  width:100%;
-  height:100%;
-  border:0;
-}
-
-.game-overlay{
-  position:absolute;
-  left:10px;
-  right:10px;
-  bottom:10px;
-  display:flex;
-  justify-content:flex-end;
-  pointer-events:none;
-}
-
-.open-game{
-  pointer-events:auto;
-  border:1px solid rgba(255,255,255,.12);
-  border-radius:10px;
-  padding:8px 11px;
-  background:rgba(2,6,23,.88);
-  color:#cbd5e1;
-  font-size:9px;
-  font-weight:800;
-  text-decoration:none;
-}
-
-
-/* =====================================================
-   TARGET
-===================================================== */
-
-.round-card{
-  margin-top:10px;
-  padding:13px;
-  border-radius:17px;
-  background:rgba(8,13,27,.88);
-  border:1px solid rgba(148,163,184,.1);
-}
-
-.round-top{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-}
-
-.round-label{
-  color:#64748b;
-  font-size:8px;
-  letter-spacing:.8px;
-}
-
-.round-period{
-  margin-top:5px;
-  font-family:monospace;
-  font-size:12px;
-  font-weight:800;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-
-.timer{
-  min-width:50px;
-  height:35px;
-  display:grid;
-  place-items:center;
-  border-radius:11px;
-  background:#111827;
-  border:1px solid #1e293b;
-  color:#38bdf8;
-  font-size:15px;
-  font-weight:1000;
-}
-
-
-/* =====================================================
-   MAIN PREDICTION
-===================================================== */
-
-.prediction-card{
-  position:relative;
-  margin-top:12px;
-  min-height:350px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  overflow:hidden;
-  border-radius:26px;
-  background:
-    radial-gradient(circle at 50% 20%,rgba(99,102,241,.14),transparent 45%),
-    rgba(8,13,27,.95);
-  border:1px solid rgba(99,102,241,.18);
-  box-shadow:0 20px 70px rgba(0,0,0,.35);
-}
-
-.prediction-inner{
-  width:100%;
-  text-align:center;
-}
-
-.ai-label{
-  color:#64748b;
-  font-size:9px;
-  font-weight:900;
-  letter-spacing:2px;
-}
-
-.target{
-  margin-top:7px;
-  color:#64748b;
-  font-family:monospace;
-  font-size:10px;
-}
-
-.target span{
-  color:#cbd5e1;
-}
-
-
-/* =====================================================
-   ANALYSIS
-===================================================== */
-
-.analysis-screen{
-  position:absolute;
-  inset:0;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  background:rgba(5,9,20,.98);
-  z-index:5;
-}
-
-.analysis-screen.hidden{
-  display:none;
-}
-
-.ai-orbit{
-  width:65px;
-  height:65px;
-  border-radius:50%;
-  border:2px solid rgba(99,102,241,.15);
-  border-top-color:#22d3ee;
-  border-right-color:#8b5cf6;
-  animation:spin .8s linear infinite;
-  box-shadow:0 0 35px rgba(99,102,241,.18);
-}
-
-@keyframes spin{
-  to{
-    transform:rotate(360deg);
-  }
-}
-
-.analysis-title{
-  margin-top:17px;
-  font-size:13px;
-  font-weight:900;
-}
-
-.analysis-text{
-  margin-top:6px;
-  color:#64748b;
-  font-size:9px;
-}
-
-.analysis-progress{
-  width:190px;
-  height:4px;
-  margin-top:15px;
-  overflow:hidden;
-  border-radius:99px;
-  background:#111827;
-}
-
-.analysis-progress span{
-  display:block;
-  width:0;
-  height:100%;
-  border-radius:99px;
-  background:linear-gradient(90deg,#22d3ee,#6366f1,#a78bfa);
-  animation:progress 3s linear forwards;
-}
-
-@keyframes progress{
-  to{
-    width:100%;
-  }
-}
-
-
-/* =====================================================
-   RESULT
-===================================================== */
-
-.final-content{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-}
-
-.final-content.hidden{
-  visibility:hidden;
-}
-
-.prediction-side{
-  margin-top:20px;
-  font-size:66px;
-  line-height:1;
-  font-weight:1000;
-  letter-spacing:-2px;
-}
-
-.prediction-side.big{
-  color:#38bdf8;
-  text-shadow:0 0 35px rgba(56,189,248,.25);
-}
-
-.prediction-side.small{
-  color:#a78bfa;
-  text-shadow:0 0 35px rgba(167,139,250,.25);
-}
-
-.confidence-wrap{
-  width:230px;
-  margin-top:29px;
-}
-
-.confidence-head{
-  display:flex;
-  justify-content:space-between;
-  margin-bottom:7px;
-  color:#64748b;
-  font-size:8px;
-  font-weight:800;
-}
-
-.confidence-head b{
-  color:#cbd5e1;
-}
-
-.confidence-bar{
-  width:100%;
-  height:5px;
-  overflow:hidden;
-  border-radius:99px;
-  background:#111827;
-}
-
-.confidence-bar span{
-  display:block;
-  width:0;
-  height:100%;
-  border-radius:99px;
-  background:linear-gradient(90deg,#22d3ee,#6366f1,#a78bfa);
-  transition:width .5s ease;
-}
-
-.ai-status{
-  margin-top:14px;
-  color:#64748b;
-  font-size:8px;
-  font-weight:800;
-}
-
-
-/* =====================================================
-   LAST 30
-===================================================== */
-
-.history-card{
-  margin-top:12px;
-  padding:14px;
-  border-radius:19px;
-  background:rgba(8,13,27,.9);
-  border:1px solid rgba(148,163,184,.1);
-}
-
-.section-head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  margin-bottom:10px;
-}
-
-.section-head h2{
-  font-size:12px;
-}
-
-.section-head span{
-  color:#64748b;
-  font-size:8px;
-  font-weight:800;
-}
-
-.history-table{
-  width:100%;
-  border-collapse:collapse;
-}
-
-.history-table th{
-  padding:7px 4px;
-  color:#475569;
-  font-size:7px;
-  text-align:left;
-}
-
-.history-table td{
-  padding:9px 4px;
-  border-top:1px solid rgba(148,163,184,.06);
-  color:#cbd5e1;
-  font-size:9px;
-}
-
-.period-cell{
-  max-width:145px;
-  font-family:monospace;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-
-.big-text{
-  color:#38bdf8!important;
-  font-weight:900;
-}
-
-.small-text{
-  color:#a78bfa!important;
-  font-weight:900;
-}
-
-.win{
-  color:#4ade80!important;
-  font-weight:900;
-}
-
-.loss{
-  color:#f87171!important;
-  font-weight:900;
-}
-
-.pending{
-  color:#64748b!important;
-}
-
-
-/* =====================================================
-   STATS
-===================================================== */
-
-.stats{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:8px;
-  margin-top:10px;
-}
-
-.stat{
-  padding:12px 8px;
-  text-align:center;
-  border-radius:14px;
-  background:rgba(8,13,27,.85);
-  border:1px solid rgba(148,163,184,.08);
-}
-
-.stat-value{
-  font-size:17px;
-  font-weight:1000;
-}
-
-.stat-label{
-  margin-top:3px;
-  color:#64748b;
-  font-size:7px;
-  text-transform:uppercase;
-}
-
-
-/* =====================================================
-   CONTROLS
-===================================================== */
-
-.controls{
-  display:flex;
-  gap:8px;
-  margin-top:10px;
-}
-
-.control-btn{
-  flex:1;
-  padding:11px;
-  border-radius:12px;
-  border:1px solid #1e293b;
-  background:#0b1220;
-  color:#94a3b8;
-  font-size:9px;
-  font-weight:800;
-}
-
-.logout{
-  color:#fca5a5;
-}
-
-
-/* =====================================================
-   MUSIC
-===================================================== */
-
-.music{
-  position:fixed;
-  left:50%;
-  bottom:10px;
-  transform:translateX(-50%);
-  width:min(calc(100% - 24px),600px);
-  z-index:20;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:10px 11px 10px 14px;
-  border-radius:18px;
-  background:rgba(7,12,24,.95);
-  border:1px solid rgba(148,163,184,.13);
-  box-shadow:0 15px 45px rgba(0,0,0,.45);
-  backdrop-filter:blur(14px);
-}
-
-.music-title{
-  font-size:10px;
-  font-weight:900;
-}
-
-.music-sub{
-  margin-top:3px;
-  color:#64748b;
-  font-size:8px;
-}
-
-.music-btn{
-  width:46px;
-  height:46px;
-  display:grid;
-  place-items:center;
-  border:0;
-  border-radius:14px;
-  background:linear-gradient(135deg,#22d3ee,#3b82f6);
-  color:#fff;
-  font-size:17px;
-}
-
-@media(max-width:430px){
-
-  .app{
-    padding:9px;
-  }
-
-  .game-card{
-    height:310px;
-  }
-
-  .prediction-card{
-    min-height:320px;
-  }
-
-  .prediction-side{
-    font-size:58px;
-  }
-
-}
-</style>
+  <meta charset="UTF-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  >
+
+  <title>DY AI Prediction</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      background: #050812;
+      color: #eaf1ff;
+      font-family:
+        Inter,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 12px;
+    }
+
+    /* ======================================================
+       HEADER
+    ====================================================== */
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 13px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      font-size: 19px;
+      font-weight: 900;
+
+      background:
+        linear-gradient(
+          135deg,
+          #16bfff,
+          #6366f1
+        );
+
+      box-shadow:
+        0 8px 30px rgba(22, 191, 255, .18);
+    }
+
+    .brand-title {
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: .5px;
+    }
+
+    .brand-sub {
+      margin-top: 2px;
+      font-size: 10px;
+      color: #71809a;
+      letter-spacing: 1px;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 7px;
+    }
+
+    .small-btn {
+      min-width: 38px;
+      height: 38px;
+      padding: 0 10px;
+      border-radius: 11px;
+
+      color: #c9d7ee;
+      background: #0b1220;
+      border: 1px solid #172238;
+
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .small-btn:active {
+      transform: scale(.96);
+    }
+
+    /* ======================================================
+       LOGIN
+    ====================================================== */
+
+    .login-screen {
+      min-height: 92vh;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 420px;
+
+      padding: 25px 20px;
+
+      border-radius: 22px;
+
+      background:
+        linear-gradient(
+          180deg,
+          #0b1220,
+          #070d18
+        );
+
+      border: 1px solid #18243a;
+
+      box-shadow:
+        0 25px 80px rgba(0, 0, 0, .35);
+    }
+
+    .login-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 15px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      border-radius: 20px;
+
+      background:
+        linear-gradient(
+          135deg,
+          #0ea5e9,
+          #6366f1
+        );
+
+      font-size: 28px;
+      font-weight: 900;
+    }
+
+    .login-title {
+      text-align: center;
+      font-size: 23px;
+      font-weight: 950;
+    }
+
+    .login-sub {
+      margin-top: 6px;
+      margin-bottom: 22px;
+
+      text-align: center;
+
+      color: #71809a;
+      font-size: 12px;
+    }
+
+    .input {
+      width: 100%;
+      height: 49px;
+
+      padding: 0 15px;
+
+      outline: none;
+
+      border-radius: 13px;
+      border: 1px solid #1b2a43;
+
+      color: white;
+      background: #050a13;
+
+      font-size: 14px;
+    }
+
+    .input:focus {
+      border-color: #19baff;
+      box-shadow:
+        0 0 0 3px rgba(25, 186, 255, .08);
+    }
+
+    .login-btn {
+      width: 100%;
+      height: 49px;
+      margin-top: 11px;
+
+      border-radius: 13px;
+
+      color: white;
+
+      background:
+        linear-gradient(
+          135deg,
+          #0ea5e9,
+          #6366f1
+        );
+
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .login-message {
+      min-height: 18px;
+      margin-top: 12px;
+
+      text-align: center;
+
+      color: #ff6978;
+      font-size: 11px;
+    }
+
+    /* ======================================================
+       MAIN
+    ====================================================== */
+
+    .main {
+      display: none;
+    }
+
+    .main.show {
+      display: block;
+    }
+
+    /* ======================================================
+       GAME
+    ====================================================== */
+
+    .game-card {
+      position: relative;
+
+      overflow: hidden;
+
+      border-radius: 20px;
+
+      background: #02060d;
+      border: 1px solid #172238;
+
+      box-shadow:
+        0 20px 55px rgba(0, 0, 0, .28);
+    }
+
+    .game-head {
+      height: 48px;
+      padding: 0 13px;
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      background: #08101c;
+      border-bottom: 1px solid #131f33;
+    }
+
+    .game-title {
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .6px;
+    }
+
+    .game-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+
+      font-size: 10px;
+      color: #6f819e;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #32e58a;
+      box-shadow:
+        0 0 10px rgba(50, 229, 138, .6);
+    }
+
+    .game-frame {
+      width: 100%;
+      height: 420px;
+
+      border: 0;
+
+      display: block;
+
+      background: #000;
+    }
+
+    .game-fallback {
+      padding: 10px;
+      background: #050b15;
+    }
+
+    .open-game {
+      width: 100%;
+      height: 43px;
+
+      border-radius: 11px;
+
+      color: white;
+
+      background: #101b2d;
+      border: 1px solid #20314d;
+
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    /* ======================================================
+       TARGET
+    ====================================================== */
+
+    .target-card {
+      margin-top: 12px;
+      padding: 13px;
+
+      border-radius: 17px;
+
+      background: #09111e;
+      border: 1px solid #17243a;
+    }
+
+    .target-label {
+      color: #6d7d96;
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 1.3px;
+    }
+
+    .target-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      gap: 10px;
+      margin-top: 7px;
+    }
+
+    .target-period {
+      min-width: 0;
+
+      color: #e8f1ff;
+
+      font-family:
+        ui-monospace,
+        SFMono-Regular,
+        Menlo,
+        monospace;
+
+      font-size: 14px;
+      font-weight: 850;
+
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .timer {
+      flex: 0 0 auto;
+
+      min-width: 76px;
+      padding: 8px 10px;
+
+      text-align: center;
+
+      border-radius: 10px;
+
+      background: #050a13;
+      border: 1px solid #17243a;
+
+      color: #27c9ff;
+
+      font-family:
+        ui-monospace,
+        monospace;
+
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    /* ======================================================
+       AI CARD
+    ====================================================== */
+
+    .ai-card {
+      position: relative;
+
+      margin-top: 12px;
+      padding: 18px 15px;
+
+      overflow: hidden;
+
+      border-radius: 21px;
+
+      background:
+        radial-gradient(
+          circle at 50% -30%,
+          rgba(32, 194, 255, .13),
+          transparent 55%
+        ),
+        #080f1c;
+
+      border: 1px solid #182940;
+    }
+
+    .ai-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      gap: 10px;
+    }
+
+    .ai-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: .7px;
+    }
+
+    .ai-pulse {
+      width: 9px;
+      height: 9px;
+
+      border-radius: 50%;
+
+      background: #20c6ff;
+
+      box-shadow:
+        0 0 14px rgba(32, 198, 255, .85);
+    }
+
+    .model-badge {
+      padding: 5px 8px;
+
+      border-radius: 8px;
+
+      background: #0d192b;
+      border: 1px solid #1b2b45;
+
+      color: #72849f;
+
+      font-size: 8px;
+      font-weight: 900;
+      letter-spacing: .7px;
+    }
+
+    /* ======================================================
+       ANALYSIS
+    ====================================================== */
+
+    .analysis {
+      display: none;
+
+      padding: 28px 8px 15px;
+
+      text-align: center;
+    }
+
+    .analysis.show {
+      display: block;
+    }
+
+    .scan {
+      width: 74px;
+      height: 74px;
+
+      margin: 0 auto 13px;
+
+      position: relative;
+
+      border-radius: 50%;
+
+      border: 2px solid #152b45;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .scan::before {
+      content: "";
+
+      position: absolute;
+
+      inset: 8px;
+
+      border-radius: 50%;
+
+      border: 2px dashed #1cbaff;
+
+      animation:
+        spin 1.2s linear infinite;
+    }
+
+    .scan-core {
+      font-size: 23px;
+      z-index: 2;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .analysis-title {
+      font-size: 15px;
+      font-weight: 900;
+    }
+
+    .analysis-sub {
+      margin-top: 5px;
+
+      color: #657893;
+
+      font-size: 10px;
+    }
+
+    .progress {
+      height: 4px;
+
+      margin: 15px auto 0;
+
+      max-width: 300px;
+
+      overflow: hidden;
+
+      border-radius: 10px;
+
+      background: #101c2e;
+    }
+
+    .progress-bar {
+      width: 0;
+      height: 100%;
+
+      border-radius: inherit;
+
+      background:
+        linear-gradient(
+          90deg,
+          #14b8ff,
+          #6366f1
+        );
+
+      transition: width .15s linear;
+    }
+
+    /* ======================================================
+       PREDICTION
+    ====================================================== */
+
+    .prediction {
+      display: none;
+
+      padding-top: 20px;
+    }
+
+    .prediction.show {
+      display: block;
+    }
+
+    .prediction-label {
+      text-align: center;
+
+      color: #6c7d97;
+
+      font-size: 9px;
+      font-weight: 900;
+
+      letter-spacing: 1.3px;
+    }
+
+    .prediction-side {
+      margin-top: 5px;
+
+      text-align: center;
+
+      font-size: 44px;
+      line-height: 1;
+
+      font-weight: 1000;
+
+      letter-spacing: 1px;
+    }
+
+    .prediction-side.big {
+      color: #22c6ff;
+
+      text-shadow:
+        0 0 25px rgba(34, 198, 255, .25);
+    }
+
+    .prediction-side.small {
+      color: #a985ff;
+
+      text-shadow:
+        0 0 25px rgba(169, 133, 255, .25);
+    }
+
+    .confidence-wrap {
+      max-width: 310px;
+      margin: 15px auto 0;
+    }
+
+    .confidence-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      color: #72839c;
+
+      font-size: 9px;
+      font-weight: 800;
+    }
+
+    .confidence-value {
+      color: #eaf2ff;
+      font-weight: 950;
+    }
+
+    .confidence-bar {
+      height: 6px;
+      margin-top: 7px;
+
+      overflow: hidden;
+
+      border-radius: 20px;
+
+      background: #111d30;
+    }
+
+    .confidence-fill {
+      width: 0;
+      height: 100%;
+
+      border-radius: inherit;
+
+      background:
+        linear-gradient(
+          90deg,
+          #17bdf4,
+          #8b78ff
+        );
+
+      transition: width .5s ease;
+    }
+
+    .regime {
+      margin-top: 14px;
+
+      text-align: center;
+    }
+
+    .regime-badge {
+      display: inline-block;
+
+      padding: 6px 10px;
+
+      border-radius: 9px;
+
+      color: #91a2bc;
+
+      background: #0c1728;
+      border: 1px solid #1a2a43;
+
+      font-size: 8px;
+      font-weight: 900;
+      letter-spacing: .8px;
+    }
+
+    .prediction-note {
+      margin-top: 8px;
+
+      text-align: center;
+
+      color: #566780;
+
+      font-size: 9px;
+    }
+
+    /* ======================================================
+       STATS
+    ====================================================== */
+
+    .stats {
+      display: grid;
+
+      grid-template-columns:
+        repeat(3, 1fr);
+
+      gap: 8px;
+
+      margin-top: 12px;
+    }
+
+    .stat {
+      padding: 12px 8px;
+
+      text-align: center;
+
+      border-radius: 14px;
+
+      background: #080f1b;
+      border: 1px solid #162238;
+    }
+
+    .stat-value {
+      font-size: 17px;
+      font-weight: 950;
+    }
+
+    .stat-label {
+      margin-top: 3px;
+
+      color: #61728c;
+
+      font-size: 8px;
+      font-weight: 850;
+
+      letter-spacing: .6px;
+    }
+
+    .win {
+      color: #36e68d;
+    }
+
+    .loss {
+      color: #ff6978;
+    }
+
+    .accuracy {
+      color: #28c8ff;
+    }
+
+    /* ======================================================
+       LAST 30
+    ====================================================== */
+
+    .history-card {
+      margin-top: 12px;
+
+      overflow: hidden;
+
+      border-radius: 19px;
+
+      background: #080f1a;
+      border: 1px solid #17243a;
+    }
+
+    .history-head {
+      padding: 14px;
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      border-bottom: 1px solid #131f33;
+    }
+
+    .history-title {
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: .6px;
+    }
+
+    .last-badge {
+      padding: 5px 8px;
+
+      border-radius: 8px;
+
+      color: #6f819c;
+
+      background: #0d1726;
+      border: 1px solid #1a2941;
+
+      font-size: 8px;
+      font-weight: 950;
+      letter-spacing: .8px;
+    }
+
+    .history-scroll {
+      overflow-x: auto;
+      max-height: 530px;
+      overflow-y: auto;
+    }
+
+    table {
+      width: 100%;
+
+      border-collapse: collapse;
+
+      min-width: 520px;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+
+      padding: 11px 9px;
+
+      text-align: left;
+
+      background: #080f1a;
+
+      color: #52627b;
+
+      font-size: 8px;
+      font-weight: 900;
+
+      letter-spacing: .9px;
+
+      border-bottom: 1px solid #162238;
+    }
+
+    td {
+      padding: 12px 9px;
+
+      color: #c7d4e9;
+
+      font-family:
+        ui-monospace,
+        SFMono-Regular,
+        Menlo,
+        monospace;
+
+      font-size: 9px;
+      font-weight: 800;
+
+      border-bottom: 1px solid #0f1a2b;
+    }
+
+    td.period {
+      color: #d5e1f2;
+    }
+
+    td.side-big {
+      color: #24c6ff;
+    }
+
+    td.side-small {
+      color: #a986ff;
+    }
+
+    td.result-empty {
+      color: #47566d;
+    }
+
+    td.wl-win {
+      color: #35e58b;
+    }
+
+    td.wl-loss {
+      color: #ff6675;
+    }
+
+    td.wl-pending {
+      color: #8796ac;
+    }
+
+    /* ======================================================
+       MUSIC
+    ====================================================== */
+
+    .music-card {
+      position: sticky;
+      bottom: 10px;
+      z-index: 10;
+
+      margin-top: 12px;
+
+      padding: 12px;
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      border-radius: 19px;
+
+      background:
+        rgba(7, 13, 24, .95);
+
+      border: 1px solid #1b2b45;
+
+      box-shadow:
+        0 15px 45px rgba(0, 0, 0, .4);
+
+      backdrop-filter: blur(15px);
+    }
+
+    .music-info {
+      min-width: 0;
+    }
+
+    .music-title {
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .6px;
+    }
+
+    .music-sub {
+      margin-top: 3px;
+
+      color: #657690;
+
+      font-size: 8px;
+    }
+
+    .music-btn {
+      width: 54px;
+      height: 54px;
+
+      flex: 0 0 auto;
+
+      border-radius: 17px;
+
+      color: white;
+
+      background:
+        linear-gradient(
+          135deg,
+          #22c7ff,
+          #587cff
+        );
+
+      font-size: 19px;
+
+      box-shadow:
+        0 8px 25px rgba(33, 178, 255, .2);
+    }
+
+    .music-btn:active {
+      transform: scale(.95);
+    }
+
+    /* ======================================================
+       FOOTER
+    ====================================================== */
+
+    .footer {
+      padding: 16px 5px 25px;
+
+      text-align: center;
+
+      color: #3f4f66;
+
+      font-size: 8px;
+      line-height: 1.6;
+    }
+
+    /* ======================================================
+       RESPONSIVE
+    ====================================================== */
+
+    @media (min-width: 700px) {
+      .app {
+        padding: 18px;
+      }
+
+      .game-frame {
+        height: 540px;
+      }
+
+      .prediction-side {
+        font-size: 54px;
+      }
+    }
+
+    @media (max-width: 430px) {
+      .app {
+        padding: 9px;
+      }
+
+      .game-frame {
+        height: 390px;
+      }
+
+      .prediction-side {
+        font-size: 41px;
+      }
+
+      .target-period {
+        font-size: 12px;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
+<div class="app">
 
-<!-- =====================================================
-     LOGIN
-===================================================== -->
+  <!-- =====================================================
+       LOGIN
+  ====================================================== -->
 
-<div id="loginPage" class="login-page">
+  <section id="loginScreen" class="login-screen">
 
-  <div class="login-box">
+    <div class="login-card">
 
-    <div class="logo">
-      DY
-    </div>
+      <div class="login-icon">
+        AI
+      </div>
 
-    <div class="login-title">
-      <h1>DY AI</h1>
-      <p>Wingo 30 Seconds Prediction</p>
-    </div>
+      <div class="login-title">
+        DY AI Prediction
+      </div>
 
-    <div class="input-wrap">
-
-      <label>ACCESS KEY</label>
+      <div class="login-sub">
+        Enter your access key to continue
+      </div>
 
       <input
-        id="accessKey"
+        id="keyInput"
         class="input"
         type="password"
-        placeholder="Enter your access key"
         autocomplete="off"
+        placeholder="Enter access key"
       >
 
+      <button
+        id="loginBtn"
+        class="login-btn"
+      >
+        LOGIN
+      </button>
+
+      <div
+        id="loginMessage"
+        class="login-message"
+      ></div>
+
     </div>
 
-    <button
-      id="loginBtn"
-      class="login-btn">
-      ENTER DY AI
-    </button>
-
-    <div
-      id="loginError"
-      class="login-error">
-    </div>
-
-  </div>
-
-</div>
+  </section>
 
 
-<!-- =====================================================
-     APP
-===================================================== -->
+  <!-- =====================================================
+       MAIN
+  ====================================================== -->
 
-<div id="app" class="app hidden">
+  <main id="main" class="main">
 
+    <!-- HEADER -->
 
-  <!-- HEADER -->
+    <header class="header">
 
-  <header class="header">
+      <div class="brand">
 
-    <div class="brand">
+        <div class="logo">
+          DY
+        </div>
 
-      <div class="brand-logo">
-        DY
+        <div>
+          <div class="brand-title">
+            DY AI
+          </div>
+
+          <div class="brand-sub">
+            BIG / SMALL INTELLIGENCE
+          </div>
+        </div>
+
       </div>
 
-      <div>
+      <div class="header-actions">
 
-        <div class="brand-name">
-          DY AI
+        <button
+          id="musicTopBtn"
+          class="small-btn"
+        >
+          ♪
+        </button>
+
+        <button
+          id="logoutBtn"
+          class="small-btn"
+        >
+          EXIT
+        </button>
+
+      </div>
+
+    </header>
+
+
+    <!-- ===================================================
+         GAME
+    ==================================================== -->
+
+    <section class="game-card">
+
+      <div class="game-head">
+
+        <div class="game-title">
+          SHREEWIN 30S
         </div>
 
-        <div class="brand-sub">
-          BIG / SMALL AI ENGINE
+        <div class="game-status">
+
+          <span class="dot"></span>
+
+          <span id="gameStatus">
+            LIVE
+          </span>
+
         </div>
 
       </div>
 
-    </div>
+      <iframe
+        id="gameFrame"
+        class="game-frame"
+        src="https://www.shreewin38.com/#/register?invitationCode=88523152383"
+        allow="fullscreen"
+        loading="eager"
+        referrerpolicy="no-referrer"
+      ></iframe>
 
-    <div class="live">
+      <div class="game-fallback">
 
-      <span class="live-dot"></span>
+        <button
+          id="openGameBtn"
+          class="open-game"
+        >
+          OPEN GAME
+        </button>
 
-      <span id="liveText">
-        LIVE
-      </span>
+      </div>
 
-    </div>
-
-  </header>
-
-
-  <!-- GAME -->
-
-  <div class="game-card">
-
-    <iframe
-      id="gameFrame"
-      src="https://www.shreewin38.com/#/register?invitationCode=88523152383"
-      allow="fullscreen"
-      loading="eager">
-    </iframe>
-
-    <div class="game-overlay">
-
-      <a
-        class="open-game"
-        href="https://www.shreewin38.com/#/register?invitationCode=88523152383"
-        target="_blank"
-        rel="noopener">
-        OPEN GAME ↗
-      </a>
-
-    </div>
-
-  </div>
+    </section>
 
 
-  <!-- TARGET -->
+    <!-- ===================================================
+         TARGET
+    ==================================================== -->
 
-  <div class="round-card">
+    <section class="target-card">
 
-    <div class="round-top">
+      <div class="target-label">
+        AI TARGET PERIOD
+      </div>
 
-      <div>
-
-        <div class="round-label">
-          PREDICTION TARGET
-        </div>
+      <div class="target-row">
 
         <div
-          id="targetIssue"
-          class="round-period">
+          id="targetPeriod"
+          class="target-period"
+        >
           WAITING...
         </div>
 
+        <div
+          id="timer"
+          class="timer"
+        >
+          00:30
+        </div>
+
       </div>
+
+    </section>
+
+
+    <!-- ===================================================
+         AI
+    ==================================================== -->
+
+    <section class="ai-card">
+
+      <div class="ai-top">
+
+        <div class="ai-title">
+
+          <span class="ai-pulse"></span>
+
+          DY AI ANALYSIS
+
+        </div>
+
+        <div class="model-badge">
+          V3 • BS ONLY
+        </div>
+
+      </div>
+
+
+      <!-- ANALYSIS -->
 
       <div
-        id="timer"
-        class="timer">
-        --
+        id="analysis"
+        class="analysis"
+      >
+
+        <div class="scan">
+
+          <div class="scan-core">
+            🤖
+          </div>
+
+        </div>
+
+        <div class="analysis-title">
+          ANALYZING TREND
+        </div>
+
+        <div class="analysis-sub">
+          Checking recent movement, trend break,
+          transition & historical pattern
+        </div>
+
+        <div class="progress">
+
+          <div
+            id="progressBar"
+            class="progress-bar"
+          ></div>
+
+        </div>
+
       </div>
 
-    </div>
 
-  </div>
-
-
-  <!-- ===================================================
-       PREDICTION
-  ==================================================== -->
-
-  <div class="prediction-card">
-
-
-    <!-- ANALYSIS -->
-
-    <div
-      id="analysisScreen"
-      class="analysis-screen">
-
-      <div class="ai-orbit"></div>
-
-      <div class="analysis-title">
-        AI ANALYZING
-      </div>
+      <!-- PREDICTION -->
 
       <div
-        id="analysisText"
-        class="analysis-text">
-        Reading recent pattern...
-      </div>
+        id="prediction"
+        class="prediction"
+      >
 
-      <div class="analysis-progress">
-        <span></span>
-      </div>
+        <div class="prediction-label">
+          AI PREDICTION
+        </div>
 
-    </div>
+        <div
+          id="predictionSide"
+          class="prediction-side"
+        >
+          --
+        </div>
 
+        <div class="confidence-wrap">
 
-    <!-- FINAL -->
+          <div class="confidence-head">
 
-    <div
-      id="finalContent"
-      class="final-content hidden">
+            <span>
+              CONFIDENCE
+            </span>
 
-      <div class="ai-label">
-        AI PREDICTION
-      </div>
+            <span
+              id="confidenceValue"
+              class="confidence-value"
+            >
+              0%
+            </span>
 
-      <div class="target">
-        Target:
-        <span id="predictionTarget">—</span>
-      </div>
+          </div>
 
-      <div
-        id="predictionSide"
-        class="prediction-side">
-        —
-      </div>
+          <div class="confidence-bar">
 
-      <div class="confidence-wrap">
+            <div
+              id="confidenceFill"
+              class="confidence-fill"
+            ></div>
 
-        <div class="confidence-head">
+          </div>
 
-          <span>
-            CONFIDENCE
+        </div>
+
+        <div class="regime">
+
+          <span
+            id="regimeBadge"
+            class="regime-badge"
+          >
+            WAITING
           </span>
 
-          <b id="confidence">
-            —
-          </b>
-
         </div>
 
-        <div class="confidence-bar">
-          <span id="confidenceBar"></span>
+        <div
+          id="predictionNote"
+          class="prediction-note"
+        >
+          Waiting for fresh AI data
         </div>
 
       </div>
 
-      <div
-        id="aiStatus"
-        class="ai-status">
-        AI SIGNAL READY
+    </section>
+
+
+    <!-- ===================================================
+         STATS
+    ==================================================== -->
+
+    <section class="stats">
+
+      <div class="stat">
+
+        <div
+          id="wins"
+          class="stat-value win"
+        >
+          0
+        </div>
+
+        <div class="stat-label">
+          WINS
+        </div>
+
       </div>
 
+      <div class="stat">
+
+        <div
+          id="losses"
+          class="stat-value loss"
+        >
+          0
+        </div>
+
+        <div class="stat-label">
+          LOSSES
+        </div>
+
+      </div>
+
+      <div class="stat">
+
+        <div
+          id="accuracy"
+          class="stat-value accuracy"
+        >
+          0%
+        </div>
+
+        <div class="stat-label">
+          ACCURACY
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- ===================================================
+         LAST 30
+    ==================================================== -->
+
+    <section class="history-card">
+
+      <div class="history-head">
+
+        <div class="history-title">
+          PREDICTION HISTORY
+        </div>
+
+        <div class="last-badge">
+          LAST 30
+        </div>
+
+      </div>
+
+      <div class="history-scroll">
+
+        <table>
+
+          <thead>
+
+            <tr>
+
+              <th>
+                PERIOD
+              </th>
+
+              <th>
+                RESULT
+              </th>
+
+              <th>
+                PREDICT
+              </th>
+
+              <th>
+                W/L
+              </th>
+
+            </tr>
+
+          </thead>
+
+          <tbody id="historyBody">
+
+            <tr>
+
+              <td
+                colspan="4"
+                style="
+                  text-align:center;
+                  color:#4d5e76;
+                  padding:25px;
+                "
+              >
+                Waiting for history...
+              </td>
+
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </section>
+
+
+    <!-- ===================================================
+         MUSIC
+    ==================================================== -->
+
+    <section class="music-card">
+
+      <div class="music-info">
+
+        <div class="music-title">
+          DY AI MUSIC
+        </div>
+
+        <div class="music-sub">
+          Background audio
+        </div>
+
+      </div>
+
+      <button
+        id="musicBtn"
+        class="music-btn"
+      >
+        ▶
+      </button>
+
+    </section>
+
+
+    <div class="footer">
+      DY AI • BIG / SMALL MODEL
+      <br>
+      Predictions are estimates, not guaranteed outcomes.
     </div>
 
-  </div>
-
-
-  <!-- ===================================================
-       LAST 30
-  ==================================================== -->
-
-  <div class="history-card">
-
-    <div class="section-head">
-
-      <h2>
-        LAST 30
-      </h2>
-
-      <span>
-        LIVE
-      </span>
-
-    </div>
-
-
-    <table class="history-table">
-
-      <thead>
-
-        <tr>
-
-          <th>
-            PERIOD
-          </th>
-
-          <th>
-            RESULT
-          </th>
-
-          <th>
-            PREDICT
-          </th>
-
-          <th>
-            W/L
-          </th>
-
-        </tr>
-
-      </thead>
-
-      <tbody id="historyBody">
-
-        <tr>
-
-          <td
-            colspan="4"
-            style="
-              text-align:center;
-              color:#475569;
-            ">
-            Waiting for live results...
-          </td>
-
-        </tr>
-
-      </tbody>
-
-    </table>
-
-  </div>
-
-
-  <!-- STATS -->
-
-  <div class="stats">
-
-    <div class="stat">
-
-      <div
-        id="wins"
-        class="stat-value">
-        0
-      </div>
-
-      <div class="stat-label">
-        Wins
-      </div>
-
-    </div>
-
-
-    <div class="stat">
-
-      <div
-        id="losses"
-        class="stat-value">
-        0
-      </div>
-
-      <div class="stat-label">
-        Losses
-      </div>
-
-    </div>
-
-
-    <div class="stat">
-
-      <div
-        id="accuracy"
-        class="stat-value">
-        0%
-      </div>
-
-      <div class="stat-label">
-        Accuracy
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <!-- CONTROLS -->
-
-  <div class="controls">
-
-    <button
-      id="musicControl"
-      class="control-btn">
-      🎵 MUSIC
-    </button>
-
-    <button
-      id="logoutBtn"
-      class="control-btn logout">
-      LOGOUT
-    </button>
-
-  </div>
-
-
-  <div style="height:80px"></div>
+  </main>
 
 </div>
 
 
-<!-- MUSIC -->
-
-<div
-  id="musicBox"
-  class="music hidden">
-
-  <div>
-
-    <div class="music-title">
-      DY AI MUSIC
-    </div>
-
-    <div class="music-sub">
-      Background audio
-    </div>
-
-  </div>
-
-  <button
-    id="musicBtn"
-    class="music-btn">
-    ▶
-  </button>
-
-</div>
-
+<!-- =======================================================
+     AUDIO
+======================================================= -->
 
 <audio
-  id="audio"
+  id="music"
   src="/music.mp3"
+  preload="none"
   loop
-  preload="none">
-</audio>
+></audio>
 
 
 <script>
+"use strict";
 
-/* =====================================================
-   VARIABLES
-===================================================== */
+/* ==========================================================
+   CONFIG
+========================================================== */
 
-const $ = id =>
-  document.getElementById(id);
+const DEVICE_STORAGE_KEY =
+  "dy_ai_device_id";
 
-let accessKey = "";
+const ACCESS_STORAGE_KEY =
+  "dy_ai_access_key";
 
-let deviceId = "";
+const ANALYSIS_TIME =
+  3000;
 
-let lastTarget = null;
-
-let analysisTarget = null;
-
-let analysisRunning = false;
-
-let stateInterval = null;
+const POLL_TIME =
+  1000;
 
 
-/* =====================================================
-   DEVICE
-===================================================== */
+/* ==========================================================
+   DOM
+========================================================== */
 
-function getDeviceId(){
+const loginScreen =
+  document.getElementById("loginScreen");
+
+const main =
+  document.getElementById("main");
+
+const keyInput =
+  document.getElementById("keyInput");
+
+const loginBtn =
+  document.getElementById("loginBtn");
+
+const loginMessage =
+  document.getElementById("loginMessage");
+
+const logoutBtn =
+  document.getElementById("logoutBtn");
+
+const targetPeriod =
+  document.getElementById("targetPeriod");
+
+const timer =
+  document.getElementById("timer");
+
+const analysis =
+  document.getElementById("analysis");
+
+const progressBar =
+  document.getElementById("progressBar");
+
+const prediction =
+  document.getElementById("prediction");
+
+const predictionSide =
+  document.getElementById("predictionSide");
+
+const confidenceValue =
+  document.getElementById("confidenceValue");
+
+const confidenceFill =
+  document.getElementById("confidenceFill");
+
+const regimeBadge =
+  document.getElementById("regimeBadge");
+
+const predictionNote =
+  document.getElementById("predictionNote");
+
+const wins =
+  document.getElementById("wins");
+
+const losses =
+  document.getElementById("losses");
+
+const accuracy =
+  document.getElementById("accuracy");
+
+const historyBody =
+  document.getElementById("historyBody");
+
+const openGameBtn =
+  document.getElementById("openGameBtn");
+
+const music =
+  document.getElementById("music");
+
+const musicBtn =
+  document.getElementById("musicBtn");
+
+const musicTopBtn =
+  document.getElementById("musicTopBtn");
+
+const gameStatus =
+  document.getElementById("gameStatus");
+
+
+/* ==========================================================
+   DEVICE ID
+========================================================== */
+
+function getDeviceId() {
 
   let id =
     localStorage.getItem(
-      "dy_ai_device_id"
+      DEVICE_STORAGE_KEY
     );
 
-  if(!id){
+  if (!id) {
 
-    if(
-      window.crypto &&
+    if (
+      crypto &&
       crypto.randomUUID
-    ){
-
+    ) {
       id =
         crypto.randomUUID();
-
-    }else{
-
+    } else {
       id =
-        "dy-" +
+        "device-" +
         Date.now() +
         "-" +
         Math.random()
           .toString(36)
           .slice(2);
-
     }
 
     localStorage.setItem(
-      "dy_ai_device_id",
+      DEVICE_STORAGE_KEY,
       id
     );
-
   }
 
   return id;
-
 }
 
-deviceId =
-  getDeviceId();
 
+/* ==========================================================
+   API
+========================================================== */
 
-/* =====================================================
-   LOGIN
-===================================================== */
+async function api(
+  url,
+  options = {}
+) {
 
-$("loginBtn")
-  .addEventListener(
-    "click",
-    login
-  );
+  const response =
+    await fetch(
+      url,
+      {
+        ...options,
+        cache: "no-store",
+        headers: {
+          "Cache-Control":
+            "no-cache",
 
-
-$("accessKey")
-  .addEventListener(
-    "keydown",
-    e => {
-
-      if(
-        e.key === "Enter"
-      ){
-
-        login();
-
+          ...(options.headers || {})
+        }
       }
-
-    }
-  );
-
-
-async function login(){
-
-  const key =
-    $("accessKey")
-      .value
-      .trim();
-
-
-  if(!key){
-
-    showLoginError(
-      "Access key enter karo."
     );
 
-    return;
+  let data = null;
 
+  try {
+    data =
+      await response.json();
+  } catch {
+    data = {};
   }
 
+  if (!response.ok) {
 
-  $("loginBtn").disabled =
-    true;
+    const message =
+      data?.message ||
+      `HTTP ${response.status}`;
 
-  $("loginBtn").textContent =
-    "CHECKING...";
+    throw new Error(message);
+  }
+
+  return data;
+}
 
 
-  try{
+/* ==========================================================
+   LOGIN
+========================================================== */
 
-    const response =
-      await fetch(
+async function login(key) {
+
+  loginMessage.textContent =
+    "Checking access key...";
+
+  loginBtn.disabled = true;
+
+  try {
+
+    const data =
+      await api(
         "/api/key/check",
         {
-          method:"POST",
+          method: "POST",
 
-          headers:{
+          headers: {
             "Content-Type":
               "application/json"
           },
 
-          body:JSON.stringify({
-
-            access_key:key,
-
-            device_id:
-              deviceId
-
-          })
-
+          body:
+            JSON.stringify({
+              key,
+              deviceId:
+                getDeviceId()
+            })
         }
       );
 
-
-    const data =
-      await response.json();
-
-
-    if(
-      !response.ok ||
-      data.ok === false
-    ){
-
+    if (!data.ok) {
       throw new Error(
-        data.error ||
-        "Access denied"
+        data.message ||
+        "Login failed"
       );
-
     }
 
-
-    accessKey =
-      key;
-
-
     localStorage.setItem(
-      "dy_ai_access_key",
+      ACCESS_STORAGE_KEY,
       key
     );
 
+    loginMessage.textContent =
+      "";
 
-    openApp();
+    showMain();
 
+  } catch (err) {
 
-  }catch(error){
+    loginMessage.textContent =
+      err.message ||
+      "Invalid access key";
 
-    showLoginError(
-      error.message ||
-      "Login failed"
-    );
+  } finally {
 
-  }finally{
-
-    $("loginBtn").disabled =
+    loginBtn.disabled =
       false;
-
-    $("loginBtn").textContent =
-      "ENTER DY AI";
-
   }
-
 }
 
 
-function openApp(){
+loginBtn.addEventListener(
+  "click",
+  () => {
 
-  $("loginPage")
-    .classList
-    .add("hidden");
+    const key =
+      keyInput.value.trim();
 
-  $("app")
-    .classList
-    .remove("hidden");
+    if (!key) {
 
-  $("musicBox")
-    .classList
-    .remove("hidden");
+      loginMessage.textContent =
+        "Enter access key";
 
-  startPolling();
-
-}
-
-
-function showLoginError(
-  message
-){
-
-  const box =
-    $("loginError");
-
-  box.textContent =
-    message;
-
-  box.classList.add(
-    "show"
-  );
-
-}
-
-
-/* =====================================================
-   AUTO LOGIN
-===================================================== */
-
-window.addEventListener(
-  "load",
-  async()=>{
-
-    const saved =
-      localStorage.getItem(
-        "dy_ai_access_key"
-      );
-
-
-    if(!saved)
       return;
+    }
+
+    login(key);
+  }
+);
 
 
-    try{
+keyInput.addEventListener(
+  "keydown",
+  event => {
 
-      const response =
-        await fetch(
-          "/api/key/check",
-          {
-            method:"POST",
-
-            headers:{
-              "Content-Type":
-                "application/json"
-            },
-
-            body:JSON.stringify({
-
-              access_key:
-                saved,
-
-              device_id:
-                deviceId
-
-            })
-
-          }
-        );
-
-
-      const data =
-        await response.json();
-
-
-      if(
-        !response.ok ||
-        data.ok === false
-      ){
-
-        throw new Error();
-
-      }
-
-
-      accessKey =
-        saved;
-
-
-      openApp();
-
-
-    }catch{
-
-      localStorage.removeItem(
-        "dy_ai_access_key"
-      );
-
+    if (
+      event.key === "Enter"
+    ) {
+      loginBtn.click();
     }
 
   }
 );
 
 
-/* =====================================================
-   POLLING
-===================================================== */
+/* ==========================================================
+   LOGOUT
+========================================================== */
 
-function startPolling(){
+logoutBtn.addEventListener(
+  "click",
+  () => {
 
-  clearInterval(
-    stateInterval
+    localStorage.removeItem(
+      ACCESS_STORAGE_KEY
+    );
+
+    main.classList.remove(
+      "show"
+    );
+
+    loginScreen.style.display =
+      "flex";
+
+    keyInput.value =
+      "";
+
+    stopPolling();
+  }
+);
+
+
+/* ==========================================================
+   SHOW MAIN
+========================================================== */
+
+function showMain() {
+
+  loginScreen.style.display =
+    "none";
+
+  main.classList.add(
+    "show"
   );
 
+  startPolling();
+}
+
+
+/* ==========================================================
+   AUTO LOGIN
+========================================================== */
+
+const savedKey =
+  localStorage.getItem(
+    ACCESS_STORAGE_KEY
+  );
+
+if (savedKey) {
+
+  login(savedKey);
+
+}
+
+
+/* ==========================================================
+   POLLING
+========================================================== */
+
+let pollTimer =
+  null;
+
+let polling =
+  false;
+
+let latestState =
+  null;
+
+let lastTarget =
+  null;
+
+let analysisToken =
+  0;
+
+function startPolling() {
+
+  if (pollTimer) {
+    clearInterval(
+      pollTimer
+    );
+  }
 
   loadState();
 
-
-  stateInterval =
+  pollTimer =
     setInterval(
       loadState,
-      1000
+      POLL_TIME
     );
-
 }
 
+function stopPolling() {
 
-async function loadState(){
-
-  try{
-
-    const response =
-      await fetch(
-        "/api/state",
-        {
-          cache:"no-store"
-        }
-      );
-
-
-    if(!response.ok)
-      throw new Error();
-
-
-    const data =
-      await response.json();
-
-
-    updateUI(data);
-
-
-    $("liveText")
-      .textContent =
-        data.providerOnline
-          ? "LIVE"
-          : "OFFLINE";
-
-
-  }catch{
-
-    $("liveText")
-      .textContent =
-        "CONNECTING";
-
-  }
-
-}
-
-
-/* =====================================================
-   UI
-===================================================== */
-
-function updateUI(data){
-
-  const target =
-    data.targetIssue ||
-    data.currentIssue;
-
-
-  $("targetIssue")
-    .textContent =
-      target ||
-      "WAITING...";
-
-
-  $("predictionTarget")
-    .textContent =
-      target ||
-      "—";
-
-
-  updateTimer(
-    data.countdown
-  );
-
-
-  /*
-    Analysis ONLY when target changes.
-  */
-
-  if(
-    target &&
-    target !== lastTarget
-  ){
-
-    lastTarget =
-      target;
-
-    showAnalysis(
-      target
-    );
-
-  }
-
-
-  updateStats(
-    data
-  );
-
-
-  updateHistory(
-    data.predictionHistory ||
-    []
-  );
-
-
-  if(
-    !analysisRunning &&
-    target === analysisTarget
-  ){
-
-    showPrediction(
-      data
-    );
-
-  }
-
-}
-
-
-/* =====================================================
-   ANALYSIS
-===================================================== */
-
-function showAnalysis(
-  target
-){
-
-  analysisTarget =
-    target;
-
-  analysisRunning =
-    true;
-
-
-  $("analysisScreen")
-    .classList
-    .remove("hidden");
-
-
-  $("finalContent")
-    .classList
-    .add("hidden");
-
-
-  const messages = [
-
-    "Reading recent pattern...",
-
-    "Checking trend break...",
-
-    "Comparing BIG / SMALL signals..."
-
-  ];
-
-
-  let index = 0;
-
-
-  $("analysisText")
-    .textContent =
-      messages[0];
-
-
-  const interval =
-    setInterval(()=>{
-
-      index++;
-
-
-      if(
-        index <
-        messages.length
-      ){
-
-        $("analysisText")
-          .textContent =
-            messages[index];
-
-      }
-
-    },950);
-
-
-  setTimeout(()=>{
+  if (pollTimer) {
 
     clearInterval(
-      interval
+      pollTimer
     );
 
-
-    analysisRunning =
-      false;
-
-
-    $("analysisScreen")
-      .classList
-      .add("hidden");
-
-
-    loadState();
-
-  },3000);
-
+    pollTimer =
+      null;
+  }
 }
 
 
-/* =====================================================
-   PREDICTION
-===================================================== */
+/* ==========================================================
+   LOAD STATE
+========================================================== */
+
+async function loadState() {
+
+  if (polling) return;
+
+  polling = true;
+
+  try {
+
+    const data =
+      await api(
+        "/api/state"
+      );
+
+    latestState =
+      data;
+
+    renderState(data);
+
+  } catch (err) {
+
+    gameStatus.textContent =
+      "SYNC ERROR";
+
+    console.warn(
+      "State:",
+      err.message
+    );
+
+  } finally {
+
+    polling = false;
+  }
+}
+
+
+/* ==========================================================
+   RENDER STATE
+========================================================== */
+
+function renderState(data) {
+
+  if (!data) return;
+
+  const current =
+    data.current || {};
+
+  const stats =
+    data.stats || {};
+
+  const provider =
+    data.provider || {};
+
+
+  /* -----------------------------------------
+     GAME STATUS
+  ----------------------------------------- */
+
+  if (provider.error) {
+
+    gameStatus.textContent =
+      "SYNC";
+
+  } else {
+
+    gameStatus.textContent =
+      "LIVE";
+  }
+
+
+  /* -----------------------------------------
+     TARGET
+  ----------------------------------------- */
+
+  const target =
+    current.targetIssue;
+
+  if (target) {
+
+    targetPeriod.textContent =
+      target;
+
+    /*
+     * IMPORTANT:
+     *
+     * Analysis only starts when the
+     * actual target period changes.
+     *
+     * It does NOT restart every second.
+     */
+
+    if (
+      target !== lastTarget
+    ) {
+
+      lastTarget =
+        target;
+
+      runAnalysis(
+        target,
+        current
+      );
+    }
+
+  }
+
+
+  /* -----------------------------------------
+     STATS
+  ----------------------------------------- */
+
+  wins.textContent =
+    Number(stats.wins || 0);
+
+  losses.textContent =
+    Number(stats.losses || 0);
+
+  accuracy.textContent =
+    `${Number(
+      stats.accuracy || 0
+    ).toFixed(2)}%`;
+
+
+  /* -----------------------------------------
+     HISTORY
+  ----------------------------------------- */
+
+  /*
+   * History is fetched separately
+   * so W/L can be refreshed smoothly.
+   */
+
+  renderHistory();
+
+
+  /* -----------------------------------------
+     TIMER
+  ----------------------------------------- */
+
+  updateTimer(
+    provider,
+    data.serverTime
+  );
+
+
+  /* -----------------------------------------
+     PREDICTION
+  ----------------------------------------- */
+
+  /*
+   * If prediction is already available
+   * for the current target, keep displaying it.
+   *
+   * During the first 3 sec of a new target,
+   * analysis animation is shown.
+   */
+
+  if (
+    target === lastTarget &&
+    current.prediction &&
+    current.targetIssue
+  ) {
+
+    /*
+     * Do not interrupt analysis.
+     */
+    if (
+      !analysis.classList.contains(
+        "show"
+      )
+    ) {
+
+      showPrediction(
+        current
+      );
+    }
+  }
+}
+
+
+/* ==========================================================
+   ANALYSIS ANIMATION
+========================================================== */
+
+function runAnalysis(
+  target,
+  current
+) {
+
+  analysisToken++;
+
+  const token =
+    analysisToken;
+
+  prediction.classList.remove(
+    "show"
+  );
+
+  analysis.classList.add(
+    "show"
+  );
+
+  progressBar.style.width =
+    "0%";
+
+  const start =
+    performance.now();
+
+  function frame(time) {
+
+    if (
+      token !==
+      analysisToken
+    ) {
+      return;
+    }
+
+    const elapsed =
+      time - start;
+
+    const percent =
+      Math.min(
+        100,
+        (elapsed /
+          ANALYSIS_TIME) *
+          100
+      );
+
+    progressBar.style.width =
+      `${percent}%`;
+
+    if (
+      elapsed <
+      ANALYSIS_TIME
+    ) {
+
+      requestAnimationFrame(
+        frame
+      );
+
+    } else {
+
+      analysis.classList.remove(
+        "show"
+      );
+
+      /*
+       * Use the current server prediction
+       * after the analysis animation.
+       */
+      if (
+        current &&
+        current.prediction
+      ) {
+
+        showPrediction(
+          current
+        );
+
+      } else {
+
+        prediction.classList.add(
+          "show"
+        );
+
+        predictionSide.textContent =
+          "--";
+
+        confidenceValue.textContent =
+          "WAITING";
+
+        confidenceFill.style.width =
+          "0%";
+
+        regimeBadge.textContent =
+          "WAITING";
+
+        predictionNote.textContent =
+          "Waiting for fresh AI data";
+      }
+    }
+  }
+
+  requestAnimationFrame(
+    frame
+  );
+}
+
+
+/* ==========================================================
+   SHOW PREDICTION
+========================================================== */
 
 function showPrediction(
-  data
-){
+  current
+) {
+
+  if (
+    !current ||
+    !current.prediction
+  ) {
+    return;
+  }
+
+  prediction.classList.add(
+    "show"
+  );
 
   const side =
     String(
-      data.prediction ||
-      ""
+      current.prediction
     ).toUpperCase();
 
+  predictionSide.textContent =
+    side;
 
-  const element =
-    $("predictionSide");
-
-
-  if(
-    side !== "BIG" &&
-    side !== "SMALL"
-  ){
-
-    element.textContent =
-      "WAIT";
-
-    element.className =
-      "prediction-side";
-
-  }else{
-
-    element.textContent =
-      side;
-
-    element.className =
-      "prediction-side " +
-      (
-        side === "BIG"
-          ? "big"
-          : "small"
-      );
-
-  }
+  predictionSide.className =
+    "prediction-side " +
+    (
+      side === "BIG"
+        ? "big"
+        : "small"
+    );
 
 
   const confidence =
     Number(
-      data.confidence ||
+      current.confidence || 0
+    );
+
+  confidenceValue.textContent =
+    `${confidence}%`;
+
+  confidenceFill.style.width =
+    `${Math.max(
+      0,
+      Math.min(
+        100,
+        confidence
+      )
+    )}%`;
+
+
+  let regime =
+    current.regime ||
+    "NEUTRAL";
+
+  regimeBadge.textContent =
+    formatRegime(regime);
+
+
+  let note =
+    current.reason ||
+    "AI signal generated";
+
+  predictionNote.textContent =
+    formatReason(note);
+
+
+  /*
+   * If already settled,
+   * show the result status.
+   */
+
+  if (
+    current.status ===
+    "WIN"
+  ) {
+
+    predictionNote.textContent =
+      "Prediction settled • WIN";
+
+  } else if (
+    current.status ===
+    "LOSS"
+  ) {
+
+    predictionNote.textContent =
+      "Prediction settled • LOSS";
+  }
+}
+
+
+/* ==========================================================
+   REGIME TEXT
+========================================================== */
+
+function formatRegime(value) {
+
+  const map = {
+
+    TREND_CONTINUING:
+      "TREND CONTINUING",
+
+    NEW_TREND:
+      "NEW TREND",
+
+    TREND_WEAKENING:
+      "TREND WEAKENING",
+
+    POSSIBLE_BREAK:
+      "POSSIBLE TREND BREAK",
+
+    CONFLICT:
+      "MIXED / CONFLICT",
+
+    NEUTRAL:
+      "NEUTRAL",
+
+    INSUFFICIENT_DATA:
+      "BUILDING DATA"
+  };
+
+  return (
+    map[value] ||
+    String(value)
+      .replaceAll(
+        "_",
+        " "
+      )
+  );
+}
+
+
+function formatReason(value) {
+
+  const map = {
+
+    TREND_CONTINUATION:
+      "Current trend has supporting evidence",
+
+    NEW_TREND:
+      "Recent movement is forming a new trend",
+
+    TREND_WEAKENING:
+      "Existing trend is losing strength",
+
+    POSSIBLE_TREND_BREAK:
+      "Possible trend-break signal detected",
+
+    MIXED_SIGNAL:
+      "Signals are mixed; confidence reduced",
+
+    BALANCED_SIGNAL:
+      "Multiple signals are being balanced"
+  };
+
+  return (
+    map[value] ||
+    "AI signal generated from current data"
+  );
+}
+
+
+/* ==========================================================
+   TIMER
+========================================================== */
+
+/*
+ * WingoBot's documented history response does not provide
+ * an authoritative countdown field.
+ *
+ * Therefore this is a smooth estimated timer based on the
+ * provider update clock. It is NOT reading the iframe timer.
+ */
+
+let timerBase =
+  null;
+
+function updateTimer(
+  provider,
+  serverTime
+) {
+
+  const current =
+    Number(
+      serverTime ||
+      Date.now()
+    );
+
+  const last =
+    Number(
+      provider?.lastUpdated ||
       0
     );
 
+  if (
+    !last ||
+    !Number.isFinite(last)
+  ) {
 
-  $("confidence")
-    .textContent =
-      confidence
-        ? `${confidence}%`
-        : "—";
-
-
-  $("confidenceBar")
-    .style
-    .width =
-      `${Math.max(
-        0,
-        Math.min(
-          100,
-          confidence
-        )
-      )}%`;
-
-
-  const regime =
-    data.analysis?.regime;
-
-
-  if(
-    regime ===
-    "POSSIBLE_BREAK"
-  ){
-
-    $("aiStatus")
-      .textContent =
-      "BREAK CHECK ACTIVE";
-
-  }else if(
-    regime ===
-    "TREND_WEAKENING"
-  ){
-
-    $("aiStatus")
-      .textContent =
-      "TREND WEAKENING";
-
-  }else if(
-    regime ===
-    "CONFLICT"
-  ){
-
-    $("aiStatus")
-      .textContent =
-      "SIGNALS IN CONFLICT";
-
-  }else if(
-    regime ===
-    "NEW_TREND"
-  ){
-
-    $("aiStatus")
-      .textContent =
-      "NEW TREND";
-
-  }else{
-
-    $("aiStatus")
-      .textContent =
-      "AI SIGNAL READY";
-
-  }
-
-
-  $("finalContent")
-    .classList
-    .remove("hidden");
-
-}
-
-
-/* =====================================================
-   TIMER
-===================================================== */
-
-function updateTimer(
-  value
-){
-
-  const seconds =
-    Number(value);
-
-
-  if(
-    !Number.isFinite(
-      seconds
-    )
-  ){
-
-    $("timer")
-      .textContent =
+    timer.textContent =
       "--";
 
     return;
-
   }
 
 
-  $("timer")
-    .textContent =
-    `${Math.max(
+  /*
+   * Convert timestamp if provider gives seconds.
+   */
+  let timestamp =
+    last;
+
+  if (
+    timestamp < 100000000000
+  ) {
+    timestamp *= 1000;
+  }
+
+
+  const elapsed =
+    Math.max(
       0,
-      Math.floor(seconds)
-    )}s`;
-
-}
-
-
-/* =====================================================
-   STATS
-===================================================== */
-
-function updateStats(
-  data
-){
-
-  const wins =
-    Number(
-      data.wins || 0
+      current - timestamp
     );
 
 
-  const losses =
-    Number(
-      data.losses || 0
+  /*
+   * 30-second rolling estimate.
+   */
+  const cycle =
+    30000;
+
+  let remaining =
+    cycle -
+    (
+      elapsed %
+      cycle
     );
 
-
-  const total =
-    wins + losses;
-
-
-  $("wins")
-    .textContent =
-    wins;
-
-
-  $("losses")
-    .textContent =
-    losses;
+  if (
+    remaining <= 0 ||
+    remaining > cycle
+  ) {
+    remaining =
+      cycle;
+  }
 
 
-  $("accuracy")
-    .textContent =
-    total
-      ? `${(
-          wins /
-          total *
-          100
-        ).toFixed(1)}%`
-      : "0%";
+  const seconds =
+    Math.ceil(
+      remaining / 1000
+    );
 
+  const s =
+    String(
+      seconds
+    ).padStart(
+      2,
+      "0"
+    );
+
+  timer.textContent =
+    `00:${s}`;
 }
 
 
-/* =====================================================
+/* ==========================================================
    HISTORY
-===================================================== */
+========================================================== */
 
-function updateHistory(
+let historyLoading =
+  false;
+
+async function renderHistory() {
+
+  if (historyLoading) {
+    return;
+  }
+
+  historyLoading =
+    true;
+
+  try {
+
+    const data =
+      await api(
+        "/api/state"
+      );
+
+    /*
+     * Current /api/state does not include
+     * full history intentionally.
+     *
+     * Fetch provider/prediction history
+     * from /api/history and combine with
+     * prediction records via server-side
+     * /api/state when available.
+     */
+
+    /*
+     * We use a dedicated endpoint fallback
+     * below if server returns prediction
+     * history in future versions.
+     */
+
+    if (
+      Array.isArray(
+        data.last30
+      )
+    ) {
+
+      drawHistory(
+        data.last30
+      );
+
+      return;
+    }
+
+    /*
+     * Fetch /api/history.
+     * This contains provider history, but not
+     * prediction records. So if no last30
+     * endpoint exists, don't fabricate W/L.
+     *
+     * We display only current known provider
+     * data when necessary.
+     */
+
+    const h =
+      await api(
+        "/api/history"
+      );
+
+    if (
+      Array.isArray(
+        h.predictions
+      )
+    ) {
+
+      drawHistory(
+        h.predictions
+      );
+
+    } else {
+
+      /*
+       * Keep existing rows instead of
+       * replacing them with incomplete data.
+       */
+    }
+
+  } catch (err) {
+
+    console.warn(
+      "History:",
+      err.message
+    );
+
+  } finally {
+
+    historyLoading =
+      false;
+  }
+}
+
+
+/* ==========================================================
+   DRAW HISTORY
+========================================================== */
+
+function drawHistory(
   rows
-){
+) {
 
-  const body =
-    $("historyBody");
+  if (
+    !Array.isArray(rows) ||
+    !rows.length
+  ) {
 
-
-  if(!rows.length){
-
-    body.innerHTML = `
-
+    historyBody.innerHTML = `
       <tr>
-
         <td
           colspan="4"
           style="
             text-align:center;
-            color:#475569;
-          ">
-
-          Waiting for live results...
-
+            color:#4d5e76;
+            padding:25px;
+          "
+        >
+          No prediction history yet
         </td>
-
       </tr>
-
     `;
 
     return;
-
   }
 
 
-  body.innerHTML =
-    rows.map(
-      row => {
+  historyBody.innerHTML =
+    rows
+      .slice(0, 30)
+      .map(row => {
 
-        const actual =
-          row.actual_result ||
-          "—";
+        const period =
+          escapeHtml(
+            row.period ??
+            row.target_issue ??
+            "-"
+          );
+
+        const resultRaw =
+          row.result ??
+          row.actual_result ??
+          null;
+
+        const predictRaw =
+          row.predict ??
+          row.prediction ??
+          "-";
+
+        const wl =
+          row.wl ??
+          "PENDING";
+
+
+        const result =
+          resultRaw
+            ? String(
+                resultRaw
+              ).toUpperCase()
+            : "—";
+
+        const predict =
+          String(
+            predictRaw
+          ).toUpperCase();
 
 
         const resultClass =
-          actual === "BIG"
-            ? "big-text"
-            : actual === "SMALL"
-              ? "small-text"
-              : "";
+          result === "BIG"
+            ? "side-big"
+            : result === "SMALL"
+              ? "side-small"
+              : "result-empty";
 
 
-        const prediction =
-          String(
-            row.prediction ||
-            "—"
-          ).toUpperCase();
+        const predictClass =
+          predict === "BIG"
+            ? "side-big"
+            : "side-small";
 
 
-        const predictionClass =
-          prediction === "BIG"
-            ? "big-text"
-            : prediction === "SMALL"
-              ? "small-text"
-              : "";
-
-
-        const outcome =
-          String(
-            row.outcome ||
-            "PENDING"
-          ).toUpperCase();
-
-
-        const outcomeClass =
-          outcome === "WIN"
-            ? "win"
-            : outcome === "LOSS"
-              ? "loss"
-              : "pending";
+        const wlClass =
+          wl === "WIN"
+            ? "wl-win"
+            : wl === "LOSS"
+              ? "wl-loss"
+              : "wl-pending";
 
 
         return `
-
           <tr>
 
-            <td
-              class="period-cell"
-              title="${escapeHtml(
-                row.target_issue
-              )}">
-
-              ${escapeHtml(
-                row.target_issue ||
-                "—"
-              )}
-
+            <td class="period">
+              ${period}
             </td>
 
-
-            <td
-              class="${resultClass}">
-
-              ${escapeHtml(
-                actual
-              )}
-
+            <td class="${resultClass}">
+              ${escapeHtml(result)}
             </td>
 
-
-            <td
-              class="${predictionClass}">
-
-              ${escapeHtml(
-                prediction
-              )}
-
+            <td class="${predictClass}">
+              ${escapeHtml(predict)}
             </td>
 
-
-            <td
-              class="${outcomeClass}">
-
-              ${escapeHtml(
-                outcome
-              )}
-
+            <td class="${wlClass}">
+              ${escapeHtml(wl)}
             </td>
 
           </tr>
-
         `;
 
-      }
-    ).join("");
-
+      })
+      .join("");
 }
 
 
-/* =====================================================
-   MUSIC
-===================================================== */
+/* ==========================================================
+   SAFE HTML
+========================================================== */
 
-$("musicControl")
-  .addEventListener(
-    "click",
-    toggleMusic
-  );
+function escapeHtml(
+  value
+) {
 
-
-$("musicBtn")
-  .addEventListener(
-    "click",
-    toggleMusic
-  );
-
-
-function toggleMusic(){
-
-  const audio =
-    $("audio");
-
-
-  if(
-    audio.paused
-  ){
-
-    audio.play()
-      .then(()=>{
-
-        $("musicBtn")
-          .textContent =
-          "Ⅱ";
-
-        $("musicControl")
-          .textContent =
-          "⏸ MUSIC";
-
-      })
-      .catch(()=>{
-
-        $("musicBtn")
-          .textContent =
-          "▶";
-
-      });
-
-  }else{
-
-    audio.pause();
+  return String(
+    value ?? ""
+  )
+    .replaceAll(
+      "&",
+      "&amp;"
+    )
+    .replaceAll(
+      "<",
+      "&lt;"
+    )
+    .replaceAll(
+      ">",
+      "&gt;"
+    )
+    .replaceAll(
+      '"',
+      "&quot;"
+    )
+    .replaceAll(
+      "'",
+      "&#039;"
+    );
+}
 
 
-    $("musicBtn")
-      .textContent =
-      "▶";
+/* ==========================================================
+   GAME
+========================================================== */
 
+openGameBtn.addEventListener(
+  "click",
+  () => {
 
-    $("musicControl")
-      .textContent =
-      "🎵 MUSIC";
+    window.open(
+      "https://www.shreewin38.com/#/register?invitationCode=88523152383",
+      "_blank",
+      "noopener"
+    );
 
   }
+);
 
-}
 
-
-/* =====================================================
-   LOGOUT
-===================================================== */
-
-$("logoutBtn")
+document
+  .getElementById("gameFrame")
   .addEventListener(
-    "click",
-    ()=>{
+    "load",
+    () => {
 
-      clearInterval(
-        stateInterval
-      );
-
-      localStorage.removeItem(
-        "dy_ai_access_key"
-      );
-
-      window.location.reload();
+      gameStatus.textContent =
+        "LIVE";
 
     }
   );
 
 
-/* =====================================================
-   ESCAPE
-===================================================== */
+/* ==========================================================
+   MUSIC
+========================================================== */
 
-function escapeHtml(
-  value
-){
+let musicPlaying =
+  false;
 
-  return String(
-    value ?? ""
-  )
-  .replaceAll(
-    "&",
-    "&amp;"
-  )
-  .replaceAll(
-    "<",
-    "&lt;"
-  )
-  .replaceAll(
-    ">",
-    "&gt;"
-  )
-  .replaceAll(
-    '"',
-    "&quot;"
-  )
-  .replaceAll(
-    "'",
-    "&#039;"
+async function toggleMusic() {
+
+  try {
+
+    if (
+      music.paused
+    ) {
+
+      await music.play();
+
+      musicPlaying =
+        true;
+
+      musicBtn.textContent =
+        "❚❚";
+
+      musicTopBtn.textContent =
+        "❚❚";
+
+    } else {
+
+      music.pause();
+
+      musicPlaying =
+        false;
+
+      musicBtn.textContent =
+        "▶";
+
+      musicTopBtn.textContent =
+        "♪";
+    }
+
+  } catch (err) {
+
+    console.warn(
+      "Music:",
+      err.message
+    );
+  }
+}
+
+
+musicBtn.addEventListener(
+  "click",
+  toggleMusic
+);
+
+musicTopBtn.addEventListener(
+  "click",
+  toggleMusic
+);
+
+
+/* ==========================================================
+   VISIBILITY
+========================================================== */
+
+document.addEventListener(
+  "visibilitychange",
+  () => {
+
+    if (
+      document.hidden
+    ) {
+      return;
+    }
+
+    if (
+      main.classList.contains(
+        "show"
+      )
+    ) {
+
+      loadState();
+    }
+
+  }
+);
+
+
+/* ==========================================================
+   INITIAL UI
+========================================================== */
+
+if (
+  savedKey
+) {
+
+  loginScreen.style.display =
+    "none";
+
+  main.classList.add(
+    "show"
   );
 
+} else {
+
+  loginScreen.style.display =
+    "flex";
+
+  main.classList.remove(
+    "show"
+  );
 }
 
 </script>
 
 </body>
-</html>
+        </html>
