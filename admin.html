@@ -1,1001 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-  <title>DY AI • Admin Panel</title>
-
-  <style>
-    *{
-      box-sizing:border-box;
-      margin:0;
-      padding:0;
-      -webkit-tap-highlight-color:transparent;
-    }
-
-    body{
-      min-height:100vh;
-      font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-      background:
-        radial-gradient(circle at top,#172554 0,#070b16 42%,#03050a 100%);
-      color:#f8fafc;
-      padding:16px;
-    }
-
-    button,input{
-      font:inherit;
-    }
-
-    .app{
-      width:100%;
-      max-width:1100px;
-      margin:auto;
-    }
-
-    .topbar{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      margin-bottom:16px;
-    }
-
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:11px;
-    }
-
-    .logo{
-      width:44px;
-      height:44px;
-      border-radius:14px;
-      display:grid;
-      place-items:center;
-      background:linear-gradient(135deg,#38bdf8,#6366f1);
-      box-shadow:0 10px 30px rgba(59,130,246,.3);
-      font-size:21px;
-      font-weight:900;
-    }
-
-    .brand h1{
-      font-size:20px;
-      line-height:1.1;
-    }
-
-    .brand p{
-      color:#94a3b8;
-      font-size:11px;
-      margin-top:4px;
-    }
-
-    .status-dot{
-      display:flex;
-      align-items:center;
-      gap:7px;
-      padding:8px 11px;
-      border-radius:999px;
-      background:rgba(15,23,42,.8);
-      border:1px solid rgba(148,163,184,.15);
-      color:#94a3b8;
-      font-size:11px;
-      white-space:nowrap;
-    }
-
-    .dot{
-      width:8px;
-      height:8px;
-      border-radius:50%;
-      background:#64748b;
-      box-shadow:0 0 10px currentColor;
-    }
-
-    .online .dot{
-      background:#22c55e;
-      color:#22c55e;
-    }
-
-    .offline .dot{
-      background:#ef4444;
-      color:#ef4444;
-    }
-
-    .card{
-      background:rgba(10,16,30,.82);
-      border:1px solid rgba(148,163,184,.12);
-      border-radius:20px;
-      padding:16px;
-      margin-bottom:14px;
-      box-shadow:0 18px 50px rgba(0,0,0,.22);
-      backdrop-filter:blur(14px);
-    }
-
-    .card-title{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      margin-bottom:14px;
-    }
-
-    .card-title h2{
-      font-size:15px;
-    }
-
-    .card-title span{
-      color:#64748b;
-      font-size:10px;
-      text-transform:uppercase;
-      letter-spacing:.8px;
-    }
-
-    .login{
-      max-width:440px;
-      margin:8vh auto 0;
-    }
-
-    .login-logo{
-      text-align:center;
-      margin-bottom:24px;
-    }
-
-    .login-logo .big-logo{
-      width:72px;
-      height:72px;
-      margin:auto;
-      border-radius:23px;
-      display:grid;
-      place-items:center;
-      font-size:32px;
-      font-weight:900;
-      background:linear-gradient(135deg,#38bdf8,#6366f1,#8b5cf6);
-      box-shadow:0 20px 50px rgba(59,130,246,.35);
-    }
-
-    .login-logo h1{
-      margin-top:14px;
-      font-size:24px;
-    }
-
-    .login-logo p{
-      color:#64748b;
-      font-size:12px;
-      margin-top:5px;
-    }
-
-    .field{
-      margin-bottom:12px;
-    }
-
-    .field label{
-      display:block;
-      font-size:11px;
-      color:#94a3b8;
-      margin-bottom:7px;
-    }
-
-    .input{
-      width:100%;
-      border:1px solid #1e293b;
-      outline:none;
-      border-radius:13px;
-      padding:13px 14px;
-      color:#fff;
-      background:#080d18;
-    }
-
-    .input:focus{
-      border-color:#3b82f6;
-      box-shadow:0 0 0 3px rgba(59,130,246,.1);
-    }
-
-    .btn{
-      border:0;
-      cursor:pointer;
-      border-radius:12px;
-      padding:11px 14px;
-      color:white;
-      background:#172033;
-      border:1px solid #263247;
-      transition:.18s;
-      font-weight:700;
-      font-size:12px;
-    }
-
-    .btn:active{
-      transform:scale(.97);
-    }
-
-    .btn-primary{
-      background:linear-gradient(135deg,#2563eb,#4f46e5);
-      border-color:transparent;
-    }
-
-    .btn-danger{
-      background:rgba(239,68,68,.1);
-      color:#fca5a5;
-      border-color:rgba(239,68,68,.25);
-    }
-
-    .btn-green{
-      background:rgba(34,197,94,.1);
-      color:#86efac;
-      border-color:rgba(34,197,94,.25);
-    }
-
-    .btn-small{
-      padding:8px 10px;
-      font-size:10px;
-      border-radius:9px;
-    }
-
-    .grid{
-      display:grid;
-      grid-template-columns:repeat(4,1fr);
-      gap:10px;
-    }
-
-    .stat{
-      min-height:92px;
-      padding:13px;
-      border-radius:15px;
-      background:rgba(15,23,42,.7);
-      border:1px solid rgba(148,163,184,.1);
-    }
-
-    .stat .label{
-      color:#64748b;
-      font-size:10px;
-      text-transform:uppercase;
-      letter-spacing:.5px;
-    }
-
-    .stat .value{
-      margin-top:8px;
-      font-size:18px;
-      font-weight:900;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      white-space:nowrap;
-    }
-
-    .stat .sub{
-      margin-top:4px;
-      color:#64748b;
-      font-size:9px;
-    }
-
-    .big-value{
-      font-size:27px!important;
-    }
-
-    .live{
-      display:grid;
-      grid-template-columns:1.5fr 1fr;
-      gap:12px;
-    }
-
-    .prediction-box{
-      border-radius:18px;
-      padding:18px;
-      min-height:210px;
-      background:
-        radial-gradient(circle at 80% 20%,rgba(59,130,246,.15),transparent 35%),
-        #080d18;
-      border:1px solid rgba(59,130,246,.16);
-    }
-
-    .prediction-label{
-      color:#64748b;
-      font-size:10px;
-      text-transform:uppercase;
-      letter-spacing:1px;
-    }
-
-    .prediction-main{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:15px;
-      margin-top:14px;
-    }
-
-    .side{
-      font-size:35px;
-      font-weight:1000;
-      letter-spacing:-1px;
-    }
-
-    .side.big{
-      color:#38bdf8;
-      text-shadow:0 0 28px rgba(56,189,248,.25);
-    }
-
-    .side.small{
-      color:#a78bfa;
-      text-shadow:0 0 28px rgba(167,139,250,.25);
-    }
-
-    .number{
-      width:58px;
-      height:58px;
-      border-radius:17px;
-      display:grid;
-      place-items:center;
-      background:#111827;
-      border:1px solid #273449;
-      font-size:24px;
-      font-weight:900;
-    }
-
-    .confidence{
-      margin-top:18px;
-    }
-
-    .confidence-head{
-      display:flex;
-      justify-content:space-between;
-      color:#94a3b8;
-      font-size:10px;
-      margin-bottom:7px;
-    }
-
-    .bar{
-      height:7px;
-      background:#111827;
-      border-radius:99px;
-      overflow:hidden;
-    }
-
-    .bar span{
-      display:block;
-      height:100%;
-      width:0;
-      background:linear-gradient(90deg,#3b82f6,#8b5cf6);
-      border-radius:99px;
-      transition:width .35s;
-    }
-
-    .analysis-grid{
-      display:grid;
-      grid-template-columns:repeat(2,1fr);
-      gap:8px;
-    }
-
-    .analysis-item{
-      padding:11px;
-      background:#080d18;
-      border:1px solid #172033;
-      border-radius:12px;
-    }
-
-    .analysis-item small{
-      display:block;
-      color:#64748b;
-      font-size:9px;
-      margin-bottom:5px;
-    }
-
-    .analysis-item strong{
-      font-size:12px;
-    }
-
-    .tools{
-      display:grid;
-      grid-template-columns:repeat(3,1fr);
-      gap:9px;
-    }
-
-    .tool{
-      min-height:85px;
-      text-align:left;
-      padding:13px;
-      border-radius:14px;
-      background:#080d18;
-      border:1px solid #172033;
-      cursor:pointer;
-      color:white;
-    }
-
-    .tool:hover{
-      border-color:#334155;
-    }
-
-    .tool b{
-      display:block;
-      font-size:12px;
-      margin-bottom:6px;
-    }
-
-    .tool span{
-      color:#64748b;
-      font-size:9px;
-      line-height:1.4;
-    }
-
-    .key-create{
-      display:grid;
-      grid-template-columns:1fr auto;
-      gap:9px;
-    }
-
-    .key-list{
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-    }
-
-    .key-row{
-      display:grid;
-      grid-template-columns:1.3fr 1fr auto;
-      align-items:center;
-      gap:10px;
-      padding:11px;
-      border-radius:12px;
-      background:#080d18;
-      border:1px solid #172033;
-    }
-
-    .key-text{
-      font-family:monospace;
-      font-size:11px;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-
-    .device{
-      color:#64748b;
-      font-size:9px;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-
-    .actions{
-      display:flex;
-      gap:6px;
-      justify-content:flex-end;
-    }
-
-    .log{
-      max-height:310px;
-      overflow:auto;
-      background:#050912;
-      border:1px solid #111827;
-      border-radius:12px;
-      padding:12px;
-      font-family:monospace;
-      font-size:10px;
-      line-height:1.7;
-      color:#94a3b8;
-      white-space:pre-wrap;
-      word-break:break-word;
-    }
-
-    .notice{
-      padding:11px 13px;
-      border-radius:12px;
-      font-size:10px;
-      margin-bottom:12px;
-      display:none;
-    }
-
-    .notice.show{
-      display:block;
-    }
-
-    .notice.ok{
-      color:#86efac;
-      background:rgba(34,197,94,.08);
-      border:1px solid rgba(34,197,94,.15);
-    }
-
-    .notice.err{
-      color:#fca5a5;
-      background:rgba(239,68,68,.08);
-      border:1px solid rgba(239,68,68,.15);
-    }
-
-    .footer{
-      text-align:center;
-      color:#475569;
-      font-size:9px;
-      padding:8px 0 20px;
-    }
-
-    .hidden{
-      display:none!important;
-    }
-
-    @media(max-width:800px){
-      .grid{
-        grid-template-columns:repeat(2,1fr);
-      }
-
-      .live{
-        grid-template-columns:1fr;
-      }
-
-      .tools{
-        grid-template-columns:1fr;
-      }
-
-      .key-row{
-        grid-template-columns:1fr;
-      }
-
-      .actions{
-        justify-content:flex-start;
-      }
-    }
-
-    @media(max-width:430px){
-      body{
-        padding:10px;
-      }
-
-      .card{
-        padding:13px;
-        border-radius:17px;
-      }
-
-      .topbar{
-        align-items:flex-start;
-      }
-
-      .status-dot{
-        font-size:9px;
-      }
-
-      .brand h1{
-        font-size:17px;
-      }
-
-      .prediction-main{
-        align-items:flex-end;
-      }
-
-      .side{
-        font-size:30px;
-      }
-    }
-  </style>
-</head>
-
-<body>
-
-<div id="loginPage" class="login">
-
-  <div class="login-logo">
-    <div class="big-logo">DY</div>
-    <h1>DY AI Admin</h1>
-    <p>Wingo 30S Control Center</p>
-  </div>
-
-  <div class="card">
-
-    <div id="loginNotice" class="notice"></div>
-
-    <div class="field">
-      <label>ADMIN ACCESS KEY</label>
-      <input
-        id="adminKey"
-        class="input"
-        type="password"
-        placeholder="Enter admin key"
-        autocomplete="off"
-      >
-    </div>
-
-    <button id="loginBtn" class="btn btn-primary" style="width:100%">
-      LOGIN TO ADMIN
-    </button>
-
-  </div>
-</div>
-
-
-<div id="adminPage" class="app hidden">
-
-  <div class="topbar">
-
-    <div class="brand">
-      <div class="logo">DY</div>
-      <div>
-        <h1>DY AI Admin</h1>
-        <p>Wingo 30 Seconds • AI Control Center</p>
-      </div>
-    </div>
-
-    <div id="serverStatus" class="status-dot offline">
-      <span class="dot"></span>
-      <span id="serverStatusText">OFFLINE</span>
-    </div>
-
-  </div>
-
-
-  <div id="globalNotice" class="notice"></div>
-
-
-  <!-- LIVE STATUS -->
-
-  <div class="card">
-
-    <div class="card-title">
-      <h2>⚡ Live System</h2>
-      <span>REAL TIME</span>
-    </div>
-
-    <div class="grid">
-
-      <div class="stat">
-        <div class="label">Provider</div>
-        <div id="provider" class="value">—</div>
-        <div class="sub">WingoBot API</div>
-      </div>
-
-      <div class="stat">
-        <div class="label">Latest Settled</div>
-        <div id="latestIssue" class="value" style="font-size:12px">—</div>
-        <div class="sub">Last actual result</div>
-      </div>
-
-      <div class="stat">
-        <div class="label">Target</div>
-        <div id="targetIssue" class="value" style="font-size:12px">—</div>
-        <div class="sub">AI prediction target</div>
-      </div>
-
-      <div class="stat">
-        <div class="label">Countdown</div>
-        <div id="countdown" class="value big-value">—</div>
-        <div class="sub">Estimated timer</div>
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <!-- AI -->
-
-  <div class="card">
-
-    <div class="card-title">
-      <h2>🤖 AI Prediction Engine</h2>
-      <span>NEW MODEL</span>
-    </div>
-
-    <div class="live">
-
-      <div class="prediction-box">
-
-        <div class="prediction-label">
-          Current AI Signal
-        </div>
-
-        <div class="prediction-main">
-
-          <div>
-            <div id="predictionSide" class="side">WAIT</div>
-
-            <div style="margin-top:5px;color:#64748b;font-size:10px">
-              Target:
-              <b id="predictionTarget">—</b>
-            </div>
-          </div>
-
-          <div>
-            <div class="prediction-label" style="text-align:center;margin-bottom:5px">
-              NUMBER
-            </div>
-
-            <div id="predictionNumber" class="number">—</div>
-          </div>
-
-        </div>
-
-        <div class="confidence">
-
-          <div class="confidence-head">
-            <span>MODEL CONFIDENCE</span>
-            <b id="confidence">—</b>
-          </div>
-
-          <div class="bar">
-            <span id="confidenceBar"></span>
-          </div>
-
-        </div>
-
-        <div id="aiSummary"
-             style="margin-top:13px;color:#94a3b8;font-size:10px;line-height:1.5">
-          Waiting for live AI analysis...
-        </div>
-
-      </div>
-
-
-      <div>
-
-        <div class="analysis-grid">
-
-          <div class="analysis-item">
-            <small>TREND</small>
-            <strong id="trend">—</strong>
-          </div>
-
-          <div class="analysis-item">
-            <small>TREND STRENGTH</small>
-            <strong id="trendStrength">—</strong>
-          </div>
-
-          <div class="analysis-item">
-            <small>TREND AGE</small>
-            <strong id="trendAge">—</strong>
-          </div>
-
-          <div class="analysis-item">
-            <small>BREAK RISK</small>
-            <strong id="breakRisk">—</strong>
-          </div>
-
-          <div class="analysis-item">
-            <small>CONTINUATION</small>
-            <strong id="continuation">—</strong>
-          </div>
-
-          <div class="analysis-item">
-            <small>MODEL AGREEMENT</small>
-            <strong id="agreement">—</strong>
-          </div>
-
-          <div class="analysis-item">
-            <small>SHORT TREND</small>
-            <strong id="shortTrend">—</strong>
-          </div>
-
-          <div class="analysis-item">
-            <small>MEDIUM TREND</small>
-            <strong id="mediumTrend">—</strong>
-          </div>
-
-          <div class="analysis-item">
-            <small>TRANSITION</small>
-            <strong id="transition">—</strong>
-          </div>
-
-          <div class="analysis-item">
-            <small>NUMBER PRESSURE</small>
-            <strong id="numberPressure">—</strong>
-          </div>
-
-          <div class="analysis-item">
-            <small>HISTORICAL MATCH</small>
-            <strong id="historicalMatch">—</strong>
-          </div>
-
-          <div class="analysis-item">
-            <small>STREAK STRUCTURE</small>
-            <strong id="streakStructure">—</strong>
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <!-- PERFORMANCE -->
-
-  <div class="card">
-
-    <div class="card-title">
-      <h2>📊 Session Performance</h2>
-      <span>SETTLED ONLY</span>
-    </div>
-
-    <div class="grid">
-
-      <div class="stat">
-        <div class="label">Wins</div>
-        <div id="wins" class="value">0</div>
-      </div>
-
-      <div class="stat">
-        <div class="label">Losses</div>
-        <div id="losses" class="value">0</div>
-      </div>
-
-      <div class="stat">
-        <div class="label">Accuracy</div>
-        <div id="accuracy" class="value">0%</div>
-      </div>
-
-      <div class="stat">
-        <div class="label">Backtest</div>
-        <div id="backtest" class="value">—</div>
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <!-- ADMIN TOOLS -->
-
-  <div class="card">
-
-    <div class="card-title">
-      <h2>🛠 Admin Tools</h2>
-      <span>CONTROL</span>
-    </div>
-
-    <div class="tools">
-
-      <button class="tool" onclick="runTool('status')">
-        <b>🟢 System Status</b>
-        <span>Check database, provider and server state.</span>
-      </button>
-
-      <button class="tool" onclick="runTool('ping')">
-        <b>📡 Provider Ping</b>
-        <span>Check live WingoBot API connection.</span>
-      </button>
-
-      <button class="tool" onclick="runTool('wingo-test')">
-        <b>🎮 Wingo Test</b>
-        <span>Fetch and inspect latest live game history.</span>
-      </button>
-
-      <button class="tool" onclick="runTool('model-test')">
-        <b>🧠 Model Test</b>
-        <span>Inspect current AI model output and signals.</span>
-      </button>
-
-      <button class="tool" onclick="refreshAll()">
-        <b>🔄 Refresh</b>
-        <span>Reload all admin dashboard information.</span>
-      </button>
-
-      <button class="tool" onclick="logout()">
-        <b>🚪 Logout</b>
-        <span>Close this admin session.</span>
-      </button>
-
-    </div>
-
-  </div>
-
-
-  <!-- ACCESS KEYS -->
-
-  <div class="card">
-
-    <div class="card-title">
-      <h2>🔑 Access Key Manager</h2>
-      <span>USERS</span>
-    </div>
-
-    <div class="key-create">
-
-      <input
-        id="newKey"
-        class="input"
-        placeholder="Enter new access key"
-        autocomplete="off"
-      >
-
-      <button class="btn btn-primary" onclick="createKey()">
-        CREATE KEY
-      </button>
-
-    </div>
-
-    <div style="height:10px"></div>
-
-    <div id="keyList" class="key-list">
-      <div style="color:#64748b;font-size:11px">
-        Loading keys...
-      </div>
-    </div>
-
-  </div>
-
-
-  <!-- TOOL OUTPUT -->
-
-  <div class="card">
-
-    <div class="card-title">
-      <h2>📋 System Output</h2>
-      <span>DEBUG</span>
-    </div>
-
-    <div id="log" class="log">
-DY AI Admin ready...
-    </div>
-
-  </div>
-
-
-  <div class="footer">
-    DY AI Wingo 30S • Admin Control Center<br>
-    AI signals are estimates and never guarantee a result.
-  </div>
-
-</div>
-
-
-<script>
-
-const $ = id => document.getElementById(id);
-
-let ADMIN = "";
-let stateTimer = null;
-
-
-/* =========================
-   NOTICE
-========================= */
-
-function notice(message,type="ok"){
-
-  const box = $("globalNotice");
-
-  box.textContent = message;
-  box.className = "notice show " + (type === "err" ? "err" : "ok");
-
-  clearTimeout(box._timer);
-
-  box._timer = setTimeout(()=>{
-    box.className = "notice";
-  },4000);
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+
+<title>DY AI • Admin</title>
+
+<style>
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+  -webkit-tap-highlight-color:transparent;
 }
 
-
-function loginNotice(message,type="err"){
-
-  const box = $("loginNotice");
-
-  box.textContent = message;
-  box.className = "notice show " + (type === "err" ? "err" : "ok");
-
+body{
+  min-height:100vh;
+  color:#f8fafc;
+  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:
+    radial-gradient(circle at 50% -10%,#172554 0,#080d1b 38%,#03050b 100%);
 }
 
+button,input{
+  font:inherit;
+}
 
-/* =========================
-   API
-========================= */
+.hidden{
+  display:none!important;
+}
 
-async function api(url,options={}){
-
-  options.headers = {
-    ...(options.headers || {}),
-    "x-admin-key": ADMIN
-  };
-
-  const res = await fetch(url,options);
-
-  let data;
-
-  try{
-    data = await res.json();
-  }catch{
-    data = {
-      ok:false,
-      error:"Invalid server response"
-    };
-  }
-
-  if(!res.ok){
-    throw new Error(data.error || `HTTP ${res.status}`);
-  }
-
-  return data;
+.app{
+  width:100%;
+  max-width:700px;
+  margin:auto;
+  padding:12px;
 }
 
 
@@ -1003,747 +42,2225 @@ async function api(url,options={}){
    LOGIN
 ========================= */
 
-$("loginBtn").addEventListener("click",login);
+.login-page{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+}
 
-$("adminKey").addEventListener("keydown",e=>{
-  if(e.key === "Enter") login();
-});
+.login-box{
+  width:100%;
+  max-width:390px;
+  padding:25px;
+  border-radius:24px;
+  background:rgba(8,13,27,.95);
+  border:1px solid rgba(148,163,184,.12);
+  box-shadow:0 25px 80px rgba(0,0,0,.5);
+}
 
+.logo{
+  width:66px;
+  height:66px;
+  margin:auto;
+  display:grid;
+  place-items:center;
+  border-radius:20px;
+  background:linear-gradient(135deg,#22d3ee,#6366f1,#8b5cf6);
+  font-size:25px;
+  font-weight:1000;
+}
 
-async function login(){
+.login-title{
+  text-align:center;
+  margin-top:15px;
+}
 
-  const key = $("adminKey").value.trim();
+.login-title h1{
+  font-size:23px;
+}
 
-  if(!key){
-    loginNotice("Admin key enter karo.");
-    return;
-  }
+.login-title p{
+  margin-top:5px;
+  color:#64748b;
+  font-size:10px;
+}
 
-  $("loginBtn").disabled = true;
-  $("loginBtn").textContent = "CHECKING...";
+.input-wrap{
+  margin-top:22px;
+}
 
-  try{
+.input-wrap label{
+  display:block;
+  margin-bottom:7px;
+  color:#94a3b8;
+  font-size:9px;
+  font-weight:800;
+}
 
-    ADMIN = key;
+.input{
+  width:100%;
+  padding:14px;
+  outline:none;
+  color:#fff;
+  background:#050a14;
+  border:1px solid #1e293b;
+  border-radius:13px;
+}
 
-    const data = await api("/api/admin/status");
+.input:focus{
+  border-color:#6366f1;
+}
 
-    if(data.ok === false){
-      throw new Error(data.error || "Invalid admin key");
-    }
+.login-btn{
+  width:100%;
+  margin-top:12px;
+  padding:14px;
+  border:0;
+  border-radius:13px;
+  color:#fff;
+  font-weight:900;
+  background:linear-gradient(135deg,#2563eb,#6366f1);
+}
 
-    localStorage.setItem("dy_admin_key",key);
+.error{
+  display:none;
+  margin-top:10px;
+  padding:10px;
+  border-radius:10px;
+  color:#fca5a5;
+  background:rgba(239,68,68,.08);
+  font-size:10px;
+}
 
-    $("loginPage").classList.add("hidden");
-    $("adminPage").classList.remove("hidden");
-
-    writeLog("Admin login successful.");
-
-    await refreshAll();
-
-    startPolling();
-
-  }catch(err){
-
-    ADMIN = "";
-
-    loginNotice(err.message || "Invalid admin key","err");
-
-  }finally{
-
-    $("loginBtn").disabled = false;
-    $("loginBtn").textContent = "LOGIN TO ADMIN";
-
-  }
-
+.error.show{
+  display:block;
 }
 
 
 /* =========================
-   AUTO LOGIN
+   HEADER
 ========================= */
 
-window.addEventListener("load",async()=>{
+.header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:4px 2px 15px;
+}
 
-  const saved = localStorage.getItem("dy_admin_key");
+.brand{
+  display:flex;
+  align-items:center;
+  gap:9px;
+}
 
-  if(!saved) return;
+.brand-logo{
+  width:40px;
+  height:40px;
+  display:grid;
+  place-items:center;
+  border-radius:13px;
+  background:linear-gradient(135deg,#22d3ee,#6366f1);
+  font-weight:1000;
+}
 
-  ADMIN = saved;
+.brand-name{
+  font-size:16px;
+  font-weight:950;
+}
 
-  try{
+.brand-sub{
+  margin-top:2px;
+  color:#64748b;
+  font-size:8px;
+}
 
-    const data = await api("/api/admin/status");
+.admin-badge{
+  padding:7px 10px;
+  border-radius:99px;
+  color:#a5b4fc;
+  background:rgba(99,102,241,.08);
+  border:1px solid rgba(99,102,241,.16);
+  font-size:8px;
+  font-weight:900;
+}
 
-    if(data.ok === false){
-      throw new Error();
-    }
 
-    $("loginPage").classList.add("hidden");
-    $("adminPage").classList.remove("hidden");
+/* =========================
+   CARDS
+========================= */
 
-    await refreshAll();
+.card{
+  margin-top:10px;
+  padding:15px;
+  border-radius:18px;
+  background:rgba(8,13,27,.92);
+  border:1px solid rgba(148,163,184,.1);
+  box-shadow:0 15px 50px rgba(0,0,0,.18);
+}
 
-    startPolling();
+.card-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:13px;
+}
 
-  }catch{
+.card-head h2{
+  font-size:12px;
+}
 
-    ADMIN = "";
-    localStorage.removeItem("dy_admin_key");
+.card-head span{
+  color:#64748b;
+  font-size:8px;
+  font-weight:800;
+}
 
-  }
 
-});
+/* =========================
+   STATUS
+========================= */
+
+.status-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:8px;
+}
+
+.status-item{
+  padding:12px;
+  border-radius:13px;
+  background:#070d19;
+  border:1px solid rgba(148,163,184,.07);
+}
+
+.status-label{
+  color:#64748b;
+  font-size:7px;
+  text-transform:uppercase;
+}
+
+.status-value{
+  margin-top:5px;
+  font-size:12px;
+  font-weight:900;
+  word-break:break-word;
+}
+
+.online{
+  color:#4ade80;
+}
+
+.offline{
+  color:#f87171;
+}
+
+
+/* =========================
+   ACTIONS
+========================= */
+
+.actions{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:8px;
+}
+
+.btn{
+  min-height:43px;
+  padding:10px;
+  border-radius:12px;
+  border:1px solid #1e293b;
+  background:#0b1220;
+  color:#cbd5e1;
+  font-size:9px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.btn:active{
+  transform:scale(.98);
+}
+
+.btn.primary{
+  border-color:rgba(99,102,241,.25);
+  background:linear-gradient(135deg,#1d4ed8,#4f46e5);
+  color:#fff;
+}
+
+.btn.danger{
+  color:#fca5a5;
+  border-color:rgba(239,68,68,.15);
+  background:rgba(127,29,29,.15);
+}
+
+.btn.success{
+  color:#86efac;
+}
+
+
+/* =========================
+   MODEL
+========================= */
+
+.model-box{
+  padding:13px;
+  border-radius:14px;
+  background:#050a14;
+  border:1px solid rgba(148,163,184,.08);
+}
+
+.model-name{
+  font-family:monospace;
+  color:#38bdf8;
+  font-size:11px;
+  font-weight:900;
+}
+
+.model-desc{
+  margin-top:6px;
+  color:#64748b;
+  font-size:9px;
+  line-height:1.5;
+}
+
+.model-result{
+  margin-top:10px;
+  padding:10px;
+  border-radius:10px;
+  background:#030712;
+  color:#cbd5e1;
+  font-family:monospace;
+  font-size:8px;
+  white-space:pre-wrap;
+  word-break:break-word;
+  max-height:280px;
+  overflow:auto;
+}
+
+
+/* =========================
+   KEY CREATE
+========================= */
+
+.key-create{
+  display:flex;
+  gap:8px;
+}
+
+.key-create .input{
+  flex:1;
+}
+
+.key-create .btn{
+  min-width:110px;
+}
+
+
+/* =========================
+   KEY LIST
+========================= */
+
+.keys{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.key-row{
+  padding:12px;
+  border-radius:13px;
+  background:#050a14;
+  border:1px solid rgba(148,163,184,.07);
+}
+
+.key-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+}
+
+.key-value{
+  font-family:monospace;
+  color:#e2e8f0;
+  font-size:10px;
+  font-weight:900;
+  word-break:break-all;
+}
+
+.key-id{
+  color:#475569;
+  font-size:8px;
+}
+
+.key-meta{
+  margin-top:8px;
+  color:#64748b;
+  font-size:8px;
+  line-height:1.6;
+}
+
+.key-actions{
+  display:flex;
+  gap:6px;
+  margin-top:9px;
+}
+
+.key-actions .btn{
+  flex:1;
+  min-height:36px;
+}
 
 
 /* =========================
    LOG
 ========================= */
 
-function writeLog(value){
-
-  const box = $("log");
-
-  const time = new Date().toLocaleTimeString();
-
-  let text;
-
-  if(typeof value === "string"){
-    text = value;
-  }else{
-    try{
-      text = JSON.stringify(value,null,2);
-    }catch{
-      text = String(value);
-    }
-  }
-
-  box.textContent =
-    `[${time}] ${text}\n\n` +
-    box.textContent;
-
+.log{
+  max-height:300px;
+  overflow:auto;
+  padding:11px;
+  border-radius:13px;
+  background:#030712;
+  color:#94a3b8;
+  font-family:monospace;
+  font-size:8px;
+  line-height:1.6;
+  white-space:pre-wrap;
+  word-break:break-word;
 }
 
 
 /* =========================
-   REFRESH
+   FOOTER
 ========================= */
 
-async function refreshAll(){
-
-  try{
-
-    await Promise.all([
-      loadState(),
-      loadKeys()
-    ]);
-
-    setServerStatus(true);
-
-  }catch(err){
-
-    setServerStatus(false);
-    writeLog("Refresh error: " + err.message);
-
-  }
-
+.footer{
+  padding:18px 5px 70px;
+  text-align:center;
+  color:#334155;
+  font-size:8px;
 }
 
 
 /* =========================
-   LIVE STATE
+   TOAST
 ========================= */
 
-async function loadState(){
+.toast{
+  position:fixed;
+  left:50%;
+  bottom:18px;
+  transform:translateX(-50%) translateY(20px);
+  z-index:100;
 
-  const data = await api("/api/state");
+  width:min(
+    calc(100% - 24px),
+    500px
+  );
 
-  updateState(data);
+  padding:11px 13px;
 
-  return data;
+  border-radius:13px;
+
+  background:#111827;
+  border:1px solid #1e293b;
+
+  color:#e2e8f0;
+
+  text-align:center;
+
+  font-size:9px;
+  font-weight:800;
+
+  opacity:0;
+  pointer-events:none;
+
+  transition:.25s ease;
 }
 
+.toast.show{
+  opacity:1;
+  transform:translateX(-50%) translateY(0);
+}
 
-function updateState(data){
+.toast.bad{
+  color:#fca5a5;
+  border-color:rgba(239,68,68,.2);
+}
 
-  if(!data) return;
+@media(max-width:430px){
 
-
-  $("provider").textContent =
-    data.providerOnline ? "ONLINE" : "OFFLINE";
-
-
-  $("latestIssue").textContent =
-    data.latestSettledIssue || "—";
-
-
-  $("targetIssue").textContent =
-    data.targetIssue || data.currentIssue || "—";
-
-
-  $("predictionTarget").textContent =
-    data.targetIssue || "—";
-
-
-  const cd = Number(data.countdown);
-
-  if(Number.isFinite(cd)){
-    $("countdown").textContent =
-      `${Math.max(0,cd)}s`;
-  }else{
-    $("countdown").textContent = "—";
+  .status-grid{
+    grid-template-columns:1fr 1fr;
   }
 
+  .actions{
+    grid-template-columns:1fr 1fr;
+  }
 
-  /* Prediction */
+  .key-create{
+    flex-direction:column;
+  }
 
-  const side =
-    String(data.prediction || "").toUpperCase();
-
-  const sideEl = $("predictionSide");
-
-  sideEl.textContent =
-    side === "BIG" || side === "SMALL"
-      ? side
-      : "WAIT";
-
-  sideEl.className =
-    "side " +
-    (side === "BIG" ? "big" :
-     side === "SMALL" ? "small" : "");
-
-
-  $("predictionNumber").textContent =
-    data.number ?? "—";
-
-
-  const conf =
-    Number(data.confidence || 0);
-
-  $("confidence").textContent =
-    conf > 0 ? `${conf}%` : "—";
-
-  $("confidenceBar").style.width =
-    `${Math.max(0,Math.min(100,conf))}%`;
-
-
-  $("aiSummary").textContent =
-    data.analysis?.summary ||
-    "Waiting for live AI analysis...";
-
-
-  /* Analysis */
-
-  const a = data.analysis || {};
-
-  $("trend").textContent =
-    a.trend || a.currentTrend || "—";
-
-  $("trendStrength").textContent =
-    formatPercent(a.trendStrength);
-
-  $("trendAge").textContent =
-    formatValue(a.trendAge);
-
-  $("breakRisk").textContent =
-    formatPercent(a.breakRisk);
-
-  $("continuation").textContent =
-    formatPercent(a.continuation);
-
-  $("agreement").textContent =
-    formatPercent(a.modelAgreement);
-
-  $("shortTrend").textContent =
-    a.shortTrend || "—";
-
-  $("mediumTrend").textContent =
-    a.mediumTrend || "—";
-
-  $("transition").textContent =
-    formatPercent(a.transition);
-
-  $("numberPressure").textContent =
-    formatPercent(a.numberPressure);
-
-  $("historicalMatch").textContent =
-    formatPercent(a.historicalMatch);
-
-  $("streakStructure").textContent =
-    a.streakStructure || "—";
-
-
-  /* Performance */
-
-  const wins =
-    Number(data.wins || 0);
-
-  const losses =
-    Number(data.losses || 0);
-
-  const total = wins + losses;
-
-  $("wins").textContent = wins;
-  $("losses").textContent = losses;
-
-  $("accuracy").textContent =
-    total
-      ? `${((wins / total) * 100).toFixed(1)}%`
-      : "0%";
-
-
-  const bt = data.backtest;
-
-  if(bt && typeof bt === "object"){
-
-    if(bt.accuracy != null){
-      $("backtest").textContent =
-        formatPercent(bt.accuracy);
-    }else if(bt.winRate != null){
-      $("backtest").textContent =
-        formatPercent(bt.winRate);
-    }else{
-      $("backtest").textContent = "READY";
-    }
-
-  }else{
-
-    $("backtest").textContent = "—";
-
+  .key-create .btn{
+    width:100%;
   }
 
 }
+</style>
+</head>
+
+<body>
 
 
-function formatPercent(v){
+<!-- =====================================================
+     LOGIN
+===================================================== -->
 
-  if(v === undefined || v === null || v === "")
-    return "—";
+<div
+  id="loginPage"
+  class="login-page">
 
-  const n = Number(v);
+  <div class="login-box">
 
-  if(!Number.isFinite(n))
-    return String(v);
+    <div class="logo">
+      DY
+    </div>
 
-  if(n <= 1)
-    return `${(n * 100).toFixed(1)}%`;
+    <div class="login-title">
 
-  return `${n.toFixed(1)}%`;
-}
+      <h1>
+        DY AI
+      </h1>
 
+      <p>
+        Administrator Panel
+      </p>
 
-function formatValue(v){
+    </div>
 
-  if(v === undefined || v === null || v === "")
-    return "—";
+    <div class="input-wrap">
 
-  return String(v);
-}
+      <label>
+        ADMIN KEY
+      </label>
 
+      <input
+        id="adminKey"
+        class="input"
+        type="password"
+        placeholder="Enter admin key"
+        autocomplete="off"
+      >
 
-/* =========================
-   SERVER STATUS
-========================= */
+    </div>
 
-function setServerStatus(online){
+    <button
+      id="loginBtn"
+      class="login-btn">
 
-  const box = $("serverStatus");
+      OPEN ADMIN
 
-  box.className =
-    "status-dot " +
-    (online ? "online" : "offline");
+    </button>
 
-  $("serverStatusText").textContent =
-    online ? "ONLINE" : "OFFLINE";
+    <div
+      id="loginError"
+      class="error">
+    </div>
 
-}
+  </div>
 
-
-/* =========================
-   POLLING
-========================= */
-
-function startPolling(){
-
-  clearInterval(stateTimer);
-
-  stateTimer = setInterval(async()=>{
-
-    try{
-
-      const data = await loadState();
-
-      setServerStatus(true);
-
-    }catch(err){
-
-      setServerStatus(false);
-
-    }
-
-  },3000);
-
-}
+</div>
 
 
-/* =========================
-   ACCESS KEYS
-========================= */
+<!-- =====================================================
+     ADMIN APP
+===================================================== -->
 
-async function loadKeys(){
-
-  const data =
-    await api("/api/admin/keys");
-
-  const keys =
-    Array.isArray(data)
-      ? data
-      : (data.keys || data.data || []);
-
-  renderKeys(keys);
-
-}
+<div
+  id="app"
+  class="app hidden">
 
 
-function renderKeys(keys){
+  <!-- HEADER -->
 
-  const box = $("keyList");
+  <header class="header">
 
-  if(!keys.length){
+    <div class="brand">
 
-    box.innerHTML =
-      `<div style="color:#64748b;font-size:11px">
-        No access keys found.
-      </div>`;
+      <div class="brand-logo">
+        DY
+      </div>
 
-    return;
-  }
+      <div>
 
-
-  box.innerHTML = keys.map(k=>{
-
-    const key =
-      escapeHtml(
-        k.access_key ??
-        k.key ??
-        ""
-      );
-
-    const device =
-      escapeHtml(
-        k.device_id ||
-        "Not bound"
-      );
-
-    const created =
-      k.created_at
-        ? new Date(Number(k.created_at))
-            .toLocaleString()
-        : "—";
-
-    const id =
-      k.id ?? "";
-
-
-    return `
-
-      <div class="key-row">
-
-        <div>
-          <div class="key-text">${key}</div>
-
-          <div style="color:#475569;font-size:8px;margin-top:4px">
-            Created: ${escapeHtml(created)}
-          </div>
+        <div class="brand-name">
+          DY AI
         </div>
 
-        <div class="device">
-          Device:
-          ${device}
-        </div>
-
-        <div class="actions">
-
-          <button
-            class="btn btn-small btn-green"
-            onclick="resetDevice(${Number(id)})">
-            RESET DEVICE
-          </button>
-
-          <button
-            class="btn btn-small btn-danger"
-            onclick="deleteKey(${Number(id)})">
-            DELETE
-          </button>
-
+        <div class="brand-sub">
+          CONTROL CENTER
         </div>
 
       </div>
 
-    `;
+    </div>
 
-  }).join("");
+    <div class="admin-badge">
+      ADMIN
+    </div>
+
+  </header>
+
+
+  <!-- ===================================================
+       LIVE STATUS
+  ==================================================== -->
+
+  <div class="card">
+
+    <div class="card-head">
+
+      <h2>
+        LIVE STATUS
+      </h2>
+
+      <span id="lastRefresh">
+        —
+      </span>
+
+    </div>
+
+
+    <div class="status-grid">
+
+      <div class="status-item">
+
+        <div class="status-label">
+          SERVER
+        </div>
+
+        <div
+          id="serverStatus"
+          class="status-value">
+          CHECKING
+        </div>
+
+      </div>
+
+
+      <div class="status-item">
+
+        <div class="status-label">
+          DATABASE
+        </div>
+
+        <div
+          id="dbStatus"
+          class="status-value">
+          CHECKING
+        </div>
+
+      </div>
+
+
+      <div class="status-item">
+
+        <div class="status-label">
+          WINGOBOT
+        </div>
+
+        <div
+          id="providerStatus"
+          class="status-value">
+          CHECKING
+        </div>
+
+      </div>
+
+
+      <div class="status-item">
+
+        <div class="status-label">
+          MODEL
+        </div>
+
+        <div
+          id="modelVersion"
+          class="status-value">
+          —
+        </div>
+
+      </div>
+
+
+      <div class="status-item">
+
+        <div class="status-label">
+          LATEST SETTLED
+        </div>
+
+        <div
+          id="latestIssue"
+          class="status-value">
+          —
+        </div>
+
+      </div>
+
+
+      <div class="status-item">
+
+        <div class="status-label">
+          CURRENT
+        </div>
+
+        <div
+          id="currentIssue"
+          class="status-value">
+          —
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- ===================================================
+       CURRENT AI
+  ==================================================== -->
+
+  <div class="card">
+
+    <div class="card-head">
+
+      <h2>
+        CURRENT AI
+      </h2>
+
+      <span>
+        BIG / SMALL
+      </span>
+
+    </div>
+
+
+    <div class="status-grid">
+
+      <div class="status-item">
+
+        <div class="status-label">
+          TARGET
+        </div>
+
+        <div
+          id="targetIssue"
+          class="status-value">
+          —
+        </div>
+
+      </div>
+
+
+      <div class="status-item">
+
+        <div class="status-label">
+          PREDICTION
+        </div>
+
+        <div
+          id="prediction"
+          class="status-value">
+          —
+        </div>
+
+      </div>
+
+
+      <div class="status-item">
+
+        <div class="status-label">
+          CONFIDENCE
+        </div>
+
+        <div
+          id="confidence"
+          class="status-value">
+          —
+        </div>
+
+      </div>
+
+
+      <div class="status-item">
+
+        <div class="status-label">
+          W / L
+        </div>
+
+        <div
+          id="wl"
+          class="status-value">
+          0 / 0
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- ===================================================
+       ACTIONS
+  ==================================================== -->
+
+  <div class="card">
+
+    <div class="card-head">
+
+      <h2>
+        SYSTEM ACTIONS
+      </h2>
+
+      <span>
+        CONTROL
+      </span>
+
+    </div>
+
+
+    <div class="actions">
+
+      <button
+        id="refreshBtn"
+        class="btn primary">
+
+        ↻ REFRESH
+
+      </button>
+
+
+      <button
+        id="pingBtn"
+        class="btn">
+
+        PING API
+
+      </button>
+
+
+      <button
+        id="wingoBtn"
+        class="btn">
+
+        WINGOBOT TEST
+
+      </button>
+
+
+      <button
+        id="modelBtn"
+        class="btn">
+
+        MODEL TEST
+
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- ===================================================
+       MODEL
+  ==================================================== -->
+
+  <div class="card">
+
+    <div class="card-head">
+
+      <h2>
+        AI ENGINE
+      </h2>
+
+      <span>
+        BIG / SMALL ONLY
+      </span>
+
+    </div>
+
+
+    <div class="model-box">
+
+      <div
+        id="modelName"
+        class="model-name">
+
+        DY-AI-BS-V2
+
+      </div>
+
+      <div class="model-desc">
+
+        Trend continuation, trend age,
+        transition behaviour, break detection,
+        historical pattern comparison and
+        conflict protection.
+
+        <br><br>
+
+        Number prediction is completely disabled.
+
+      </div>
+
+
+      <div
+        id="modelResult"
+        class="model-result hidden">
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- ===================================================
+       ACCESS KEYS
+  ==================================================== -->
+
+  <div class="card">
+
+    <div class="card-head">
+
+      <h2>
+        ACCESS KEYS
+      </h2>
+
+      <span id="keyCount">
+        0 KEYS
+      </span>
+
+    </div>
+
+
+    <div class="key-create">
+
+      <input
+        id="newKey"
+        class="input"
+        type="text"
+        placeholder="Enter new access key"
+        autocomplete="off"
+      >
+
+      <button
+        id="createKeyBtn"
+        class="btn primary">
+
+        CREATE KEY
+
+      </button>
+
+    </div>
+
+
+    <div
+      id="keys"
+      class="keys"
+      style="margin-top:12px;">
+
+      <div
+        style="
+          text-align:center;
+          color:#475569;
+          font-size:9px;
+          padding:15px;
+        ">
+
+        Loading keys...
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- ===================================================
+       LOG
+  ==================================================== -->
+
+  <div class="card">
+
+    <div class="card-head">
+
+      <h2>
+        SYSTEM LOG
+      </h2>
+
+      <span>
+        LOCAL
+      </span>
+
+    </div>
+
+    <div
+      id="log"
+      class="log">
+
+      DY AI Admin ready.
+
+    </div>
+
+  </div>
+
+
+  <div class="footer">
+
+    DY AI • WINGO 30S<br>
+    BIG / SMALL ENGINE
+
+  </div>
+
+
+</div>
+
+
+<!-- TOAST -->
+
+<div
+  id="toast"
+  class="toast">
+</div>
+
+
+<script>
+
+/* =====================================================
+   VARIABLES
+===================================================== */
+
+const $ =
+  id => document.getElementById(id);
+
+let adminKey = "";
+
+let refreshTimer = null;
+
+
+/* =====================================================
+   LOG
+===================================================== */
+
+function addLog(
+  message
+){
+
+  const log =
+    $("log");
+
+  const time =
+    new Date()
+      .toLocaleTimeString();
+
+  log.textContent +=
+    `\n[${time}] ${message}`;
+
+  log.scrollTop =
+    log.scrollHeight;
 
 }
 
 
-/* =========================
-   CREATE KEY
-========================= */
+/* =====================================================
+   TOAST
+===================================================== */
 
-async function createKey(){
+let toastTimer;
 
-  const input = $("newKey");
+function toast(
+  message,
+  bad = false
+){
+
+  const el =
+    $("toast");
+
+  el.textContent =
+    message;
+
+  el.classList.toggle(
+    "bad",
+    bad
+  );
+
+  el.classList.add(
+    "show"
+  );
+
+  clearTimeout(
+    toastTimer
+  );
+
+  toastTimer =
+    setTimeout(
+      () => {
+
+        el.classList.remove(
+          "show"
+        );
+
+      },
+      2200
+    );
+
+}
+
+
+/* =====================================================
+   LOGIN
+===================================================== */
+
+$("loginBtn")
+  .addEventListener(
+    "click",
+    adminLogin
+  );
+
+
+$("adminKey")
+  .addEventListener(
+    "keydown",
+    e => {
+
+      if(
+        e.key === "Enter"
+      ){
+
+        adminLogin();
+
+      }
+
+    }
+  );
+
+
+async function adminLogin(){
 
   const key =
-    input.value.trim();
+    $("adminKey")
+      .value
+      .trim();
+
 
   if(!key){
 
-    notice("Access key enter karo.","err");
-    return;
-
-  }
-
-
-  try{
-
-    const data =
-      await api("/api/admin/keys",{
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json"
-        },
-        body:JSON.stringify({
-          access_key:key
-        })
-      });
-
-
-    writeLog(data);
-
-    input.value = "";
-
-    notice("Access key created.");
-
-    await loadKeys();
-
-  }catch(err){
-
-    notice(err.message,"err");
-    writeLog("Create key error: " + err.message);
-
-  }
-
-}
-
-
-/* =========================
-   RESET DEVICE
-========================= */
-
-async function resetDevice(id){
-
-  if(!id){
-    notice("Invalid key ID.","err");
-    return;
-  }
-
-  if(!confirm(
-    "Is key ka device binding reset karna hai?"
-  )){
-    return;
-  }
-
-
-  try{
-
-    const data =
-      await api("/api/admin/reset-device",{
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json"
-        },
-        body:JSON.stringify({
-          id
-        })
-      });
-
-
-    writeLog(data);
-
-    notice("Device binding reset.");
-
-    await loadKeys();
-
-  }catch(err){
-
-    notice(err.message,"err");
-    writeLog("Reset error: " + err.message);
-
-  }
-
-}
-
-
-/* =========================
-   DELETE KEY
-========================= */
-
-async function deleteKey(id){
-
-  if(!id){
-    notice("Invalid key ID.","err");
-    return;
-  }
-
-  if(!confirm(
-    "Ye access key permanently delete karni hai?"
-  )){
-    return;
-  }
-
-
-  try{
-
-    const data =
-      await api("/api/admin/keys",{
-        method:"DELETE",
-        headers:{
-          "Content-Type":"application/json"
-        },
-        body:JSON.stringify({
-          id
-        })
-      });
-
-
-    writeLog(data);
-
-    notice("Access key deleted.");
-
-    await loadKeys();
-
-  }catch(err){
-
-    notice(err.message,"err");
-    writeLog("Delete error: " + err.message);
-
-  }
-
-}
-
-
-/* =========================
-   ADMIN TOOLS
-========================= */
-
-async function runTool(tool){
-
-  try{
-
-    let url = "";
-
-    if(tool === "status"){
-      url = "/api/admin/status";
-    }
-
-    if(tool === "ping"){
-      url = "/api/admin/ping";
-    }
-
-    if(tool === "wingo-test"){
-      url = "/api/admin/wingo-test";
-    }
-
-    if(tool === "model-test"){
-      url = "/api/admin/model-test";
-    }
-
-    if(!url){
-      return;
-    }
-
-
-    writeLog(`Running ${tool}...`);
-
-    const data =
-      await api(url);
-
-    writeLog(data);
-
-    notice(
-      `${tool.toUpperCase()} completed.`
+    showError(
+      "Admin key enter karo."
     );
 
-    setServerStatus(true);
+    return;
+
+  }
 
 
-    if(tool === "status" ||
-       tool === "wingo-test" ||
-       tool === "model-test"){
+  $("loginBtn").disabled =
+    true;
+
+  $("loginBtn").textContent =
+    "CHECKING...";
+
+
+  try{
+
+    const response =
+      await fetch(
+        "/api/admin/status",
+        {
+          headers:{
+            "x-admin-key":
+              key
+          },
+          cache:"no-store"
+        }
+      );
+
+
+    const data =
+      await response.json();
+
+
+    if(
+      !response.ok ||
+      data.ok === false
+    ){
+
+      throw new Error(
+        data.error ||
+        "Invalid admin key"
+      );
+
+    }
+
+
+    adminKey =
+      key;
+
+
+    sessionStorage.setItem(
+      "dy_ai_admin_key",
+      key
+    );
+
+
+    $("loginPage")
+      .classList
+      .add("hidden");
+
+
+    $("app")
+      .classList
+      .remove("hidden");
+
+
+    addLog(
+      "Admin authentication successful."
+    );
+
+
+    await refreshAll();
+
+
+    refreshTimer =
+      setInterval(
+        refreshStatus,
+        5000
+      );
+
+
+  }catch(error){
+
+    showError(
+      error.message ||
+      "Login failed"
+    );
+
+  }finally{
+
+    $("loginBtn").disabled =
+      false;
+
+    $("loginBtn").textContent =
+      "OPEN ADMIN";
+
+  }
+
+}
+
+
+function showError(
+  message
+){
+
+  const el =
+    $("loginError");
+
+  el.textContent =
+    message;
+
+  el.classList.add(
+    "show"
+  );
+
+}
+
+
+/* =====================================================
+   AUTO LOGIN
+===================================================== */
+
+window.addEventListener(
+  "load",
+  async()=>{
+
+    const saved =
+      sessionStorage.getItem(
+        "dy_ai_admin_key"
+      );
+
+
+    if(!saved)
+      return;
+
+
+    try{
+
+      const response =
+        await fetch(
+          "/api/admin/status",
+          {
+            headers:{
+              "x-admin-key":
+                saved
+            },
+            cache:"no-store"
+          }
+        );
+
+
+      if(!response.ok)
+        throw new Error();
+
+
+      const data =
+        await response.json();
+
+
+      if(!data.ok)
+        throw new Error();
+
+
+      adminKey =
+        saved;
+
+
+      $("loginPage")
+        .classList
+        .add("hidden");
+
+
+      $("app")
+        .classList
+        .remove("hidden");
+
+
+      addLog(
+        "Admin session restored."
+      );
+
+
+      await refreshAll();
+
+
+      refreshTimer =
+        setInterval(
+          refreshStatus,
+          5000
+        );
+
+    }catch{
+
+      sessionStorage.removeItem(
+        "dy_ai_admin_key"
+      );
+
+    }
+
+  }
+);
+
+
+/* =====================================================
+   API HELPER
+===================================================== */
+
+async function api(
+  url,
+  options = {}
+){
+
+  const headers =
+    {
+      ...(options.headers || {}),
+      "x-admin-key":
+        adminKey
+    };
+
+
+  const response =
+    await fetch(
+      url,
+      {
+        ...options,
+        headers,
+        cache:"no-store"
+      }
+    );
+
+
+  let data = {};
+
+  try{
+
+    data =
+      await response.json();
+
+  }catch{}
+
+
+  if(
+    !response.ok ||
+    data.ok === false
+  ){
+
+    throw new Error(
+      data.error ||
+      `HTTP ${response.status}`
+    );
+
+  }
+
+
+  return data;
+
+}
+
+
+/* =====================================================
+   REFRESH STATUS
+===================================================== */
+
+async function refreshStatus(){
+
+  try{
+
+    const data =
+      await api(
+        "/api/admin/status"
+      );
+
+
+    $("serverStatus")
+      .textContent =
+      data.server?.online
+        ? "ONLINE"
+        : "OFFLINE";
+
+
+    $("serverStatus")
+      .className =
+      "status-value " +
+      (
+        data.server?.online
+          ? "online"
+          : "offline"
+      );
+
+
+    $("dbStatus")
+      .textContent =
+      data.database?.online
+        ? "ONLINE"
+        : "OFFLINE";
+
+
+    $("dbStatus")
+      .className =
+      "status-value " +
+      (
+        data.database?.online
+          ? "online"
+          : "offline"
+      );
+
+
+    $("providerStatus")
+      .textContent =
+      data.provider?.online
+        ? "ONLINE"
+        : "OFFLINE";
+
+
+    $("providerStatus")
+      .className =
+      "status-value " +
+      (
+        data.provider?.online
+          ? "online"
+          : "offline"
+      );
+
+
+    $("modelVersion")
+      .textContent =
+      data.modelVersion ||
+      "—";
+
+
+    $("latestIssue")
+      .textContent =
+      data.provider
+        ?.latestSettled ||
+      "—";
+
+
+    $("currentIssue")
+      .textContent =
+      data.provider
+        ?.currentIssue ||
+      "—";
+
+
+    $("lastRefresh")
+      .textContent =
+      new Date()
+        .toLocaleTimeString();
+
+
+  }catch(error){
+
+    addLog(
+      "Status error: " +
+      error.message
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   REFRESH CURRENT AI
+===================================================== */
+
+async function refreshCurrent(){
+
+  try{
+
+    const response =
+      await fetch(
+        "/api/state",
+        {
+          cache:"no-store"
+        }
+      );
+
+
+    const data =
+      await response.json();
+
+
+    $("targetIssue")
+      .textContent =
+      data.targetIssue ||
+      "—";
+
+
+    $("prediction")
+      .textContent =
+      data.prediction ||
+      "—";
+
+
+    $("confidence")
+      .textContent =
+      data.confidence
+        ? `${data.confidence}%`
+        : "—";
+
+
+    $("wl")
+      .textContent =
+      `${data.wins || 0} / ${data.losses || 0}`;
+
+
+  }catch(error){
+
+    addLog(
+      "Current AI error: " +
+      error.message
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   REFRESH ALL
+===================================================== */
+
+async function refreshAll(){
+
+  await Promise.all([
+    refreshStatus(),
+    refreshCurrent(),
+    loadKeys()
+  ]);
+
+}
+
+
+/* =====================================================
+   REFRESH BUTTON
+===================================================== */
+
+$("refreshBtn")
+  .addEventListener(
+    "click",
+    async()=>{
+
+      addLog(
+        "Manual refresh."
+      );
+
+      await refreshAll();
+
+      toast(
+        "Refreshed"
+      );
+
+    }
+  );
+
+
+/* =====================================================
+   PING
+===================================================== */
+
+$("pingBtn")
+  .addEventListener(
+    "click",
+    async()=>{
 
       try{
-        await loadState();
-      }catch{}
+
+        addLog(
+          "Pinging WingoBot..."
+        );
+
+
+        const data =
+          await api(
+            "/api/admin/ping"
+          );
+
+
+        addLog(
+          `Ping OK • ${data.latency}ms • Current: ${data.currentIssue || "—"}`
+        );
+
+
+        toast(
+          `Ping ${data.latency}ms`
+        );
+
+
+      }catch(error){
+
+        addLog(
+          "Ping failed: " +
+          error.message
+        );
+
+        toast(
+          error.message,
+          true
+        );
+
+      }
 
     }
+  );
 
-  }catch(err){
 
-    writeLog(
-      `${tool} ERROR: ${err.message}`
+/* =====================================================
+   WINGOBOT TEST
+===================================================== */
+
+$("wingoBtn")
+  .addEventListener(
+    "click",
+    async()=>{
+
+      try{
+
+        addLog(
+          "Running WingoBot test..."
+        );
+
+
+        const data =
+          await api(
+            "/api/admin/wingo-test"
+          );
+
+
+        showModelResult(
+          JSON.stringify(
+            data,
+            null,
+            2
+          )
+        );
+
+
+        addLog(
+          "WingoBot test successful."
+        );
+
+
+        toast(
+          "WingoBot OK"
+        );
+
+
+      }catch(error){
+
+        addLog(
+          "WingoBot test failed: " +
+          error.message
+        );
+
+        toast(
+          error.message,
+          true
+        );
+
+      }
+
+    }
+  );
+
+
+/* =====================================================
+   MODEL TEST
+===================================================== */
+
+$("modelBtn")
+  .addEventListener(
+    "click",
+    async()=>{
+
+      try{
+
+        addLog(
+          "Running BIG/SMALL model test..."
+        );
+
+
+        const data =
+          await api(
+            "/api/admin/model-test"
+          );
+
+
+        showModelResult(
+          JSON.stringify(
+            data,
+            null,
+            2
+          )
+        );
+
+
+        addLog(
+          "Model test completed."
+        );
+
+
+        toast(
+          "Model test complete"
+        );
+
+
+      }catch(error){
+
+        addLog(
+          "Model test failed: " +
+          error.message
+        );
+
+        toast(
+          error.message,
+          true
+        );
+
+      }
+
+    }
+  );
+
+
+function showModelResult(
+  text
+){
+
+  const el =
+    $("modelResult");
+
+  el.textContent =
+    text;
+
+  el.classList.remove(
+    "hidden"
+  );
+
+}
+
+
+/* =====================================================
+   CREATE KEY
+===================================================== */
+
+$("createKeyBtn")
+  .addEventListener(
+    "click",
+    createKey
+  );
+
+
+$("newKey")
+  .addEventListener(
+    "keydown",
+    e => {
+
+      if(
+        e.key === "Enter"
+      ){
+
+        createKey();
+
+      }
+
+    }
+  );
+
+
+async function createKey(){
+
+  const key =
+    $("newKey")
+      .value
+      .trim();
+
+
+  if(!key){
+
+    toast(
+      "Access key enter karo.",
+      true
     );
 
-    notice(err.message,"err");
+    return;
 
-    if(tool === "ping"){
-      setServerStatus(false);
-    }
+  }
+
+
+  try{
+
+    const data =
+      await api(
+        "/api/admin/keys",
+        {
+          method:"POST",
+
+          headers:{
+            "Content-Type":
+              "application/json"
+          },
+
+          body:
+            JSON.stringify({
+              access_key:key
+            })
+
+        }
+      );
+
+
+    $("newKey")
+      .value =
+      "";
+
+
+    addLog(
+      "Access key created: " +
+      key
+    );
+
+
+    toast(
+      "Key created"
+    );
+
+
+    await loadKeys();
+
+
+  }catch(error){
+
+    addLog(
+      "Create key failed: " +
+      error.message
+    );
+
+
+    toast(
+      error.message,
+      true
+    );
 
   }
 
 }
 
 
-/* =========================
-   LOGOUT
-========================= */
+/* =====================================================
+   LOAD KEYS
+===================================================== */
 
-function logout(){
+async function loadKeys(){
 
-  clearInterval(stateTimer);
+  try{
 
-  ADMIN = "";
+    const data =
+      await api(
+        "/api/admin/keys"
+      );
 
-  localStorage.removeItem("dy_admin_key");
 
-  $("adminPage").classList.add("hidden");
-  $("loginPage").classList.remove("hidden");
+    const keys =
+      data.keys ||
+      [];
 
-  $("adminKey").value = "";
 
-  loginNotice("Logged out.","ok");
+    $("keyCount")
+      .textContent =
+      `${keys.length} KEY${keys.length === 1 ? "" : "S"}`;
+
+
+    const box =
+      $("keys");
+
+
+    if(!keys.length){
+
+      box.innerHTML = `
+
+        <div
+          style="
+            text-align:center;
+            color:#475569;
+            font-size:9px;
+            padding:15px;
+          ">
+
+          No access keys yet.
+
+        </div>
+
+      `;
+
+      return;
+
+    }
+
+
+    box.innerHTML =
+      keys.map(
+        row => {
+
+          const created =
+            row.created_at
+              ? new Date(
+                  Number(
+                    row.created_at
+                  )
+                ).toLocaleString()
+              : "—";
+
+
+          const seen =
+            row.last_seen
+              ? new Date(
+                  Number(
+                    row.last_seen
+                  )
+                ).toLocaleString()
+              : "Never";
+
+
+          const bound =
+            row.device_id
+              ? "BOUND"
+              : "FREE";
+
+
+          return `
+
+            <div
+              class="key-row">
+
+              <div
+                class="key-top">
+
+                <div
+                  class="key-value">
+
+                  ${escapeHtml(
+                    row.access_key
+                  )}
+
+                </div>
+
+                <div
+                  class="key-id">
+
+                  #${row.id}
+
+                </div>
+
+              </div>
+
+
+              <div
+                class="key-meta">
+
+                Device: ${bound}<br>
+                Created: ${escapeHtml(created)}<br>
+                Last seen: ${escapeHtml(seen)}
+
+              </div>
+
+
+              <div
+                class="key-actions">
+
+                <button
+                  class="btn success"
+                  onclick="resetDevice(${row.id})">
+
+                  RESET DEVICE
+
+                </button>
+
+
+                <button
+                  class="btn danger"
+                  onclick="deleteKey(${row.id})">
+
+                  DELETE
+
+                </button>
+
+              </div>
+
+            </div>
+
+          `;
+
+        }
+      ).join("");
+
+
+  }catch(error){
+
+    addLog(
+      "Load keys failed: " +
+      error.message
+    );
+
+  }
 
 }
 
 
-/* =========================
+/* =====================================================
+   RESET DEVICE
+===================================================== */
+
+async function resetDevice(
+  id
+){
+
+  if(
+    !confirm(
+      "Is key ka device binding reset karna hai?"
+    )
+  ){
+
+    return;
+
+  }
+
+
+  try{
+
+    await api(
+      "/api/admin/reset-device",
+      {
+        method:"POST",
+
+        headers:{
+          "Content-Type":
+            "application/json"
+        },
+
+        body:
+          JSON.stringify({
+            id
+          })
+
+      }
+    );
+
+
+    addLog(
+      `Device reset: key #${id}`
+    );
+
+
+    toast(
+      "Device reset"
+    );
+
+
+    await loadKeys();
+
+
+  }catch(error){
+
+    addLog(
+      "Reset failed: " +
+      error.message
+    );
+
+
+    toast(
+      error.message,
+      true
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   DELETE KEY
+===================================================== */
+
+async function deleteKey(
+  id
+){
+
+  if(
+    !confirm(
+      "Is access key ko permanently delete karna hai?"
+    )
+  ){
+
+    return;
+
+  }
+
+
+  try{
+
+    await api(
+      "/api/admin/keys",
+      {
+        method:"DELETE",
+
+        headers:{
+          "Content-Type":
+            "application/json"
+        },
+
+        body:
+          JSON.stringify({
+            id
+          })
+
+      }
+    );
+
+
+    addLog(
+      `Access key deleted: #${id}`
+    );
+
+
+    toast(
+      "Key deleted"
+    );
+
+
+    await loadKeys();
+
+
+  }catch(error){
+
+    addLog(
+      "Delete failed: " +
+      error.message
+    );
+
+
+    toast(
+      error.message,
+      true
+    );
+
+  }
+
+}
+
+
+/* =====================================================
    ESCAPE
-========================= */
+===================================================== */
 
-function escapeHtml(value){
+function escapeHtml(
+  value
+){
 
-  return String(value ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
+  return String(
+    value ?? ""
+  )
+  .replaceAll(
+    "&",
+    "&amp;"
+  )
+  .replaceAll(
+    "<",
+    "&lt;"
+  )
+  .replaceAll(
+    ">",
+    "&gt;"
+  )
+  .replaceAll(
+    '"',
+    "&quot;"
+  )
+  .replaceAll(
+    "'",
+    "&#039;"
+  );
 
 }
+
+
+/* =====================================================
+   GLOBAL
+===================================================== */
+
+window.resetDevice =
+  resetDevice;
+
+window.deleteKey =
+  deleteKey;
 
 </script>
 
 </body>
-  </html>
+</html>
