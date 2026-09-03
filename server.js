@@ -18,16 +18,6 @@ const WINGOBOT_TOKEN =
 const DATABASE_URL =
   process.env.DATABASE_URL || "";
 
-const RANDOM_MIX_PERCENT = Math.max(
-  0,
-  Math.min(
-    100,
-    Number(
-      process.env.RANDOM_MIX_PERCENT || 25
-    )
-  )
-);
-
 const PUBLIC_DIR = __dirname;
 
 const pool = DATABASE_URL
@@ -46,66 +36,71 @@ const pool = DATABASE_URL
 
 let liveState = {
   success: true,
-
   ready: false,
 
   currentIssue: "",
-
   latestSettledIssue: "",
-
   targetIssue: "",
 
   prediction: "WAIT",
-
   number: null,
 
   confidence: 0,
-
   status: "WAIT",
 
   mode: "AI MODE",
-
   randomized: false,
-
-  randomMixPercent:
-    RANDOM_MIX_PERCENT,
+  randomMixPercent: 0,
 
   aiPrediction: "WAIT",
-
   aiNumber: null,
 
   analysis: {
     status: "WAIT",
 
     patternScore: 0,
-
     modelAgreement: 0,
 
     backtestSamples: 0,
-
     avgModelAccuracy: null,
+
+    bigProbability: 50,
+    smallProbability: 50,
+
+    votes: {
+      BIG: 0,
+      SMALL: 0,
+      total: 0
+    },
+
+    volatility: 0,
 
     evidence: [],
 
-    randomized: false,
+    streak: {
+      side: "",
+      length: 0
+    },
 
-    mode: "AI MODE"
+    transition: {
+      currentSide: "",
+      sample: 0
+    },
+
+    mode: "AI MODE",
+    randomized: false
   },
 
   result: null,
-
   settled: false,
 
   history: [],
-
   predictionHistory: [],
 
   historySignature: "",
 
   wins: 0,
-
   losses: 0,
-
   pending: 0,
 
   updatedAt: Date.now(),
@@ -124,7 +119,6 @@ async function initDb() {
     console.log(
       "[DB] DATABASE_URL not configured"
     );
-
     return;
   }
 
@@ -316,6 +310,36 @@ function safeInt(
 }
 
 
+function clamp(
+  value,
+  min,
+  max
+) {
+
+  return Math.max(
+    min,
+    Math.min(
+      max,
+      value
+    )
+  );
+}
+
+
+function sigmoid(
+  value
+) {
+
+  return (
+    1 /
+    (
+      1 +
+      Math.exp(-value)
+    )
+  );
+}
+
+
 function normalizeSide(value) {
 
   const v =
@@ -323,10 +347,14 @@ function normalizeSide(value) {
       value || ""
     ).toUpperCase();
 
-  if (v === "BIG")
+  if (
+    v === "BIG"
+  )
     return "BIG";
 
-  if (v === "SMALL")
+  if (
+    v === "SMALL"
+  )
     return "SMALL";
 
   return "";
@@ -338,7 +366,9 @@ function sideFromNumber(number) {
   const n =
     Number(number);
 
-  if (!Number.isFinite(n))
+  if (
+    !Number.isFinite(n)
+  )
     return "";
 
   return n >= 5
@@ -347,43 +377,25 @@ function sideFromNumber(number) {
 }
 
 
-function randomInt(
-  min,
-  max
-) {
-
-  return Math.floor(
-    Math.random() *
-      (max - min + 1)
-  ) + min;
-}
-
-
 /* =========================================================
    PERIOD HELPERS
 ========================================================= */
-
-/*
-  Example:
-
-  20260903100051103
-             ↓
-  20260903100051104
-
-  We increment the numeric issue safely with BigInt.
-*/
 
 function incrementIssue(
   issue
 ) {
 
   const value =
-    String(issue || "").trim();
+    String(
+      issue || ""
+    ).trim();
 
   if (!value)
     return "";
 
-  if (!/^\d+$/.test(value))
+  if (
+    !/^\d+$/.test(value)
+  )
     return "";
 
   try {
@@ -399,17 +411,6 @@ function incrementIssue(
   }
 }
 
-
-/*
-  Compare numeric issue IDs.
-
-  Returns:
-    1  a > b
-    0  equal
-   -1  a < b
-
-  If non-numeric, fallback to string comparison.
-*/
 
 function compareIssues(
   a,
@@ -433,41 +434,24 @@ function compareIssues(
     const B =
       BigInt(bb);
 
-    if (A > B) return 1;
+    if (A > B)
+      return 1;
 
-    if (A < B) return -1;
+    if (A < B)
+      return -1;
 
     return 0;
   }
 
-  if (aa > bb) return 1;
+  if (aa > bb)
+    return 1;
 
-  if (aa < bb) return -1;
+  if (aa < bb)
+    return -1;
 
   return 0;
 }
 
-
-/*
-  This is the important target resolver.
-
-  Example 1:
-
-  API current = 51104
-  latest settled = 51103
-
-  target = 51104
-
-  Example 2:
-
-  API current = 51103
-  latest settled = 51103
-
-  target = 51104
-
-  Therefore latest settled result is NEVER
-  used as the next prediction target.
-*/
 
 function resolveTargetIssue(
   currentIssue,
@@ -489,7 +473,9 @@ function resolveTargetIssue(
   }
 
   if (!current) {
-    return incrementIssue(latest);
+    return incrementIssue(
+      latest
+    );
   }
 
   const comparison =
@@ -498,22 +484,17 @@ function resolveTargetIssue(
       latest
     );
 
-  if (comparison > 0) {
-
-    /*
-      Current is already ahead.
-    */
+  if (
+    comparison > 0
+  ) {
 
     return current;
   }
 
-  /*
-    Current is same/behind latest settled.
-    Next issue is required.
-  */
-
   return (
-    incrementIssue(latest) ||
+    incrementIssue(
+      latest
+    ) ||
     current
   );
 }
@@ -543,7 +524,6 @@ async function checkAccessKey(
 
     return {
       ok: false,
-
       error:
         "ACCESS_KEY_AND_DEVICE_REQUIRED"
     };
@@ -583,8 +563,9 @@ async function checkAccessKey(
     await pool.query(
       `
       UPDATE access_keys
-      SET device_id = $1,
-          last_seen = $2
+      SET
+        device_id = $1,
+        last_seen = $2
       WHERE id = $3
       `,
       [
@@ -607,7 +588,6 @@ async function checkAccessKey(
 
     return {
       ok: false,
-
       error:
         "KEY_ALREADY_USED_ON_ANOTHER_DEVICE"
     };
@@ -633,7 +613,7 @@ async function checkAccessKey(
 
 
 /* =========================================================
-   WINGOBOT
+   WINGOBOT API
 ========================================================= */
 
 function fetchWingoBot() {
@@ -641,7 +621,9 @@ function fetchWingoBot() {
   return new Promise(
     (resolve, reject) => {
 
-      if (!WINGOBOT_TOKEN) {
+      if (
+        !WINGOBOT_TOKEN
+      ) {
 
         reject(
           new Error(
@@ -665,6 +647,7 @@ function fetchWingoBot() {
               "GET",
 
             headers: {
+
               Authorization:
                 `Bearer ${WINGOBOT_TOKEN}`,
 
@@ -672,10 +655,11 @@ function fetchWingoBot() {
                 "application/json",
 
               "User-Agent":
-                "DY-AI-Wingo/2.0"
+                "DY-AI-Wingo/3.0"
             },
 
-            timeout: 10000
+            timeout:
+              10000
           },
 
           response => {
@@ -685,6 +669,7 @@ function fetchWingoBot() {
             response.on(
               "data",
               chunk => {
+
                 body +=
                   chunk.toString();
               }
@@ -806,6 +791,7 @@ function normalizeHistory(
         !issueNumber ||
         !Number.isFinite(number)
       ) {
+
         return null;
       }
 
@@ -844,7 +830,6 @@ function normalizeHistory(
         raw:
           row
       };
-
     })
     .filter(Boolean);
 }
@@ -867,7 +852,10 @@ function makeHistorySignature(
 ) {
 
   return history
-    .slice(0, 10)
+    .slice(
+      0,
+      15
+    )
     .map(
       row =>
         `${row.issueNumber}:${row.number}:${row.side}`
@@ -877,67 +865,85 @@ function makeHistorySignature(
 
 
 /* =========================================================
-   MODELS
+   RECENCY ENGINE
 ========================================================= */
 
-function countSides(
-  rows
+function recencySignal(
+  history,
+  size
 ) {
 
-  let big = 0;
-
-  let small = 0;
-
-  for (
-    const row of rows
-  ) {
-
-    if (
-      row.side === "BIG"
-    )
-      big++;
-
-    if (
-      row.side === "SMALL"
-    )
-      small++;
-  }
-
-  return {
-    big,
-    small,
-
-    total:
-      big + small
-  };
-}
-
-
-function recentSide(
-  rows,
-  windowSize
-) {
-
-  return countSides(
-    rows.slice(
+  const rows =
+    history.slice(
       0,
-      windowSize
-    )
-  );
-}
-
-
-function sideScoreFromCounts(
-  counts
-) {
+      size
+    );
 
   if (
-    !counts.total
+    !rows.length
   ) {
 
     return {
       BIG: 0,
-      SMALL: 0
+      SMALL: 0,
+      sample: 0
+    };
+  }
+
+  let bigWeight = 0;
+  let smallWeight = 0;
+  let totalWeight = 0;
+
+  rows.forEach(
+    (
+      row,
+      index
+    ) => {
+
+      const weight =
+        Math.max(
+          0.35,
+          1 -
+          (
+            index /
+            Math.max(
+              1,
+              size * 1.15
+            )
+          )
+        );
+
+      totalWeight +=
+        weight;
+
+      if (
+        row.side ===
+        "BIG"
+      ) {
+
+        bigWeight +=
+          weight;
+      }
+
+      else if (
+        row.side ===
+        "SMALL"
+      ) {
+
+        smallWeight +=
+          weight;
+      }
+    }
+  );
+
+  if (
+    !totalWeight
+  ) {
+
+    return {
+      BIG: 0,
+      SMALL: 0,
+      sample: 0
     };
   }
 
@@ -945,23 +951,26 @@ function sideScoreFromCounts(
 
     BIG:
       (
-        counts.big -
-        counts.small
-      ) /
-      counts.total,
+        bigWeight /
+        totalWeight
+      ) -
+      0.5,
 
     SMALL:
       (
-        counts.small -
-        counts.big
-      ) /
-      counts.total
+        smallWeight /
+        totalWeight
+      ) -
+      0.5,
+
+    sample:
+      rows.length
   };
 }
 
 
 /* =========================================================
-   TRANSITION
+   TRANSITION ENGINE
 ========================================================= */
 
 function transitionEvidence(
@@ -989,190 +998,245 @@ function transitionEvidence(
   ) {
 
     const current =
-      history[i];
+      history[i]?.side;
 
     const previous =
-      history[i + 1];
+      history[i + 1]?.side;
 
     if (
-      !current.side ||
-      !previous.side
+      !current ||
+      !previous
     )
       continue;
 
     transitions[
-      previous.side
+      previous
     ][
-      current.side
+      current
     ]++;
   }
 
-  const current =
+  const currentSide =
     history[0]?.side;
 
-  if (!current) {
+  if (!currentSide) {
 
     return {
+
       BIG: 0,
       SMALL: 0,
-      sample: 0
+
+      sample: 0,
+
+      currentSide: ""
     };
   }
 
-  const data =
-    transitions[current];
+  const row =
+    transitions[
+      currentSide
+    ];
 
   const total =
-    data.BIG +
-    data.SMALL;
+    row.BIG +
+    row.SMALL;
 
-  if (!total) {
+  if (
+    total === 0
+  ) {
 
     return {
+
       BIG: 0,
       SMALL: 0,
-      sample: 0
+
+      sample: 0,
+
+      currentSide
     };
   }
+
+  /*
+    Laplace smoothing.
+  */
+
+  const bigProbability =
+    (
+      row.BIG + 1
+    ) /
+    (
+      total + 2
+    );
+
+  const smallProbability =
+    (
+      row.SMALL + 1
+    ) /
+    (
+      total + 2
+    );
 
   return {
 
     BIG:
-      (
-        data.BIG -
-        data.SMALL
-      ) /
-      total,
+      bigProbability -
+      0.5,
 
     SMALL:
-      (
-        data.SMALL -
-        data.BIG
-      ) /
-      total,
+      smallProbability -
+      0.5,
 
     sample:
-      total
+      total,
+
+    currentSide
   };
 }
 
 
 /* =========================================================
-   PATTERN
+   PATTERN ENGINE
 ========================================================= */
 
-function patternEvidence(
-  history
+function sequenceEvidence(
+  history,
+  length
 ) {
 
   const result = {
 
     BIG: 0,
-
     SMALL: 0,
 
-    samples: 0
+    samples: 0,
+
+    pattern: ""
   };
 
   if (
-    history.length < 6
-  )
-    return result;
-
-  for (
-    const length of
-      [2, 3, 4]
+    history.length <
+    length + 4
   ) {
 
+    return result;
+  }
+
+  const currentPattern =
+    history
+      .slice(
+        0,
+        length
+      )
+      .map(
+        row =>
+          row.side
+      )
+      .join(",");
+
+  result.pattern =
+    currentPattern;
+
+  let big = 0;
+  let small = 0;
+
+  /*
+    Search only older patterns.
+
+    history is newest first.
+
+    Example:
+
+      [current pattern]
+      [older pattern]
+      [older result]
+
+    The result after the older
+    pattern is at i + length.
+  */
+
+  for (
+    let i = 1;
+    i + length <
+      history.length;
+    i++
+  ) {
+
+    const pattern =
+      history
+        .slice(
+          i,
+          i + length
+        )
+        .map(
+          row =>
+            row.side
+        )
+        .join(",");
+
     if (
-      history.length <=
-      length + 1
+      pattern !==
+      currentPattern
     )
       continue;
 
-    const currentPattern =
-      history
-        .slice(
-          0,
-          length
-        )
-        .map(
-          x => x.side
-        )
-        .join("");
+    const next =
+      history[
+        i + length
+      ];
 
-    let big = 0;
-
-    let small = 0;
-
-    for (
-      let i = length;
-      i <
-        history.length;
-      i++
+    if (
+      next?.side ===
+      "BIG"
     ) {
 
-      const pattern =
-        history
-          .slice(
-            i - length,
-            i
-          )
-          .map(
-            x => x.side
-          )
-          .join("");
-
-      if (
-        pattern !==
-        currentPattern
-      )
-        continue;
-
-      const next =
-        history[i - 1];
-
-      if (
-        next?.side === "BIG"
-      )
-        big++;
-
-      if (
-        next?.side === "SMALL"
-      )
-        small++;
+      big++;
     }
 
-    const total =
-      big + small;
+    else if (
+      next?.side ===
+      "SMALL"
+    ) {
 
-    if (total > 0) {
-
-      result.BIG +=
-        (
-          big - small
-        ) /
-        total;
-
-      result.SMALL +=
-        (
-          small - big
-        ) /
-        total;
-
-      result.samples +=
-        total;
+      small++;
     }
   }
+
+  const total =
+    big + small;
 
   if (
-    result.samples
+    total === 0
   ) {
 
-    result.BIG /= 3;
-
-    result.SMALL /= 3;
+    return result;
   }
+
+  const bigProbability =
+    (
+      big + 1
+    ) /
+    (
+      total + 2
+    );
+
+  const smallProbability =
+    (
+      small + 1
+    ) /
+    (
+      total + 2
+    );
+
+  result.BIG =
+    bigProbability -
+    0.5;
+
+  result.SMALL =
+    smallProbability -
+    0.5;
+
+  result.samples =
+    total;
 
   return result;
 }
@@ -1186,19 +1250,16 @@ function getStreak(
   history
 ) {
 
-  if (
-    !history.length ||
-    !history[0].side
-  ) {
+  const side =
+    history[0]?.side;
+
+  if (!side) {
 
     return {
       side: "",
       length: 0
     };
   }
-
-  const side =
-    history[0].side;
 
   let length = 0;
 
@@ -1207,7 +1268,8 @@ function getStreak(
   ) {
 
     if (
-      row.side !== side
+      row.side !==
+      side
     )
       break;
 
@@ -1226,18 +1288,20 @@ function streakEvidence(
 ) {
 
   const streak =
-    getStreak(history);
+    getStreak(
+      history
+    );
 
   if (
-    !streak.side ||
-    streak.length < 2
+    !streak.side
   ) {
 
     return {
+
       BIG: 0,
       SMALL: 0,
-      length:
-        streak.length
+
+      length: 0
     };
   }
 
@@ -1246,150 +1310,398 @@ function streakEvidence(
       history
     );
 
-  const followWeight =
-    Math.min(
-      0.22,
-      streak.length *
-        0.035
-    );
+  let BIG = 0;
+  let SMALL = 0;
 
-  const result = {
+  /*
+    A streak does NOT automatically
+    mean reversal.
 
-    BIG: 0,
+    First give a small continuation
+    signal.
+  */
 
-    SMALL: 0,
+  if (
+    streak.length >= 2
+  ) {
+
+    const continuation =
+      clamp(
+        streak.length *
+        0.025,
+        0,
+        0.12
+      );
+
+    if (
+      streak.side ===
+      "BIG"
+    ) {
+
+      BIG +=
+        continuation;
+
+    } else {
+
+      SMALL +=
+        continuation;
+    }
+  }
+
+  /*
+    Historical transition gets
+    stronger when sample is useful.
+  */
+
+  if (
+    transition.sample >= 5
+  ) {
+
+    BIG +=
+      transition.BIG *
+      0.30;
+
+    SMALL +=
+      transition.SMALL *
+      0.30;
+  }
+
+  return {
+
+    BIG,
+    SMALL,
 
     length:
       streak.length
   };
-
-  result[
-    streak.side
-  ] += followWeight;
-
-  if (
-    transition.sample >= 3
-  ) {
-
-    result.BIG +=
-      transition.BIG *
-      0.18;
-
-    result.SMALL +=
-      transition.SMALL *
-      0.18;
-  }
-
-  return result;
 }
 
 
 /* =========================================================
-   ENSEMBLE
+   VOLATILITY
+========================================================= */
+
+function volatilitySignal(
+  history
+) {
+
+  const rows =
+    history.slice(
+      0,
+      12
+    );
+
+  if (
+    rows.length < 3
+  ) {
+
+    return {
+
+      alternation: 0,
+      changes: 0
+    };
+  }
+
+  let changes = 0;
+
+  for (
+    let i = 0;
+    i <
+      rows.length - 1;
+    i++
+  ) {
+
+    if (
+      rows[i].side &&
+      rows[i + 1].side &&
+      rows[i].side !==
+        rows[i + 1].side
+    ) {
+
+      changes++;
+    }
+  }
+
+  return {
+
+    alternation:
+      changes /
+      Math.max(
+        1,
+        rows.length - 1
+      ),
+
+    changes
+  };
+}
+
+
+/* =========================================================
+   NUMBER ANALYSIS
+========================================================= */
+
+function numberAnalysis(
+  history
+) {
+
+  const counts = {};
+
+  for (
+    let n = 0;
+    n <= 9;
+    n++
+  ) {
+
+    counts[n] = 0;
+  }
+
+  history
+    .slice(
+      0,
+      30
+    )
+    .forEach(
+      (
+        row,
+        index
+      ) => {
+
+        const n =
+          Number(
+            row.number
+          );
+
+        if (
+          !Number.isInteger(n) ||
+          n < 0 ||
+          n > 9
+        )
+          return;
+
+        const weight =
+          Math.max(
+            0.35,
+            1 -
+            (
+              index /
+              45
+            )
+          );
+
+        counts[n] +=
+          weight;
+      }
+    );
+
+  let big = 0;
+  let small = 0;
+
+  [5,6,7,8,9]
+    .forEach(
+      n => {
+        big +=
+          counts[n];
+      }
+    );
+
+  [0,1,2,3,4]
+    .forEach(
+      n => {
+        small +=
+          counts[n];
+      }
+    );
+
+  const total =
+    big + small;
+
+  if (
+    !total
+  ) {
+
+    return {
+
+      BIG: 0,
+      SMALL: 0,
+
+      counts
+    };
+  }
+
+  return {
+
+    BIG:
+      (
+        big /
+        total
+      ) -
+      0.5,
+
+    SMALL:
+      (
+        small /
+        total
+      ) -
+      0.5,
+
+    counts
+  };
+}
+
+
+/* =========================================================
+   EXPERT ENSEMBLE
 ========================================================= */
 
 function runModels(
   history
 ) {
 
-  const evidence = [];
-
   let BIG = 0;
-
   let SMALL = 0;
 
+  const evidence = [];
 
-  const r3 =
-    sideScoreFromCounts(
-      recentSide(
-        history,
-        3
-      )
+
+  /*
+    MICRO 3
+  */
+
+  const micro3 =
+    recencySignal(
+      history,
+      3
     );
 
   BIG +=
-    r3.BIG *
-    0.18;
+    micro3.BIG *
+    0.24;
 
   SMALL +=
-    r3.SMALL *
-    0.18;
+    micro3.SMALL *
+    0.24;
 
   evidence.push({
-    name: "RECENCY 3",
-    BIG: r3.BIG,
-    SMALL: r3.SMALL
+
+    name:
+      "MICRO 3",
+
+    BIG:
+      micro3.BIG,
+
+    SMALL:
+      micro3.SMALL,
+
+    sample:
+      micro3.sample
   });
 
 
-  const r5 =
-    sideScoreFromCounts(
-      recentSide(
-        history,
-        5
-      )
+  /*
+    SHORT 5
+  */
+
+  const short5 =
+    recencySignal(
+      history,
+      5
     );
 
   BIG +=
-    r5.BIG *
-    0.17;
+    short5.BIG *
+    0.20;
 
   SMALL +=
-    r5.SMALL *
-    0.17;
+    short5.SMALL *
+    0.20;
 
   evidence.push({
-    name: "RECENCY 5",
-    BIG: r5.BIG,
-    SMALL: r5.SMALL
+
+    name:
+      "SHORT 5",
+
+    BIG:
+      short5.BIG,
+
+    SMALL:
+      short5.SMALL,
+
+    sample:
+      short5.sample
   });
 
 
-  const r8 =
-    sideScoreFromCounts(
-      recentSide(
-        history,
-        8
-      )
+  /*
+    MEDIUM 8
+  */
+
+  const medium8 =
+    recencySignal(
+      history,
+      8
     );
 
   BIG +=
-    r8.BIG *
-    0.13;
+    medium8.BIG *
+    0.12;
 
   SMALL +=
-    r8.SMALL *
-    0.13;
+    medium8.SMALL *
+    0.12;
 
   evidence.push({
-    name: "RECENCY 8",
-    BIG: r8.BIG,
-    SMALL: r8.SMALL
+
+    name:
+      "MEDIUM 8",
+
+    BIG:
+      medium8.BIG,
+
+    SMALL:
+      medium8.SMALL,
+
+    sample:
+      medium8.sample
   });
 
 
-  const r10 =
-    sideScoreFromCounts(
-      recentSide(
-        history,
-        10
-      )
+  /*
+    BALANCE 12
+  */
+
+  const balance12 =
+    recencySignal(
+      history,
+      12
     );
 
   BIG +=
-    r10.BIG *
-    0.10;
+    balance12.BIG *
+    0.08;
 
   SMALL +=
-    r10.SMALL *
-    0.10;
+    balance12.SMALL *
+    0.08;
 
   evidence.push({
-    name: "BALANCE 10",
-    BIG: r10.BIG,
-    SMALL: r10.SMALL
+
+    name:
+      "BALANCE 12",
+
+    BIG:
+      balance12.BIG,
+
+    SMALL:
+      balance12.SMALL,
+
+    sample:
+      balance12.sample
   });
 
+
+  /*
+    TRANSITION
+  */
 
   const transition =
     transitionEvidence(
@@ -1405,31 +1717,126 @@ function runModels(
     0.17;
 
   evidence.push({
-    name: "TRANSITION",
-    BIG: transition.BIG,
-    SMALL: transition.SMALL
+
+    name:
+      "TRANSITION",
+
+    BIG:
+      transition.BIG,
+
+    SMALL:
+      transition.SMALL,
+
+    sample:
+      transition.sample
   });
 
 
-  const pattern =
-    patternEvidence(
-      history
+  /*
+    PATTERN 2
+  */
+
+  const pattern2 =
+    sequenceEvidence(
+      history,
+      2
     );
 
   BIG +=
-    pattern.BIG *
-    0.15;
+    pattern2.BIG *
+    0.06;
 
   SMALL +=
-    pattern.SMALL *
-    0.15;
+    pattern2.SMALL *
+    0.06;
 
   evidence.push({
-    name: "PATTERN",
-    BIG: pattern.BIG,
-    SMALL: pattern.SMALL
+
+    name:
+      "PATTERN 2",
+
+    BIG:
+      pattern2.BIG,
+
+    SMALL:
+      pattern2.SMALL,
+
+    sample:
+      pattern2.samples
   });
 
+
+  /*
+    PATTERN 3
+  */
+
+  const pattern3 =
+    sequenceEvidence(
+      history,
+      3
+    );
+
+  BIG +=
+    pattern3.BIG *
+    0.08;
+
+  SMALL +=
+    pattern3.SMALL *
+    0.08;
+
+  evidence.push({
+
+    name:
+      "PATTERN 3",
+
+    BIG:
+      pattern3.BIG,
+
+    SMALL:
+      pattern3.SMALL,
+
+    sample:
+      pattern3.samples
+  });
+
+
+  /*
+    PATTERN 4
+  */
+
+  const pattern4 =
+    sequenceEvidence(
+      history,
+      4
+    );
+
+  BIG +=
+    pattern4.BIG *
+    0.05;
+
+  SMALL +=
+    pattern4.SMALL *
+    0.05;
+
+  evidence.push({
+
+    name:
+      "PATTERN 4",
+
+    BIG:
+      pattern4.BIG,
+
+    SMALL:
+      pattern4.SMALL,
+
+    sample:
+      pattern4.samples
+  });
+
+
+  /*
+    STREAK
+  */
 
   const streak =
     streakEvidence(
@@ -1438,58 +1845,184 @@ function runModels(
 
   BIG +=
     streak.BIG *
-    0.10;
+    0.07;
 
   SMALL +=
     streak.SMALL *
-    0.10;
+    0.07;
 
   evidence.push({
-    name: "STREAK",
-    BIG: streak.BIG,
-    SMALL: streak.SMALL
+
+    name:
+      "STREAK",
+
+    BIG:
+      streak.BIG,
+
+    SMALL:
+      streak.SMALL,
+
+    sample:
+      streak.length
   });
 
 
-  const totalAbs =
-    Math.abs(BIG) +
-    Math.abs(SMALL);
+  /*
+    NUMBER DISTRIBUTION
+  */
 
-  let side =
-    "WAIT";
+  const numbers =
+    numberAnalysis(
+      history
+    );
+
+  BIG +=
+    numbers.BIG *
+    0.03;
+
+  SMALL +=
+    numbers.SMALL *
+    0.03;
+
+  evidence.push({
+
+    name:
+      "NUMBER DISTRIBUTION",
+
+    BIG:
+      numbers.BIG,
+
+    SMALL:
+      numbers.SMALL
+  });
 
 
-  if (
-    BIG > SMALL
-  )
-    side = "BIG";
+  /*
+    VOLATILITY
+  */
+
+  const volatility =
+    volatilitySignal(
+      history
+    );
+
+  evidence.push({
+
+    name:
+      "VOLATILITY",
+
+    BIG: 0,
+
+    SMALL: 0,
+
+    alternation:
+      volatility.alternation
+  });
 
 
-  if (
-    SMALL > BIG
-  )
-    side = "SMALL";
+  /*
+    FINAL DIRECTION
+  */
 
+  const difference =
+    BIG -
+    SMALL;
 
-  const rawEdge =
+  const edge =
     Math.abs(
-      BIG - SMALL
-    ) /
-    Math.max(
-      0.01,
-      totalAbs
+      difference
     );
 
 
+  const bigProbability =
+    sigmoid(
+      difference *
+      5.5
+    );
+
+  const smallProbability =
+    1 -
+    bigProbability;
+
+
+  /*
+    Voting models.
+  */
+
+  const directional =
+    evidence.filter(
+      item =>
+        item.name !==
+        "VOLATILITY" &&
+        Math.abs(
+          item.BIG -
+          item.SMALL
+        ) >=
+        0.025
+    );
+
+
+  const bigVotes =
+    directional.filter(
+      item =>
+        item.BIG >
+        item.SMALL
+    ).length;
+
+
+  const smallVotes =
+    directional.filter(
+      item =>
+        item.SMALL >
+        item.BIG
+    ).length;
+
+
+  const totalVotes =
+    directional.length;
+
+
+  let side =
+    bigProbability >=
+    smallProbability
+      ? "BIG"
+      : "SMALL";
+
+
+  const agreement =
+    totalVotes
+      ? (
+          Math.max(
+            bigVotes,
+            smallVotes
+          ) /
+          totalVotes
+        )
+      : 0;
+
+
+  /*
+    More history means
+    stricter decision.
+  */
+
   const minimumEdge =
     history.length < 15
-      ? 0.16
-      : 0.10;
+      ? 0.115
+      : history.length < 25
+        ? 0.095
+        : 0.075;
 
+
+  /*
+    Don't force a weak prediction.
+  */
 
   if (
-    rawEdge <
-    minimumEdge
+    edge <
+    minimumEdge ||
+    agreement <
+    0.50
   ) {
 
     side =
@@ -1497,39 +2030,28 @@ function runModels(
   }
 
 
-  const agreement =
-    evidence.filter(
-      item => {
-
-        const d =
-          item.BIG -
-          item.SMALL;
-
-        if (
-          side === "BIG"
-        )
-          return d > 0.05;
-
-        if (
-          side === "SMALL"
-        )
-          return d < -0.05;
-
-        return false;
-      }
-    ).length;
-
-
   const modelAgreement =
-    evidence.length
-      ? Math.round(
-          (
-            agreement /
-            evidence.length
-          ) *
-          100
-        )
-      : 0;
+    Math.round(
+      agreement *
+      100
+    );
+
+
+  const patternScore =
+    Math.round(
+      clamp(
+        (
+          edge *
+          65
+        ) +
+        (
+          agreement *
+          35
+        ),
+        0,
+        100
+      )
+    );
 
 
   return {
@@ -1537,26 +2059,64 @@ function runModels(
     side,
 
     BIG,
-
     SMALL,
 
-    edge:
-      rawEdge,
+    edge,
+
+    bigProbability:
+      Math.round(
+        bigProbability *
+        100
+      ),
+
+    smallProbability:
+      Math.round(
+        smallProbability *
+        100
+      ),
 
     modelAgreement,
 
-    evidence
+    patternScore,
+
+    evidence,
+
+    volatility:
+      volatility.alternation,
+
+    votes: {
+
+      BIG:
+        bigVotes,
+
+      SMALL:
+        smallVotes,
+
+      total:
+        totalVotes
+    },
+
+    streak,
+
+    transition
   };
 }
 
 
 /* =========================================================
-   BACKTEST
+   WALK-FORWARD BACKTEST
 ========================================================= */
 
 function predictFromPast(
   history
 ) {
+
+  if (
+    history.length < 8
+  ) {
+
+    return "WAIT";
+  }
 
   return runModels(
     history
@@ -1569,25 +2129,29 @@ function backtest(
 ) {
 
   if (
-    history.length < 15
+    history.length < 18
   ) {
 
     return {
+
       samples: 0,
-      accuracy: null
+
+      accuracy: null,
+
+      wins: 0,
+
+      losses: 0
     };
   }
 
   const maxSamples =
     Math.min(
-      history.length - 10,
+      history.length - 9,
       100
     );
 
   let samples = 0;
-
   let correct = 0;
-
 
   for (
     let i = 0;
@@ -1601,7 +2165,7 @@ function backtest(
       i;
 
     if (
-      targetIndex <= 8
+      targetIndex <= 7
     )
       break;
 
@@ -1609,6 +2173,10 @@ function backtest(
       history[
         targetIndex
       ];
+
+    /*
+      Only older data.
+    */
 
     const training =
       history.slice(
@@ -1626,10 +2194,14 @@ function backtest(
       );
 
     if (
-      prediction !== "BIG" &&
-      prediction !== "SMALL"
-    )
+      prediction !==
+        "BIG" &&
+      prediction !==
+        "SMALL"
+    ) {
+
       continue;
+    }
 
     samples++;
 
@@ -1641,7 +2213,6 @@ function backtest(
       correct++;
     }
   }
-
 
   return {
 
@@ -1656,13 +2227,129 @@ function backtest(
             ) *
             100
           )
-        : null
+        : null,
+
+    wins:
+      correct,
+
+    losses:
+      samples -
+      correct
   };
 }
 
 
 /* =========================================================
-   NUMBER
+   CONFIDENCE
+========================================================= */
+
+function adaptiveConfidence(
+  model,
+  bt,
+  historyLength
+) {
+
+  if (
+    model.side !==
+      "BIG" &&
+    model.side !==
+      "SMALL"
+  ) {
+
+    return 0;
+  }
+
+  let confidence =
+    50 +
+    (
+      model.edge *
+      155
+    );
+
+
+  if (
+    model.modelAgreement >=
+    70
+  ) {
+
+    confidence += 5;
+  }
+
+
+  if (
+    model.modelAgreement >=
+    85
+  ) {
+
+    confidence += 4;
+  }
+
+
+  if (
+    bt.samples >= 15 &&
+    bt.accuracy != null
+  ) {
+
+    confidence =
+      (
+        confidence *
+        0.72
+      ) +
+      (
+        bt.accuracy *
+        0.28
+      );
+  }
+
+
+  /*
+    Confidence caps.
+    We don't display fake
+    90–99% certainty.
+  */
+
+  if (
+    historyLength < 15
+  ) {
+
+    confidence =
+      Math.min(
+        confidence,
+        64
+      );
+
+  } else if (
+    historyLength < 25
+  ) {
+
+    confidence =
+      Math.min(
+        confidence,
+        72
+      );
+
+  } else {
+
+    confidence =
+      Math.min(
+        confidence,
+        82
+      );
+  }
+
+
+  return clamp(
+    Math.round(
+      confidence
+    ),
+    0,
+    82
+  );
+}
+
+
+/* =========================================================
+   SMART NUMBER
 ========================================================= */
 
 function chooseNumber(
@@ -1673,28 +2360,38 @@ function chooseNumber(
   if (
     side !== "BIG" &&
     side !== "SMALL"
-  )
+  ) {
+
     return null;
+  }
 
 
   const allowed =
     side === "BIG"
-      ? [5, 6, 7, 8, 9]
-      : [0, 1, 2, 3, 4];
+      ? [5,6,7,8,9]
+      : [0,1,2,3,4];
 
 
   const counts = {};
+  const lastSeen = {};
 
-  for (
-    const n of allowed
-  ) {
 
-    counts[n] = 0;
-  }
+  allowed.forEach(
+    n => {
+
+      counts[n] = 0;
+
+      lastSeen[n] =
+        Infinity;
+    }
+  );
 
 
   history
-    .slice(0, 30)
+    .slice(
+      0,
+      40
+    )
     .forEach(
       (
         row,
@@ -1713,262 +2410,124 @@ function chooseNumber(
 
         const weight =
           Math.max(
-            1,
-            8 -
-              Math.floor(
-                index / 4
-              )
+            0.35,
+            1 -
+            (
+              index /
+              50
+            )
           );
 
         counts[n] +=
           weight;
+
+        if (
+          lastSeen[n] ===
+          Infinity
+        ) {
+
+          lastSeen[n] =
+            index;
+        }
       }
     );
 
 
-  let minCount =
-    Infinity;
+  const scored =
+    allowed.map(
+      n => {
 
-  for (
-    const n of allowed
-  ) {
+        const frequencyPenalty =
+          counts[n] *
+          0.55;
 
-    minCount =
-      Math.min(
-        minCount,
-        counts[n]
-      );
-  }
+        const missingBonus =
+          Math.min(
+            5,
+            lastSeen[n] ===
+              Infinity
+              ? 5
+              : lastSeen[n] *
+                0.14
+          );
 
+        return {
 
-  const candidates =
-    allowed.filter(
-      n =>
-        counts[n] <=
-        minCount + 2
+          number:
+            n,
+
+          score:
+            missingBonus -
+            frequencyPenalty
+        };
+      }
     );
 
 
+  const maxScore =
+    Math.max(
+      ...scored.map(
+        x =>
+          x.score
+      )
+    );
+
+
+  const candidates =
+    scored
+      .filter(
+        x =>
+          x.score >=
+          maxScore -
+          1.25
+      )
+      .map(
+        x =>
+          x.number
+      );
+
+
+  /*
+    Deterministic.
+
+    Same target/history =
+    same number.
+  */
+
+  const seed =
+    String(
+      history[0]?.issueNumber ||
+      "0"
+    );
+
+  let hash = 0;
+
+  for (
+    let i = 0;
+    i < seed.length;
+    i++
+  ) {
+
+    hash =
+      (
+        (
+          hash *
+          31
+        ) +
+        seed.charCodeAt(i)
+      ) |
+      0;
+  }
+
   return candidates[
-    randomInt(
-      0,
-      candidates.length - 1
-    )
+    Math.abs(hash) %
+    candidates.length
   ];
 }
 
 
 /* =========================================================
-   CONFIDENCE
-========================================================= */
-
-function adaptiveConfidence(
-  model,
-  bt,
-  historyLength
-) {
-
-  let confidence =
-    50 +
-    model.edge *
-      42;
-
-
-  if (
-    model.modelAgreement >= 70
-  ) {
-
-    confidence += 5;
-  }
-
-
-  if (
-    model.modelAgreement >= 85
-  ) {
-
-    confidence += 4;
-  }
-
-
-  if (
-    bt.samples >= 20 &&
-    bt.accuracy != null
-  ) {
-
-    confidence =
-      confidence *
-        0.70 +
-      bt.accuracy *
-        0.30;
-  }
-
-
-  if (
-    historyLength < 15
-  ) {
-
-    confidence =
-      Math.min(
-        confidence,
-        58
-      );
-
-  } else {
-
-    confidence =
-      Math.min(
-        confidence,
-        78
-      );
-  }
-
-
-  confidence =
-    Math.max(
-      0,
-      Math.round(
-        confidence
-      )
-    );
-
-
-  return confidence;
-}
-
-
-/* =========================================================
-   RANDOM MIX
-========================================================= */
-
-function applyRandomMix(
-  base,
-  history
-) {
-
-  if (
-    RANDOM_MIX_PERCENT <= 0 ||
-    history.length < 10 ||
-    (
-      base.prediction !== "BIG" &&
-      base.prediction !== "SMALL"
-    )
-  ) {
-
-    return {
-
-      prediction:
-        base.prediction,
-
-      number:
-        base.number,
-
-      randomized:
-        false,
-
-      mode:
-        "AI MODE",
-
-      aiPrediction:
-        base.prediction,
-
-      aiNumber:
-        base.number,
-
-      confidence:
-        base.confidence,
-
-      status:
-        base.status
-    };
-  }
-
-
-  const roll =
-    Math.random() *
-    100;
-
-
-  if (
-    roll >=
-    RANDOM_MIX_PERCENT
-  ) {
-
-    return {
-
-      prediction:
-        base.prediction,
-
-      number:
-        base.number,
-
-      randomized:
-        false,
-
-      mode:
-        "AI MODE",
-
-      aiPrediction:
-        base.prediction,
-
-      aiNumber:
-        base.number,
-
-      confidence:
-        base.confidence,
-
-      status:
-        base.status
-    };
-  }
-
-
-  const opposite =
-    base.prediction === "BIG"
-      ? "SMALL"
-      : "BIG";
-
-
-  const randomNumber =
-    chooseNumber(
-      history,
-      opposite
-    );
-
-
-  return {
-
-    prediction:
-      opposite,
-
-    number:
-      randomNumber,
-
-    randomized:
-      true,
-
-    mode:
-      "RANDOM MIX",
-
-    aiPrediction:
-      base.prediction,
-
-    aiNumber:
-      base.number,
-
-    confidence:
-      Math.min(
-        55,
-        base.confidence
-      ),
-
-    status:
-      "RANDOM MIX"
-  };
-}
-
-
-/* =========================================================
-   CREATE PREDICTION
+   EXPERT PREDICTION
 ========================================================= */
 
 function createPrediction(
@@ -1976,7 +2535,7 @@ function createPrediction(
 ) {
 
   if (
-    history.length < 8
+    history.length < 10
   ) {
 
     return {
@@ -2022,14 +2581,38 @@ function createPrediction(
         avgModelAccuracy:
           null,
 
-        evidence:
-          [],
+        bigProbability:
+          50,
 
-        randomized:
-          false,
+        smallProbability:
+          50,
+
+        votes: {
+          BIG: 0,
+          SMALL: 0,
+          total: 0
+        },
+
+        volatility:
+          0,
+
+        evidence: [],
+
+        streak: {
+          side: "",
+          length: 0
+        },
+
+        transition: {
+          currentSide: "",
+          sample: 0
+        },
 
         mode:
-          "AI MODE"
+          "AI MODE",
+
+        randomized:
+          false
       }
     };
   }
@@ -2047,13 +2630,11 @@ function createPrediction(
     );
 
 
-  const prediction =
-    model.side;
-
-
   if (
-    prediction !== "BIG" &&
-    prediction !== "SMALL"
+    model.side !==
+      "BIG" &&
+    model.side !==
+      "SMALL"
   ) {
 
     return {
@@ -2088,10 +2669,7 @@ function createPrediction(
           "NO CLEAR EDGE",
 
         patternScore:
-          Math.round(
-            model.edge *
-            100
-          ),
+          model.patternScore,
 
         modelAgreement:
           model.modelAgreement,
@@ -2102,14 +2680,40 @@ function createPrediction(
         avgModelAccuracy:
           bt.accuracy,
 
+        bigProbability:
+          model.bigProbability,
+
+        smallProbability:
+          model.smallProbability,
+
+        votes:
+          model.votes,
+
+        volatility:
+          model.volatility,
+
         evidence:
           model.evidence,
 
-        randomized:
-          false,
+        streak:
+          model.streak,
+
+        transition: {
+
+          currentSide:
+            model.transition
+              .currentSide,
+
+          sample:
+            model.transition
+              .sample
+        },
 
         mode:
-          "AI MODE"
+          "AI MODE",
+
+        randomized:
+          false
       }
     };
   }
@@ -2126,87 +2730,70 @@ function createPrediction(
   const number =
     chooseNumber(
       history,
-      prediction
+      model.side
     );
 
 
   let status =
-    "EARLY SIGNAL";
+    "WEAK SIGNAL";
 
 
   if (
-    model.edge >= 0.30 &&
-    model.modelAgreement >= 70
+    confidence >= 75 &&
+    model.modelAgreement >=
+      70
   ) {
 
     status =
       "STRONGER SIGNAL";
 
   } else if (
-    model.edge >= 0.20 &&
-    model.modelAgreement >= 55
+    confidence >= 65 &&
+    model.modelAgreement >=
+      55
   ) {
 
     status =
       "MODERATE SIGNAL";
 
   } else if (
-    model.edge < 0.15
+    confidence >= 55
   ) {
 
     status =
-      "WEAK SIGNAL";
+      "EARLY SIGNAL";
   }
-
-
-  const mixed =
-    applyRandomMix(
-      {
-        prediction,
-        number,
-        confidence,
-        status
-      },
-      history
-    );
 
 
   return {
 
     prediction:
-      mixed.prediction,
+      model.side,
 
-    number:
-      mixed.number,
+    number,
 
-    confidence:
-      mixed.confidence,
+    confidence,
 
-    status:
-      mixed.status,
+    status,
 
     mode:
-      mixed.mode,
+      "AI MODE",
 
     randomized:
-      mixed.randomized,
+      false,
 
     aiPrediction:
-      mixed.aiPrediction,
+      model.side,
 
     aiNumber:
-      mixed.aiNumber,
+      number,
 
     analysis: {
 
-      status:
-        mixed.status,
+      status,
 
       patternScore:
-        Math.round(
-          model.edge *
-          100
-        ),
+        model.patternScore,
 
       modelAgreement:
         model.modelAgreement,
@@ -2217,14 +2804,40 @@ function createPrediction(
       avgModelAccuracy:
         bt.accuracy,
 
+      bigProbability:
+        model.bigProbability,
+
+      smallProbability:
+        model.smallProbability,
+
+      votes:
+        model.votes,
+
+      volatility:
+        model.volatility,
+
       evidence:
         model.evidence,
 
-      randomized:
-        mixed.randomized,
+      streak:
+        model.streak,
+
+      transition: {
+
+        currentSide:
+          model.transition
+            .currentSide,
+
+        sample:
+          model.transition
+            .sample
+      },
 
       mode:
-        mixed.mode
+        "AI MODE",
+
+      randomized:
+        false
     }
   };
 }
@@ -2294,6 +2907,7 @@ async function savePredictionRecord(
       RETURNING *
       `,
       [
+
         String(issue),
 
         prediction.prediction,
@@ -2304,11 +2918,9 @@ async function savePredictionRecord(
 
         prediction.aiNumber,
 
-        prediction.mode,
+        "AI MODE",
 
-        Boolean(
-          prediction.randomized
-        ),
+        false,
 
         prediction.confidence,
 
@@ -2335,11 +2947,6 @@ async function settlePredictions(
 
   if (!pool)
     return;
-
-
-  /*
-    Load all pending predictions.
-  */
 
   const pending =
     await pool.query(
@@ -2381,18 +2988,11 @@ async function settlePredictions(
       );
 
 
-    let outcome =
-      "LOSS";
-
-
-    if (
+    const outcome =
       prediction.prediction ===
       actualSide
-    ) {
-
-      outcome =
-        "WIN";
-    }
+        ? "WIN"
+        : "LOSS";
 
 
     await pool.query(
@@ -2406,6 +3006,7 @@ async function settlePredictions(
       WHERE id = $5
       `,
       [
+
         actual.number,
 
         actualSide,
@@ -2427,7 +3028,7 @@ async function settlePredictions(
 
 
 /* =========================================================
-   GET PREDICTION HISTORY
+   PREDICTION HISTORY
 ========================================================= */
 
 async function getPredictionHistory() {
@@ -2477,6 +3078,7 @@ async function getStats() {
   if (!pool) {
 
     return {
+
       wins: 0,
       losses: 0,
       pending: 0
@@ -2488,14 +3090,21 @@ async function getStats() {
     await pool.query(
       `
       SELECT
-        COUNT(*) FILTER
-          (WHERE outcome = 'WIN') AS wins,
 
         COUNT(*) FILTER
-          (WHERE outcome = 'LOSS') AS losses,
+          (
+            WHERE outcome = 'WIN'
+          ) AS wins,
 
         COUNT(*) FILTER
-          (WHERE outcome = 'PENDING') AS pending
+          (
+            WHERE outcome = 'LOSS'
+          ) AS losses,
+
+        COUNT(*) FILTER
+          (
+            WHERE outcome = 'PENDING'
+          ) AS pending
 
       FROM prediction_records
       `
@@ -2573,10 +3182,6 @@ async function updateLiveState() {
     }
 
 
-    /*
-      API current issue.
-    */
-
     const apiCurrent =
       String(
         data?.current?.issueNumber ||
@@ -2590,11 +3195,6 @@ async function updateLiveState() {
       );
 
 
-    /*
-      CRITICAL FIX:
-      Resolve the actual NEXT TARGET.
-    */
-
     const targetIssue =
       resolveTargetIssue(
         apiCurrent,
@@ -2603,8 +3203,22 @@ async function updateLiveState() {
 
 
     /*
-      First settle any previous predictions
-      whose exact target now exists in history.
+      Detect target BEFORE replacing
+      liveState.
+    */
+
+    const targetChanged =
+      String(
+        liveState.targetIssue ||
+        ""
+      ) !==
+      String(
+        targetIssue
+      );
+
+
+    /*
+      Settle exact matching periods.
     */
 
     await settlePredictions(
@@ -2613,7 +3227,7 @@ async function updateLiveState() {
 
 
     /*
-      Check if target prediction already exists.
+      Existing target?
     */
 
     let record =
@@ -2623,13 +3237,17 @@ async function updateLiveState() {
 
 
     /*
-      Only create prediction once
-      for this exact target.
+      Only generate when this exact
+      target does not exist.
     */
+
+    let freshPrediction =
+      null;
+
 
     if (!record) {
 
-      const prediction =
+      freshPrediction =
         createPrediction(
           history
         );
@@ -2638,12 +3256,26 @@ async function updateLiveState() {
       record =
         await savePredictionRecord(
           targetIssue,
-          prediction
+          freshPrediction
         );
 
 
       /*
-        If DB is unavailable, keep in memory.
+        If INSERT lost a race,
+        load the existing record.
+      */
+
+      if (!record) {
+
+        record =
+          await getPredictionRecord(
+            targetIssue
+          );
+      }
+
+
+      /*
+        No DB fallback.
       */
 
       if (!record) {
@@ -2654,28 +3286,28 @@ async function updateLiveState() {
             targetIssue,
 
           prediction:
-            prediction.prediction,
+            freshPrediction.prediction,
 
           predicted_number:
-            prediction.number,
+            freshPrediction.number,
 
           ai_prediction:
-            prediction.aiPrediction,
+            freshPrediction.aiPrediction,
 
           ai_number:
-            prediction.aiNumber,
+            freshPrediction.aiNumber,
 
           mode:
-            prediction.mode,
+            "AI MODE",
 
           randomized:
-            prediction.randomized,
+            false,
 
           confidence:
-            prediction.confidence,
+            freshPrediction.confidence,
 
           status:
-            prediction.status,
+            freshPrediction.status,
 
           created_at:
             now(),
@@ -2687,40 +3319,52 @@ async function updateLiveState() {
             null,
 
           outcome:
-            "PENDING"
+            "PENDING",
+
+          analysis:
+            freshPrediction.analysis
         };
       }
 
 
       console.log(
-        `[PREDICTION CREATED] ${targetIssue} => ${record.prediction} | number=${record.predicted_number} | mode=${record.mode}`
+        `[PREDICTION CREATED] ${targetIssue} => ${record.prediction} | number=${record.predicted_number} | confidence=${record.confidence}`
       );
     }
 
 
-    /*
-      If target already has a record,
-      NEVER regenerate it.
-    */
-
-
-    const predictionChanged =
-      String(
-        liveState.targetIssue
-      ) !==
-      String(
-        targetIssue
-      );
-
-
-    const signature =
-      makeHistorySignature(
-        history
-      );
-
-
     const stats =
       await getStats();
+
+
+    let analysis =
+      liveState.analysis;
+
+
+    /*
+      Fresh target gets fresh
+      analysis.
+
+      Same target keeps the
+      previous analysis.
+    */
+
+    if (
+      targetChanged &&
+      freshPrediction
+    ) {
+
+      analysis =
+        freshPrediction.analysis;
+
+    } else if (
+      targetChanged &&
+      record.analysis
+    ) {
+
+      analysis =
+        record.analysis;
+    }
 
 
     liveState = {
@@ -2759,16 +3403,13 @@ async function updateLiveState() {
         "WAIT",
 
       mode:
-        record.mode ||
         "AI MODE",
 
       randomized:
-        Boolean(
-          record.randomized
-        ),
+        false,
 
       randomMixPercent:
-        RANDOM_MIX_PERCENT,
+        0,
 
       aiPrediction:
         record.ai_prediction ||
@@ -2780,55 +3421,22 @@ async function updateLiveState() {
         record.predicted_number ??
         null,
 
-      analysis:
-        liveState.targetIssue ===
-          targetIssue &&
-        liveState.analysis
-          ? liveState.analysis
-          : {
-              status:
-                record.status ||
-                "WAIT",
+      analysis: {
 
-              patternScore:
-                liveState.analysis
-                  ?.patternScore ||
-                0,
+        ...analysis,
 
-              modelAgreement:
-                liveState.analysis
-                  ?.modelAgreement ||
-                0,
+        mode:
+          "AI MODE",
 
-              backtestSamples:
-                liveState.analysis
-                  ?.backtestSamples ||
-                0,
-
-              avgModelAccuracy:
-                liveState.analysis
-                  ?.avgModelAccuracy ??
-                null,
-
-              evidence:
-                liveState.analysis
-                  ?.evidence ||
-                [],
-
-              randomized:
-                Boolean(
-                  record.randomized
-                ),
-
-              mode:
-                record.mode ||
-                "AI MODE"
-            },
+        randomized:
+          false
+      },
 
       result:
         record.result_number !=
         null
           ? {
+
               issueNumber:
                 record.target_issue,
 
@@ -2857,7 +3465,9 @@ async function updateLiveState() {
         await getPredictionHistory(),
 
       historySignature:
-        signature,
+        makeHistorySignature(
+          history
+        ),
 
       wins:
         stats.wins,
@@ -2874,48 +3484,6 @@ async function updateLiveState() {
       error:
         null
     };
-
-
-    /*
-      If this is a brand-new target,
-      create fresh analysis metadata.
-    */
-
-    if (
-      predictionChanged
-    ) {
-
-      const model =
-        createPrediction(
-          history
-        );
-
-
-      liveState.analysis = {
-        ...model.analysis,
-
-        /*
-          Use saved prediction's actual
-          random state.
-        */
-
-        randomized:
-          Boolean(
-            record.randomized
-          ),
-
-        mode:
-          record.mode ||
-          "AI MODE"
-      };
-    }
-
-
-    /*
-      Important:
-      If target did not change,
-      prediction stays exactly the same.
-    */
 
   } catch(error) {
 
@@ -2940,11 +3508,10 @@ async function updateLiveState() {
 
 
 /* =========================================================
-   STATE
+   ESTIMATED TIMER
 ========================================================= */
 
 let timerAnchor = null;
-
 let lastTimerIssue = "";
 
 
@@ -2962,7 +3529,9 @@ function buildState() {
   ) {
 
     timerAnchor = {
+
       issue,
+
       at:
         now()
     };
@@ -2984,12 +3553,6 @@ function buildState() {
       : 0;
 
 
-  /*
-    UI timer only.
-    Exact provider countdown isn't
-    exposed in documented history response.
-  */
-
   let countdown =
     30 -
     (
@@ -2999,8 +3562,11 @@ function buildState() {
 
   if (
     countdown <= 0
-  )
-    countdown = 30;
+  ) {
+
+    countdown =
+      30;
+  }
 
 
   return {
@@ -3046,18 +3612,22 @@ function isAdmin(
 
 
   return (
+
     String(
       headerKey || ""
     ) ===
-      String(
-        ADMIN_KEY
-      ) ||
+    String(
+      ADMIN_KEY
+    )
+
+    ||
+
     String(
       queryKey || ""
     ) ===
-      String(
-        ADMIN_KEY
-      )
+    String(
+      ADMIN_KEY
+    )
   );
 }
 
@@ -3107,6 +3677,7 @@ async function adminKeys(
       res,
       200,
       {
+
         success:
           true,
 
@@ -3141,6 +3712,7 @@ async function adminKeys(
     res,
     200,
     {
+
       success:
         true,
 
@@ -3263,6 +3835,7 @@ async function createKey(
       res,
       200,
       {
+
         success:
           true,
 
@@ -3289,6 +3862,7 @@ async function createKey(
         res,
         409,
         {
+
           success:
             false,
 
@@ -3420,6 +3994,7 @@ async function deleteKey(
       res,
       400,
       {
+
         success:
           false,
 
@@ -3436,6 +4011,7 @@ async function deleteKey(
     res,
     200,
     {
+
       success:
         true,
 
@@ -3495,6 +4071,7 @@ async function resetDevice(
       res,
       500,
       {
+
         success:
           false,
 
@@ -3570,6 +4147,7 @@ async function resetDevice(
       res,
       400,
       {
+
         success:
           false,
 
@@ -3586,6 +4164,7 @@ async function resetDevice(
     res,
     200,
     {
+
       success:
         true,
 
@@ -3643,6 +4222,7 @@ async function adminStatus(
     res,
     200,
     {
+
       success:
         true,
 
@@ -3671,10 +4251,10 @@ async function adminStatus(
         liveState.confidence,
 
       mode:
-        liveState.mode,
+        "AI MODE",
 
       randomized:
-        liveState.randomized,
+        false,
 
       aiPrediction:
         liveState.aiPrediction,
@@ -3683,7 +4263,7 @@ async function adminStatus(
         liveState.aiNumber,
 
       randomMixPercent:
-        RANDOM_MIX_PERCENT,
+        0,
 
       analysis:
         liveState.analysis,
@@ -3692,7 +4272,8 @@ async function adminStatus(
         liveState.history.length,
 
       predictionCount:
-        liveState.predictionHistory
+        liveState
+          .predictionHistory
           .length,
 
       wins:
@@ -3789,6 +4370,7 @@ async function adminWingoTest(
       res,
       200,
       {
+
         success:
           true,
 
@@ -3824,6 +4406,7 @@ async function adminWingoTest(
       res,
       500,
       {
+
         success:
           false,
 
@@ -3862,6 +4445,7 @@ async function adminModelTest(
       res,
       401,
       {
+
         success:
           false,
 
@@ -3916,6 +4500,7 @@ async function adminModelTest(
       res,
       200,
       {
+
         success:
           true,
 
@@ -3940,10 +4525,10 @@ async function adminModelTest(
           prediction.confidence,
 
         mode:
-          prediction.mode,
+          "AI MODE",
 
         randomized:
-          prediction.randomized,
+          false,
 
         aiPrediction:
           prediction.aiPrediction,
@@ -3969,7 +4554,7 @@ async function adminModelTest(
             .backtestSamples,
 
         randomMixPercent:
-          RANDOM_MIX_PERCENT
+          0
       }
     );
 
@@ -3979,6 +4564,7 @@ async function adminModelTest(
       res,
       500,
       {
+
         success:
           false,
 
@@ -4017,6 +4603,7 @@ async function router(
     res.writeHead(
       204,
       {
+
         "Access-Control-Allow-Origin":
           "*",
 
@@ -4047,6 +4634,7 @@ async function router(
       res,
       200,
       {
+
         ok:
           true,
 
@@ -4062,7 +4650,7 @@ async function router(
   }
 
 
-  /* KEY */
+  /* ACCESS KEY */
 
   if (
     req.method ===
@@ -4092,6 +4680,7 @@ async function router(
         ? 200
         : 403,
       {
+
         success:
           result.ok,
 
@@ -4135,6 +4724,7 @@ async function router(
       res,
       200,
       {
+
         success:
           true,
 
@@ -4270,6 +4860,7 @@ async function router(
         res,
         401,
         {
+
           success:
             false,
 
@@ -4286,6 +4877,7 @@ async function router(
       res,
       200,
       {
+
         success:
           true,
 
@@ -4301,7 +4893,7 @@ async function router(
   }
 
 
-  /* WINGO TEST */
+  /* WINGOBOT TEST */
 
   if (
     req.method ===
@@ -4421,7 +5013,7 @@ async function router(
 
 
 /* =========================================================
-   STATIC
+   STATIC FILE
 ========================================================= */
 
 function serveFile(
@@ -4452,6 +5044,7 @@ function serveFile(
       res.writeHead(
         200,
         {
+
           "Content-Type":
             contentType,
 
@@ -4505,6 +5098,7 @@ function serveAudio(
         res.writeHead(
           200,
           {
+
             "Content-Type":
               "audio/mpeg",
 
@@ -4584,6 +5178,7 @@ function serveAudio(
       res.writeHead(
         206,
         {
+
           "Content-Range":
             `bytes ${start}-${end}/${stats.size}`,
 
@@ -4642,6 +5237,7 @@ const server =
               res,
               500,
               {
+
                 success:
                   false,
 
@@ -4682,7 +5278,8 @@ async function start() {
 
 
   /*
-    WingoBot polling every 3 seconds.
+    API polling:
+    every 3 seconds.
   */
 
   setInterval(
@@ -4701,7 +5298,11 @@ async function start() {
       );
 
       console.log(
-        `Random Mix: ${RANDOM_MIX_PERCENT}%`
+        "Expert AI: ENABLED"
+      );
+
+      console.log(
+        "Random Mix: DISABLED"
       );
     }
   );
