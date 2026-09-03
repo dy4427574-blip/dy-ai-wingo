@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DY AI Prediction</title>
+
+<title>DY AI Admin</title>
 
 <style>
 *{
@@ -20,7 +21,7 @@ html,body{
 }
 
 body{
-  overflow-x:hidden;
+  padding:10px;
 }
 
 button,input{
@@ -34,16 +35,15 @@ button{
 
 .app{
   width:100%;
-  max-width:900px;
+  max-width:1050px;
   margin:auto;
-  padding:10px;
 }
 
 /* =========================================================
    LOGIN
 ========================================================= */
 
-.login-screen{
+.login{
   min-height:95vh;
   display:flex;
   align-items:center;
@@ -52,15 +52,15 @@ button{
 
 .login-card{
   width:100%;
-  max-width:400px;
-  padding:25px 20px;
+  max-width:410px;
+  padding:26px 20px;
   border-radius:24px;
   background:linear-gradient(180deg,#0c1423,#070c15);
-  border:1px solid #1a2940;
-  box-shadow:0 25px 80px rgba(0,0,0,.4);
+  border:1px solid #1b2a41;
+  box-shadow:0 25px 80px rgba(0,0,0,.45);
 }
 
-.login-logo{
+.admin-logo{
   width:68px;
   height:68px;
   margin:0 auto 15px;
@@ -68,10 +68,9 @@ button{
   align-items:center;
   justify-content:center;
   border-radius:21px;
-  background:linear-gradient(135deg,#10bdf5,#665fff);
-  font-size:25px;
+  background:linear-gradient(135deg,#ff9f43,#ff5d7d);
+  font-size:22px;
   font-weight:1000;
-  box-shadow:0 10px 35px rgba(35,180,255,.2);
 }
 
 .login-title{
@@ -84,10 +83,10 @@ button{
   margin:6px 0 22px;
   text-align:center;
   color:#71829b;
-  font-size:11px;
+  font-size:10px;
 }
 
-.key-input{
+.input{
   width:100%;
   height:50px;
   padding:0 15px;
@@ -98,9 +97,9 @@ button{
   border-radius:13px;
 }
 
-.key-input:focus{
-  border-color:#20bfff;
-  box-shadow:0 0 0 3px rgba(32,191,255,.08);
+.input:focus{
+  border-color:#ff8d55;
+  box-shadow:0 0 0 3px rgba(255,141,85,.08);
 }
 
 .login-btn{
@@ -109,16 +108,16 @@ button{
   margin-top:11px;
   border-radius:13px;
   color:white;
-  background:linear-gradient(135deg,#0eb8ee,#615fff);
-  font-weight:900;
+  background:linear-gradient(135deg,#ff914d,#ff5d7d);
+  font-weight:950;
 }
 
-.login-message{
+.login-msg{
   min-height:18px;
   margin-top:12px;
   text-align:center;
-  color:#ff6878;
-  font-size:11px;
+  color:#ff6978;
+  font-size:10px;
 }
 
 /* =========================================================
@@ -142,609 +141,497 @@ button{
   align-items:center;
   justify-content:space-between;
   gap:10px;
-  margin-bottom:10px;
+  margin-bottom:12px;
 }
 
 .brand{
   display:flex;
   align-items:center;
-  gap:9px;
+  gap:10px;
 }
 
 .logo{
-  width:41px;
-  height:41px;
+  width:43px;
+  height:43px;
   display:flex;
   align-items:center;
   justify-content:center;
-  border-radius:13px;
-  background:linear-gradient(135deg,#13bdf5,#6262ff);
-  font-size:15px;
+  border-radius:14px;
+  background:linear-gradient(135deg,#ff974f,#ff5d7d);
+  font-size:14px;
   font-weight:1000;
 }
 
-.brand-title{
-  font-size:16px;
+.title{
+  font-size:17px;
   font-weight:950;
 }
 
-.brand-sub{
+.sub{
   margin-top:2px;
-  color:#61718a;
+  color:#60718a;
   font-size:8px;
   letter-spacing:1px;
 }
 
-.header-actions{
+.header-btns{
   display:flex;
   gap:7px;
 }
 
 .top-btn{
-  min-width:38px;
   height:38px;
-  padding:0 10px;
+  padding:0 11px;
   border-radius:11px;
-  color:#cbd8ea;
+  color:#d1dced;
   background:#0b1321;
-  border:1px solid #19283e;
-  font-size:10px;
-  font-weight:900;
-}
-
-.top-btn:active{
-  transform:scale(.95);
-}
-
-/* =========================================================
-   GAME
-========================================================= */
-
-.game-card{
-  overflow:hidden;
-  border-radius:20px;
-  background:#02060c;
-  border:1px solid #17253b;
-  box-shadow:0 18px 55px rgba(0,0,0,.3);
-}
-
-.game-head{
-  height:47px;
-  padding:0 13px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  background:#09111d;
-  border-bottom:1px solid #142138;
-}
-
-.game-title{
-  font-size:11px;
-  font-weight:950;
-  letter-spacing:.7px;
-}
-
-.game-live{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  color:#72839a;
+  border:1px solid #1a2a42;
   font-size:9px;
-  font-weight:800;
-}
-
-.live-dot{
-  width:7px;
-  height:7px;
-  border-radius:50%;
-  background:#32e58b;
-  box-shadow:0 0 12px rgba(50,229,139,.7);
-}
-
-.game-frame{
-  width:100%;
-  height:430px;
-  display:block;
-  border:0;
-  background:#000;
-}
-
-.open-wrap{
-  padding:9px;
-  background:#050b14;
-}
-
-.open-game{
-  width:100%;
-  height:43px;
-  border-radius:11px;
-  color:white;
-  background:#101b2d;
-  border:1px solid #20314d;
-  font-size:11px;
   font-weight:900;
 }
 
 /* =========================================================
-   TARGET
+   STATUS GRID
 ========================================================= */
 
-.target-card{
-  margin-top:10px;
-  padding:13px;
+.grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:9px;
+}
+
+.card{
+  padding:14px;
   border-radius:17px;
-  background:#09111e;
+  background:#080f1a;
   border:1px solid #17253b;
 }
 
-.target-label{
-  color:#62738c;
+.card-label{
+  color:#61738d;
   font-size:8px;
-  font-weight:950;
-  letter-spacing:1.3px;
+  font-weight:900;
+  letter-spacing:.8px;
 }
 
-.target-row{
+.card-value{
+  margin-top:7px;
+  color:#edf4ff;
+  font-size:13px;
+  font-weight:950;
+  word-break:break-word;
+}
+
+.online{
+  color:#35e58b;
+}
+
+.offline{
+  color:#ff6978;
+}
+
+.waiting{
+  color:#f0bd63;
+}
+
+/* =========================================================
+   MODEL
+========================================================= */
+
+.model-card{
+  margin-top:10px;
+  padding:16px;
+  border-radius:19px;
+  background:
+    radial-gradient(circle at 90% 0%,rgba(255,140,80,.09),transparent 40%),
+    #080f1a;
+  border:1px solid #182940;
+}
+
+.section-head{
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap:10px;
-  margin-top:7px;
 }
 
-.target-period{
-  min-width:0;
-  color:#e7f0ff;
-  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
-  font-size:13px;
-  font-weight:850;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-
-.timer{
-  flex:0 0 auto;
-  min-width:73px;
-  padding:8px 9px;
-  text-align:center;
-  border-radius:10px;
-  color:#20c5ff;
-  background:#050a13;
-  border:1px solid #17253b;
-  font-family:ui-monospace,monospace;
+.section-title{
   font-size:12px;
   font-weight:950;
+  letter-spacing:.6px;
 }
 
-/* =========================================================
-   AI CARD
-========================================================= */
-
-.ai-card{
-  margin-top:10px;
-  padding:17px 14px;
-  border-radius:21px;
-  background:
-    radial-gradient(circle at 50% -35%,rgba(26,194,255,.13),transparent 55%),
-    #080f1b;
-  border:1px solid #182941;
-}
-
-.ai-header{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-}
-
-.ai-title{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  font-size:11px;
-  font-weight:950;
-  letter-spacing:.7px;
-}
-
-.ai-dot{
-  width:8px;
-  height:8px;
-  border-radius:50%;
-  background:#20c5ff;
-  box-shadow:0 0 14px rgba(32,197,255,.8);
-}
-
-.version{
+.badge{
   padding:5px 8px;
   border-radius:8px;
-  color:#70829d;
-  background:#0d1829;
-  border:1px solid #1a2b45;
-  font-size:8px;
-  font-weight:900;
-  letter-spacing:.7px;
-}
-
-/* =========================================================
-   ANALYSIS
-========================================================= */
-
-.analysis{
-  display:none;
-  padding:29px 6px 14px;
-  text-align:center;
-}
-
-.analysis.show{
-  display:block;
-}
-
-.scan{
-  width:76px;
-  height:76px;
-  margin:0 auto 13px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  position:relative;
-  border:2px solid #172b45;
-  border-radius:50%;
-}
-
-.scan:before{
-  content:"";
-  position:absolute;
-  inset:8px;
-  border:2px dashed #1abaff;
-  border-radius:50%;
-  animation:spin 1.15s linear infinite;
-}
-
-.scan-icon{
-  position:relative;
-  z-index:2;
-  font-size:22px;
-}
-
-@keyframes spin{
-  to{transform:rotate(360deg);}
-}
-
-.analysis-title{
-  font-size:15px;
-  font-weight:950;
-}
-
-.analysis-sub{
-  max-width:350px;
-  margin:5px auto 0;
-  color:#62738d;
-  font-size:9px;
-  line-height:1.5;
-}
-
-.progress{
-  height:4px;
-  max-width:310px;
-  margin:15px auto 0;
-  overflow:hidden;
-  border-radius:20px;
-  background:#111d30;
-}
-
-.progress-fill{
-  width:0;
-  height:100%;
-  background:linear-gradient(90deg,#15bdf5,#6861ff);
-  transition:width .1s linear;
-}
-
-/* =========================================================
-   PREDICTION
-========================================================= */
-
-.prediction{
-  display:none;
-  padding-top:20px;
-}
-
-.prediction.show{
-  display:block;
-}
-
-.pred-label{
-  text-align:center;
-  color:#657791;
-  font-size:8px;
-  font-weight:950;
-  letter-spacing:1.4px;
-}
-
-.pred-side{
-  margin-top:6px;
-  text-align:center;
-  font-size:45px;
-  line-height:1;
-  font-weight:1000;
-  letter-spacing:1px;
-}
-
-.pred-side.big{
-  color:#20c5ff;
-  text-shadow:0 0 28px rgba(32,197,255,.25);
-}
-
-.pred-side.small{
-  color:#a886ff;
-  text-shadow:0 0 28px rgba(168,134,255,.25);
-}
-
-.confidence{
-  max-width:310px;
-  margin:16px auto 0;
-}
-
-.conf-head{
-  display:flex;
-  justify-content:space-between;
-  color:#697b95;
-  font-size:8px;
-  font-weight:850;
-}
-
-.conf-value{
-  color:#edf4ff;
-  font-weight:950;
-}
-
-.conf-bar{
-  height:6px;
-  margin-top:7px;
-  overflow:hidden;
-  border-radius:20px;
-  background:#111d30;
-}
-
-.conf-fill{
-  width:0;
-  height:100%;
-  border-radius:20px;
-  background:linear-gradient(90deg,#16bdf4,#8978ff);
-  transition:width .5s ease;
-}
-
-.regime{
-  margin-top:14px;
-  text-align:center;
-}
-
-.regime-badge{
-  display:inline-block;
-  padding:6px 10px;
-  border-radius:9px;
-  color:#8c9cb2;
+  color:#8393aa;
   background:#0d1727;
-  border:1px solid #1a2b44;
+  border:1px solid #1a2a43;
   font-size:8px;
-  font-weight:900;
-  letter-spacing:.7px;
+  font-weight:950;
 }
 
-.pred-note{
-  margin-top:8px;
-  text-align:center;
-  color:#566983;
-  font-size:9px;
-}
-
-/* =========================================================
-   STATS
-========================================================= */
-
-.stats{
+.model-grid{
   display:grid;
   grid-template-columns:repeat(3,1fr);
   gap:8px;
-  margin-top:10px;
+  margin-top:12px;
 }
 
-.stat{
-  padding:12px 7px;
-  text-align:center;
-  border-radius:14px;
-  background:#080f1a;
-  border:1px solid #16243a;
+.model-box{
+  padding:12px;
+  border-radius:13px;
+  background:#060c15;
+  border:1px solid #142238;
 }
 
-.stat-value{
-  font-size:17px;
-  font-weight:950;
-}
-
-.stat-label{
-  margin-top:3px;
-  color:#61728b;
+.model-label{
+  color:#5e7089;
   font-size:7px;
   font-weight:900;
   letter-spacing:.7px;
 }
 
+.model-value{
+  margin-top:5px;
+  font-size:12px;
+  font-weight:950;
+}
+
+/* =========================================================
+   ACTIONS
+========================================================= */
+
+.actions{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+  margin-top:10px;
+}
+
+.action{
+  min-height:43px;
+  padding:0 10px;
+  border-radius:11px;
+  color:#dce7f7;
+  background:#0c1728;
+  border:1px solid #1b2b45;
+  font-size:9px;
+  font-weight:900;
+}
+
+.action:active{
+  transform:scale(.97);
+}
+
+.action.primary{
+  background:linear-gradient(135deg,#126f9d,#5154b9);
+}
+
+.action.danger{
+  color:#ff8b98;
+}
+
+/* =========================================================
+   CURRENT AI
+========================================================= */
+
+.current-card{
+  margin-top:10px;
+  padding:17px;
+  border-radius:20px;
+  background:#080f1a;
+  border:1px solid #182941;
+}
+
+.current-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:9px;
+  margin-top:12px;
+}
+
+.current-box{
+  padding:13px 10px;
+  text-align:center;
+  border-radius:14px;
+  background:#060c15;
+  border:1px solid #142238;
+}
+
+.current-label{
+  color:#5e7089;
+  font-size:7px;
+  font-weight:900;
+  letter-spacing:.7px;
+}
+
+.current-value{
+  margin-top:6px;
+  font-size:15px;
+  font-weight:1000;
+  word-break:break-word;
+}
+
+.big{
+  color:#20c5ff;
+}
+
+.small{
+  color:#a887ff;
+}
+
 .win{
-  color:#35e58b;
+  color:#36e58c;
 }
 
 .loss{
   color:#ff6978;
 }
 
-.acc{
-  color:#20c6ff;
+.pending{
+  color:#f0bd63;
 }
 
 /* =========================================================
-   HISTORY
+   DIAGNOSTICS
 ========================================================= */
 
-.history-card{
+.diag-card{
   margin-top:10px;
-  overflow:hidden;
+  padding:16px;
   border-radius:19px;
   background:#080f1a;
   border:1px solid #17253b;
 }
 
-.history-head{
-  padding:14px;
+.diag-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+  margin-top:12px;
+}
+
+.diag{
+  padding:11px;
+  border-radius:12px;
+  background:#060c15;
+  border:1px solid #142238;
+}
+
+.diag-name{
+  color:#5e7089;
+  font-size:7px;
+  font-weight:900;
+}
+
+.diag-value{
+  margin-top:5px;
+  font-family:ui-monospace,monospace;
+  font-size:11px;
+  font-weight:900;
+}
+
+/* =========================================================
+   KEYS
+========================================================= */
+
+.keys-card{
+  margin-top:10px;
+  overflow:hidden;
+  border-radius:20px;
+  background:#080f1a;
+  border:1px solid #17253b;
+}
+
+.keys-head{
+  padding:15px;
   display:flex;
   align-items:center;
   justify-content:space-between;
+  gap:10px;
   border-bottom:1px solid #142138;
 }
 
-.history-title{
-  font-size:11px;
-  font-weight:950;
-  letter-spacing:.6px;
+.create-row{
+  display:flex;
+  gap:7px;
+  padding:12px;
+  border-bottom:1px solid #142138;
 }
 
-.last30{
-  padding:5px 8px;
-  border-radius:8px;
-  color:#72839c;
-  background:#0d1726;
-  border:1px solid #1a2a43;
-  font-size:8px;
-  font-weight:950;
-  letter-spacing:.8px;
+.create-input{
+  flex:1;
+  min-width:0;
+  height:43px;
+  padding:0 12px;
+  outline:none;
+  color:white;
+  background:#050a12;
+  border:1px solid #1b2a42;
+  border-radius:11px;
+  font-size:10px;
 }
 
-.history-scroll{
-  max-height:530px;
+.create-btn{
+  flex:0 0 auto;
+  height:43px;
+  padding:0 13px;
+  border-radius:11px;
+  color:white;
+  background:linear-gradient(135deg,#16a8e2,#635fff);
+  font-size:9px;
+  font-weight:950;
+}
+
+.keys-scroll{
   overflow:auto;
 }
 
 table{
   width:100%;
-  min-width:480px;
+  min-width:690px;
   border-collapse:collapse;
 }
 
 th{
-  position:sticky;
-  top:0;
-  z-index:2;
-  padding:10px 9px;
+  padding:10px;
   text-align:left;
+  color:#52637c;
   background:#080f1a;
-  color:#52637d;
   border-bottom:1px solid #162238;
-  font-size:8px;
+  font-size:7px;
   font-weight:950;
-  letter-spacing:.8px;
+  letter-spacing:.7px;
 }
 
 td{
-  padding:12px 9px;
-  border-bottom:1px solid #0f1929;
+  padding:11px 10px;
   color:#cbd8e9;
-  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
-  font-size:9px;
-  font-weight:850;
+  border-bottom:1px solid #0f1929;
+  font-size:8px;
+  font-weight:750;
+  vertical-align:middle;
 }
 
-.period{
-  color:#d7e2f2;
+.key-text{
+  font-family:ui-monospace,monospace;
+  color:#dce8f8;
+  font-weight:900;
 }
 
-.big-text{
-  color:#20c5ff;
+.device{
+  max-width:180px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:#64768f;
+  font-family:ui-monospace,monospace;
 }
 
-.small-text{
-  color:#a887ff;
+.row-btn{
+  height:31px;
+  padding:0 8px;
+  margin-right:4px;
+  border-radius:8px;
+  color:#aebed3;
+  background:#0e192a;
+  border:1px solid #1b2c46;
+  font-size:7px;
+  font-weight:900;
 }
 
-.empty{
-  color:#46566d;
-}
-
-.pending{
-  color:#8291a8;
-}
-
-.win-text{
-  color:#36e68c;
-}
-
-.loss-text{
-  color:#ff6877;
+.row-btn.delete{
+  color:#ff7583;
 }
 
 /* =========================================================
-   MUSIC
+   LOG
 ========================================================= */
 
-.music{
-  position:sticky;
-  bottom:9px;
-  z-index:20;
+.log-card{
   margin-top:10px;
-  padding:11px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
+  padding:15px;
   border-radius:18px;
-  background:rgba(7,13,23,.96);
-  border:1px solid #1a2b44;
-  box-shadow:0 15px 45px rgba(0,0,0,.4);
-  backdrop-filter:blur(14px);
+  background:#080f1a;
+  border:1px solid #17253b;
 }
 
-.music-title{
-  font-size:10px;
-  font-weight:950;
-}
-
-.music-sub{
-  margin-top:3px;
-  color:#62738c;
+.log{
+  margin-top:10px;
+  min-height:90px;
+  max-height:220px;
+  overflow:auto;
+  padding:11px;
+  border-radius:11px;
+  background:#04080f;
+  border:1px solid #101b2b;
+  color:#687a94;
+  font-family:ui-monospace,monospace;
   font-size:8px;
-}
-
-.music-btn{
-  width:50px;
-  height:50px;
-  border-radius:16px;
-  color:white;
-  background:linear-gradient(135deg,#18c3fa,#6377ff);
-  font-size:17px;
+  line-height:1.7;
+  white-space:pre-wrap;
 }
 
 .footer{
-  padding:15px 5px 25px;
+  padding:18px 5px 28px;
   text-align:center;
   color:#3f4f66;
   font-size:8px;
   line-height:1.6;
 }
 
-@media(min-width:700px){
-  .app{
-    padding:18px;
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media(max-width:750px){
+
+  .grid{
+    grid-template-columns:repeat(2,1fr);
   }
 
-  .game-frame{
-    height:550px;
+  .model-grid{
+    grid-template-columns:repeat(2,1fr);
   }
 
-  .pred-side{
-    font-size:55px;
+  .current-grid{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .diag-grid{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .actions{
+    grid-template-columns:repeat(2,1fr);
   }
 }
 
 @media(max-width:430px){
-  .game-frame{
-    height:395px;
+
+  body{
+    padding:8px;
+  }
+
+  .grid{
+    gap:7px;
+  }
+
+  .card{
+    padding:11px;
+  }
+
+  .current-value{
+    font-size:13px;
+  }
+
+  .create-row{
+    flex-direction:column;
+  }
+
+  .create-btn{
+    width:100%;
   }
 }
 </style>
@@ -758,40 +645,43 @@ td{
      LOGIN
 ======================================================= -->
 
-<section id="loginScreen" class="login-screen">
+<section
+  id="login"
+  class="login"
+>
 
   <div class="login-card">
 
-    <div class="login-logo">
-      AI
+    <div class="admin-logo">
+      DY
     </div>
 
     <div class="login-title">
-      DY AI Prediction
+      DY AI ADMIN
     </div>
 
     <div class="login-sub">
-      Enter your access key to continue
+      Secure administrator access
     </div>
 
     <input
-      id="keyInput"
-      class="key-input"
+      id="adminKey"
+      class="input"
       type="password"
-      placeholder="Enter access key"
       autocomplete="off"
+      placeholder="Enter admin key"
     >
 
     <button
       id="loginBtn"
       class="login-btn"
     >
-      LOGIN
+      ADMIN LOGIN
     </button>
 
     <div
-      id="loginMessage"
-      class="login-message"
+      id="loginMsg"
+      class="login-msg"
     ></div>
 
   </div>
@@ -803,7 +693,10 @@ td{
      MAIN
 ======================================================= -->
 
-<main id="main" class="main">
+<main
+  id="main"
+  class="main"
+>
 
   <!-- HEADER -->
 
@@ -816,24 +709,26 @@ td{
       </div>
 
       <div>
-        <div class="brand-title">
-          DY AI
+
+        <div class="title">
+          DY AI ADMIN
         </div>
 
-        <div class="brand-sub">
-          BIG / SMALL INTELLIGENCE
+        <div class="sub">
+          CONTROL CENTER
         </div>
+
       </div>
 
     </div>
 
-    <div class="header-actions">
+    <div class="header-btns">
 
       <button
-        id="topMusic"
+        id="refreshBtn"
         class="top-btn"
       >
-        ♪
+        REFRESH
       </button>
 
       <button
@@ -848,275 +743,446 @@ td{
   </header>
 
 
-  <!-- GAME -->
+  <!-- STATUS -->
 
-  <section class="game-card">
+  <section class="grid">
 
-    <div class="game-head">
+    <div class="card">
 
-      <div class="game-title">
-        SHREEWIN 30S
+      <div class="card-label">
+        SERVER
       </div>
 
-      <div class="game-live">
+      <div
+        id="serverStatus"
+        class="card-value waiting"
+      >
+        WAITING
+      </div>
 
-        <span class="live-dot"></span>
+    </div>
 
-        <span id="gameStatus">
-          LIVE
-        </span>
+    <div class="card">
+
+      <div class="card-label">
+        DATABASE
+      </div>
+
+      <div
+        id="dbStatus"
+        class="card-value waiting"
+      >
+        WAITING
+      </div>
+
+    </div>
+
+    <div class="card">
+
+      <div class="card-label">
+        WINGOBOT
+      </div>
+
+      <div
+        id="wingoStatus"
+        class="card-value waiting"
+      >
+        WAITING
+      </div>
+
+    </div>
+
+    <div class="card">
+
+      <div class="card-label">
+        MODEL
+      </div>
+
+      <div
+        id="modelStatus"
+        class="card-value"
+      >
+        DY-AI-BS-V3
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- MODEL -->
+
+  <section class="model-card">
+
+    <div class="section-head">
+
+      <div class="section-title">
+        AI MODEL
+      </div>
+
+      <div class="badge">
+        BIG / SMALL ONLY
+      </div>
+
+    </div>
+
+    <div class="model-grid">
+
+      <div class="model-box">
+
+        <div class="model-label">
+          VERSION
+        </div>
+
+        <div
+          id="modelVersion"
+          class="model-value"
+        >
+          DY-AI-BS-V3
+        </div>
+
+      </div>
+
+      <div class="model-box">
+
+        <div class="model-label">
+          NUMBER MODEL
+        </div>
+
+        <div
+          id="numberModel"
+          class="model-value"
+        >
+          DISABLED
+        </div>
+
+      </div>
+
+      <div class="model-box">
+
+        <div class="model-label">
+          HISTORY FETCHED
+        </div>
+
+        <div
+          id="historyFetched"
+          class="model-value"
+        >
+          0
+        </div>
 
       </div>
 
     </div>
 
-    <iframe
-      id="gameFrame"
-      class="game-frame"
-      src="https://www.shreewin38.com/#/register?invitationCode=88523152383"
-      allow="fullscreen"
-      loading="eager"
-      referrerpolicy="no-referrer"
-    ></iframe>
+  </section>
 
-    <div class="open-wrap">
+
+  <!-- ACTIONS -->
+
+  <section class="actions">
+
+    <button
+      id="refreshAction"
+      class="action primary"
+    >
+      REFRESH STATUS
+    </button>
+
+    <button
+      id="pingBtn"
+      class="action"
+    >
+      SERVER PING
+    </button>
+
+    <button
+      id="wingoTestBtn"
+      class="action"
+    >
+      WINGOBOT TEST
+    </button>
+
+    <button
+      id="modelTestBtn"
+      class="action"
+    >
+      MODEL TEST
+    </button>
+
+  </section>
+
+
+  <!-- CURRENT AI -->
+
+  <section class="current-card">
+
+    <div class="section-head">
+
+      <div class="section-title">
+        CURRENT AI
+      </div>
+
+      <div
+        id="currentBadge"
+        class="badge"
+      >
+        WAITING
+      </div>
+
+    </div>
+
+    <div class="current-grid">
+
+      <div class="current-box">
+
+        <div class="current-label">
+          TARGET
+        </div>
+
+        <div
+          id="currentTarget"
+          class="current-value"
+        >
+          —
+        </div>
+
+      </div>
+
+      <div class="current-box">
+
+        <div class="current-label">
+          PREDICTION
+        </div>
+
+        <div
+          id="currentPrediction"
+          class="current-value"
+        >
+          —
+        </div>
+
+      </div>
+
+      <div class="current-box">
+
+        <div class="current-label">
+          CONFIDENCE
+        </div>
+
+        <div
+          id="currentConfidence"
+          class="current-value"
+        >
+          —
+        </div>
+
+      </div>
+
+      <div class="current-box">
+
+        <div class="current-label">
+          STATUS
+        </div>
+
+        <div
+          id="currentStatus"
+          class="current-value"
+        >
+          PENDING
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- DIAGNOSTICS -->
+
+  <section class="diag-card">
+
+    <div class="section-head">
+
+      <div class="section-title">
+        AI DIAGNOSTICS
+      </div>
+
+      <div
+        id="regimeBadge"
+        class="badge"
+      >
+        WAITING
+      </div>
+
+    </div>
+
+    <div class="diag-grid">
+
+      <div class="diag">
+
+        <div class="diag-name">
+          FINAL SCORE
+        </div>
+
+        <div
+          id="dScore"
+          class="diag-value"
+        >
+          —
+        </div>
+
+      </div>
+
+      <div class="diag">
+
+        <div class="diag-name">
+          SHORT TREND
+        </div>
+
+        <div
+          id="dShort"
+          class="diag-value"
+        >
+          —
+        </div>
+
+      </div>
+
+      <div class="diag">
+
+        <div class="diag-name">
+          MEDIUM TREND
+        </div>
+
+        <div
+          id="dMedium"
+          class="diag-value"
+        >
+          —
+        </div>
+
+      </div>
+
+      <div class="diag">
+
+        <div class="diag-name">
+          TRANSITION
+        </div>
+
+        <div
+          id="dTransition"
+          class="diag-value"
+        >
+          —
+        </div>
+
+      </div>
+
+      <div class="diag">
+
+        <div class="diag-name">
+          BREAK
+        </div>
+
+        <div
+          id="dBreak"
+          class="diag-value"
+        >
+          —
+        </div>
+
+      </div>
+
+      <div class="diag">
+
+        <div class="diag-name">
+          STREAK
+        </div>
+
+        <div
+          id="dStreak"
+          class="diag-value"
+        >
+          —
+        </div>
+
+      </div>
+
+      <div class="diag">
+
+        <div class="diag-name">
+          AGREEMENT
+        </div>
+
+        <div
+          id="dAgreement"
+          class="diag-value"
+        >
+          —
+        </div>
+
+      </div>
+
+      <div class="diag">
+
+        <div class="diag-name">
+          HISTORY USED
+        </div>
+
+        <div
+          id="dHistory"
+          class="diag-value"
+        >
+          —
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- KEYS -->
+
+  <section class="keys-card">
+
+    <div class="keys-head">
+
+      <div class="section-title">
+        ACCESS KEYS
+      </div>
+
+      <div
+        id="keyCount"
+        class="badge"
+      >
+        0 KEYS
+      </div>
+
+    </div>
+
+    <div class="create-row">
+
+      <input
+        id="newKey"
+        class="create-input"
+        type="text"
+        placeholder="Custom key (optional)"
+      >
 
       <button
-        id="openGame"
-        class="open-game"
+        id="createKey"
+        class="create-btn"
       >
-        OPEN GAME
+        CREATE KEY
       </button>
 
     </div>
 
-  </section>
-
-
-  <!-- TARGET -->
-
-  <section class="target-card">
-
-    <div class="target-label">
-      AI TARGET PERIOD
-    </div>
-
-    <div class="target-row">
-
-      <div
-        id="targetPeriod"
-        class="target-period"
-      >
-        WAITING...
-      </div>
-
-      <div
-        id="timer"
-        class="timer"
-      >
-        --:--
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- AI -->
-
-  <section class="ai-card">
-
-    <div class="ai-header">
-
-      <div class="ai-title">
-
-        <span class="ai-dot"></span>
-
-        DY AI ANALYSIS
-
-      </div>
-
-      <div class="version">
-        V3 • BS ONLY
-      </div>
-
-    </div>
-
-
-    <!-- ANALYSIS -->
-
-    <div
-      id="analysis"
-      class="analysis"
-    >
-
-      <div class="scan">
-
-        <div class="scan-icon">
-          🤖
-        </div>
-
-      </div>
-
-      <div class="analysis-title">
-        ANALYZING TREND
-      </div>
-
-      <div class="analysis-sub">
-        Checking recent movement, trend break,
-        transition and historical pattern
-      </div>
-
-      <div class="progress">
-
-        <div
-          id="progressFill"
-          class="progress-fill"
-        ></div>
-
-      </div>
-
-    </div>
-
-
-    <!-- PREDICTION -->
-
-    <div
-      id="prediction"
-      class="prediction"
-    >
-
-      <div class="pred-label">
-        AI PREDICTION
-      </div>
-
-      <div
-        id="predSide"
-        class="pred-side"
-      >
-        --
-      </div>
-
-      <div class="confidence">
-
-        <div class="conf-head">
-
-          <span>
-            CONFIDENCE
-          </span>
-
-          <span
-            id="confidence"
-            class="conf-value"
-          >
-            0%
-          </span>
-
-        </div>
-
-        <div class="conf-bar">
-
-          <div
-            id="confidenceFill"
-            class="conf-fill"
-          ></div>
-
-        </div>
-
-      </div>
-
-      <div class="regime">
-
-        <span
-          id="regime"
-          class="regime-badge"
-        >
-          WAITING
-        </span>
-
-      </div>
-
-      <div
-        id="predNote"
-        class="pred-note"
-      >
-        Waiting for AI data
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- STATS -->
-
-  <section class="stats">
-
-    <div class="stat">
-
-      <div
-        id="wins"
-        class="stat-value win"
-      >
-        0
-      </div>
-
-      <div class="stat-label">
-        WINS
-      </div>
-
-    </div>
-
-    <div class="stat">
-
-      <div
-        id="losses"
-        class="stat-value loss"
-      >
-        0
-      </div>
-
-      <div class="stat-label">
-        LOSSES
-      </div>
-
-    </div>
-
-    <div class="stat">
-
-      <div
-        id="accuracy"
-        class="stat-value acc"
-      >
-        0%
-      </div>
-
-      <div class="stat-label">
-        ACCURACY
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- LAST 30 -->
-
-  <section class="history-card">
-
-    <div class="history-head">
-
-      <div class="history-title">
-        PREDICTION HISTORY
-      </div>
-
-      <div class="last30">
-        LAST 30
-      </div>
-
-    </div>
-
-    <div class="history-scroll">
+    <div class="keys-scroll">
 
       <table>
 
@@ -1125,38 +1191,46 @@ td{
           <tr>
 
             <th>
-              PERIOD
+              ID
             </th>
 
             <th>
-              RESULT
+              ACCESS KEY
             </th>
 
             <th>
-              PREDICT
+              DEVICE
             </th>
 
             <th>
-              W/L
+              CREATED
+            </th>
+
+            <th>
+              LAST SEEN
+            </th>
+
+            <th>
+              ACTION
             </th>
 
           </tr>
 
         </thead>
 
-        <tbody id="historyBody">
+        <tbody id="keysBody">
 
           <tr>
 
             <td
-              colspan="4"
+              colspan="6"
               style="
                 text-align:center;
                 padding:25px;
                 color:#4d5e76;
               "
             >
-              Waiting for history...
+              No keys loaded
             </td>
 
           </tr>
@@ -1170,40 +1244,31 @@ td{
   </section>
 
 
-  <!-- MUSIC -->
+  <!-- LOG -->
 
-  <section class="music">
+  <section class="log-card">
 
-    <div>
-
-      <div class="music-title">
-        DY AI MUSIC
-      </div>
-
-      <div class="music-sub">
-        Background audio
-      </div>
-
+    <div class="section-title">
+      SYSTEM LOG
     </div>
 
-    <button
-      id="musicBtn"
-      class="music-btn"
+    <div
+      id="log"
+      class="log"
     >
-      ▶
-    </button>
+      DY AI Admin ready...
+    </div>
 
   </section>
 
 
   <div class="footer">
 
-    DY AI • BIG / SMALL MODEL
+    DY AI • ADMIN CONTROL CENTER
 
     <br>
 
-    Predictions are estimates,
-    not guaranteed outcomes.
+    Model: DY-AI-BS-V3 • BIG/SMALL ONLY
 
   </div>
 
@@ -1212,41 +1277,30 @@ td{
 </div>
 
 
-<audio
-  id="musicAudio"
-  src="/music.mp3"
-  preload="none"
-  loop
-></audio>
-
-
 <script>
 "use strict";
 
 /* =========================================================
-   CONFIG
+   STATE
 ========================================================= */
 
-const ACCESS_KEY =
-  "dy_ai_access_key";
+let adminKey =
+  "";
 
-const DEVICE_KEY =
-  "dy_ai_device_id";
+let refreshTimer =
+  null;
 
-const POLL_INTERVAL =
-  1000;
-
-const ANALYSIS_DURATION =
-  3000;
+let loading =
+  false;
 
 
 /* =========================================================
-   ELEMENTS
+   DOM
 ========================================================= */
 
-const loginScreen =
+const login =
   document.getElementById(
-    "loginScreen"
+    "login"
   );
 
 const main =
@@ -1254,9 +1308,9 @@ const main =
     "main"
   );
 
-const keyInput =
+const adminKeyInput =
   document.getElementById(
-    "keyInput"
+    "adminKey"
   );
 
 const loginBtn =
@@ -1264,152 +1318,31 @@ const loginBtn =
     "loginBtn"
   );
 
-const loginMessage =
+const loginMsg =
   document.getElementById(
-    "loginMessage"
+    "loginMsg"
   );
 
-const logoutBtn =
+const logBox =
   document.getElementById(
-    "logoutBtn"
-  );
-
-const targetPeriod =
-  document.getElementById(
-    "targetPeriod"
-  );
-
-const timer =
-  document.getElementById(
-    "timer"
-  );
-
-const analysis =
-  document.getElementById(
-    "analysis"
-  );
-
-const progressFill =
-  document.getElementById(
-    "progressFill"
-  );
-
-const prediction =
-  document.getElementById(
-    "prediction"
-  );
-
-const predSide =
-  document.getElementById(
-    "predSide"
-  );
-
-const confidence =
-  document.getElementById(
-    "confidence"
-  );
-
-const confidenceFill =
-  document.getElementById(
-    "confidenceFill"
-  );
-
-const regime =
-  document.getElementById(
-    "regime"
-  );
-
-const predNote =
-  document.getElementById(
-    "predNote"
-  );
-
-const wins =
-  document.getElementById(
-    "wins"
-  );
-
-const losses =
-  document.getElementById(
-    "losses"
-  );
-
-const accuracy =
-  document.getElementById(
-    "accuracy"
-  );
-
-const historyBody =
-  document.getElementById(
-    "historyBody"
-  );
-
-const openGame =
-  document.getElementById(
-    "openGame"
-  );
-
-const gameStatus =
-  document.getElementById(
-    "gameStatus"
-  );
-
-const musicAudio =
-  document.getElementById(
-    "musicAudio"
-  );
-
-const musicBtn =
-  document.getElementById(
-    "musicBtn"
-  );
-
-const topMusic =
-  document.getElementById(
-    "topMusic"
+    "log"
   );
 
 
 /* =========================================================
-   DEVICE ID
+   LOG
 ========================================================= */
 
-function getDeviceId(){
+function log(message){
 
-  let id =
-    localStorage.getItem(
-      DEVICE_KEY
-    );
+  const time =
+    new Date()
+      .toLocaleTimeString();
 
-  if (!id){
+  logBox.textContent =
+    `[${time}] ${message}\n` +
+    logBox.textContent;
 
-    if (
-      window.crypto &&
-      crypto.randomUUID
-    ){
-
-      id =
-        crypto.randomUUID();
-
-    }else{
-
-      id =
-        "device-" +
-        Date.now() +
-        "-" +
-        Math.random()
-          .toString(36)
-          .slice(2);
-
-    }
-
-    localStorage.setItem(
-      DEVICE_KEY,
-      id
-    );
-  }
-
-  return id;
 }
 
 
@@ -1434,6 +1367,13 @@ async function api(
         headers:{
           "Cache-Control":
             "no-cache",
+
+          ...(adminKey
+            ? {
+                "x-admin-key":
+                  adminKey
+              }
+            : {}),
 
           ...(options.headers || {})
         }
@@ -1470,105 +1410,88 @@ async function api(
    LOGIN
 ========================================================= */
 
-async function login(key){
+async function doLogin(){
+
+  const key =
+    adminKeyInput
+      .value
+      .trim();
 
   if (!key){
+
+    loginMsg.textContent =
+      "Enter admin key";
+
     return;
+
   }
 
   loginBtn.disabled =
     true;
 
-  loginMessage.textContent =
-    "Checking access key...";
+  loginMsg.textContent =
+    "Checking...";
+
+  adminKey =
+    key;
 
   try{
 
     const data =
       await api(
-        "/api/key/check",
-        {
-          method:"POST",
-
-          headers:{
-            "Content-Type":
-              "application/json"
-          },
-
-          body:
-            JSON.stringify({
-              key:key,
-              deviceId:
-                getDeviceId()
-            })
-        }
+        "/api/admin/status"
       );
 
     if (!data.ok){
 
       throw new Error(
-        data.message ||
-        "Access denied"
+        "Admin access denied"
       );
 
     }
 
-    localStorage.setItem(
-      ACCESS_KEY,
-      key
-    );
-
-    loginMessage.textContent =
-      "";
-
-    loginScreen.style.display =
+    login.style.display =
       "none";
 
     main.classList.add(
       "show"
     );
 
-    startPolling();
+    loginMsg.textContent =
+      "";
+
+    log(
+      "Admin login successful"
+    );
+
+    await refreshAll();
+
+    startAutoRefresh();
 
   }catch(error){
 
-    loginMessage.textContent =
-      error.message ||
-      "Invalid access key";
+    adminKey =
+      "";
 
-    localStorage.removeItem(
-      ACCESS_KEY
-    );
+    loginMsg.textContent =
+      error.message ||
+      "Invalid admin key";
 
   }finally{
 
     loginBtn.disabled =
       false;
   }
+
 }
 
 
 loginBtn.addEventListener(
   "click",
-  () => {
-
-    const key =
-      keyInput.value.trim();
-
-    if (!key){
-
-      loginMessage.textContent =
-        "Enter access key";
-
-      return;
-    }
-
-    login(key);
-  }
+  doLogin
 );
 
-
-keyInput.addEventListener(
+adminKeyInput.addEventListener(
   "keydown",
   event => {
 
@@ -1576,503 +1499,383 @@ keyInput.addEventListener(
       event.key === "Enter"
     ){
 
-      loginBtn.click();
+      doLogin();
 
     }
 
   }
 );
-
-
-/* =========================================================
-   AUTO LOGIN
-========================================================= */
-
-const savedKey =
-  localStorage.getItem(
-    ACCESS_KEY
-  );
-
-if (savedKey){
-
-  login(savedKey);
-
-}
 
 
 /* =========================================================
    LOGOUT
 ========================================================= */
 
-logoutBtn.addEventListener(
-  "click",
-  () => {
+document
+  .getElementById(
+    "logoutBtn"
+  )
+  .addEventListener(
+    "click",
+    () => {
 
-    localStorage.removeItem(
-      ACCESS_KEY
-    );
+      stopAutoRefresh();
 
-    stopPolling();
+      adminKey =
+        "";
 
-    main.classList.remove(
-      "show"
-    );
+      main.classList.remove(
+        "show"
+      );
 
-    loginScreen.style.display =
-      "flex";
+      login.style.display =
+        "flex";
 
-    keyInput.value =
-      "";
+      adminKeyInput.value =
+        "";
 
-    loginMessage.textContent =
-      "";
+      loginMsg.textContent =
+        "";
 
-  }
-);
+      log(
+        "Logged out"
+      );
 
-
-/* =========================================================
-   POLLING
-========================================================= */
-
-let pollHandle =
-  null;
-
-let requestRunning =
-  false;
-
-let currentState =
-  null;
-
-let displayedTarget =
-  null;
-
-let analysisId =
-  0;
-
-let lastServerTime =
-  Date.now();
-
-let lastProviderUpdate =
-  0;
-
-
-function startPolling(){
-
-  stopPolling();
-
-  loadState();
-
-  pollHandle =
-    setInterval(
-      loadState,
-      POLL_INTERVAL
-    );
-}
-
-
-function stopPolling(){
-
-  if (pollHandle){
-
-    clearInterval(
-      pollHandle
-    );
-
-    pollHandle =
-      null;
-  }
-}
+    }
+  );
 
 
 /* =========================================================
-   LOAD STATE
+   REFRESH ALL
 ========================================================= */
 
-async function loadState(){
+async function refreshAll(){
 
-  if (requestRunning){
+  if (loading){
     return;
   }
 
-  requestRunning =
+  loading =
     true;
+
+  try{
+
+    await refreshStatus();
+
+    await refreshKeys();
+
+    await refreshModel();
+
+  }catch(error){
+
+    log(
+      "Refresh error: " +
+      error.message
+    );
+
+  }finally{
+
+    loading =
+      false;
+  }
+
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+async function refreshStatus(){
+
+  const data =
+    await api(
+      "/api/admin/status"
+    );
+
+
+  /*
+   * SERVER
+   */
+
+  setStatus(
+    "serverStatus",
+    data.server?.status
+  );
+
+
+  /*
+   * DATABASE
+   */
+
+  setStatus(
+    "dbStatus",
+    data.database?.status
+  );
+
+
+  /*
+   * WINGOBOT
+   */
+
+  setStatus(
+    "wingoStatus",
+    data.wingobot?.status
+  );
+
+
+  /*
+   * MODEL
+   */
+
+  document
+    .getElementById(
+      "modelStatus"
+    )
+    .textContent =
+      data.model?.version ||
+      "UNKNOWN";
+
+
+  document
+    .getElementById(
+      "modelVersion"
+    )
+    .textContent =
+      data.model?.version ||
+      "UNKNOWN";
+
+
+  document
+    .getElementById(
+      "numberModel"
+    )
+    .textContent =
+      data.model?.numberPrediction
+        ? "ENABLED"
+        : "DISABLED";
+
+
+  document
+    .getElementById(
+      "historyFetched"
+    )
+    .textContent =
+      data.wingobot?.fetched ??
+      0;
+
+
+  /*
+   * CURRENT
+   */
+
+  await refreshCurrent();
+
+
+  log(
+    "Status refreshed"
+  );
+
+}
+
+
+/* =========================================================
+   CURRENT
+========================================================= */
+
+async function refreshCurrent(){
+
+  const data =
+    await api(
+      "/api/state"
+    );
+
+  const current =
+    data.current || {};
+
+  const diagnostics =
+    current.diagnostics || {};
+
+
+  document
+    .getElementById(
+      "currentTarget"
+    )
+    .textContent =
+      current.targetIssue ||
+      "—";
+
+
+  const predictionEl =
+    document
+      .getElementById(
+        "currentPrediction"
+      );
+
+  predictionEl.textContent =
+    current.prediction ||
+    "—";
+
+  predictionEl.className =
+    "current-value " +
+    (
+      current.prediction ===
+      "BIG"
+        ? "big"
+        : current.prediction ===
+          "SMALL"
+            ? "small"
+            : ""
+    );
+
+
+  document
+    .getElementById(
+      "currentConfidence"
+    )
+    .textContent =
+      current.prediction
+        ? `${current.confidence}%`
+        : "—";
+
+
+  const statusEl =
+    document
+      .getElementById(
+        "currentStatus"
+      );
+
+  statusEl.textContent =
+    current.status ||
+    "PENDING";
+
+  statusEl.className =
+    "current-value " +
+    (
+      current.status === "WIN"
+        ? "win"
+        : current.status === "LOSS"
+          ? "loss"
+          : "pending"
+    );
+
+
+  document
+    .getElementById(
+      "currentBadge"
+    )
+    .textContent =
+      current.reason
+        ? formatText(
+            current.reason
+          )
+        : "WAITING";
+
+
+  /*
+   * Diagnostics
+   */
+
+  document
+    .getElementById(
+      "regimeBadge"
+    )
+    .textContent =
+      formatText(
+        current.regime ||
+        "WAITING"
+      );
+
+
+  setText(
+    "dScore",
+    diagnostics.score
+  );
+
+  setText(
+    "dShort",
+    diagnostics.short
+  );
+
+  setText(
+    "dMedium",
+    diagnostics.medium
+  );
+
+  setText(
+    "dTransition",
+    diagnostics.transition
+  );
+
+  setText(
+    "dBreak",
+    diagnostics.break
+  );
+
+  setText(
+    "dStreak",
+    diagnostics.streakLength
+      ? `${diagnostics.streakSide} × ${diagnostics.streakLength}`
+      : "—"
+  );
+
+  setText(
+    "dAgreement",
+    diagnostics.agreement !==
+      undefined
+      ? `${Math.round(
+          diagnostics.agreement *
+          100
+        )}%`
+      : "—"
+  );
+
+  setText(
+    "dHistory",
+    diagnostics.historyUsed
+  );
+
+}
+
+
+/* =========================================================
+   MODEL TEST
+========================================================= */
+
+async function refreshModel(){
 
   try{
 
     const data =
       await api(
-        "/api/state"
+        "/api/admin/model-test"
       );
 
-    currentState =
-      data;
-
-    render(data);
-
-  }catch(error){
-
-    console.warn(
-      "State error:",
-      error.message
-    );
-
-    gameStatus.textContent =
-      "SYNC";
-
-  }finally{
-
-    requestRunning =
-      false;
-  }
-}
-
-
-/* =========================================================
-   RENDER
-========================================================= */
-
-function render(data){
-
-  if (!data){
-    return;
-  }
-
-  const current =
-    data.current || {};
-
-  const provider =
-    data.provider || {};
-
-  const stats =
-    data.stats || {};
-
-
-  /*
-   * GAME STATUS
-   */
-
-  if (provider.error){
-
-    gameStatus.textContent =
-      "SYNC";
-
-  }else{
-
-    gameStatus.textContent =
-      "LIVE";
-
-  }
-
-
-  /*
-   * TARGET
-   */
-
-  if (
-    current.targetIssue
-  ){
-
-    targetPeriod.textContent =
-      current.targetIssue;
-
-    /*
-     * IMPORTANT:
-     *
-     * Analysis only starts when
-     * target period actually changes.
-     */
+    const model =
+      data.model || {};
 
     if (
-      displayedTarget !==
-      current.targetIssue
+      model.prediction
     ){
 
-      displayedTarget =
-        current.targetIssue;
-
-      startAnalysis(
-        current.targetIssue,
-        current
-      );
-
-    }
-
-  }
-
-
-  /*
-   * STATS
-   */
-
-  wins.textContent =
-    Number(
-      stats.wins || 0
-    );
-
-  losses.textContent =
-    Number(
-      stats.losses || 0
-    );
-
-  accuracy.textContent =
-    `${Number(
-      stats.accuracy || 0
-    ).toFixed(2)}%`;
-
-
-  /*
-   * LAST 30
-   */
-
-  drawHistory(
-    Array.isArray(
-      data.last30
-    )
-      ? data.last30
-      : []
-  );
-
-
-  /*
-   * TIMER
-   */
-
-  updateTimer(
-    provider,
-    data.serverTime
-  );
-
-
-  /*
-   * If analysis is NOT currently
-   * running, display stored prediction.
-   */
-
-  if (
-    current.prediction &&
-    !analysis.classList.contains(
-      "show"
-    )
-  ){
-
-    showPrediction(
-      current
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   3 SECOND ANALYSIS
-========================================================= */
-
-function startAnalysis(
-  target,
-  current
-){
-
-  analysisId++;
-
-  const id =
-    analysisId;
-
-  prediction.classList.remove(
-    "show"
-  );
-
-  analysis.classList.add(
-    "show"
-  );
-
-  progressFill.style.width =
-    "0%";
-
-  const start =
-    performance.now();
-
-
-  function animate(time){
-
-    if (
-      id !== analysisId
-    ){
-
-      return;
-
-    }
-
-    const elapsed =
-      time - start;
-
-    const percent =
-      Math.min(
-        100,
-        (
-          elapsed /
-          ANALYSIS_DURATION
-        ) * 100
-      );
-
-    progressFill.style.width =
-      `${percent}%`;
-
-
-    if (
-      elapsed <
-      ANALYSIS_DURATION
-    ){
-
-      requestAnimationFrame(
-        animate
-      );
-
-      return;
-
-    }
-
-
-    analysis.classList.remove(
-      "show"
-    );
-
-
-    /*
-     * Use server prediction for
-     * the SAME target.
-     */
-    if (
-      current &&
-      current.targetIssue ===
-        target &&
-      current.prediction
-    ){
-
-      showPrediction(
-        current
+      log(
+        `Model test: ${model.prediction} @ ${model.confidence}%`
       );
 
     }else{
 
-      prediction.classList.add(
-        "show"
+      log(
+        "Model test waiting for history"
       );
-
-      predSide.textContent =
-        "--";
-
-      confidence.textContent =
-        "WAITING";
-
-      confidenceFill.style.width =
-        "0%";
-
-      regime.textContent =
-        "WAITING";
-
-      predNote.textContent =
-        "Waiting for fresh AI data";
 
     }
 
-  }
+  }catch(error){
 
-  requestAnimationFrame(
-    animate
-  );
-}
-
-
-/* =========================================================
-   SHOW PREDICTION
-========================================================= */
-
-function showPrediction(
-  current
-){
-
-  if (
-    !current ||
-    !current.prediction
-  ){
-
-    return;
-
-  }
-
-
-  prediction.classList.add(
-    "show"
-  );
-
-
-  const side =
-    String(
-      current.prediction
-    ).toUpperCase();
-
-
-  predSide.textContent =
-    side;
-
-  predSide.className =
-    "pred-side " +
-    (
-      side === "BIG"
-        ? "big"
-        : "small"
+    log(
+      "Model test error: " +
+      error.message
     );
-
-
-  const conf =
-    Math.max(
-      0,
-      Math.min(
-        100,
-        Number(
-          current.confidence || 0
-        )
-      )
-    );
-
-
-  confidence.textContent =
-    `${conf}%`;
-
-  confidenceFill.style.width =
-    `${conf}%`;
-
-
-  regime.textContent =
-    formatRegime(
-      current.regime
-    );
-
-
-  if (
-    current.status ===
-    "WIN"
-  ){
-
-    predNote.textContent =
-      "Prediction settled • WIN";
-
-  }else if (
-    current.status ===
-    "LOSS"
-  ){
-
-    predNote.textContent =
-      "Prediction settled • LOSS";
-
-  }else{
-
-    predNote.textContent =
-      formatReason(
-        current.reason
-      );
 
   }
 
@@ -2080,355 +1883,212 @@ function showPrediction(
 
 
 /* =========================================================
-   REGIME
+   STATUS CLASS
 ========================================================= */
 
-function formatRegime(
+function setStatus(
+  id,
   value
 ){
 
-  const map = {
+  const el =
+    document.getElementById(
+      id
+    );
 
-    TREND_CONTINUING:
-      "TREND CONTINUING",
-
-    NEW_TREND:
-      "NEW TREND",
-
-    TREND_WEAKENING:
-      "TREND WEAKENING",
-
-    POSSIBLE_BREAK:
-      "POSSIBLE TREND BREAK",
-
-    CONFLICT:
-      "MIXED / CONFLICT",
-
-    NEUTRAL:
-      "NEUTRAL",
-
-    INSUFFICIENT_DATA:
-      "BUILDING DATA",
-
-    WAITING:
-      "WAITING"
-
-  };
-
-  return (
-    map[value] ||
+  const v =
     String(
       value ||
-      "NEUTRAL"
-    ).replaceAll(
-      "_",
-      " "
-    )
-  );
+      "WAITING"
+    ).toUpperCase();
+
+  el.textContent =
+    v;
+
+  el.className =
+    "card-value " +
+    (
+      v === "ONLINE" ||
+      v === "OK"
+        ? "online"
+        : v === "OFFLINE" ||
+          v === "ERROR"
+            ? "offline"
+            : "waiting"
+    );
+
 }
 
 
-function formatReason(
+/* =========================================================
+   TEXT
+========================================================= */
+
+function setText(
+  id,
   value
 ){
 
-  const map = {
+  document
+    .getElementById(
+      id
+    )
+    .textContent =
+      value === null ||
+      value === undefined
+        ? "—"
+        : String(value);
 
-    TREND_CONTINUATION:
-      "Current trend has supporting evidence",
+}
 
-    NEW_TREND:
-      "Recent movement is forming a new trend",
 
-    TREND_WEAKENING:
-      "Existing trend is losing strength",
+function formatText(
+  value
+){
 
-    POSSIBLE_TREND_BREAK:
-      "Possible trend-break signal detected",
+  return String(
+    value ||
+    "WAITING"
+  )
+    .replaceAll(
+      "_",
+      " "
+    );
 
-    MIXED_SIGNAL:
-      "Signals are mixed; confidence reduced",
-
-    BALANCED_SIGNAL:
-      "Multiple signals are being balanced",
-
-    WAITING_FOR_HISTORY:
-      "Waiting for fresh history"
-
-  };
-
-  return (
-    map[value] ||
-    "AI signal generated from current data"
-  );
 }
 
 
 /* =========================================================
-   TIMER
+   KEYS
 ========================================================= */
 
-function updateTimer(
-  provider,
-  serverTime
-){
+async function refreshKeys(){
 
-  const current =
-    Number(
-      serverTime ||
-      Date.now()
+  const data =
+    await api(
+      "/api/admin/keys"
     );
 
-  lastServerTime =
-    current;
+  const keys =
+    Array.isArray(
+      data.keys
+    )
+      ? data.keys
+      : [];
 
 
-  let updated =
-    Number(
-      provider.lastUpdated || 0
-    );
+  document
+    .getElementById(
+      "keyCount"
+    )
+    .textContent =
+      `${keys.length} KEYS`;
 
 
-  if (!updated){
-
-    timer.textContent =
-      "--:--";
-
-    return;
-
-  }
+  const body =
+    document
+      .getElementById(
+        "keysBody"
+      );
 
 
-  /*
-   * WingoBot may return seconds
-   * or milliseconds.
-   */
+  if (!keys.length){
 
-  if (
-    updated <
-    100000000000
-  ){
-
-    updated *= 1000;
-
-  }
-
-
-  lastProviderUpdate =
-    updated;
-
-
-  /*
-   * 30-second smooth estimate.
-   *
-   * This is a UI estimate because
-   * provider history endpoint does
-   * not expose the game countdown.
-   */
-
-  const cycle =
-    30000;
-
-  const elapsed =
-    Math.max(
-      0,
-      current - updated
-    );
-
-  let remaining =
-    cycle -
-    (
-      elapsed %
-      cycle
-    );
-
-
-  if (
-    remaining <= 0 ||
-    remaining > cycle
-  ){
-
-    remaining =
-      cycle;
-
-  }
-
-
-  const seconds =
-    Math.ceil(
-      remaining / 1000
-    );
-
-
-  timer.textContent =
-    `00:${String(
-      seconds
-    ).padStart(
-      2,
-      "0"
-    )}`;
-}
-
-
-/* =========================================================
-   LOCAL TIMER SMOOTH UPDATE
-========================================================= */
-
-setInterval(
-  () => {
-
-    if (
-      !main.classList.contains(
-        "show"
-      )
-    ){
-
-      return;
-
-    }
-
-    if (
-      !lastProviderUpdate
-    ){
-
-      return;
-
-    }
-
-    /*
-     * Estimate current time from
-     * last server sync.
-     */
-
-    const elapsedSinceSync =
-      Date.now() -
-      lastServerTime;
-
-    const virtualNow =
-      lastServerTime +
-      elapsedSinceSync;
-
-    updateTimer(
-      {
-        lastUpdated:
-          lastProviderUpdate
-      },
-      virtualNow
-    );
-
-  },
-  250
-);
-
-
-/* =========================================================
-   HISTORY DRAW
-========================================================= */
-
-function drawHistory(
-  rows
-){
-
-  if (
-    !Array.isArray(rows) ||
-    !rows.length
-  ){
-
-    historyBody.innerHTML = `
+    body.innerHTML = `
       <tr>
         <td
-          colspan="4"
+          colspan="6"
           style="
             text-align:center;
             padding:25px;
             color:#4d5e76;
           "
         >
-          Waiting for prediction history...
+          No access keys
         </td>
       </tr>
     `;
 
     return;
-
   }
 
 
-  historyBody.innerHTML =
-    rows
-      .slice(0,30)
+  body.innerHTML =
+    keys
       .map(
-        row => {
+        key => {
 
-          const period =
-            escapeHTML(
-              row.period ||
-              "-"
+          const created =
+            formatDate(
+              key.created_at
             );
 
-          const result =
-            row.result
-              ? String(
-                  row.result
-                ).toUpperCase()
-              : "—";
-
-          const predict =
-            row.predict
-              ? String(
-                  row.predict
-                ).toUpperCase()
-              : "—";
-
-          const wl =
-            row.wl
-              ? String(
-                  row.wl
-                ).toUpperCase()
-              : "PENDING";
-
-
-          const resultClass =
-            result === "BIG"
-              ? "big-text"
-              : result === "SMALL"
-                ? "small-text"
-                : "empty";
-
-
-          const predictClass =
-            predict === "BIG"
-              ? "big-text"
-              : predict === "SMALL"
-                ? "small-text"
-                : "empty";
-
-
-          const wlClass =
-            wl === "WIN"
-              ? "win-text"
-              : wl === "LOSS"
-                ? "loss-text"
-                : "pending";
+          const seen =
+            key.last_seen
+              ? formatDate(
+                  key.last_seen
+                )
+              : "NEVER";
 
 
           return `
             <tr>
 
-              <td class="period">
-                ${period}
+              <td>
+                ${escapeHTML(
+                  key.id
+                )}
               </td>
 
-              <td class="${resultClass}">
-                ${escapeHTML(result)}
+              <td>
+                <span class="key-text">
+                  ${escapeHTML(
+                    key.access_key
+                  )}
+                </span>
               </td>
 
-              <td class="${predictClass}">
-                ${escapeHTML(predict)}
+              <td>
+                <span class="device">
+                  ${escapeHTML(
+                    key.device_id ||
+                    "UNLINKED"
+                  )}
+                </span>
               </td>
 
-              <td class="${wlClass}">
-                ${escapeHTML(wl)}
+              <td>
+                ${escapeHTML(
+                  created
+                )}
+              </td>
+
+              <td>
+                ${escapeHTML(
+                  seen
+                )}
+              </td>
+
+              <td>
+
+                <button
+                  class="row-btn"
+                  onclick="resetDevice(${Number(
+                    key.id
+                  )})"
+                >
+                  RESET
+                </button>
+
+                <button
+                  class="row-btn delete"
+                  onclick="deleteKey(${Number(
+                    key.id
+                  )})"
+                >
+                  DELETE
+                </button>
+
               </td>
 
             </tr>
@@ -2437,6 +2097,226 @@ function drawHistory(
         }
       )
       .join("");
+
+}
+
+
+/* =========================================================
+   CREATE KEY
+========================================================= */
+
+document
+  .getElementById(
+    "createKey"
+  )
+  .addEventListener(
+    "click",
+    async () => {
+
+      const input =
+        document
+          .getElementById(
+            "newKey"
+          );
+
+      const custom =
+        input.value.trim();
+
+
+      try{
+
+        const data =
+          await api(
+            "/api/admin/keys",
+            {
+              method:"POST",
+
+              headers:{
+                "Content-Type":
+                  "application/json"
+              },
+
+              body:
+                JSON.stringify({
+                  key:
+                    custom ||
+                    undefined
+                })
+            }
+          );
+
+
+        log(
+          "Access key created: " +
+          (
+            data.key?.access_key ||
+            "UNKNOWN"
+          )
+        );
+
+
+        input.value =
+          "";
+
+        await refreshKeys();
+
+      }catch(error){
+
+        log(
+          "Create key error: " +
+          error.message
+        );
+
+      }
+
+    }
+  );
+
+
+/* =========================================================
+   RESET DEVICE
+========================================================= */
+
+async function resetDevice(
+  id
+){
+
+  if (
+    !confirm(
+      "Reset this key's device binding?"
+    )
+  ){
+
+    return;
+
+  }
+
+
+  try{
+
+    await api(
+      "/api/admin/reset-device",
+      {
+        method:"POST",
+
+        headers:{
+          "Content-Type":
+            "application/json"
+        },
+
+        body:
+          JSON.stringify({
+            id
+          })
+      }
+    );
+
+
+    log(
+      `Device reset for key ID ${id}`
+    );
+
+    await refreshKeys();
+
+  }catch(error){
+
+    log(
+      "Reset error: " +
+      error.message
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   DELETE KEY
+========================================================= */
+
+async function deleteKey(
+  id
+){
+
+  if (
+    !confirm(
+      "Delete this access key permanently?"
+    )
+  ){
+
+    return;
+
+  }
+
+
+  try{
+
+    await api(
+      `/api/admin/keys/${id}`,
+      {
+        method:"DELETE"
+      }
+    );
+
+
+    log(
+      `Access key deleted: ID ${id}`
+    );
+
+    await refreshKeys();
+
+  }catch(error){
+
+    log(
+      "Delete error: " +
+      error.message
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   DATE
+========================================================= */
+
+function formatDate(
+  value
+){
+
+  if (!value){
+    return "—";
+  }
+
+  let n =
+    Number(value);
+
+  if (
+    n &&
+    n < 100000000000
+  ){
+
+    n *= 1000;
+
+  }
+
+  const d =
+    new Date(n);
+
+  if (
+    Number.isNaN(
+      d.getTime()
+    )
+  ){
+
+    return String(
+      value
+    );
+
+  }
+
+  return d.toLocaleString();
 
 }
 
@@ -2477,101 +2357,163 @@ function escapeHTML(
 
 
 /* =========================================================
-   GAME
+   ACTION BUTTONS
 ========================================================= */
 
-openGame.addEventListener(
-  "click",
-  () => {
+document
+  .getElementById(
+    "refreshBtn"
+  )
+  .addEventListener(
+    "click",
+    refreshAll
+  );
 
-    window.open(
-      "https://www.shreewin38.com/#/register?invitationCode=88523152383",
-      "_blank",
-      "noopener,noreferrer"
-    );
-
-  }
-);
+document
+  .getElementById(
+    "refreshAction"
+  )
+  .addEventListener(
+    "click",
+    refreshAll
+  );
 
 
 document
   .getElementById(
-    "gameFrame"
+    "pingBtn"
   )
   .addEventListener(
-    "load",
-    () => {
+    "click",
+    async () => {
 
-      gameStatus.textContent =
-        "LIVE";
+      try{
+
+        const data =
+          await api(
+            "/api/admin/ping"
+          );
+
+        log(
+          `PING OK • ${data.model}`
+        );
+
+      }catch(error){
+
+        log(
+          "PING ERROR • " +
+          error.message
+        );
+
+      }
 
     }
   );
 
 
-/* =========================================================
-   MUSIC
-========================================================= */
+document
+  .getElementById(
+    "wingoTestBtn"
+  )
+  .addEventListener(
+    "click",
+    async () => {
 
-let musicPlaying =
-  false;
+      try{
 
+        log(
+          "Testing WingoBot..."
+        );
 
-async function toggleMusic(){
+        const data =
+          await api(
+            "/api/admin/wingo-test"
+          );
 
-  try{
+        log(
+          `WingoBot OK • Current ${data.currentIssue || "—"} • Settled ${data.latestSettledIssue || "—"} • Fetched ${data.fetched || 0}`
+        );
 
-    if (
-      musicAudio.paused
-    ){
+        await refreshAll();
 
-      await musicAudio.play();
+      }catch(error){
 
-      musicPlaying =
-        true;
+        log(
+          "WingoBot ERROR • " +
+          error.message
+        );
 
-      musicBtn.textContent =
-        "❚❚";
-
-      topMusic.textContent =
-        "❚❚";
-
-    }else{
-
-      musicAudio.pause();
-
-      musicPlaying =
-        false;
-
-      musicBtn.textContent =
-        "▶";
-
-      topMusic.textContent =
-        "♪";
+      }
 
     }
+  );
 
-  }catch(error){
 
-    console.warn(
-      "Music error:",
-      error.message
+document
+  .getElementById(
+    "modelTestBtn"
+  )
+  .addEventListener(
+    "click",
+    refreshModel
+  );
+
+
+/* =========================================================
+   AUTO REFRESH
+========================================================= */
+
+function startAutoRefresh(){
+
+  stopAutoRefresh();
+
+  refreshTimer =
+    setInterval(
+      async () => {
+
+        if (
+          document.hidden
+        ){
+
+          return;
+
+        }
+
+        try{
+
+          await refreshStatus();
+
+        }catch(error){
+
+          console.warn(
+            error.message
+          );
+
+        }
+
+      },
+      3000
     );
-
-  }
 
 }
 
 
-musicBtn.addEventListener(
-  "click",
-  toggleMusic
-);
+function stopAutoRefresh(){
 
-topMusic.addEventListener(
-  "click",
-  toggleMusic
-);
+  if (
+    refreshTimer
+  ){
+
+    clearInterval(
+      refreshTimer
+    );
+
+    refreshTimer =
+      null;
+
+  }
+
+}
 
 
 /* =========================================================
@@ -2589,7 +2531,7 @@ document.addEventListener(
       )
     ){
 
-      loadState();
+      refreshAll();
 
     }
 
