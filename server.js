@@ -11,7 +11,9 @@ const { Pool } = require("pg");
    CONFIG
 ========================================================= */
 
-const PORT = Number(process.env.PORT || 10000);
+const PORT = Number(
+  process.env.PORT || 10000
+);
 
 const DATABASE_URL =
   process.env.DATABASE_URL || "";
@@ -53,25 +55,33 @@ const MUSIC_FILE =
 ========================================================= */
 
 if (!DATABASE_URL) {
+
   console.warn(
     "[WARNING] DATABASE_URL is not configured."
   );
 }
 
-const pool = new Pool({
-  connectionString: DATABASE_URL || undefined,
+const pool =
+  new Pool({
 
-  ssl:
-    process.env.NODE_ENV === "production"
-      ? { rejectUnauthorized: false }
-      : undefined,
+    connectionString:
+      DATABASE_URL || undefined,
 
-  max: 10,
+    ssl:
+      process.env.NODE_ENV === "production"
+        ? {
+            rejectUnauthorized: false
+          }
+        : undefined,
 
-  idleTimeoutMillis: 30000,
+    max: 10,
 
-  connectionTimeoutMillis: 10000
-});
+    idleTimeoutMillis:
+      30000,
+
+    connectionTimeoutMillis:
+      10000
+  });
 
 
 let dbReady = false;
@@ -123,8 +133,17 @@ let liveState = {
 
   lastUpdated: 0,
 
-  error: null
+  providerUpdated: null,
 
+  mode: "AI MODE",
+
+  randomized: false,
+
+  aiPrediction: "WAIT",
+
+  aiNumber: null,
+
+  error: null
 };
 
 
@@ -190,30 +209,31 @@ async function initDatabase() {
 
 
     /*
-      IMPORTANT:
-      Old broken records where WAIT was marked LOSS
-      are repaired automatically.
+      =======================================================
+      IMPORTANT DATABASE REPAIR
+      =======================================================
+
+      Previous version could create:
+
+          WAIT -> SKIPPED
+
+      Those records are not useful prediction records.
+
+      Genuine BIG/SMALL WIN/LOSS records are NOT touched.
+
+      We remove only old WAIT records.
     */
 
     await pool.query(`
-      UPDATE prediction_records
-      SET
-        outcome = 'SKIPPED',
-        settled_at = CASE
-          WHEN settled_at IS NULL OR settled_at = 0
-          THEN EXTRACT(EPOCH FROM NOW())::BIGINT
-          ELSE settled_at
-        END
+      DELETE FROM prediction_records
       WHERE
         UPPER(TRIM(prediction)) = 'WAIT'
-        AND UPPER(TRIM(outcome)) = 'LOSS'
     `);
 
 
     /*
-      Remove old random-mode state from future records.
-      Existing records remain visible but are treated as
-      historical records.
+      Old random-mode flags are disabled.
+      Existing result history remains.
     */
 
     await pool.query(`
@@ -250,6 +270,7 @@ async function initDatabase() {
 ========================================================= */
 
 function now() {
+
   return Date.now();
 }
 
@@ -267,6 +288,7 @@ function jsonResponse(
   res.writeHead(
     status,
     {
+
       "Content-Type":
         "application/json; charset=utf-8",
 
@@ -302,6 +324,7 @@ function textResponse(
   res.writeHead(
     status,
     {
+
       "Content-Type":
         type,
 
@@ -310,11 +333,14 @@ function textResponse(
     }
   );
 
+
   res.end(text);
 }
 
 
-function safeJsonParse(text) {
+function safeJsonParse(
+  text
+) {
 
   try {
 
@@ -334,12 +360,14 @@ function readBody(req) {
 
       let body = "";
 
+
       req.on(
         "data",
         chunk => {
 
           body +=
             chunk.toString();
+
 
           if (
             body.length >
@@ -348,7 +376,6 @@ function readBody(req) {
 
             req.destroy();
           }
-
         }
       );
 
@@ -360,16 +387,17 @@ function readBody(req) {
           resolve(
             safeJsonParse(body)
           );
-
         }
       );
 
 
       req.on(
         "error",
-        () => resolve({})
-      );
+        () => {
 
+          resolve({});
+        }
+      );
     }
   );
 }
@@ -379,10 +407,13 @@ function readBody(req) {
    NUMBER / SIDE HELPERS
 ========================================================= */
 
-function cleanNumber(value) {
+function cleanNumber(
+  value
+) {
 
   const n =
     Number(value);
+
 
   if (
     !Number.isInteger(n) ||
@@ -393,18 +424,23 @@ function cleanNumber(value) {
     return null;
   }
 
+
   return n;
 }
 
 
-function sideFromNumber(number) {
+function sideFromNumber(
+  number
+) {
 
   const n =
     cleanNumber(number);
 
+
   if (n === null) {
     return null;
   }
+
 
   return n >= 5
     ? "BIG"
@@ -412,16 +448,20 @@ function sideFromNumber(number) {
 }
 
 
-function normalizeSide(value) {
+function normalizeSide(
+  value
+) {
 
   if (!value) {
     return null;
   }
 
+
   const s =
     String(value)
       .trim()
       .toUpperCase();
+
 
   if (
     s === "BIG" ||
@@ -431,6 +471,7 @@ function normalizeSide(value) {
     return "BIG";
   }
 
+
   if (
     s === "SMALL" ||
     s === "S"
@@ -438,6 +479,7 @@ function normalizeSide(value) {
 
     return "SMALL";
   }
+
 
   return null;
 }
@@ -447,7 +489,9 @@ function normalizeSide(value) {
    ISSUE HELPERS
 ========================================================= */
 
-function normalizeIssue(value) {
+function normalizeIssue(
+  value
+) {
 
   if (
     value === null ||
@@ -457,24 +501,23 @@ function normalizeIssue(value) {
     return "";
   }
 
+
   return String(value).trim();
 }
 
 
-function incrementIssue(issue) {
+function incrementIssue(
+  issue
+) {
 
   const s =
     normalizeIssue(issue);
+
 
   if (!s) {
     return "";
   }
 
-
-  /*
-    Wingo issue numbers are numeric strings.
-    BigInt avoids precision loss.
-  */
 
   if (/^\d+$/.test(s)) {
 
@@ -482,8 +525,7 @@ function incrementIssue(issue) {
 
       const next =
         (
-          BigInt(s) +
-          1n
+          BigInt(s) + 1n
         ).toString();
 
 
@@ -502,6 +544,7 @@ function incrementIssue(issue) {
       return next;
 
     } catch {
+
       return "";
     }
   }
@@ -512,20 +555,16 @@ function incrementIssue(issue) {
 
 
 /*
-  IMPORTANT TARGET RESOLUTION
+  TARGET RESOLUTION
 
-  latest settled = history[0]
+  latest settled:
+      history[0]
 
   If API current is ahead:
       target = API current
 
   If API current is same/behind:
       target = latest settled + 1
-
-  This fixes the screenshot case:
-      settled 51103
-      current 51104
-      target 51104
 */
 
 function resolveTargetIssue(
@@ -537,6 +576,7 @@ function resolveTargetIssue(
     normalizeIssue(
       currentIssue
     );
+
 
   const latest =
     normalizeIssue(
@@ -623,9 +663,11 @@ async function fetchWingoHistory() {
     await fetch(
       WINGOBOT_HISTORY_URL,
       {
+
         method: "GET",
 
         headers: {
+
           "Authorization":
             `Bearer ${WINGOBOT_TOKEN}`,
 
@@ -648,11 +690,7 @@ async function fetchWingoHistory() {
   }
 
 
-  const data =
-    safeJsonParse(text);
-
-
-  return data;
+  return safeJsonParse(text);
 }
 
 
@@ -660,7 +698,9 @@ async function fetchWingoHistory() {
    HISTORY NORMALIZATION
 ========================================================= */
 
-function normalizeHistory(apiData) {
+function normalizeHistory(
+  apiData
+) {
 
   const raw =
     Array.isArray(
@@ -762,8 +802,21 @@ function normalizeHistory(apiData) {
               b.issueNumber
             );
 
-          if (aa > bb) return -1;
-          if (aa < bb) return 1;
+
+          if (
+            aa > bb
+          ) {
+
+            return -1;
+          }
+
+
+          if (
+            aa < bb
+          ) {
+
+            return 1;
+          }
 
         } catch {}
       }
@@ -782,7 +835,9 @@ function normalizeHistory(apiData) {
    SIDE ARRAYS
 ========================================================= */
 
-function sides(history) {
+function sides(
+  history
+) {
 
   return history
     .map(
@@ -850,11 +905,20 @@ function recencySignal(
       const side of arr
     ) {
 
-      if (side === "BIG")
-        big++;
+      if (
+        side === "BIG"
+      ) {
 
-      if (side === "SMALL")
+        big++;
+      }
+
+
+      if (
+        side === "SMALL"
+      ) {
+
         small++;
+      }
     }
 
 
@@ -862,8 +926,9 @@ function recencySignal(
       big + small;
 
 
-    if (!total)
+    if (!total) {
       continue;
+    }
 
 
     signals.push({
@@ -884,11 +949,16 @@ function recencySignal(
   }
 
 
-  if (!signals.length) {
+  if (
+    !signals.length
+  ) {
 
     return {
+
       side: null,
+
       strength: 0,
+
       agreement: 0
     };
   }
@@ -896,7 +966,6 @@ function recencySignal(
 
   let bigScore = 0;
   let smallScore = 0;
-
   let weights = 0;
 
 
@@ -915,12 +984,12 @@ function recencySignal(
 
 
     bigScore +=
-      s.big *
-      weight;
+      s.big * weight;
+
 
     smallScore +=
-      s.small *
-      weight;
+      s.small * weight;
+
 
     weights +=
       weight;
@@ -929,6 +998,7 @@ function recencySignal(
 
   const big =
     bigScore / weights;
+
 
   const small =
     smallScore / weights;
@@ -995,9 +1065,13 @@ function transitionEvidence(
   ) {
 
     return {
+
       side: null,
+
       strength: 0,
+
       agreement: 0,
+
       samples: 0
     };
   }
@@ -1010,9 +1084,13 @@ function transitionEvidence(
   if (!current) {
 
     return {
+
       side: null,
+
       strength: 0,
+
       agreement: 0,
+
       samples: 0
     };
   }
@@ -1026,11 +1104,11 @@ function transitionEvidence(
   /*
     Newest-first:
 
-    history[i] = older current state
-    history[i-1] = next result after it
+    history[i]
+        = older state
 
-    We skip i=0 because there is no newer
-    result inside the historical array.
+    history[i-1]
+        = next chronological result
   */
 
   for (
@@ -1041,6 +1119,7 @@ function transitionEvidence(
 
     const state =
       history[i]?.side;
+
 
     const next =
       history[i - 1]?.side;
@@ -1064,7 +1143,7 @@ function transitionEvidence(
 
       bigNext++;
 
-    }else{
+    } else {
 
       smallNext++;
     }
@@ -1072,14 +1151,17 @@ function transitionEvidence(
 
 
   if (
-    samples <
-    3
+    samples < 3
   ) {
 
     return {
+
       side: null,
+
       strength: 0,
+
       agreement: 0,
+
       samples
     };
   }
@@ -1087,6 +1169,7 @@ function transitionEvidence(
 
   const big =
     bigNext / samples;
+
 
   const small =
     smallNext / samples;
@@ -1139,14 +1222,17 @@ function sequenceEvidence(
 
 
   if (
-    arr.length <
-    8
+    arr.length < 8
   ) {
 
     return {
+
       side: null,
+
       strength: 0,
+
       agreement: 0,
+
       samples: 0
     };
   }
@@ -1156,12 +1242,11 @@ function sequenceEvidence(
   let weightedSmall = 0;
 
   let totalWeight = 0;
-
   let allSamples = 0;
 
 
   for (
-    const length of [2,3,4]
+    const length of [2, 3, 4]
   ) {
 
     if (
@@ -1185,23 +1270,6 @@ function sequenceEvidence(
     let big = 0;
     let small = 0;
 
-
-    /*
-      Example:
-
-      newest:
-      A B C
-
-      Search older:
-      X A B C
-
-      In newest-first array the result following
-      the matching older pattern is at i - 1.
-
-      Because currentPattern starts at 0,
-      an older matching sequence begins at i,
-      and its next chronological result is i-1.
-    */
 
     for (
       let i = length;
@@ -1227,19 +1295,25 @@ function sequenceEvidence(
       }
 
 
+      /*
+        In newest-first order,
+        i-1 is the result immediately after
+        the matched historical pattern.
+      */
+
       const next =
         arr[i - 1];
 
 
       if (
         next === "BIG"
-      ){
+      ) {
 
         big++;
 
-      }else if(
+      } else if (
         next === "SMALL"
-      ){
+      ) {
 
         small++;
       }
@@ -1251,8 +1325,7 @@ function sequenceEvidence(
 
 
     if (
-      samples <
-      2
+      samples < 2
     ) {
 
       continue;
@@ -1262,20 +1335,8 @@ function sequenceEvidence(
     const strength =
       Math.abs(
         big - small
-      ) /
-      samples;
+      ) / samples;
 
-
-    const side =
-      big >= small
-        ? "BIG"
-        : "SMALL";
-
-
-    /*
-      Longer exact patterns get slightly more weight,
-      but only when enough samples exist.
-    */
 
     const weight =
       length === 4
@@ -1292,6 +1353,7 @@ function sequenceEvidence(
       strength *
       weight;
 
+
     weightedSmall +=
       (
         small / samples
@@ -1303,6 +1365,7 @@ function sequenceEvidence(
     totalWeight +=
       weight;
 
+
     allSamples +=
       samples;
   }
@@ -1313,9 +1376,13 @@ function sequenceEvidence(
   ) {
 
     return {
+
       side: null,
+
       strength: 0,
+
       agreement: 0,
+
       samples: allSamples
     };
   }
@@ -1324,6 +1391,7 @@ function sequenceEvidence(
   const big =
     weightedBig /
     totalWeight;
+
 
   const small =
     weightedSmall /
@@ -1397,14 +1465,17 @@ function streakEvidence(
 
 
   if (
-    arr.length <
-    4
+    arr.length < 4
   ) {
 
     return {
+
       side: null,
+
       strength: 0,
+
       agreement: 0,
+
       streak: 0
     };
   }
@@ -1424,13 +1495,12 @@ function streakEvidence(
   ) {
 
     if (
-      arr[i] ===
-      current
+      arr[i] === current
     ) {
 
       streak++;
 
-    }else{
+    } else {
 
       break;
     }
@@ -1442,18 +1512,17 @@ function streakEvidence(
   ) {
 
     return {
+
       side: current,
+
       strength: 0,
+
       agreement: 0.5,
+
       streak
     };
   }
 
-
-  /*
-    Streak itself is NOT treated as automatic reversal.
-    We look at historical transitions after same-side streaks.
-  */
 
   let afterBig = 0;
   let afterSmall = 0;
@@ -1468,8 +1537,7 @@ function streakEvidence(
   ) {
 
     if (
-      arr[i] !==
-      current
+      arr[i] !== current
     ) {
 
       continue;
@@ -1481,8 +1549,7 @@ function streakEvidence(
 
 
     if (
-      previous !==
-      current
+      previous !== current
     ) {
 
       continue;
@@ -1493,8 +1560,9 @@ function streakEvidence(
       arr[i - 2];
 
 
-    if (!next)
+    if (!next) {
       continue;
+    }
 
 
     samples++;
@@ -1502,11 +1570,11 @@ function streakEvidence(
 
     if (
       next === "BIG"
-    ){
+    ) {
 
       afterBig++;
 
-    }else{
+    } else {
 
       afterSmall++;
     }
@@ -1514,31 +1582,32 @@ function streakEvidence(
 
 
   if (
-    samples <
-    2
+    samples < 2
   ) {
 
     return {
+
       side: current,
+
       strength:
         Math.min(
           0.45,
-          streak *
-          0.07
+          streak * 0.07
         ),
+
       agreement: 0.5,
+
       streak
     };
   }
 
 
   const big =
-    afterBig /
-    samples;
+    afterBig / samples;
+
 
   const small =
-    afterSmall /
-    samples;
+    afterSmall / samples;
 
 
   const side =
@@ -1584,7 +1653,7 @@ function volatilitySignal(
 
   const arr =
     history
-      .slice(0,12)
+      .slice(0, 12)
       .map(
         r => r.side
       )
@@ -1592,13 +1661,15 @@ function volatilitySignal(
 
 
   if (
-    arr.length <
-    6
+    arr.length < 6
   ) {
 
     return {
+
       alternating: false,
+
       streaky: false,
+
       volatility: 0
     };
   }
@@ -1653,16 +1724,17 @@ function numberAnalysis(
 ) {
 
   const counts = {
-    0:0,
-    1:0,
-    2:0,
-    3:0,
-    4:0,
-    5:0,
-    6:0,
-    7:0,
-    8:0,
-    9:0
+
+    0: 0,
+    1: 0,
+    2: 0,
+    3: 0,
+    4: 0,
+    5: 0,
+    6: 0,
+    7: 0,
+    8: 0,
+    9: 0
   };
 
 
@@ -1682,6 +1754,7 @@ function numberAnalysis(
         row.number
       );
 
+
     if (
       n !== null
     ) {
@@ -1693,17 +1766,9 @@ function numberAnalysis(
 
   const candidates =
     targetSide === "BIG"
-      ? [5,6,7,8,9]
-      : [0,1,2,3,4];
+      ? [5, 6, 7, 8, 9]
+      : [0, 1, 2, 3, 4];
 
-
-  /*
-    Don't simply choose most frequent number.
-    Score combines:
-      - frequency
-      - recent absence
-      - slight recency
-  */
 
   const scored =
     candidates.map(
@@ -1729,8 +1794,7 @@ function numberAnalysis(
             ) === n
           ) {
 
-            lastIndex =
-              i;
+            lastIndex = i;
 
             break;
           }
@@ -1740,35 +1804,33 @@ function numberAnalysis(
         const absence =
           Math.min(
             1,
-            lastIndex /
-            10
+            lastIndex / 10
           );
 
 
         const frequencyPenalty =
           Math.min(
             1,
-            frequency /
-            5
+            frequency / 5
           );
 
 
         const score =
           (
-            absence *
-            0.60
+            absence * 0.60
           ) +
           (
             (
               1 -
               frequencyPenalty
-            ) *
-            0.40
+            ) * 0.40
           );
 
 
         return {
-          number:n,
+
+          number: n,
+
           score
         };
       }
@@ -1776,7 +1838,7 @@ function numberAnalysis(
 
 
   scored.sort(
-    (a,b) =>
+    (a, b) =>
       b.score -
       a.score
   );
@@ -1792,7 +1854,8 @@ function numberAnalysis(
           : 0
       ),
 
-    candidates:scored
+    candidates:
+      scored
   };
 }
 
@@ -1840,14 +1903,19 @@ function runModels(
 
   if (
     recency.side
-  ){
+  ) {
 
     votes.push({
-      name:"RECENCY",
-      side:recency.side,
+
+      name: "RECENCY",
+
+      side:
+        recency.side,
+
       strength:
         recency.strength,
-      weight:1.30
+
+      weight: 1.30
     });
   }
 
@@ -1855,14 +1923,19 @@ function runModels(
   if (
     transition.side &&
     transition.samples >= 3
-  ){
+  ) {
 
     votes.push({
-      name:"TRANSITION",
-      side:transition.side,
+
+      name: "TRANSITION",
+
+      side:
+        transition.side,
+
       strength:
         transition.strength,
-      weight:1.20
+
+      weight: 1.20
     });
   }
 
@@ -1870,14 +1943,19 @@ function runModels(
   if (
     sequence.side &&
     sequence.samples >= 2
-  ){
+  ) {
 
     votes.push({
-      name:"SEQUENCE",
-      side:sequence.side,
+
+      name: "SEQUENCE",
+
+      side:
+        sequence.side,
+
       strength:
         sequence.strength,
-      weight:1.10
+
+      weight: 1.10
     });
   }
 
@@ -1885,33 +1963,38 @@ function runModels(
   if (
     streak.side &&
     streak.strength > 0
-  ){
+  ) {
 
     votes.push({
-      name:"STREAK",
-      side:streak.side,
+
+      name: "STREAK",
+
+      side:
+        streak.side,
+
       strength:
         streak.strength,
-      weight:0.75
+
+      weight: 0.75
     });
   }
 
 
   if (
     !votes.length
-  ){
+  ) {
 
     return {
 
-      side:null,
+      side: null,
 
-      edge:0,
+      edge: 0,
 
-      agreement:0,
+      agreement: 0,
 
-      patternScore:0,
+      patternScore: 0,
 
-      models:[],
+      models: [],
 
       recency,
 
@@ -1945,14 +2028,13 @@ function runModels(
 
 
     if (
-      vote.side ===
-      "BIG"
-    ){
+      vote.side === "BIG"
+    ) {
 
       bigScore +=
         contribution;
 
-    }else{
+    } else {
 
       smallScore +=
         contribution;
@@ -1966,26 +2048,35 @@ function runModels(
 
   if (
     totalWeight <= 0
-  ){
+  ) {
 
     return {
 
-      side:null,
+      side: null,
 
-      edge:0,
+      edge: 0,
 
-      agreement:0,
+      agreement: 0,
 
-      patternScore:0,
+      patternScore: 0,
 
-      models:votes
+      models: votes,
+
+      recency,
+
+      transition,
+
+      sequence,
+
+      streak,
+
+      volatility
     };
   }
 
 
   const side =
-    bigScore >=
-    smallScore
+    bigScore >= smallScore
       ? "BIG"
       : "SMALL";
 
@@ -2015,8 +2106,7 @@ function runModels(
   const agreement =
     votes.filter(
       v =>
-        v.side ===
-        side
+        v.side === side
     ).length /
     votes.length;
 
@@ -2032,6 +2122,7 @@ function runModels(
     Math.round(
       Math.min(
         100,
+
         (
           patternStrength *
           100
@@ -2045,9 +2136,8 @@ function runModels(
 
 
   /*
-    Alternating history:
-    reduce confidence in simple recency/transition
-    rather than pretending there is a strong edge.
+    Alternating/choppy history reduces confidence,
+    but never forces the prediction to WAIT.
   */
 
   let adjustedEdge =
@@ -2074,7 +2164,7 @@ function runModels(
 
     patternScore,
 
-    models:votes,
+    models: votes,
 
     recency,
 
@@ -2097,24 +2187,19 @@ function backtest(
   history
 ) {
 
-  /*
-    Need enough history to avoid fake accuracy.
-  */
-
   if (
-    history.length <
-    25
-  ){
+    history.length < 25
+  ) {
 
     return {
 
-      samples:0,
+      samples: 0,
 
-      accuracy:null,
+      accuracy: null,
 
-      wins:0,
+      wins: 0,
 
-      losses:0
+      losses: 0
     };
   }
 
@@ -2123,16 +2208,6 @@ function backtest(
   let wins = 0;
   let losses = 0;
 
-
-  /*
-    history is newest-first.
-
-    For each target at index i:
-      training data = i+1 onward
-      actual target = history[i]
-
-    We walk from older data toward newer data.
-  */
 
   for (
     let i =
@@ -2148,9 +2223,8 @@ function backtest(
 
 
     if (
-      training.length <
-      15
-    ){
+      training.length < 15
+    ) {
 
       continue;
     }
@@ -2160,8 +2234,9 @@ function backtest(
       history[i]?.side;
 
 
-    if (!actual)
+    if (!actual) {
       continue;
+    }
 
 
     const model =
@@ -2172,21 +2247,15 @@ function backtest(
 
     if (
       !model.side
-    ){
+    ) {
 
       continue;
     }
 
 
-    /*
-      Only count predictions where the historical
-      model itself had enough edge.
-    */
-
     if (
-      model.edge <
-      0.12
-    ){
+      model.edge < 0.12
+    ) {
 
       continue;
     }
@@ -2196,13 +2265,12 @@ function backtest(
 
 
     if (
-      model.side ===
-      actual
-    ){
+      model.side === actual
+    ) {
 
       wins++;
 
-    }else{
+    } else {
 
       losses++;
     }
@@ -2219,8 +2287,7 @@ function backtest(
             (
               wins /
               samples
-            ) *
-            100
+            ) * 100
           )
         : null,
 
@@ -2244,49 +2311,35 @@ function adaptiveConfidence(
   if (
     !model ||
     !model.side
-  ){
+  ) {
 
     return 0;
   }
 
 
-  /*
-    Base confidence is intentionally conservative.
-  */
-
   let confidence =
     50 +
     (
-      model.edge *
-      38
+      model.edge * 38
     ) +
     (
       Math.max(
         0,
-        model.agreement -
-        0.5
-      ) *
-      18
+        model.agreement - 0.5
+      ) * 18
     );
 
-
-  /*
-    Backtest modifies confidence only if there
-    are enough genuine walk-forward samples.
-  */
 
   if (
     test &&
     test.samples >= 20 &&
     test.accuracy != null
-  ){
+  ) {
 
     const backtestAdjustment =
       (
-        test.accuracy -
-        50
-      ) *
-      0.20;
+        test.accuracy - 50
+      ) * 0.20;
 
 
     confidence +=
@@ -2294,16 +2347,9 @@ function adaptiveConfidence(
   }
 
 
-  /*
-    Small history => strong cap.
-    This prevents fake 80-90% confidence
-    from only a few observations.
-  */
-
   if (
-    historyLength <
-    15
-  ){
+    historyLength < 15
+  ) {
 
     confidence =
       Math.min(
@@ -2311,10 +2357,9 @@ function adaptiveConfidence(
         64
       );
 
-  }else if(
-    historyLength <
-    25
-  ){
+  } else if (
+    historyLength < 25
+  ) {
 
     confidence =
       Math.min(
@@ -2322,7 +2367,7 @@ function adaptiveConfidence(
         72
       );
 
-  }else{
+  } else {
 
     confidence =
       Math.min(
@@ -2354,23 +2399,23 @@ function predictSide(
 
   if (
     !Array.isArray(history) ||
-    history.length <
-    10
-  ){
+    history.length < 10
+  ) {
 
     return {
 
-      side:"WAIT",
+      side: "WAIT",
 
-      confidence:0,
+      confidence: 0,
 
-      status:"INSUFFICIENT DATA",
+      status: "INSUFFICIENT DATA",
 
-      model:null,
+      model: null,
 
-      backtest:backtest(
-        history || []
-      )
+      backtest:
+        backtest(
+          history || []
+        )
     };
   }
 
@@ -2387,48 +2432,36 @@ function predictSide(
     );
 
 
+  /*
+    Only WAIT when there is genuinely no model signal.
+
+    IMPORTANT:
+
+    We no longer reject the model merely because:
+      - edge is low
+      - agreement is low
+      - confidence is below 70
+
+    Otherwise every round can become WAIT/SKIPPED.
+  */
+
   if (
+    !model ||
     !model.side
-  ){
+  ) {
 
     return {
 
-      side:"WAIT",
+      side: "WAIT",
 
-      confidence:0,
+      confidence: 0,
 
-      status:"NO CLEAR EDGE",
+      status: "NO MODEL SIGNAL",
 
       model,
 
-      backtest:test
+      backtest: test
     };
-  }
-
-
-  /*
-    Stronger threshold.
-    We don't want every tiny majority to become
-    a prediction.
-  */
-
-  let minimumEdge =
-    history.length >= 25
-      ? 0.16
-      : 0.19;
-
-
-  /*
-    If model agreement is weak, increase threshold.
-  */
-
-  if (
-    model.agreement <
-    0.60
-  ){
-
-    minimumEdge +=
-      0.04;
   }
 
 
@@ -2440,65 +2473,40 @@ function predictSide(
     );
 
 
-  /*
-    IMPORTANT:
-    Do not force low-confidence predictions.
-
-    70% is a practical minimum display threshold
-    for this application.
-  */
-
-  if (
-    model.edge <
-    minimumEdge ||
-    model.agreement <
-    0.60 ||
-    confidence <
-    70
-  ){
-
-    return {
-
-      side:"WAIT",
-
-      confidence,
-
-      status:
-        model.agreement <
-        0.60
-          ? "NO CLEAR EDGE"
-          : "WEAK SIGNAL",
-
-      model,
-
-      backtest:test
-    };
-  }
-
-
   let status =
-    "EARLY SIGNAL";
+    "LOW CONFIDENCE";
 
 
   if (
-    confidence >=
-    78 &&
-    model.agreement >=
-    0.70
-  ){
+    confidence >= 78 &&
+    model.agreement >= 0.70
+  ) {
 
     status =
       "STRONGER SIGNAL";
 
-  }else if(
-    confidence >=
-    74
-  ){
+  } else if (
+    confidence >= 74 &&
+    model.agreement >= 0.65
+  ) {
 
     status =
       "MODERATE SIGNAL";
+
+  } else if (
+    confidence >= 68
+  ) {
+
+    status =
+      "EARLY SIGNAL";
   }
 
+
+  /*
+    ALWAYS return the model side.
+
+    This is the main fix.
+  */
 
   return {
 
@@ -2511,7 +2519,7 @@ function predictSide(
 
     model,
 
-    backtest:test
+    backtest: test
   };
 }
 
@@ -2527,11 +2535,9 @@ function chooseNumber(
 ) {
 
   if (
-    targetSide !==
-      "BIG" &&
-    targetSide !==
-      "SMALL"
-  ){
+    targetSide !== "BIG" &&
+    targetSide !== "SMALL"
+  ) {
 
     return null;
   }
@@ -2544,20 +2550,13 @@ function chooseNumber(
     );
 
 
-  /*
-    Deterministic selection based on target issue.
-
-    This ensures the number does not change every
-    second for the same target.
-  */
-
   const candidates =
     analysis.candidates;
 
 
   if (
     !candidates.length
-  ){
+  ) {
 
     return targetSide === "BIG"
       ? 5
@@ -2566,10 +2565,9 @@ function chooseNumber(
 
 
   /*
-    Mostly choose top candidate.
-    Small deterministic tie rotation avoids
-    always displaying the same number when scores
-    are identical.
+    Top 3 deterministic candidates.
+
+    No random number is used.
   */
 
   const top =
@@ -2586,8 +2584,7 @@ function chooseNumber(
 
 
   for (
-    const ch of
-    String(
+    const ch of String(
       targetIssue || ""
     )
   ) {
@@ -2628,18 +2625,17 @@ function createPrediction(
     );
 
 
-  let side =
+  const side =
     decision.side;
 
 
-  let number =
-    null;
+  let number = null;
 
 
   if (
     side === "BIG" ||
     side === "SMALL"
-  ){
+  ) {
 
     number =
       chooseNumber(
@@ -2676,8 +2672,7 @@ function createPrediction(
     analysis: {
 
       patternScore:
-        model?.patternScore ??
-        0,
+        model?.patternScore ?? 0,
 
       modelAgreement:
         model
@@ -2685,43 +2680,31 @@ function createPrediction(
               (
                 model.agreement ||
                 0
-              ) *
-              100
+              ) * 100
             )
           : 0,
 
       backtestSamples:
-        test?.samples ??
-        0,
+        test?.samples ?? 0,
 
       avgModelAccuracy:
-        test?.accuracy ??
-        null,
+        test?.accuracy ?? null,
 
       recency:
-        model?.recency ??
-        null,
+        model?.recency ?? null,
 
       transition:
-        model?.transition ??
-        null,
+        model?.transition ?? null,
 
       sequence:
-        model?.sequence ??
-        null,
+        model?.sequence ?? null,
 
       streak:
-        model?.streak ??
-        null,
+        model?.streak ?? null,
 
       volatility:
-        model?.volatility ??
-        null
+        model?.volatility ?? null
     },
-
-    /*
-      Random mode intentionally disabled.
-    */
 
     mode:
       "AI MODE",
@@ -2759,12 +2742,16 @@ async function getPredictionRecord(
       WHERE target_issue = $1
       LIMIT 1
       `,
-      [String(issue)]
+      [
+        String(issue)
+      ]
     );
 
 
-  return result.rows[0] ||
-    null;
+  return (
+    result.rows[0] ||
+    null
+  );
 }
 
 
@@ -2782,9 +2769,25 @@ async function savePrediction(
 
 
   /*
-    WAIT is stored as WAIT but is NEVER
-    settled as WIN/LOSS.
+    WAIT should not normally be created.
+
+    If the model somehow returns WAIT,
+    don't store it as a prediction record.
   */
+
+  const validSide =
+    normalizeSide(
+      prediction.prediction
+    );
+
+
+  if (
+    !validSide
+  ) {
+
+    return null;
+  }
+
 
   const result =
     await pool.query(
@@ -2823,13 +2826,13 @@ async function savePrediction(
 
         prediction.targetIssue,
 
-        prediction.prediction,
+        validSide,
 
         prediction.number,
 
-        prediction.aiPrediction,
+        validSide,
 
-        prediction.aiNumber,
+        prediction.number,
 
         prediction.confidence,
 
@@ -2861,37 +2864,19 @@ async function settlePredictions(
     !dbReady ||
     !Array.isArray(history) ||
     !history.length
-  ){
+  ) {
 
     return;
   }
 
 
   /*
-    Only records with actual BIG/SMALL predictions
-    are eligible for WIN/LOSS.
+    IMPORTANT:
 
-    WAIT:
-       PENDING -> SKIPPED
+    NO global WAIT -> SKIPPED conversion.
 
-    Never:
-       WAIT -> LOSS
+    Only exact issue matching is allowed.
   */
-
-  await pool.query(`
-    UPDATE prediction_records
-    SET
-      outcome = 'SKIPPED',
-      settled_at = CASE
-        WHEN settled_at IS NULL OR settled_at = 0
-        THEN EXTRACT(EPOCH FROM NOW())::BIGINT
-        ELSE settled_at
-      END
-    WHERE
-      UPPER(TRIM(prediction)) = 'WAIT'
-      AND outcome IN ('PENDING','LOSS','WIN')
-  `);
-
 
   for (
     const actual of history
@@ -2919,14 +2904,14 @@ async function settlePredictions(
       !issue ||
       number === null ||
       !actualSide
-    ){
+    ) {
 
       continue;
     }
 
 
     /*
-      Exact issue match only.
+      Exact target issue match.
     */
 
     const result =
@@ -2943,7 +2928,7 @@ async function settlePredictions(
 
     if (
       !result.rows.length
-    ){
+    ) {
 
       continue;
     }
@@ -2954,17 +2939,13 @@ async function settlePredictions(
 
 
     /*
-      Already settled => do nothing.
+      Already settled.
     */
 
     if (
-      record.outcome ===
-        "WIN" ||
-      record.outcome ===
-        "LOSS" ||
-      record.outcome ===
-        "SKIPPED"
-    ){
+      record.outcome === "WIN" ||
+      record.outcome === "LOSS"
+    ) {
 
       continue;
     }
@@ -2977,29 +2958,24 @@ async function settlePredictions(
 
 
     /*
-      WAIT is skipped, never LOSS.
+      Safety fallback.
+
+      WAIT records should not exist after the
+      new database initialization, but if one
+      somehow exists, remove/skip it without
+      counting it as LOSS.
     */
 
-    if (
-      !prediction
-    ){
+    if (!prediction) {
 
       await pool.query(
         `
-        UPDATE prediction_records
-        SET
-          result_number = $2,
-          result_side = $3,
-          outcome = 'SKIPPED',
-          settled_at = $4
-        WHERE target_issue = $1
+        DELETE FROM prediction_records
+        WHERE
+          target_issue = $1
+          AND outcome = 'PENDING'
         `,
-        [
-          issue,
-          number,
-          actualSide,
-          now()
-        ]
+        [issue]
       );
 
 
@@ -3008,8 +2984,7 @@ async function settlePredictions(
 
 
     const outcome =
-      prediction ===
-      actualSide
+      prediction === actualSide
         ? "WIN"
         : "LOSS";
 
@@ -3022,7 +2997,9 @@ async function settlePredictions(
         result_side = $3,
         outcome = $4,
         settled_at = $5
-      WHERE target_issue = $1
+      WHERE
+        target_issue = $1
+        AND outcome = 'PENDING'
       `,
       [
 
@@ -3048,10 +3025,15 @@ async function settlePredictions(
 async function getPredictionHistory() {
 
   if (!dbReady) {
-
     return [];
   }
 
+
+  /*
+    Only genuine BIG/SMALL predictions.
+
+    Old WAIT/SKIPPED rows are excluded.
+  */
 
   const result =
     await pool.query(
@@ -3071,8 +3053,14 @@ async function getPredictionHistory() {
         result_side,
         outcome,
         settled_at
+
       FROM prediction_records
+
+      WHERE
+        prediction IN ('BIG','SMALL')
+
       ORDER BY id DESC
+
       LIMIT 30
       `
     );
@@ -3092,24 +3080,27 @@ async function getStats() {
 
     return {
 
-      wins:0,
+      wins: 0,
 
-      losses:0,
+      losses: 0,
 
-      skipped:0
+      skipped: 0
     };
   }
 
 
   /*
-    IMPORTANT:
-    WAIT/SKIPPED are excluded from W/L.
+    Only real WIN/LOSS count in session.
+
+    SKIPPED is retained for compatibility,
+    but no new prediction should create it.
   */
 
   const result =
     await pool.query(
       `
       SELECT
+
         COUNT(*) FILTER (
           WHERE outcome = 'WIN'
         ) AS wins,
@@ -3155,46 +3146,77 @@ async function getStats() {
    COUNTDOWN
 ========================================================= */
 
+function normalizeTimestamp(
+  value
+) {
+
+  const n =
+    Number(value);
+
+
+  if (
+    !Number.isFinite(n) ||
+    n <= 0
+  ) {
+
+    return 0;
+  }
+
+
+  /*
+    Support both:
+      seconds
+      milliseconds
+  */
+
+  if (
+    n < 100000000000
+  ) {
+
+    return n * 1000;
+  }
+
+
+  return n;
+}
+
+
 function calculateCountdown(
   currentIssue,
   latestUpdated
 ) {
 
   /*
-    WingoBot documented history endpoint does not expose
-    an authoritative countdown field.
+    WingoBot history endpoint does not expose an
+    authoritative countdown field.
 
-    Therefore this is only an estimated server timer.
-
-    When stats.last_updated is available, use it as
-    the synchronization anchor.
+    This is therefore an estimated timer.
   */
 
   const updated =
-    Number(
-      latestUpdated || 0
+    normalizeTimestamp(
+      latestUpdated
     );
 
 
   if (
-    !updated ||
-    !Number.isFinite(updated)
-  ){
+    !updated
+  ) {
 
     const seconds =
       Math.floor(
-        (
-          Date.now() / 1000
-        )
+        Date.now() / 1000
       );
 
 
+    const remainder =
+      seconds % 30;
+
+
     return (
-      30 -
-      (
-        seconds %
-        30
-      )
+      remainder === 0
+        ? 30
+        : 30 - remainder
     );
   }
 
@@ -3204,17 +3226,18 @@ function calculateCountdown(
       (
         Date.now() -
         updated
-      ) /
-      1000
+      ) / 1000
     );
+
+
+  const remainder =
+    elapsed % 30;
 
 
   const remaining =
-    30 -
-    (
-      elapsed %
-      30
-    );
+    remainder === 0
+      ? 30
+      : 30 - remainder;
 
 
   return Math.max(
@@ -3235,7 +3258,7 @@ async function updateLiveState() {
 
   if (
     updateInProgress
-  ){
+  ) {
 
     return liveState;
   }
@@ -3276,7 +3299,8 @@ async function updateLiveState() {
 
 
     /*
-      First settle previous predictions.
+      First settle any previous prediction whose
+      exact target issue now exists in history.
     */
 
     await settlePredictions(
@@ -3285,8 +3309,13 @@ async function updateLiveState() {
 
 
     /*
-      Check whether target already exists.
-      If it exists, DO NOT generate a new prediction.
+      Get existing target prediction.
+
+      If target already exists:
+          DON'T change it.
+
+      If target doesn't exist:
+          create exactly one prediction.
     */
 
     let record =
@@ -3298,7 +3327,7 @@ async function updateLiveState() {
     if (
       !record &&
       targetIssue
-    ){
+    ) {
 
       const prediction =
         createPrediction(
@@ -3306,6 +3335,10 @@ async function updateLiveState() {
           targetIssue
         );
 
+
+      /*
+        Only BIG/SMALL records are saved.
+      */
 
       record =
         await savePrediction(
@@ -3333,24 +3366,28 @@ async function updateLiveState() {
     let prediction =
       "WAIT";
 
+
     let number =
       null;
+
 
     let confidence =
       0;
 
+
     let status =
       "WAIT";
 
+
     let analysis = {
 
-      patternScore:0,
+      patternScore: 0,
 
-      modelAgreement:0,
+      modelAgreement: 0,
 
-      backtestSamples:0,
+      backtestSamples: 0,
 
-      avgModelAccuracy:null
+      avgModelAccuracy: null
     };
 
 
@@ -3370,8 +3407,7 @@ async function updateLiveState() {
 
       confidence =
         Number(
-          record.confidence ||
-          0
+          record.confidence || 0
         );
 
 
@@ -3381,9 +3417,10 @@ async function updateLiveState() {
 
 
       /*
-        Reconstruct details from current history so
-        model details remain live, while prediction
-        itself remains fixed for target.
+        Live analysis details.
+
+        Prediction itself remains fixed for the
+        target issue.
       */
 
       const currentDecision =
@@ -3423,7 +3460,10 @@ async function updateLiveState() {
       analysis,
 
       history:
-        history.slice(0,30),
+        history.slice(
+          0,
+          30
+        ),
 
       predictionHistory,
 
@@ -3455,7 +3495,8 @@ async function updateLiveState() {
       aiNumber:
         number,
 
-      error:null
+      error:
+        null
     };
 
 
@@ -3495,7 +3536,10 @@ async function updateLiveState() {
    ADMIN AUTH
 ========================================================= */
 
-function isAdmin(req, body = {}) {
+function isAdmin(
+  req,
+  body = {}
+) {
 
   const headerKey =
     req.headers[
@@ -3545,7 +3589,7 @@ async function checkAccessKey(
 
     return {
 
-      success:false,
+      success: false,
 
       error:
         "DATABASE_NOT_READY"
@@ -3568,11 +3612,11 @@ async function checkAccessKey(
   if (
     !key ||
     !device
-  ){
+  ) {
 
     return {
 
-      success:false,
+      success: false,
 
       error:
         "INVALID_REQUEST"
@@ -3594,11 +3638,11 @@ async function checkAccessKey(
 
   if (
     !result.rows.length
-  ){
+  ) {
 
     return {
 
-      success:false,
+      success: false,
 
       error:
         "INVALID_ACCESS_KEY"
@@ -3616,13 +3660,12 @@ async function checkAccessKey(
 
   if (
     row.device_id &&
-    row.device_id !==
-      device
-  ){
+    row.device_id !== device
+  ) {
 
     return {
 
-      success:false,
+      success: false,
 
       error:
         "KEY_ALREADY_USED_ON_ANOTHER_DEVICE"
@@ -3639,8 +3682,11 @@ async function checkAccessKey(
     WHERE access_key = $1
     `,
     [
+
       key,
+
       device,
+
       now()
     ]
   );
@@ -3648,9 +3694,9 @@ async function checkAccessKey(
 
   return {
 
-    success:true,
+    success: true,
 
-    error:null
+    error: null
   };
 }
 
@@ -3661,8 +3707,9 @@ async function checkAccessKey(
 
 async function listKeys() {
 
-  if (!dbReady)
+  if (!dbReady) {
     return [];
+  }
 
 
   const result =
@@ -3732,7 +3779,9 @@ async function createAccessKey(
         last_seen
       `,
       [
+
         key,
+
         now()
       ]
     );
@@ -3765,7 +3814,7 @@ async function adminModelTest() {
 
   return {
 
-    success:true,
+    success: true,
 
     liveTarget:
       liveState.targetIssue,
@@ -3791,7 +3840,8 @@ async function adminModelTest() {
     mode:
       "AI MODE",
 
-    randomized:false
+    randomized:
+      false
   };
 }
 
@@ -3816,7 +3866,7 @@ async function adminWingoTest() {
 
     return {
 
-      success:true,
+      success: true,
 
       current:
         apiData?.current ||
@@ -3844,7 +3894,7 @@ async function adminWingoTest() {
 
     return {
 
-      success:false,
+      success: false,
 
       error:
         error.message
@@ -3869,26 +3919,26 @@ function serveStatic(
   if (
     pathname === "/" ||
     pathname === "/prediction.html"
-  ){
+  ) {
 
     filePath =
       PREDICTION_FILE;
 
-  }else if(
+  } else if (
     pathname === "/admin.html"
-  ){
+  ) {
 
     filePath =
       ADMIN_FILE;
 
-  }else if(
+  } else if (
     pathname === "/music.mp3"
-  ){
+  ) {
 
     filePath =
       MUSIC_FILE;
 
-  }else{
+  } else {
 
     textResponse(
       res,
@@ -3904,7 +3954,7 @@ function serveStatic(
     !fs.existsSync(
       filePath
     )
-  ){
+  ) {
 
     textResponse(
       res,
@@ -3946,13 +3996,9 @@ function serveStatic(
     "application/octet-stream";
 
 
-  /*
-    MP3 range support.
-  */
-
   if (
     ext === ".mp3"
-  ){
+  ) {
 
     serveAudio(
       req,
@@ -3983,6 +4029,7 @@ function serveStatic(
       res.writeHead(
         200,
         {
+
           "Content-Type":
             contentType,
 
@@ -4037,6 +4084,7 @@ function serveAudio(
         res.writeHead(
           200,
           {
+
             "Content-Type":
               "audio/mpeg",
 
@@ -4068,10 +4116,12 @@ function serveAudio(
         res.writeHead(
           416,
           {
+
             "Content-Range":
               `bytes */${size}`
           }
         );
+
 
         res.end();
 
@@ -4095,16 +4145,19 @@ function serveAudio(
 
       if (
         start >= size ||
-        end >= size
-      ){
+        end >= size ||
+        start > end
+      ) {
 
         res.writeHead(
           416,
           {
+
             "Content-Range":
               `bytes */${size}`
           }
         );
+
 
         res.end();
 
@@ -4165,11 +4218,12 @@ const server =
         if (
           req.method ===
           "OPTIONS"
-        ){
+        ) {
 
           res.writeHead(
             204,
             {
+
               "Access-Control-Allow-Origin":
                 "*",
 
@@ -4180,6 +4234,7 @@ const server =
                 "GET, POST, DELETE, OPTIONS"
             }
           );
+
 
           res.end();
 
@@ -4203,16 +4258,15 @@ const server =
         ================================================= */
 
         if (
-          pathname ===
-          "/health"
-        ){
+          pathname === "/health"
+        ) {
 
           jsonResponse(
             res,
             200,
             {
 
-              ok:true,
+              ok: true,
 
               database:
                 dbReady,
@@ -4227,6 +4281,7 @@ const server =
             }
           );
 
+
           return;
         }
 
@@ -4240,7 +4295,7 @@ const server =
             "/api/key/check" &&
           req.method ===
             "POST"
-        ){
+        ) {
 
           const body =
             await readBody(
@@ -4260,11 +4315,14 @@ const server =
 
           jsonResponse(
             res,
+
             result.success
               ? 200
               : 403,
+
             result
           );
+
 
           return;
         }
@@ -4279,7 +4337,7 @@ const server =
             "/api/state" &&
           req.method ===
             "GET"
-        ){
+        ) {
 
           await updateLiveState();
 
@@ -4289,6 +4347,7 @@ const server =
             200,
             liveState
           );
+
 
           return;
         }
@@ -4303,7 +4362,7 @@ const server =
             "/api/history" &&
           req.method ===
             "GET"
-        ){
+        ) {
 
           await updateLiveState();
 
@@ -4317,11 +4376,12 @@ const server =
             200,
             {
 
-              success:true,
+              success: true,
 
               history
             }
           );
+
 
           return;
         }
@@ -4336,7 +4396,7 @@ const server =
             "/api/admin/status" &&
           req.method ===
             "GET"
-        ){
+        ) {
 
           const body = {};
 
@@ -4346,16 +4406,20 @@ const server =
               req,
               body
             )
-          ){
+          ) {
 
             jsonResponse(
               res,
               403,
               {
-                success:false,
-                error:"UNAUTHORIZED"
+
+                success: false,
+
+                error:
+                  "UNAUTHORIZED"
               }
             );
+
 
             return;
           }
@@ -4369,7 +4433,7 @@ const server =
             200,
             {
 
-              success:true,
+              success: true,
 
               database:
                 dbReady,
@@ -4403,9 +4467,11 @@ const server =
               mode:
                 "AI MODE",
 
-              randomized:false
+              randomized:
+                false
             }
           );
+
 
           return;
         }
@@ -4420,7 +4486,7 @@ const server =
             "/api/admin/ping" &&
           req.method ===
             "POST"
-        ){
+        ) {
 
           const body =
             await readBody(
@@ -4433,16 +4499,20 @@ const server =
               req,
               body
             )
-          ){
+          ) {
 
             jsonResponse(
               res,
               403,
               {
-                success:false,
-                error:"UNAUTHORIZED"
+
+                success: false,
+
+                error:
+                  "UNAUTHORIZED"
               }
             );
+
 
             return;
           }
@@ -4453,7 +4523,7 @@ const server =
             200,
             {
 
-              success:true,
+              success: true,
 
               message:
                 "Admin connection OK",
@@ -4462,6 +4532,7 @@ const server =
                 new Date().toISOString()
             }
           );
+
 
           return;
         }
@@ -4476,22 +4547,26 @@ const server =
             "/api/admin/keys" &&
           req.method ===
             "GET"
-        ){
+        ) {
 
           if (
             !isAdmin(
               req
             )
-          ){
+          ) {
 
             jsonResponse(
               res,
               403,
               {
-                success:false,
-                error:"UNAUTHORIZED"
+
+                success: false,
+
+                error:
+                  "UNAUTHORIZED"
               }
             );
+
 
             return;
           }
@@ -4506,11 +4581,12 @@ const server =
             200,
             {
 
-              success:true,
+              success: true,
 
               keys
             }
           );
+
 
           return;
         }
@@ -4525,7 +4601,7 @@ const server =
             "/api/admin/keys" &&
           req.method ===
             "POST"
-        ){
+        ) {
 
           const body =
             await readBody(
@@ -4538,16 +4614,20 @@ const server =
               req,
               body
             )
-          ){
+          ) {
 
             jsonResponse(
               res,
               403,
               {
-                success:false,
-                error:"UNAUTHORIZED"
+
+                success: false,
+
+                error:
+                  "UNAUTHORIZED"
               }
             );
+
 
             return;
           }
@@ -4568,7 +4648,7 @@ const server =
               200,
               {
 
-                success:true,
+                success: true,
 
                 key
               }
@@ -4581,7 +4661,7 @@ const server =
               400,
               {
 
-                success:false,
+                success: false,
 
                 error:
                   error.code ===
@@ -4591,6 +4671,7 @@ const server =
               }
             );
           }
+
 
           return;
         }
@@ -4605,7 +4686,7 @@ const server =
             "/api/admin/keys" &&
           req.method ===
             "DELETE"
-        ){
+        ) {
 
           const body =
             await readBody(
@@ -4618,16 +4699,20 @@ const server =
               req,
               body
             )
-          ){
+          ) {
 
             jsonResponse(
               res,
               403,
               {
-                success:false,
-                error:"UNAUTHORIZED"
+
+                success: false,
+
+                error:
+                  "UNAUTHORIZED"
               }
             );
+
 
             return;
           }
@@ -4658,7 +4743,7 @@ const server =
                 [id]
               );
 
-          }else{
+          } else {
 
             result =
               await pool.query(
@@ -4677,13 +4762,14 @@ const server =
             200,
             {
 
-              success:true,
+              success: true,
 
               deleted:
                 result.rows[0] ||
                 null
             }
           );
+
 
           return;
         }
@@ -4698,7 +4784,7 @@ const server =
             "/api/admin/reset-device" &&
           req.method ===
             "POST"
-        ){
+        ) {
 
           const body =
             await readBody(
@@ -4711,16 +4797,20 @@ const server =
               req,
               body
             )
-          ){
+          ) {
 
             jsonResponse(
               res,
               403,
               {
-                success:false,
-                error:"UNAUTHORIZED"
+
+                success: false,
+
+                error:
+                  "UNAUTHORIZED"
               }
             );
+
 
             return;
           }
@@ -4754,7 +4844,7 @@ const server =
                 [id]
               );
 
-          }else{
+          } else {
 
             result =
               await pool.query(
@@ -4776,13 +4866,14 @@ const server =
             200,
             {
 
-              success:true,
+              success: true,
 
               reset:
                 result.rows[0] ||
                 null
             }
           );
+
 
           return;
         }
@@ -4797,7 +4888,7 @@ const server =
             "/api/admin/wingo-test" &&
           req.method ===
             "POST"
-        ){
+        ) {
 
           const body =
             await readBody(
@@ -4810,16 +4901,20 @@ const server =
               req,
               body
             )
-          ){
+          ) {
 
             jsonResponse(
               res,
               403,
               {
-                success:false,
-                error:"UNAUTHORIZED"
+
+                success: false,
+
+                error:
+                  "UNAUTHORIZED"
               }
             );
+
 
             return;
           }
@@ -4831,11 +4926,14 @@ const server =
 
           jsonResponse(
             res,
+
             result.success
               ? 200
               : 502,
+
             result
           );
+
 
           return;
         }
@@ -4850,7 +4948,7 @@ const server =
             "/api/admin/model-test" &&
           req.method ===
             "POST"
-        ){
+        ) {
 
           const body =
             await readBody(
@@ -4863,16 +4961,20 @@ const server =
               req,
               body
             )
-          ){
+          ) {
 
             jsonResponse(
               res,
               403,
               {
-                success:false,
-                error:"UNAUTHORIZED"
+
+                success: false,
+
+                error:
+                  "UNAUTHORIZED"
               }
             );
+
 
             return;
           }
@@ -4890,6 +4992,7 @@ const server =
             200,
             result
           );
+
 
           return;
         }
@@ -4918,14 +5021,13 @@ const server =
           500,
           {
 
-            success:false,
+            success: false,
 
             error:
               "INTERNAL_SERVER_ERROR"
           }
         );
       }
-
     }
   );
 
@@ -4941,7 +5043,6 @@ async function start() {
 
   /*
     Initial live update.
-    Failure does not prevent server startup.
   */
 
   try {
@@ -4958,9 +5059,8 @@ async function start() {
 
 
   /*
-    Provider history is refreshed every 3 seconds.
-    Frontend itself can poll every second for smooth
-    timer/UI rendering.
+    WingoBot provider refresh:
+    every 3 seconds.
   */
 
   setInterval(
@@ -4992,14 +5092,23 @@ async function start() {
         `DY AI Wingo server running on port ${PORT}`
       );
 
-      console.log(
-        `Database: ${dbReady ? "READY" : "NOT READY"}`
-      );
 
       console.log(
-        `WingoBot: ${WINGOBOT_TOKEN ? "TOKEN SET" : "TOKEN MISSING"}`
+        `Database: ${
+          dbReady
+            ? "READY"
+            : "NOT READY"
+        }`
       );
 
+
+      console.log(
+        `WingoBot: ${
+          WINGOBOT_TOKEN
+            ? "TOKEN SET"
+            : "TOKEN MISSING"
+        }`
+      );
     }
   );
 }
