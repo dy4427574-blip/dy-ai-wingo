@@ -1,1719 +1,2913 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="theme-color" content="#06101c">
-<title>DY AI Wingo 30S</title>
+const http = require("http");
+const fs = require("fs");
+const path = require("path");
+const crypto = require("crypto");
+const { Pool } = require("pg");
 
-<style>
-*{
-  box-sizing:border-box;
+const PORT = Number(process.env.PORT || 10000);
+
+const ADMIN_KEY =
+  process.env.ADMIN_KEY || "dy4427574";
+
+const WINGOBOT_TOKEN =
+  process.env.WINGOBOT_TOKEN || "";
+
+const WINGOBOT_URL =
+  process.env.WINGOBOT_URL ||
+  "https://api.wingobot.com/v2/30-sec-game-history";
+
+const ROUND_SECONDS = 30;
+const LIVE_RESULTS_LIMIT = 30;
+const WINLOSS_LIMIT = 30;
+
+if (!process.env.DATABASE_URL) {
+  console.error("DATABASE_URL is missing");
+  process.exit(1);
 }
 
-html,body{
-  margin:0;
-  padding:0;
-  background:#050b14;
-  color:#eef5ff;
-  font-family:Arial,sans-serif;
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+  max: 10
+});
+
+const state = {
+  history: [],
+  settledIssue: "",
+  targetIssue: "",
+  prediction: null,
+  historySignature: "",
+  historyVersion: 0,
+  countdown: 30,
+  anchorTime: Date.now(),
+  lastFetchAt: 0,
+  providerCurrentIssue: "",
+  providerFetched: 0,
+  lastError: "",
+  updating: false
+};
+
+/* =========================================================
+   DATABASE
+========================================================= */
+
+async function initDb() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS access_keys (
+      id SERIAL PRIMARY KEY,
+      access_key TEXT UNIQUE NOT NULL,
+      device_id TEXT,
+      created_at BIGINT NOT NULL,
+      last_seen BIGINT DEFAULT 0
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS predictions (
+      id SERIAL PRIMARY KEY,
+      target_issue TEXT UNIQUE NOT NULL,
+      prediction TEXT NOT NULL,
+      predicted_number INTEGER,
+      confidence NUMERIC DEFAULT 0,
+      status TEXT DEFAULT 'PENDING',
+      actual_number INTEGER,
+      actual_result TEXT,
+      created_at BIGINT NOT NULL,
+      settled_at BIGINT DEFAULT 0
+    )
+  `);
 }
 
-body{
-  min-height:100vh;
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function json(res, status, data) {
+  const body = JSON.stringify(data);
+
+  res.writeHead(status, {
+    "Content-Type": "application/json; charset=utf-8",
+    "Cache-Control": "no-store",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers":
+      "Content-Type, Authorization, X-Admin-Key",
+    "Access-Control-Allow-Methods":
+      "GET, POST, DELETE, OPTIONS"
+  });
+
+  res.end(body);
 }
 
-.wrap{
-  width:min(980px,100%);
-  margin:auto;
-  padding:10px;
+function text(res, status, body, type) {
+  res.writeHead(status, {
+    "Content-Type":
+      type || "text/plain; charset=utf-8"
+  });
+
+  res.end(body);
 }
 
-.top,
-.head,
-.predtop{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
+function now() {
+  return Date.now();
 }
 
-.brand{
-  font-size:20px;
-  font-weight:900;
+function clamp(n, min, max) {
+  return Math.max(min, Math.min(max, n));
 }
 
-.brand span{
-  color:#36c7ff;
+function issueString(v) {
+  return v == null ? "" : String(v).trim();
 }
 
-.pill,
-.tag{
-  background:#0a1725;
-  border:1px solid #1d3853;
-  border-radius:9px;
-  color:#91a9c0;
-  font-size:10px;
-  padding:6px 9px;
+function issueBigInt(v) {
+  try {
+    return BigInt(issueString(v));
+  } catch {
+    return 0n;
+  }
 }
 
-.card{
-  background:#081421;
-  border:1px solid #1b334b;
-  border-radius:17px;
-  margin:10px 0;
-  overflow:hidden;
-  box-shadow:0 10px 30px #0005;
+function nextIssue(issue) {
+  try {
+    return (issueBigInt(issue) + 1n).toString();
+  } catch {
+    return "";
+  }
 }
 
-.head{
-  padding:13px 14px;
-  border-bottom:1px solid #183047;
+function resultType(number) {
+  const n = Number(number);
+
+  if (!Number.isFinite(n)) return "";
+
+  return n >= 5 ? "BIG" : "SMALL";
 }
 
-.title{
-  font-size:12px;
-  font-weight:900;
-  letter-spacing:.7px;
+function opposite(type) {
+  return type === "BIG" ? "SMALL" : "BIG";
 }
 
-.sub{
-  font-size:9px;
-  color:#718aa3;
+function average(arr) {
+  if (!arr.length) return 0;
+
+  return arr.reduce(
+    (a, b) => a + b,
+    0
+  ) / arr.length;
 }
 
-.game{
-  height:410px;
-  background:#02060b;
-  position:relative;
+/* =========================================================
+   BODY
+========================================================= */
+
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = "";
+
+    req.on("data", chunk => {
+      body += chunk;
+
+      if (body.length > 1024 * 1024) {
+        reject(new Error("Request too large"));
+        req.destroy();
+      }
+    });
+
+    req.on("end", () => {
+      if (!body) {
+        resolve({});
+        return;
+      }
+
+      try {
+        resolve(JSON.parse(body));
+      } catch {
+        reject(new Error("Invalid JSON"));
+      }
+    });
+
+    req.on("error", reject);
+  });
 }
 
-.game iframe{
-  width:100%;
-  height:100%;
-  border:0;
-  display:block;
-}
+/* =========================================================
+   WINGOBOT API
+========================================================= */
 
-.fallback{
-  display:none;
-  position:absolute;
-  inset:0;
-  align-items:center;
-  justify-content:center;
-  flex-direction:column;
-  gap:10px;
-  text-align:center;
-  color:#8299af;
-  padding:20px;
-}
-
-.open{
-  border:0;
-  border-radius:11px;
-  padding:12px 18px;
-  background:#1683ff;
-  color:#fff;
-  font-weight:900;
-}
-
-.grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:8px;
-  padding:11px;
-}
-
-.box{
-  background:#07121e;
-  border:1px solid #19334b;
-  border-radius:12px;
-  padding:11px;
-}
-
-.lab{
-  font-size:9px;
-  color:#718aa3;
-  text-transform:uppercase;
-}
-
-.val{
-  font-size:13px;
-  font-weight:900;
-  margin-top:5px;
-  word-break:break-all;
-}
-
-.timer{
-  font-size:24px;
-  color:#38c8ff;
-}
-
-.pred{
-  margin:0 11px 11px;
-  padding:15px;
-  border:1px solid #23415e;
-  border-radius:15px;
-  background:linear-gradient(135deg,#091a2a,#07111d);
-}
-
-.predname{
-  font-size:9px;
-  color:#7891aa;
-  text-transform:uppercase;
-}
-
-.prediction{
-  font-size:30px;
-  font-weight:1000;
-  margin-top:3px;
-}
-
-.big{
-  color:#ff8585;
-}
-
-.small{
-  color:#53d8ff;
-}
-
-.conf{
-  font-size:22px;
-  font-weight:1000;
-}
-
-.tags{
-  display:flex;
-  gap:6px;
-  flex-wrap:wrap;
-  margin-top:8px;
-}
-
-.wl{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:8px;
-  padding:0 11px 11px;
-}
-
-.wbox{
-  text-align:center;
-  background:#07121e;
-  border:1px solid #19334b;
-  border-radius:11px;
-  padding:9px;
-}
-
-.wbox b{
-  display:block;
-  font-size:18px;
-  margin-top:3px;
-}
-
-.win{
-  color:#56e6a7;
-}
-
-.loss{
-  color:#ff7777;
-}
-
-.analysis{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:8px;
-  padding:11px;
-}
-
-.ast{
-  padding:10px;
-  background:#07121e;
-  border:1px solid #19334b;
-  border-radius:11px;
-}
-
-.num{
-  font-size:17px;
-  font-weight:900;
-  margin-top:4px;
-}
-
-.table{
-  overflow:auto;
-  padding:8px 11px 13px;
-}
-
-table{
-  width:100%;
-  border-collapse:collapse;
-  min-width:500px;
-}
-
-th,
-td{
-  text-align:left;
-  padding:9px;
-  border-bottom:1px solid #142a3f;
-}
-
-th{
-  font-size:9px;
-  color:#718aa3;
-}
-
-td{
-  font-size:11px;
-}
-
-.n{
-  font-size:15px;
-  font-weight:900;
-}
-
-.badge{
-  display:inline-block;
-  border-radius:7px;
-  padding:5px 8px;
-  font-size:9px;
-  font-weight:900;
-}
-
-.bgb{
-  background:#ff66661c;
-  color:#ff8888;
-}
-
-.bsm{
-  background:#42d5ff1c;
-  color:#55dcff;
-}
-
-.bwin{
-  background:#4de69c1c;
-  color:#59e7a8;
-}
-
-.bloss{
-  background:#ff66661c;
-  color:#ff7777;
-}
-
-.empty{
-  text-align:center;
-  color:#6d849b;
-  padding:22px;
-}
-
-.foot{
-  text-align:center;
-  color:#4d647b;
-  font-size:9px;
-  padding:10px;
-}
-
-.login{
-  position:fixed;
-  inset:0;
-  z-index:50;
-  background:#040a12;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:20px;
-}
-
-.loginbox{
-  width:min(390px,100%);
-  background:#091624;
-  border:1px solid #1d3853;
-  border-radius:19px;
-  padding:23px;
-}
-
-.loginbox h1{
-  margin:0 0 6px;
-}
-
-.loginbox p{
-  color:#7d95ab;
-  font-size:11px;
-}
-
-.loginbox input{
-  width:100%;
-  padding:13px;
-  border-radius:10px;
-  border:1px solid #24415d;
-  background:#06101b;
-  color:#fff;
-  outline:0;
-}
-
-.loginbox button{
-  width:100%;
-  margin-top:10px;
-  padding:13px;
-  border:0;
-  border-radius:10px;
-  background:#1683ff;
-  color:#fff;
-  font-weight:900;
-}
-
-.err{
-  color:#ff7777;
-  font-size:11px;
-  min-height:16px;
-  margin-top:8px;
-}
-
-.hide{
-  display:none!important;
-}
-
-@media(max-width:650px){
-
-  .game{
-    height:430px;
+async function fetchWingo() {
+  if (!WINGOBOT_TOKEN) {
+    throw new Error("WINGOBOT_TOKEN missing");
   }
 
-  .analysis{
-    grid-template-columns:1fr 1fr;
-  }
-
-  .brand{
-    font-size:18px;
-  }
-
-}
-</style>
-</head>
-
-<body>
-
-<!-- ================= LOGIN ================= -->
-
-<div id="login" class="login">
-
-  <div class="loginbox">
-
-    <h1>
-      DY
-      <span style="color:#38c7ff">AI</span>
-      Wingo
-    </h1>
-
-    <p>
-      Premium access key enter karo.
-    </p>
-
-    <input
-      id="key"
-      placeholder="Access Key"
-      autocomplete="off"
-    >
-
-    <button id="loginBtn">
-      UNLOCK PREMIUM
-    </button>
-
-    <div
-      id="err"
-      class="err"
-    ></div>
-
-  </div>
-
-</div>
-
-
-<!-- ================= APP ================= -->
-
-<main
-  id="app"
-  class="wrap hide"
->
-
-  <!-- TOP -->
-
-  <div class="top">
-
-    <div class="brand">
-      DY
-      <span>AI</span>
-      WINGO 30S
-    </div>
-
-    <div
-      id="conn"
-      class="pill"
-    >
-      CONNECTING...
-    </div>
-
-  </div>
-
-
-  <!-- ================= GAME ================= -->
-
-  <section class="card">
-
-    <div class="head">
-
-      <div class="title">
-        LIVE GAME
-      </div>
-
-      <div class="sub">
-        30 SECOND
-      </div>
-
-    </div>
-
-    <div class="game">
-
-      <iframe
-        id="game"
-        src="https://www.tojvhr55.com/#/register?invitationCode=761671301584"
-        allow="fullscreen"
-        referrerpolicy="no-referrer"
-      ></iframe>
-
-      <div
-        id="fallback"
-        class="fallback"
-      >
-
-        <b>
-          GAME WINDOW BLOCKED
-        </b>
-
-        <span>
-          External game iframe block kar sakta hai.
-        </span>
-
-        <button
-          class="open"
-          onclick="openGame()"
-        >
-          OPEN GAME
-        </button>
-
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- ================= ROUND CONTROL ================= -->
-
-  <section class="card">
-
-    <div class="head">
-
-      <div class="title">
-        ROUND CONTROL
-      </div>
-
-      <div
-        id="updated"
-        class="sub"
-      >
-        --
-      </div>
-
-    </div>
-
-
-    <div class="grid">
-
-      <div class="box">
-
-        <div class="lab">
-          Settled Period
-        </div>
-
-        <div
-          id="settled"
-          class="val"
-        >
-          --
-        </div>
-
-      </div>
-
-
-      <div class="box">
-
-        <div class="lab">
-          Next Period
-        </div>
-
-        <div
-          id="next"
-          class="val"
-        >
-          --
-        </div>
-
-      </div>
-
-
-      <div class="box">
-
-        <div class="lab">
-          Next Prediction
-        </div>
-
-        <div
-          id="target"
-          class="val"
-        >
-          --
-        </div>
-
-      </div>
-
-
-      <div class="box">
-
-        <div class="lab">
-          Countdown
-        </div>
-
-        <div
-          id="timer"
-          class="val timer"
-        >
-          --
-        </div>
-
-      </div>
-
-    </div>
-
-
-    <!-- PREDICTION -->
-
-    <div class="pred">
-
-      <div class="predtop">
-
-        <div>
-
-          <div class="predname">
-            AI Prediction
-          </div>
-
-          <div
-            id="prediction"
-            class="prediction"
-          >
-            WAIT
-          </div>
-
-          <div class="tags">
-
-            <span class="tag">
-              NUMBER:
-              <b id="prednum">
-                --
-              </b>
-            </span>
-
-            <span
-              id="status"
-              class="tag"
-            >
-              INSUFFICIENT DATA
-            </span>
-
-          </div>
-
-        </div>
-
-
-        <div
-          style="text-align:right"
-        >
-
-          <div class="predname">
-            Confidence
-          </div>
-
-          <div
-            id="confidence"
-            class="conf"
-          >
-            0%
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
-
-
-    <!-- WIN LOSS -->
-
-    <div class="wl">
-
-      <div class="wbox">
-
-        <div class="lab">
-          Wins
-        </div>
-
-        <b
-          id="wins"
-          class="win"
-        >
-          0
-        </b>
-
-      </div>
-
-
-      <div class="wbox">
-
-        <div class="lab">
-          Losses
-        </div>
-
-        <b
-          id="losses"
-          class="loss"
-        >
-          0
-        </b>
-
-      </div>
-
-
-      <div class="wbox">
-
-        <div class="lab">
-          Rate
-        </div>
-
-        <b id="rate">
-          0%
-        </b>
-
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- ================= AI ANALYSIS ================= -->
-
-  <section class="card">
-
-    <div class="head">
-
-      <div class="title">
-        AI ANALYSIS
-      </div>
-
-      <div
-        id="count"
-        class="sub"
-      >
-        0 DATA
-      </div>
-
-    </div>
-
-
-    <div class="analysis">
-
-      <div class="ast">
-
-        <div class="lab">
-          Pattern Score
-        </div>
-
-        <div
-          id="pattern"
-          class="num"
-        >
-          0
-        </div>
-
-      </div>
-
-
-      <div class="ast">
-
-        <div class="lab">
-          Model Agreement
-        </div>
-
-        <div
-          id="agree"
-          class="num"
-        >
-          0%
-        </div>
-
-      </div>
-
-
-      <div class="ast">
-
-        <div class="lab">
-          Backtest Samples
-        </div>
-
-        <div
-          id="samples"
-          class="num"
-        >
-          0
-        </div>
-
-      </div>
-
-
-      <div class="ast">
-
-        <div class="lab">
-          Average Accuracy
-        </div>
-
-        <div
-          id="accuracy"
-          class="num"
-        >
-          N/A
-        </div>
-
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- ================= LIVE RESULTS ================= -->
-
-  <section class="card">
-
-    <div class="head">
-
-      <div class="title">
-        LIVE RESULTS + WIN/LOSS
-      </div>
-
-      <div class="sub">
-        LAST 30
-      </div>
-
-    </div>
-
-
-    <div class="table">
-
-      <table>
-
-        <thead>
-
-          <tr>
-
-            <th>
-              Period
-            </th>
-
-            <th>
-              Number
-            </th>
-
-            <th>
-              Pred
-            </th>
-
-            <th>
-              W/L
-            </th>
-
-          </tr>
-
-        </thead>
-
-
-        <tbody id="rows">
-
-          <tr>
-
-            <td
-              colspan="4"
-              class="empty"
-            >
-              Loading...
-            </td>
-
-          </tr>
-
-        </tbody>
-
-      </table>
-
-    </div>
-
-  </section>
-
-
-  <div class="foot">
-
-    DY AI statistical analysis
-    • No prediction is guaranteed
-
-  </div>
-
-</main>
-
-
-<!-- ================= MUSIC ================= -->
-
-<audio
-  id="music"
-  src="/music.mp3"
-  preload="auto"
-  loop
-></audio>
-
-
-<script>
-
-/* =========================================================
-   CONFIG
-   ========================================================= */
-
-const GAME_URL =
-  "https://www.tojvhr55.com/#/register?invitationCode=761671301584";
-
-
-/* =========================================================
-   DEVICE ID
-   ========================================================= */
-
-let deviceId =
-  localStorage.getItem(
-    "dy_ai_device_id"
-  );
-
-if (!deviceId) {
-
-  deviceId =
-    (
-      crypto.randomUUID
-        ? crypto.randomUUID()
-        : "dy-" +
-          Date.now() +
-          "-" +
-          Math.random()
-            .toString(36)
-            .slice(2)
-    );
-
-  localStorage.setItem(
-    "dy_ai_device_id",
-    deviceId
-  );
-
-}
-
-
-/* =========================================================
-   VARIABLES
-   ========================================================= */
-
-let timer = 0;
-
-let lastTimerAt = 0;
-
-let lastVersion = -1;
-
-
-/* =========================================================
-   SHORT SELECTOR
-   ========================================================= */
-
-const $ =
-  id =>
-    document.getElementById(id);
-
-
-/* =========================================================
-   ESCAPE HTML
-   ========================================================= */
-
-function esc(value) {
-
-  return String(
-    value ?? ""
-  )
-  .replace(
-    /[&<>"']/g,
-    function(m) {
-
-      return {
-        "&":"&amp;",
-        "<":"&lt;",
-        ">":"&gt;",
-        '"':"&quot;",
-        "'":"&#039;"
-
-      }[m];
-
-    }
-  );
-
-}
-
-
-/* =========================================================
-   OPEN GAME
-   ========================================================= */
-
-function openGame() {
-
-  window.open(
-    GAME_URL,
-    "_blank",
-    "noopener,noreferrer"
-  );
-
-}
-
-
-/* =========================================================
-   SHOW APP
-   ========================================================= */
-
-function showApp() {
-
-  $("login")
-    .classList
-    .add("hide");
-
-  $("app")
-    .classList
-    .remove("hide");
-
-}
-
-
-/* =========================================================
-   LOGIN
-   ========================================================= */
-
-async function doLogin() {
-
-  const key =
-    $("key")
-      .value
-      .trim();
-
-  if (!key) {
-
-    $("err").textContent =
-      "Access key enter karo.";
-
-    return;
-
-  }
-
-
-  $("loginBtn").disabled =
-    true;
-
-  $("loginBtn").textContent =
-    "CHECKING...";
-
+  const controller = new AbortController();
+
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, 12000);
 
   try {
+    const response = await fetch(
+      WINGOBOT_URL,
+      {
+        method: "GET",
+        headers: {
+          Authorization:
+            `Bearer ${WINGOBOT_TOKEN}`,
+          Accept: "application/json"
+        },
+        signal: controller.signal
+      }
+    );
 
-    const response =
-      await fetch(
-        "/api/key/check",
-        {
-          method:"POST",
+    const raw = await response.text();
 
-          headers:{
-            "Content-Type":
-              "application/json"
-          },
+    let data;
 
-          body:JSON.stringify({
-            key:key,
-            device_id:deviceId
-          })
-        }
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      throw new Error(
+        `Wingo API invalid JSON: HTTP ${response.status}`
       );
+    }
 
+    if (!response.ok) {
+      throw new Error(
+        data?.error ||
+        data?.message ||
+        `Wingo API HTTP ${response.status}`
+      );
+    }
 
-    const data =
-      await response.json();
-
-
-    if (!data.ok) {
-
+    if (data?.success === false) {
       throw new Error(
         data.error ||
-        "Invalid access key"
+        data.message ||
+        "Wingo API failed"
       );
+    }
+
+    return data;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+/* =========================================================
+   NORMALIZE HISTORY
+========================================================= */
+
+function normalizeHistory(data) {
+  let rows = [];
+
+  if (Array.isArray(data?.history)) {
+    rows = data.history;
+  } else if (
+    Array.isArray(data?.data?.history)
+  ) {
+    rows = data.data.history;
+  } else if (Array.isArray(data?.data)) {
+    rows = data.data;
+  }
+
+  const result = [];
+
+  for (const row of rows) {
+    const issue =
+      row?.issueNumber ??
+      row?.issue ??
+      row?.period ??
+      row?.periodId ??
+      row?.id;
+
+    const number =
+      row?.number ??
+      row?.drawNumber ??
+      row?.result;
+
+    if (
+      issue == null ||
+      number == null
+    ) {
+      continue;
+    }
+
+    const n = Number(number);
+
+    if (!Number.isFinite(n)) {
+      continue;
+    }
+
+    result.push({
+      issueNumber: issueString(issue),
+      number: n,
+      colour:
+        row?.colour ??
+        row?.color ??
+        "",
+      premium:
+        row?.premium ?? null,
+      sum:
+        row?.sum ?? null
+    });
+  }
+
+  const unique = new Map();
+
+  for (const row of result) {
+    if (!unique.has(row.issueNumber)) {
+      unique.set(
+        row.issueNumber,
+        row
+      );
+    }
+  }
+
+  const finalRows =
+    [...unique.values()];
+
+  finalRows.sort((a, b) => {
+    const aa =
+      issueBigInt(a.issueNumber);
+
+    const bb =
+      issueBigInt(b.issueNumber);
+
+    if (aa > bb) return -1;
+    if (aa < bb) return 1;
+
+    return 0;
+  });
+
+  return finalRows;
+}
+
+/* =========================================================
+   COUNTDOWN
+========================================================= */
+
+function extractCountdown(data) {
+  const values = [
+    data?.countdownSeconds,
+    data?.countdown,
+    data?.current?.countdownSeconds,
+    data?.current?.countdown,
+    data?.data?.countdownSeconds,
+    data?.data?.countdown
+  ];
+
+  for (const value of values) {
+    const n = Number(value);
+
+    if (
+      Number.isFinite(n) &&
+      n >= 0 &&
+      n <= ROUND_SECONDS
+    ) {
+      return Math.floor(n);
+    }
+  }
+
+  return null;
+}
+
+/* =========================================================
+   SEQUENCES
+========================================================= */
+
+function getSequence(history, limit) {
+  const rows =
+    history.slice(
+      0,
+      limit || history.length
+    );
+
+  return rows
+    .map(x => resultType(x.number))
+    .filter(Boolean)
+    .reverse();
+}
+
+function counts(sequence) {
+  let big = 0;
+  let small = 0;
+
+  for (const x of sequence) {
+    if (x === "BIG") big++;
+    else if (x === "SMALL") small++;
+  }
+
+  return { big, small };
+}
+
+/* =========================================================
+   MODEL 1 - RECENCY
+========================================================= */
+
+function recencyModel(history) {
+  const seq =
+    getSequence(
+      history,
+      Math.min(history.length, 40)
+    );
+
+  if (seq.length < 5) return null;
+
+  let big = 0;
+  let small = 0;
+
+  for (let i = 0; i < seq.length; i++) {
+    const weight = i + 1;
+
+    if (seq[i] === "BIG") {
+      big += weight;
+    } else {
+      small += weight;
+    }
+  }
+
+  const total = big + small;
+
+  if (!total) return null;
+
+  const pBig = big / total;
+  const pSmall = small / total;
+
+  return {
+    name: "Recency",
+    prediction:
+      pBig >= pSmall
+        ? "BIG"
+        : "SMALL",
+    confidence:
+      clamp(
+        50 +
+        Math.abs(pBig - pSmall) * 100,
+        50,
+        72
+      )
+  };
+}
+
+/* =========================================================
+   MODEL 2 - SHORT WINDOW
+========================================================= */
+
+function shortModel(history) {
+  const seq =
+    getSequence(
+      history,
+      Math.min(history.length, 12)
+    );
+
+  if (seq.length < 5) return null;
+
+  const c = counts(seq);
+
+  let prediction =
+    c.big >= c.small
+      ? "BIG"
+      : "SMALL";
+
+  const last =
+    seq[seq.length - 1];
+
+  let streak = 1;
+
+  for (
+    let i = seq.length - 2;
+    i >= 0;
+    i--
+  ) {
+    if (seq[i] === last) {
+      streak++;
+    } else {
+      break;
+    }
+  }
+
+  if (streak >= 4) {
+    prediction = last;
+  }
+
+  return {
+    name: "Short Window",
+    prediction,
+    confidence:
+      clamp(
+        50 +
+        Math.abs(c.big - c.small) *
+          5 +
+        Math.min(streak, 5) * 2,
+        50,
+        78
+      )
+  };
+}
+
+/* =========================================================
+   MODEL 3 - TRANSITION
+========================================================= */
+
+function transitionModel(history) {
+  const seq =
+    getSequence(
+      history,
+      Math.min(history.length, 300)
+    );
+
+  if (seq.length < 20) return null;
+
+  const t = {
+    BIG: {
+      BIG: 0,
+      SMALL: 0
+    },
+    SMALL: {
+      BIG: 0,
+      SMALL: 0
+    }
+  };
+
+  for (let i = 1; i < seq.length; i++) {
+    const previous =
+      seq[i - 1];
+
+    const current =
+      seq[i];
+
+    t[previous][current]++;
+  }
+
+  const last =
+    seq[seq.length - 1];
+
+  const row =
+    t[last];
+
+  const total =
+    row.BIG + row.SMALL;
+
+  if (!total) return null;
+
+  const pBig =
+    row.BIG / total;
+
+  const pSmall =
+    row.SMALL / total;
+
+  return {
+    name: "Transition",
+    prediction:
+      pBig >= pSmall
+        ? "BIG"
+        : "SMALL",
+    confidence:
+      clamp(
+        50 +
+        Math.abs(pBig - pSmall) * 100,
+        50,
+        80
+      )
+  };
+}
+
+/* =========================================================
+   MODEL 4 - STREAK
+========================================================= */
+
+function streakModel(history) {
+  const seq =
+    getSequence(
+      history,
+      Math.min(history.length, 80)
+    );
+
+  if (seq.length < 5) return null;
+
+  const last =
+    seq[seq.length - 1];
+
+  let streak = 1;
+
+  for (
+    let i = seq.length - 2;
+    i >= 0;
+    i--
+  ) {
+    if (seq[i] === last) {
+      streak++;
+    } else {
+      break;
+    }
+  }
+
+  if (streak < 3) {
+    return null;
+  }
+
+  return {
+    name: "Streak",
+    prediction: last,
+    confidence:
+      clamp(
+        55 + streak * 4,
+        55,
+        75
+      )
+  };
+}
+
+/* =========================================================
+   MODEL 5 - ALTERNATION
+========================================================= */
+
+function alternationModel(history) {
+  const seq =
+    getSequence(
+      history,
+      Math.min(history.length, 20)
+    );
+
+  if (seq.length < 6) return null;
+
+  let alternating = 0;
+
+  for (let i = 1; i < seq.length; i++) {
+    if (
+      seq[i] !==
+      seq[i - 1]
+    ) {
+      alternating++;
+    }
+  }
+
+  const ratio =
+    alternating /
+    (seq.length - 1);
+
+  if (ratio < 0.72) {
+    return null;
+  }
+
+  return {
+    name: "Alternation",
+    prediction:
+      opposite(
+        seq[seq.length - 1]
+      ),
+    confidence:
+      clamp(
+        55 + ratio * 20,
+        55,
+        72
+      )
+  };
+}
+
+/* =========================================================
+   MODEL 6 - FULL HISTORY
+========================================================= */
+
+function fullHistoryModel(history) {
+  const seq =
+    getSequence(
+      history,
+      history.length
+    );
+
+  if (seq.length < 30) return null;
+
+  const c = counts(seq);
+
+  const total =
+    c.big + c.small;
+
+  const pBig =
+    c.big / total;
+
+  const pSmall =
+    c.small / total;
+
+  return {
+    name: "Full History",
+    prediction:
+      pBig >= pSmall
+        ? "BIG"
+        : "SMALL",
+    confidence:
+      clamp(
+        50 +
+        Math.abs(pBig - pSmall) * 70,
+        50,
+        65
+      )
+  };
+}
+
+/* =========================================================
+   MODEL 7 - NUMBER STRUCTURE
+========================================================= */
+
+function numberModel(history) {
+  const rows =
+    history.slice(
+      0,
+      Math.min(
+        history.length,
+        100
+      )
+    );
+
+  if (rows.length < 15) {
+    return null;
+  }
+
+  let big = 0;
+  let small = 0;
+
+  for (const row of rows) {
+    if (Number(row.number) >= 5) {
+      big++;
+    } else {
+      small++;
+    }
+  }
+
+  const total =
+    big + small;
+
+  const pBig =
+    big / total;
+
+  const pSmall =
+    small / total;
+
+  return {
+    name: "Number Structure",
+    prediction:
+      pBig >= pSmall
+        ? "BIG"
+        : "SMALL",
+    confidence:
+      clamp(
+        50 +
+        Math.abs(pBig - pSmall) * 60,
+        50,
+        63
+      )
+  };
+}
+
+/* =========================================================
+   MODEL 8 - PATTERN MATCH
+========================================================= */
+
+function patternModel(history) {
+  const seq =
+    getSequence(
+      history,
+      history.length
+    );
+
+  if (seq.length < 30) {
+    return null;
+  }
+
+  const patternLength =
+    Math.min(
+      5,
+      Math.floor(seq.length / 5)
+    );
+
+  const current =
+    seq.slice(
+      seq.length -
+      patternLength
+    );
+
+  let big = 0;
+  let small = 0;
+  let matches = 0;
+
+  /*
+    Find older occurrences of the
+    same recent sequence.
+  */
+
+  for (
+    let i = 0;
+    i <=
+      seq.length -
+      patternLength -
+      1;
+    i++
+  ) {
+
+    let same = true;
+
+    for (
+      let j = 0;
+      j < patternLength;
+      j++
+    ) {
+
+      if (
+        seq[i + j] !==
+        current[j]
+      ) {
+        same = false;
+        break;
+      }
 
     }
 
+    if (!same) continue;
 
-    localStorage.setItem(
-      "dy_ai_access_key",
-      key
-    );
+    const next =
+      seq[i + patternLength];
 
+    if (next === "BIG") {
+      big++;
+    }
 
-    showApp();
+    if (next === "SMALL") {
+      small++;
+    }
 
-
-    const music =
-      $("music");
-
-    music.volume =
-      0.35;
-
-    music.play()
-      .catch(
-        () => {}
-      );
-
-
-    load();
-
-
-  }
-  catch(error) {
-
-    $("err").textContent =
-      error.message ||
-      "Login failed";
-
-  }
-  finally {
-
-    $("loginBtn").disabled =
-      false;
-
-    $("loginBtn").textContent =
-      "UNLOCK PREMIUM";
-
+    matches++;
   }
 
+  if (matches < 3) {
+    return null;
+  }
+
+  const total =
+    big + small;
+
+  if (!total) return null;
+
+  const pBig =
+    big / total;
+
+  const pSmall =
+    small / total;
+
+  return {
+    name: "Pattern Match",
+    prediction:
+      pBig >= pSmall
+        ? "BIG"
+        : "SMALL",
+    confidence:
+      clamp(
+        50 +
+        Math.abs(pBig - pSmall) *
+          100 +
+        Math.min(matches, 10),
+        50,
+        78
+      )
+  };
 }
 
+/* =========================================================
+   GENERATE MODELS
+========================================================= */
+
+function generateModels(history) {
+  return [
+    recencyModel(history),
+    shortModel(history),
+    transitionModel(history),
+    streakModel(history),
+    alternationModel(history),
+    fullHistoryModel(history),
+    numberModel(history),
+    patternModel(history)
+  ].filter(Boolean);
+}
 
 /* =========================================================
-   AUTO LOGIN
-   ========================================================= */
+   RAW ENSEMBLE
+========================================================= */
 
-async function autoLogin() {
+function rawEnsemble(history) {
+  const models =
+    generateModels(history);
 
-  const key =
-    localStorage.getItem(
-      "dy_ai_access_key"
+  if (!models.length) {
+    return {
+      prediction: null,
+      confidence: 0,
+      agreement: 0,
+      models
+    };
+  }
+
+  const weights = {
+    "Pattern Match": 1.35,
+    "Transition": 1.25,
+    "Short Window": 1.20,
+    "Recency": 1.05,
+    "Streak": 0.90,
+    "Alternation": 0.85,
+    "Number Structure": 0.55,
+    "Full History": 0.65
+  };
+
+  let bigScore = 0;
+  let smallScore = 0;
+
+  for (const model of models) {
+
+    const weight =
+      weights[model.name] ||
+      0.75;
+
+    const confidence =
+      clamp(
+        model.confidence,
+        50,
+        85
+      ) / 100;
+
+    const score =
+      weight * confidence;
+
+    if (
+      model.prediction ===
+      "BIG"
+    ) {
+      bigScore += score;
+    }
+    else if (
+      model.prediction ===
+      "SMALL"
+    ) {
+      smallScore += score;
+    }
+  }
+
+  const total =
+    bigScore +
+    smallScore;
+
+  if (!total) {
+    return {
+      prediction: null,
+      confidence: 0,
+      agreement: 0,
+      models
+    };
+  }
+
+  const prediction =
+    bigScore >= smallScore
+      ? "BIG"
+      : "SMALL";
+
+  const dominant =
+    Math.max(
+      bigScore,
+      smallScore
     );
 
+  let confidence =
+    50 +
+    (
+      dominant / total -
+      0.5
+    ) *
+    100;
 
-  if (!key) {
+  const agreeCount =
+    models.filter(
+      x =>
+        x.prediction ===
+        prediction
+    ).length;
+
+  const agreement =
+    agreeCount /
+    models.length *
+    100;
+
+  return {
+    prediction,
+    confidence:
+      clamp(
+        confidence,
+        50,
+        82
+      ),
+    agreement,
+    models
+  };
+}
+
+/* =========================================================
+   BACKTEST
+========================================================= */
+
+function backtest(history) {
+
+  /*
+    API se jo bhi history aayi hai
+    usi ko training ke liye use karte hain.
+
+    Testing ke liye latest maximum 150
+    historical points liye jaate hain,
+    taaki server unnecessarily heavy na ho.
+  */
+
+  const chronological =
+    [...history].reverse();
+
+  if (
+    chronological.length < 40
+  ) {
+    return {
+      samples: 0,
+      wins: 0,
+      losses: 0,
+      accuracy: null
+    };
+  }
+
+  const minimumTrain = 30;
+
+  const available =
+    chronological.length -
+    minimumTrain;
+
+  const sampleCount =
+    Math.min(
+      150,
+      available
+    );
+
+  const start =
+    chronological.length -
+    sampleCount;
+
+  let wins = 0;
+  let losses = 0;
+  let samples = 0;
+
+  for (
+    let i = start;
+    i < chronological.length;
+    i++
+  ) {
+
+    const train =
+      chronological.slice(
+        0,
+        i
+      );
+
+    const actual =
+      resultType(
+        chronological[i].number
+      );
+
+    const signal =
+      rawEnsemble(train);
+
+    if (!signal.prediction) {
+      continue;
+    }
+
+    samples++;
+
+    if (
+      signal.prediction ===
+      actual
+    ) {
+      wins++;
+    } else {
+      losses++;
+    }
+  }
+
+  return {
+    samples,
+    wins,
+    losses,
+    accuracy:
+      samples
+        ? wins / samples * 100
+        : null
+  };
+}
+
+/* =========================================================
+   FINAL AI ENGINE
+========================================================= */
+
+function adaptiveEnsemble(history) {
+
+  const raw =
+    rawEnsemble(history);
+
+  if (!raw.prediction) {
+    return {
+      prediction: null,
+      confidence: 0,
+      agreement: 0,
+      patternScore: 0,
+      status:
+        "INSUFFICIENT DATA",
+      backtest: {
+        samples: 0,
+        wins: 0,
+        losses: 0,
+        accuracy: null
+      },
+      models: []
+    };
+  }
+
+  const bt =
+    backtest(history);
+
+  let confidence =
+    raw.confidence;
+
+  /*
+    Calibration:
+    insufficient backtest =
+    lower displayed confidence.
+  */
+
+  if (bt.samples < 20) {
+
+    confidence =
+      Math.min(
+        confidence,
+        60
+      );
+
+  }
+  else if (bt.samples < 50) {
+
+    confidence =
+      Math.min(
+        confidence,
+        66
+      );
+
+  }
+  else if (
+    bt.accuracy != null &&
+    bt.accuracy < 50
+  ) {
+
+    confidence =
+      Math.min(
+        confidence,
+        57
+      );
+
+  }
+  else if (
+    bt.accuracy != null &&
+    bt.accuracy < 55
+  ) {
+
+    confidence =
+      Math.min(
+        confidence,
+        62
+      );
+
+  }
+  else if (
+    bt.accuracy != null &&
+    bt.accuracy >= 60
+  ) {
+
+    confidence += 4;
+
+  }
+
+  if (
+    raw.agreement < 50
+  ) {
+    confidence -= 4;
+  }
+
+  if (
+    raw.agreement >= 75
+  ) {
+    confidence += 3;
+  }
+
+  confidence =
+    Math.round(
+      clamp(
+        confidence,
+        50,
+        76
+      )
+    );
+
+  let status =
+    "WEAK SIGNAL";
+
+  if (
+    bt.samples < 20
+  ) {
+    status =
+      "EARLY SIGNAL";
+  }
+  else if (
+    confidence >= 70 &&
+    bt.accuracy != null &&
+    bt.accuracy >= 55
+  ) {
+    status =
+      "STRONGER MODEL LEAN";
+  }
+  else if (
+    confidence >= 63
+  ) {
+    status =
+      "MODERATE SIGNAL";
+  }
+
+  const patternScore =
+    Math.round(
+      clamp(
+        raw.agreement * 0.55 +
+        confidence * 0.45,
+        0,
+        100
+      )
+    );
+
+  return {
+    prediction:
+      raw.prediction,
+
+    confidence,
+
+    agreement:
+      Math.round(
+        raw.agreement
+      ),
+
+    patternScore,
+
+    status,
+
+    backtest: bt,
+
+    models:
+      raw.models.map(
+        model => ({
+          name:
+            model.name,
+          prediction:
+            model.prediction,
+          confidence:
+            Math.round(
+              model.confidence
+            )
+        })
+      )
+  };
+}
+
+/* =========================================================
+   PREDICTED NUMBER
+========================================================= */
+
+function predictedNumber(
+  history,
+  prediction
+) {
+
+  if (!prediction) {
+    return null;
+  }
+
+  const candidates =
+    prediction === "BIG"
+      ? [5,6,7,8,9]
+      : [0,1,2,3,4];
+
+  const frequency =
+    new Map();
+
+  for (
+    const row of history.slice(
+      0,
+      Math.min(
+        history.length,
+        100
+      )
+    )
+  ) {
+
+    const n =
+      Number(row.number);
+
+    frequency.set(
+      n,
+      (frequency.get(n) || 0) + 1
+    );
+
+  }
+
+  candidates.sort(
+    (a,b) =>
+      (frequency.get(a) || 0) -
+      (frequency.get(b) || 0)
+  );
+
+  return candidates[0];
+}
+
+/* =========================================================
+   SAVE PREDICTION
+========================================================= */
+
+async function savePrediction(pred) {
+
+  if (
+    !pred ||
+    !pred.targetIssue ||
+    !pred.prediction
+  ) {
     return;
   }
 
+  await pool.query(
+    `
+    INSERT INTO predictions
+    (
+      target_issue,
+      prediction,
+      predicted_number,
+      confidence,
+      status,
+      created_at
+    )
+    VALUES
+    ($1,$2,$3,$4,'PENDING',$5)
+
+    ON CONFLICT (target_issue)
+    DO UPDATE SET
+      prediction =
+        EXCLUDED.prediction,
+      predicted_number =
+        EXCLUDED.predicted_number,
+      confidence =
+        EXCLUDED.confidence
+    `,
+    [
+      pred.targetIssue,
+      pred.prediction,
+      pred.predictedNumber,
+      pred.confidence,
+      now()
+    ]
+  );
+}
+
+/* =========================================================
+   SETTLE
+========================================================= */
+
+async function settlePrediction(
+  issue,
+  actualNumber
+) {
+
+  const actual =
+    resultType(actualNumber);
+
+  if (!issue || !actual) {
+    return;
+  }
+
+  await pool.query(
+    `
+    UPDATE predictions
+
+    SET
+      actual_number = $2,
+      actual_result = $3,
+
+      status =
+        CASE
+          WHEN prediction = $3
+          THEN 'WIN'
+          ELSE 'LOSS'
+        END,
+
+      settled_at = $4
+
+    WHERE target_issue = $1
+      AND status = 'PENDING'
+    `,
+    [
+      issue,
+      actualNumber,
+      actual,
+      now()
+    ]
+  );
+}
+
+/* =========================================================
+   WIN LOSS
+========================================================= */
+
+async function getWinLoss() {
+
+  const result =
+    await pool.query(
+      `
+      SELECT
+        target_issue,
+        prediction,
+        predicted_number,
+        confidence,
+        status,
+        actual_number,
+        actual_result,
+        created_at,
+        settled_at
+
+      FROM predictions
+
+      WHERE status IN
+        ('WIN','LOSS')
+
+      ORDER BY id DESC
+
+      LIMIT $1
+      `,
+      [WINLOSS_LIMIT]
+    );
+
+  const rows =
+    result.rows;
+
+  let wins = 0;
+  let losses = 0;
+
+  for (const row of rows) {
+
+    if (row.status === "WIN") {
+      wins++;
+    }
+
+    if (row.status === "LOSS") {
+      losses++;
+    }
+
+  }
+
+  const total =
+    wins + losses;
+
+  return {
+    rows,
+    wins,
+    losses,
+    total,
+    rate:
+      total
+        ? Math.round(
+            wins /
+            total *
+            100
+          )
+        : 0
+  };
+}
+
+/* =========================================================
+   LIVE UPDATE
+========================================================= */
+
+async function updateLiveState() {
+
+  if (state.updating) {
+    return;
+  }
+
+  state.updating = true;
 
   try {
 
-    const response =
-      await fetch(
-        "/api/key/check",
-        {
-          method:"POST",
+    const data =
+      await fetchWingo();
 
-          headers:{
-            "Content-Type":
-              "application/json"
-          },
+    const history =
+      normalizeHistory(data);
 
-          body:JSON.stringify({
-            key:key,
-            device_id:deviceId
-          })
-        }
+    if (!history.length) {
+      throw new Error(
+        "Wingo history is empty"
+      );
+    }
+
+    const settled =
+      history[0];
+
+    const settledIssue =
+      settled.issueNumber;
+
+    const providerCurrent =
+      issueString(
+        data?.current?.issueNumber ??
+        data?.current?.periodId ??
+        ""
       );
 
+    const fetched =
+      Number(
+        data?.stats?.fetched ??
+        history.length
+      );
 
-    const data =
-      await response.json();
+    const signature =
+      history
+        .slice(0,20)
+        .map(
+          x =>
+            `${x.issueNumber}:${x.number}`
+        )
+        .join("|");
 
+    const historyChanged =
+      signature !==
+      state.historySignature;
 
-    if (data.ok) {
+    /*
+      If a new settled result arrived,
+      settle the prediction for that
+      exact issue.
+    */
 
-      showApp();
+    if (
+      historyChanged &&
+      state.targetIssue
+    ) {
 
-      load();
+      const exact =
+        history.find(
+          x =>
+            x.issueNumber ===
+            state.targetIssue
+        );
+
+      if (exact) {
+
+        await settlePrediction(
+          exact.issueNumber,
+          exact.number
+        );
+
+      }
+
+    }
+
+    state.history =
+      history;
+
+    state.settledIssue =
+      settledIssue;
+
+    state.providerCurrentIssue =
+      providerCurrent;
+
+    state.providerFetched =
+      fetched;
+
+    state.lastFetchAt =
+      now();
+
+    state.lastError =
+      "";
+
+    /*
+      Target issue.
+    */
+
+    let target =
+      nextIssue(
+        settledIssue
+      );
+
+    if (providerCurrent) {
+
+      try {
+
+        if (
+          issueBigInt(
+            providerCurrent
+          ) >
+          issueBigInt(
+            settledIssue
+          )
+        ) {
+
+          target =
+            providerCurrent;
+
+        }
+
+      } catch {}
+
+    }
+
+    /*
+      Prediction changes ONLY
+      when actual history changes
+      or target is missing/changed.
+    */
+
+    const recalculate =
+      historyChanged ||
+      target !== state.targetIssue ||
+      !state.prediction;
+
+    if (recalculate) {
+
+      const analysis =
+        adaptiveEnsemble(
+          history
+        );
+
+      const number =
+        predictedNumber(
+          history,
+          analysis.prediction
+        );
+
+      state.targetIssue =
+        target;
+
+      state.prediction = {
+        targetIssue:
+          target,
+
+        prediction:
+          analysis.prediction,
+
+        predictedNumber:
+          number,
+
+        confidence:
+          analysis.confidence,
+
+        agreement:
+          analysis.agreement,
+
+        patternScore:
+          analysis.patternScore,
+
+        status:
+          analysis.status,
+
+        backtest:
+          analysis.backtest,
+
+        models:
+          analysis.models,
+
+        generatedAt:
+          now()
+      };
+
+      if (
+        analysis.prediction
+      ) {
+
+        await savePrediction({
+          targetIssue:
+            target,
+
+          prediction:
+            analysis.prediction,
+
+          predictedNumber:
+            number,
+
+          confidence:
+            analysis.confidence
+        });
+
+      }
+
+      state.historyVersion++;
+    }
+
+    /*
+      Provider countdown if available.
+    */
+
+    const providerCountdown =
+      extractCountdown(data);
+
+    if (
+      providerCountdown !== null
+    ) {
+
+      state.countdown =
+        providerCountdown;
+
+      state.anchorTime =
+        now() -
+        (
+          ROUND_SECONDS -
+          providerCountdown
+        ) *
+        1000;
 
     }
     else {
 
-      localStorage.removeItem(
-        "dy_ai_access_key"
-      );
+      /*
+        Fallback timer is estimated
+        from the latest API update.
+      */
+
+      if (
+        historyChanged ||
+        !state.anchorTime
+      ) {
+
+        state.anchorTime =
+          now();
+
+      }
+
+      const elapsed =
+        Math.floor(
+          (
+            now() -
+            state.anchorTime
+          ) / 1000
+        );
+
+      state.countdown =
+        ROUND_SECONDS -
+        (
+          elapsed %
+          ROUND_SECONDS
+        );
 
     }
 
-  }
-  catch(error) {}
-
-}
-
-
-/* =========================================================
-   CONNECTION
-   ========================================================= */
-
-function connection(ok) {
-
-  $("conn").textContent =
-    ok
-      ? "● LIVE"
-      : "● OFFLINE";
-
-
-  $("conn").style.color =
-    ok
-      ? "#55e6a5"
-      : "#ff7777";
-
-}
-
-
-/* =========================================================
-   RENDER STATE
-   ========================================================= */
-
-function render(data) {
-
-
-  /* ROUND */
-
-  $("settled").textContent =
-    data.settledIssue ||
-    "--";
-
-
-  $("next").textContent =
-    data.nextIssue ||
-    "--";
-
-
-  $("target").textContent =
-    data.targetIssue ||
-    "--";
-
-
-  $("count").textContent =
-    (
-      data.historyCount ||
-      0
-    ) +
-    " DATA";
-
-
-  $("updated").textContent =
-    data.lastFetchAt
-      ? new Date(
-          data.lastFetchAt
-        ).toLocaleTimeString()
-      : "--";
-
-
-  /* PREDICTION */
-
-  const prediction =
-    data.prediction;
-
-
-  $("prediction").textContent =
-    prediction?.prediction ||
-    "WAIT";
-
-
-  $("prediction").className =
-    "prediction " +
-    (
-      prediction?.prediction ===
-      "BIG"
-        ? "big"
-        : prediction?.prediction ===
-          "SMALL"
-            ? "small"
-            : ""
-    );
-
-
-  $("prednum").textContent =
-    prediction?.predictedNumber ??
-    "--";
-
-
-  $("confidence").textContent =
-    (
-      prediction?.confidence ||
-      0
-    ) +
-    "%";
-
-
-  $("status").textContent =
-    prediction?.status ||
-    "INSUFFICIENT DATA";
-
-
-  /* ANALYSIS */
-
-  $("pattern").textContent =
-    prediction?.patternScore ??
-    0;
-
-
-  $("agree").textContent =
-    (
-      prediction?.agreement ??
-      0
-    ) +
-    "%";
-
-
-  $("samples").textContent =
-    prediction?.backtest?.samples ??
-    0;
-
-
-  $("accuracy").textContent =
-    prediction?.backtest?.accuracy ==
-    null
-      ? "N/A"
-      : Math.round(
-          prediction.backtest.accuracy
-        ) +
-        "%";
-
-
-  /* WIN LOSS */
-
-  $("wins").textContent =
-    data.winLoss?.wins ??
-    0;
-
-
-  $("losses").textContent =
-    data.winLoss?.losses ??
-    0;
-
-
-  $("rate").textContent =
-    (
-      data.winLoss?.rate ??
-      0
-    ) +
-    "%";
-
-
-  /* TIMER */
-
-  if (
-    typeof data.countdown ===
-    "number"
-  ) {
-
-    timer =
-      Math.max(
-        0,
-        Math.min(
-          30,
-          Math.floor(
-            data.countdown
-          )
-        )
-      );
-
-    lastTimerAt =
-      Date.now();
-
-  }
-
-
-  /* =======================================================
-     LIVE TABLE
-
-     Only exact target_issue mapping is used.
-     No wrong period mapping.
-     ======================================================= */
-
-  const winRows =
-    data.winLoss?.rows ||
-    [];
-
-
-  const predictionMap =
-    new Map();
-
-
-  winRows.forEach(
-    item => {
-
-      predictionMap.set(
-        String(
-          item.target_issue
-        ),
-        item
-      );
-
-    }
-  );
-
-
-  const liveRows =
-    (
-      data.history ||
-      []
-    ).slice(
-      0,
-      30
-    );
-
-
-  if (!liveRows.length) {
-
-    $("rows").innerHTML =
-      `
-      <tr>
-        <td
-          colspan="4"
-          class="empty"
-        >
-          No live results.
-        </td>
-      </tr>
-      `;
-
-  }
-  else {
-
-    $("rows").innerHTML =
-      liveRows
-      .map(
-        item => {
-
-          const issue =
-            String(
-              item.issueNumber
-            );
-
-
-          const matched =
-            predictionMap.get(
-              issue
-            );
-
-
-          let predictionHtml =
-            `
-            <span
-              style="color:#536c83"
-            >
-              —
-            </span>
-            `;
-
-
-          let resultHtml =
-            `
-            <span
-              style="color:#536c83"
-            >
-              —
-            </span>
-            `;
-
-
-          if (matched) {
-
-            predictionHtml =
-              `
-              <span
-                class="badge ${
-                  matched.prediction ===
-                  "BIG"
-                    ? "bgb"
-                    : "bsm"
-                }"
-              >
-                ${esc(
-                  matched.prediction
-                )}
-              </span>
-              `;
-
-
-            if (
-              matched.status ===
-              "WIN"
-            ) {
-
-              resultHtml =
-                `
-                <span
-                  class="badge bwin"
-                >
-                  WIN
-                </span>
-                `;
-
-            }
-            else if (
-              matched.status ===
-              "LOSS"
-            ) {
-
-              resultHtml =
-                `
-                <span
-                  class="badge bloss"
-                >
-                  LOSS
-                </span>
-                `;
-
-            }
-
-          }
-
-
-          return `
-            <tr>
-
-              <td>
-                ${esc(
-                  issue.length > 8
-                    ? issue.slice(-8)
-                    : issue
-                )}
-              </td>
-
-              <td class="n">
-                ${esc(
-                  item.number
-                )}
-              </td>
-
-              <td>
-                ${predictionHtml}
-              </td>
-
-              <td>
-                ${resultHtml}
-              </td>
-
-            </tr>
-          `;
-
-        }
-      )
-      .join("");
-
-  }
-
-
-  connection(
-    !data.error
-  );
-
-
-  /*
-    History version changes only when
-    server receives a new settled result.
-  */
-
-  lastVersion =
-    data.historyVersion;
-
-}
-
-
-/* =========================================================
-   LOAD STATE
-   ========================================================= */
-
-async function load() {
-
-  try {
-
-    const response =
-      await fetch(
-        "/api/state?t=" +
-        Date.now(),
-        {
-          cache:"no-store"
-        }
-      );
-
-
-    if (!response.ok) {
-
-      throw new Error(
-        "Server error"
-      );
-
-    }
-
-
-    const data =
-      await response.json();
-
-
-    if (!data.success) {
-
-      throw new Error(
-        data.error ||
-        "State unavailable"
-      );
-
-    }
-
-
-    render(data);
+    state.historySignature =
+      signature;
 
   }
   catch(error) {
 
-    connection(false);
+    state.lastError =
+      error?.message ||
+      "Wingo API error";
+
+    console.error(
+      "WINGO UPDATE ERROR:",
+      state.lastError
+    );
+
+  }
+  finally {
+
+    state.updating =
+      false;
+
+  }
+}
+
+/* =========================================================
+   STATE
+========================================================= */
+
+async function getState() {
+
+  const winLoss =
+    await getWinLoss();
+
+  return {
+    success: true,
+
+    settledIssue:
+      state.settledIssue,
+
+    nextIssue:
+      state.targetIssue,
+
+    targetIssue:
+      state.targetIssue,
+
+    countdown:
+      state.countdown,
+
+    prediction:
+      state.prediction,
+
+    /*
+      UI only receives latest 30.
+      AI above uses the complete
+      API history stored in state.
+    */
+
+    history:
+      state.history.slice(
+        0,
+        LIVE_RESULTS_LIMIT
+      ),
+
+    historyCount:
+      state.history.length,
+
+    providerFetched:
+      state.providerFetched,
+
+    historyVersion:
+      state.historyVersion,
+
+    lastFetchAt:
+      state.lastFetchAt,
+
+    error:
+      state.lastError || null,
+
+    winLoss
+  };
+}
+
+/* =========================================================
+   ACCESS KEY
+========================================================= */
+
+async function checkKey(
+  key,
+  deviceId
+) {
+
+  key =
+    String(key || "").trim();
+
+  deviceId =
+    String(deviceId || "").trim();
+
+  if (!key) {
+
+    return {
+      ok:false,
+      error:
+        "Access key required"
+    };
 
   }
 
+  const result =
+    await pool.query(
+      `
+      SELECT *
+      FROM access_keys
+      WHERE access_key = $1
+      LIMIT 1
+      `,
+      [key]
+    );
+
+  if (!result.rows.length) {
+
+    return {
+      ok:false,
+      error:
+        "Invalid access key"
+    };
+
+  }
+
+  const row =
+    result.rows[0];
+
+  if (
+    row.device_id &&
+    deviceId &&
+    row.device_id !==
+      deviceId
+  ) {
+
+    return {
+      ok:false,
+      error:
+        "This key is already linked to another device"
+    };
+
+  }
+
+  if (!row.device_id) {
+
+    await pool.query(
+      `
+      UPDATE access_keys
+
+      SET
+        device_id = $2,
+        last_seen = $3
+
+      WHERE id = $1
+      `,
+      [
+        row.id,
+        deviceId,
+        now()
+      ]
+    );
+
+  }
+  else {
+
+    await pool.query(
+      `
+      UPDATE access_keys
+
+      SET last_seen = $2
+
+      WHERE id = $1
+      `,
+      [
+        row.id,
+        now()
+      ]
+    );
+
+  }
+
+  return {
+    ok:true,
+    key:row.access_key
+  };
 }
 
+/* =========================================================
+   ADMIN AUTH
+========================================================= */
+
+function isAdmin(
+  req,
+  body
+) {
+
+  body =
+    body || {};
+
+  const header =
+    req.headers[
+      "x-admin-key"
+    ];
+
+  const auth =
+    req.headers.authorization ||
+    "";
+
+  const bearer =
+    auth.startsWith(
+      "Bearer "
+    )
+      ? auth.slice(7)
+      : "";
+
+  const supplied =
+    body.adminKey ||
+    body.admin_key ||
+    header ||
+    bearer ||
+    "";
+
+  return String(
+    supplied
+  ) === String(
+    ADMIN_KEY
+  );
+}
 
 /* =========================================================
-   SMOOTH LIVE POLLING
-   ========================================================= */
+   ADMIN
+========================================================= */
 
-setInterval(
-  load,
-  1000
-);
+async function listKeys() {
 
+  const result =
+    await pool.query(
+      `
+      SELECT
+        id,
+        access_key,
+        device_id,
+        created_at,
+        last_seen
 
-/* =========================================================
-   SMOOTH TIMER
-   ========================================================= */
+      FROM access_keys
 
-setInterval(
-  function() {
+      ORDER BY id DESC
+      `
+    );
 
-    if (!lastTimerAt) {
-      return;
-    }
+  return result.rows;
+}
 
+async function createKey(
+  body
+) {
 
-    const elapsed =
-      Math.floor(
-        (
-          Date.now() -
-          lastTimerAt
-        ) / 1000
-      );
+  let key =
+    String(
+      body.access_key ||
+      body.key ||
+      ""
+    ).trim();
 
+  if (!key) {
 
-    const value =
-      Math.max(
-        0,
-        timer - elapsed
-      );
+    key =
+      "DY-" +
+      crypto
+        .randomBytes(8)
+        .toString("hex")
+        .toUpperCase();
 
+  }
 
-    $("timer").textContent =
-      String(value)
-        .padStart(
-          2,
-          "0"
-        ) +
-      "s";
+  await pool.query(
+    `
+    INSERT INTO access_keys
+    (
+      access_key,
+      created_at,
+      last_seen
+    )
 
-  },
-  250
-);
-
-
-/* =========================================================
-   LOGIN EVENTS
-   ========================================================= */
-
-$("loginBtn")
-  .addEventListener(
-    "click",
-    doLogin
+    VALUES
+    ($1,$2,0)
+    `,
+    [
+      key,
+      now()
+    ]
   );
 
+  return key;
+}
 
-$("key")
-  .addEventListener(
-    "keydown",
-    function(event) {
+/* =========================================================
+   STATIC FILE SERVER
+========================================================= */
+
+function serveStatic(
+  req,
+  res
+) {
+
+  let requestPath;
+
+  try {
+
+    requestPath =
+      decodeURIComponent(
+        req.url.split("?")[0]
+      );
+
+  }
+  catch {
+
+    text(
+      res,
+      400,
+      "Bad request"
+    );
+
+    return;
+  }
+
+  if (
+    requestPath === "/"
+  ) {
+
+    requestPath =
+      "/prediction.html";
+
+  }
+
+  if (
+    requestPath.includes("..") ||
+    requestPath.includes("\0")
+  ) {
+
+    text(
+      res,
+      403,
+      "Forbidden"
+    );
+
+    return;
+  }
+
+  const filePath =
+    path.join(
+      __dirname,
+      requestPath
+    );
+
+  fs.stat(
+    filePath,
+    (error, stats) => {
 
       if (
-        event.key ===
-        "Enter"
+        error ||
+        !stats.isFile()
       ) {
 
-        doLogin();
+        text(
+          res,
+          404,
+          "Not found"
+        );
+
+        return;
+      }
+
+      const ext =
+        path.extname(
+          filePath
+        ).toLowerCase();
+
+      const types = {
+        ".html":
+          "text/html; charset=utf-8",
+        ".js":
+          "application/javascript; charset=utf-8",
+        ".css":
+          "text/css; charset=utf-8",
+        ".json":
+          "application/json; charset=utf-8",
+        ".png":
+          "image/png",
+        ".jpg":
+          "image/jpeg",
+        ".jpeg":
+          "image/jpeg",
+        ".svg":
+          "image/svg+xml",
+        ".ico":
+          "image/x-icon",
+        ".mp3":
+          "audio/mpeg"
+      };
+
+      const type =
+        types[ext] ||
+        "application/octet-stream";
+
+      /*
+        MP3 range support
+      */
+
+      if (
+        ext === ".mp3" &&
+        req.headers.range
+      ) {
+
+        const match =
+          req.headers.range.match(
+            /bytes=(\d+)-(\d*)/
+          );
+
+        if (!match) {
+
+          text(
+            res,
+            416,
+            "Invalid range"
+          );
+
+          return;
+        }
+
+        const start =
+          Number(match[1]);
+
+        const end =
+          match[2]
+            ? Number(match[2])
+            : stats.size - 1;
+
+        if (
+          start >= stats.size ||
+          end >= stats.size ||
+          start > end
+        ) {
+
+          res.writeHead(
+            416,
+            {
+              "Content-Range":
+                `bytes */${stats.size}`
+            }
+          );
+
+          res.end();
+
+          return;
+        }
+
+        res.writeHead(
+          206,
+          {
+            "Content-Type":
+              type,
+
+            "Content-Range":
+              `bytes ${start}-${end}/${stats.size}`,
+
+            "Accept-Ranges":
+              "bytes",
+
+            "Content-Length":
+              end - start + 1
+          }
+        );
+
+        fs.createReadStream(
+          filePath,
+          {
+            start,
+            end
+          }
+        ).pipe(res);
+
+        return;
+      }
+
+      res.writeHead(
+        200,
+        {
+          "Content-Type":
+            type,
+
+          "Content-Length":
+            stats.size,
+
+          "Cache-Control":
+            ext === ".html"
+              ? "no-store"
+              : "public, max-age=3600"
+        }
+      );
+
+      fs.createReadStream(
+        filePath
+      ).pipe(res);
+
+    }
+  );
+}
+
+/* =========================================================
+   SERVER
+========================================================= */
+
+const server =
+  http.createServer(
+    async (req, res) => {
+
+      try {
+
+        if (
+          req.method ===
+          "OPTIONS"
+        ) {
+
+          res.writeHead(
+            204,
+            {
+              "Access-Control-Allow-Origin":
+                "*",
+
+              "Access-Control-Allow-Headers":
+                "Content-Type, Authorization, X-Admin-Key",
+
+              "Access-Control-Allow-Methods":
+                "GET, POST, DELETE, OPTIONS"
+            }
+          );
+
+          res.end();
+
+          return;
+        }
+
+        const url =
+          new URL(
+            req.url,
+            `http://${req.headers.host || "localhost"}`
+          );
+
+        const pathname =
+          url.pathname;
+
+        /* HEALTH */
+
+        if (
+          pathname ===
+            "/health" &&
+          req.method ===
+            "GET"
+        ) {
+
+          json(
+            res,
+            200,
+            {
+              ok:true,
+              service:
+                "DY AI Wingo 30S",
+              uptime:
+                process.uptime()
+            }
+          );
+
+          return;
+        }
+
+        /* KEY CHECK */
+
+        if (
+          pathname ===
+            "/api/key/check" &&
+          req.method ===
+            "POST"
+        ) {
+
+          const body =
+            await readBody(req);
+
+          const result =
+            await checkKey(
+              body.key ||
+              body.access_key,
+              body.device_id
+            );
+
+          json(
+            res,
+            result.ok
+              ? 200
+              : 403,
+            result
+          );
+
+          return;
+        }
+
+        /* STATE */
+
+        if (
+          pathname ===
+            "/api/state" &&
+          req.method ===
+            "GET"
+        ) {
+
+          json(
+            res,
+            200,
+            await getState()
+          );
+
+          return;
+        }
+
+        /* HISTORY */
+
+        if (
+          pathname ===
+            "/api/history" &&
+          req.method ===
+            "GET"
+        ) {
+
+          json(
+            res,
+            200,
+            {
+              success:true,
+              limit:
+                WINLOSS_LIMIT,
+              ...(await getWinLoss())
+            }
+          );
+
+          return;
+        }
+
+        /* ADMIN KEYS GET */
+
+        if (
+          pathname ===
+            "/api/admin/keys" &&
+          req.method ===
+            "GET"
+        ) {
+
+          if (!isAdmin(req)) {
+
+            json(
+              res,
+              403,
+              {
+                success:false,
+                error:"Unauthorized"
+              }
+            );
+
+            return;
+          }
+
+          json(
+            res,
+            200,
+            {
+              success:true,
+              keys:
+                await listKeys()
+            }
+          );
+
+          return;
+        }
+
+        /* ADMIN KEYS CREATE */
+
+        if (
+          pathname ===
+            "/api/admin/keys" &&
+          req.method ===
+            "POST"
+        ) {
+
+          const body =
+            await readBody(req);
+
+          if (
+            !isAdmin(
+              req,
+              body
+            )
+          ) {
+
+            json(
+              res,
+              403,
+              {
+                success:false,
+                error:"Unauthorized"
+              }
+            );
+
+            return;
+          }
+
+          const key =
+            await createKey(
+              body
+            );
+
+          json(
+            res,
+            200,
+            {
+              success:true,
+              key
+            }
+          );
+
+          return;
+        }
+
+        /* ADMIN KEY DELETE */
+
+        if (
+          pathname ===
+            "/api/admin/keys" &&
+          req.method ===
+            "DELETE"
+        ) {
+
+          const body =
+            await readBody(req);
+
+          if (
+            !isAdmin(
+              req,
+              body
+            )
+          ) {
+
+            json(
+              res,
+              403,
+              {
+                success:false,
+                error:"Unauthorized"
+              }
+            );
+
+            return;
+          }
+
+          await pool.query(
+            `
+            DELETE FROM access_keys
+            WHERE id = $1
+            `,
+            [
+              Number(body.id)
+            ]
+          );
+
+          json(
+            res,
+            200,
+            {
+              success:true
+            }
+          );
+
+          return;
+        }
+
+        /* RESET DEVICE */
+
+        if (
+          pathname ===
+            "/api/admin/reset-device" &&
+          req.method ===
+            "POST"
+        ) {
+
+          const body =
+            await readBody(req);
+
+          if (
+            !isAdmin(
+              req,
+              body
+            )
+          ) {
+
+            json(
+              res,
+              403,
+              {
+                success:false,
+                error:"Unauthorized"
+              }
+            );
+
+            return;
+          }
+
+          await pool.query(
+            `
+            UPDATE access_keys
+
+            SET
+              device_id = NULL,
+              last_seen = 0
+
+            WHERE id = $1
+            `,
+            [
+              Number(body.id)
+            ]
+          );
+
+          json(
+            res,
+            200,
+            {
+              success:true
+            }
+          );
+
+          return;
+        }
+
+        /* ADMIN STATUS */
+
+        if (
+          pathname ===
+            "/api/admin/status" &&
+          req.method ===
+            "GET"
+        ) {
+
+          if (!isAdmin(req)) {
+
+            json(
+              res,
+              403,
+              {
+                success:false,
+                error:"Unauthorized"
+              }
+            );
+
+            return;
+          }
+
+          json(
+            res,
+            200,
+            {
+              success:true,
+              uptime:
+                process.uptime(),
+              historyLength:
+                state.history.length,
+              settledIssue:
+                state.settledIssue,
+              targetIssue:
+                state.targetIssue,
+              historyVersion:
+                state.historyVersion,
+              providerFetched:
+                state.providerFetched,
+              lastFetchAt:
+                state.lastFetchAt,
+              error:
+                state.lastError || null
+            }
+          );
+
+          return;
+        }
+
+        /* ADMIN PING */
+
+        if (
+          pathname ===
+            "/api/admin/ping" &&
+          req.method ===
+            "GET"
+        ) {
+
+          if (!isAdmin(req)) {
+
+            json(
+              res,
+              403,
+              {
+                success:false,
+                error:"Unauthorized"
+              }
+            );
+
+            return;
+          }
+
+          json(
+            res,
+            200,
+            {
+              success:true,
+              message:
+                "DY AI server online",
+              time:
+                now()
+            }
+          );
+
+          return;
+        }
+
+        /* ADMIN WINGO TEST */
+
+        if (
+          pathname ===
+            "/api/admin/wingo-test" &&
+          req.method ===
+            "GET"
+        ) {
+
+          if (!isAdmin(req)) {
+
+            json(
+              res,
+              403,
+              {
+                success:false,
+                error:"Unauthorized"
+              }
+            );
+
+            return;
+          }
+
+          try {
+
+            const data =
+              await fetchWingo();
+
+            const history =
+              normalizeHistory(
+                data
+              );
+
+            json(
+              res,
+              200,
+              {
+                success:true,
+                current:
+                  data?.current ||
+                  null,
+                fetched:
+                  data?.stats?.fetched ??
+                  history.length,
+                historyLength:
+                  history.length,
+                latest:
+                  history[0] ||
+                  null
+              }
+            );
+
+          }
+          catch(error) {
+
+            json(
+              res,
+              500,
+              {
+                success:false,
+                error:
+                  error.message
+              }
+            );
+
+          }
+
+          return;
+        }
+
+        /* ADMIN MODEL TEST */
+
+        if (
+          pathname ===
+            "/api/admin/model-test" &&
+          req.method ===
+            "GET"
+        ) {
+
+          if (!isAdmin(req)) {
+
+            json(
+              res,
+              403,
+              {
+                success:false,
+                error:"Unauthorized"
+              }
+            );
+
+            return;
+          }
+
+          const analysis =
+            adaptiveEnsemble(
+              state.history
+            );
+
+          json(
+            res,
+            200,
+            {
+              success:true,
+              history:
+                state.history.length,
+              analysis
+            }
+          );
+
+          return;
+        }
+
+        /* STATIC */
+
+        serveStatic(
+          req,
+          res
+        );
+
+      }
+      catch(error) {
+
+        console.error(
+          "SERVER ERROR:",
+          error
+        );
+
+        json(
+          res,
+          500,
+          {
+            success:false,
+            error:
+              error.message ||
+              "Internal server error"
+          }
+        );
 
       }
 
     }
   );
 
-
 /* =========================================================
-   MUSIC
-   ========================================================= */
+   START
+========================================================= */
 
-document.addEventListener(
-  "click",
-  function() {
+async function start() {
 
-    $("music")
-      .play()
-      .catch(
-        () => {}
-      );
+  try {
 
-  },
-  {
-    once:true
+    await initDb();
+
+    console.log(
+      "Database initialized"
+    );
+
+    /*
+      First API fetch
+    */
+
+    await updateLiveState();
+
+    /*
+      API polling every second.
+      Prediction is NOT recalculated
+      every second.
+    */
+
+    setInterval(
+      () => {
+
+        updateLiveState()
+          .catch(error => {
+
+            console.error(
+              "UPDATE LOOP:",
+              error.message
+            );
+
+          });
+
+      },
+      1000
+    );
+
+    server.listen(
+      PORT,
+      "0.0.0.0",
+      () => {
+
+        console.log(
+          `DY AI Wingo server running on port ${PORT}`
+        );
+
+      }
+    );
+
   }
-);
+  catch(error) {
 
+    console.error(
+      "START FAILED:",
+      error
+    );
 
-/* =========================================================
-   AUTO LOGIN
-   ========================================================= */
+    process.exit(1);
 
-autoLogin();
+  }
 
-</script>
+}
 
-</body>
-</html>
+start();
