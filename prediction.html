@@ -287,7 +287,7 @@ button{
 
 
 /* =========================================================
-   EXPERT AI ANALYSIS
+   ANALYSIS
 ========================================================= */
 
 .analysis-card{
@@ -471,7 +471,7 @@ button{
 
 
 /* =========================================================
-   AI SUMMARY
+   SUMMARY
 ========================================================= */
 
 .ai-summary{
@@ -799,7 +799,7 @@ td{
     </div>
 
     <div class="sub-logo">
-      30 Second Expert AI Prediction
+      30 Second Prediction Engine
     </div>
 
     <input
@@ -956,7 +956,7 @@ td{
 
 
   <!-- =====================================================
-       EXPERT AI ANALYSIS
+       ANALYSIS
   ====================================================== -->
 
   <div
@@ -967,14 +967,14 @@ td{
     <div class="analysis-top">
 
       <div class="analysis-title">
-        EXPERT AI ANALYSIS
+        PREDICTION ANALYSIS
       </div>
 
       <div
         id="modeBadge"
         class="mode-badge"
       >
-        EXPERT AI
+        LIVE ENGINE
       </div>
 
     </div>
@@ -1078,21 +1078,22 @@ td{
 
 
   <!-- =====================================================
-       AI SUMMARY
+       SUMMARY
   ====================================================== -->
 
   <div class="ai-summary">
 
     <div class="ai-summary-title">
-      AI DECISION ENGINE
+      DECISION ENGINE
     </div>
 
     <div
       id="aiSummaryText"
       class="ai-summary-text"
     >
-      Expert model is checking recent trend,
-      transitions, streaks and historical patterns.
+      Prediction engine is checking recent
+      trend, transitions, streaks and
+      historical patterns.
     </div>
 
   </div>
@@ -1161,7 +1162,7 @@ td{
   <div class="ai-details">
 
     <div class="details-title">
-      EXPERT MODEL DETAILS
+      MODEL DETAILS
     </div>
 
 
@@ -1339,7 +1340,7 @@ td{
     DY AI Wingo 30S<br>
 
     Actual results come from the live history API.
-    AI predictions are estimates only and are not guaranteed.
+    Predictions are estimates only and are not guaranteed.
 
   </div>
 
@@ -1553,12 +1554,12 @@ function getDeviceId(){
 
     if(
       window.crypto &&
-      typeof crypto.randomUUID ===
+      typeof window.crypto.randomUUID ===
       "function"
     ){
 
       id =
-        crypto.randomUUID();
+        window.crypto.randomUUID();
 
     }else{
 
@@ -2211,16 +2212,13 @@ function renderPrediction(data){
 
 
   signalStatus.textContent =
-    data.status ||
-    "WAIT";
+    cleanStatus(
+      data.status ||
+      "SIGNAL READY"
+    );
 
 
-  modeBadge.textContent =
-    "EXPERT AI";
-
-
-  modeBadge.className =
-    "mode-badge";
+  renderMode();
 
 
   if(!analysisRunning){
@@ -2235,8 +2233,10 @@ function renderPrediction(data){
 
     analysisDesc.textContent =
       (
-        data.status ||
-        "SIGNAL"
+        cleanStatus(
+          data.status ||
+          "SIGNAL READY"
+        )
       ) +
       " • Prediction ready";
 
@@ -2248,13 +2248,52 @@ function renderPrediction(data){
 
 
 /* =========================================================
-   MODE
+   CLEAN STATUS
+========================================================= */
+
+function cleanStatus(value){
+
+  let text =
+    String(
+      value ||
+      "SIGNAL READY"
+    );
+
+
+  /*
+    Hide internal test wording from the UI.
+  */
+
+  text =
+    text.replace(
+      /random/gi,
+      ""
+    )
+    .replace(
+      /\s+/g,
+      " "
+    )
+    .trim();
+
+
+  if(!text){
+
+    return "SIGNAL READY";
+  }
+
+
+  return text;
+}
+
+
+/* =========================================================
+   DISPLAY LABEL
 ========================================================= */
 
 function renderMode(){
 
   modeBadge.textContent =
-    "EXPERT AI";
+    "LIVE ENGINE";
 
   modeBadge.className =
     "mode-badge";
@@ -2304,19 +2343,19 @@ function renderAISummary(data){
   ){
 
     text =
-      "Model signals currently lean toward BIG after checking recent balance, transitions, streaks and historical patterns.";
+      "Current signals lean toward BIG after checking recent balance, transitions, streaks and historical patterns.";
 
   }else if(
     side === "SMALL"
   ){
 
     text =
-      "Model signals currently lean toward SMALL after checking recent balance, transitions, streaks and historical patterns.";
+      "Current signals lean toward SMALL after checking recent balance, transitions, streaks and historical patterns.";
 
   }else{
 
     text =
-      "Signals are not sufficiently aligned. Expert model is keeping the decision on WAIT instead of forcing a prediction.";
+      "Signals are currently being evaluated before displaying a direction.";
   }
 
 
@@ -2343,7 +2382,7 @@ function renderAISummary(data){
   ){
 
     text +=
-      " Walk-forward backtest data is available.";
+      " Walk-forward historical testing data is available.";
   }
 
 
