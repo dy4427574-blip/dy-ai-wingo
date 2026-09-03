@@ -2,8 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport"
-      content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 
 <title>DY AI • Wingo 30S</title>
 
@@ -21,43 +20,32 @@ html,body{
 }
 
 body{
-  font-family:
-    Inter,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-
+  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   color:#f8fafc;
-
   background:
-    radial-gradient(
-      circle at 50% -10%,
-      #172554 0,
-      #080d1b 38%,
-      #03050b 100%
-    );
-
+    radial-gradient(circle at 50% -10%,#172554 0,#080d1b 38%,#03050b 100%);
   overflow-x:hidden;
 }
 
-button,
-input{
+button,input{
   font:inherit;
+}
+
+.hidden{
+  display:none!important;
 }
 
 .app{
   width:100%;
   max-width:650px;
   margin:auto;
-  padding:12px;
+  padding:10px;
 }
 
 
-/* =========================================================
+/* =====================================================
    LOGIN
-========================================================= */
+===================================================== */
 
 .login-page{
   min-height:100vh;
@@ -70,41 +58,24 @@ input{
 .login-box{
   width:100%;
   max-width:390px;
-  padding:24px;
+  padding:25px;
   border-radius:24px;
-
-  background:
-    rgba(8,13,27,.92);
-
+  background:rgba(8,13,27,.94);
   border:1px solid rgba(148,163,184,.12);
-
-  box-shadow:
-    0 25px 80px rgba(0,0,0,.45);
+  box-shadow:0 25px 80px rgba(0,0,0,.5);
 }
 
 .logo{
-  width:68px;
-  height:68px;
-  margin:0 auto;
-
+  width:66px;
+  height:66px;
+  margin:auto;
   display:grid;
   place-items:center;
-
-  border-radius:21px;
-
-  background:
-    linear-gradient(
-      135deg,
-      #22d3ee,
-      #6366f1,
-      #8b5cf6
-    );
-
-  font-size:27px;
+  border-radius:20px;
+  background:linear-gradient(135deg,#22d3ee,#6366f1,#8b5cf6);
+  font-size:25px;
   font-weight:1000;
-
-  box-shadow:
-    0 15px 45px rgba(59,130,246,.3);
+  box-shadow:0 15px 45px rgba(59,130,246,.3);
 }
 
 .login-title{
@@ -119,75 +90,55 @@ input{
 .login-title p{
   margin-top:5px;
   color:#64748b;
-  font-size:11px;
+  font-size:10px;
 }
 
 .input-wrap{
-  margin-top:23px;
+  margin-top:22px;
 }
 
 .input-wrap label{
   display:block;
   margin-bottom:7px;
-
   color:#94a3b8;
-  font-size:10px;
-  font-weight:700;
+  font-size:9px;
+  font-weight:800;
 }
 
 .input{
   width:100%;
   padding:14px;
-
   outline:none;
-
   color:#fff;
   background:#050a14;
-
   border:1px solid #1e293b;
   border-radius:13px;
 }
 
 .input:focus{
   border-color:#6366f1;
-  box-shadow:
-    0 0 0 3px rgba(99,102,241,.1);
+  box-shadow:0 0 0 3px rgba(99,102,241,.1);
 }
 
 .login-btn{
   width:100%;
   margin-top:12px;
-
   padding:14px;
-
   border:0;
   border-radius:13px;
-
   color:#fff;
   font-weight:900;
-
-  background:
-    linear-gradient(
-      135deg,
-      #2563eb,
-      #6366f1
-    );
-
-  cursor:pointer;
+  background:linear-gradient(135deg,#2563eb,#6366f1);
 }
 
 .login-error{
   display:none;
-
   margin-top:10px;
   padding:10px;
-
   border-radius:10px;
-
   color:#fca5a5;
   background:rgba(239,68,68,.08);
   border:1px solid rgba(239,68,68,.15);
-
   font-size:10px;
 }
 
@@ -196,16 +147,15 @@ input{
 }
 
 
-/* =========================================================
+/* =====================================================
    HEADER
-========================================================= */
+===================================================== */
 
 .header{
   display:flex;
   align-items:center;
   justify-content:space-between;
-
-  padding:5px 3px 13px;
+  padding:4px 3px 12px;
 }
 
 .brand{
@@ -217,20 +167,11 @@ input{
 .brand-logo{
   width:38px;
   height:38px;
-
   display:grid;
   place-items:center;
-
   border-radius:12px;
-
-  background:
-    linear-gradient(
-      135deg,
-      #22d3ee,
-      #6366f1
-    );
-
-  font-size:15px;
+  background:linear-gradient(135deg,#22d3ee,#6366f1);
+  font-size:14px;
   font-weight:1000;
 }
 
@@ -249,14 +190,10 @@ input{
   display:flex;
   align-items:center;
   gap:6px;
-
   padding:7px 9px;
-
   border-radius:99px;
-
   background:rgba(15,23,42,.75);
   border:1px solid rgba(148,163,184,.12);
-
   color:#94a3b8;
   font-size:8px;
   font-weight:800;
@@ -265,88 +202,64 @@ input{
 .live-dot{
   width:6px;
   height:6px;
-
   border-radius:50%;
   background:#22c55e;
-
-  box-shadow:
-    0 0 10px #22c55e;
+  box-shadow:0 0 10px #22c55e;
 }
 
 
-/* =========================================================
+/* =====================================================
    GAME
-========================================================= */
+===================================================== */
 
 .game-card{
   position:relative;
-
   height:350px;
-
   overflow:hidden;
-
   border-radius:22px;
-
   background:#02050a;
-
   border:1px solid rgba(148,163,184,.12);
-
-  box-shadow:
-    0 20px 60px rgba(0,0,0,.35);
+  box-shadow:0 20px 60px rgba(0,0,0,.35);
 }
 
 .game-card iframe{
   width:100%;
   height:100%;
-
   border:0;
 }
 
 .game-overlay{
   position:absolute;
-
   left:10px;
   right:10px;
   bottom:10px;
-
   display:flex;
   justify-content:flex-end;
-
   pointer-events:none;
 }
 
 .open-game{
   pointer-events:auto;
-
   border:1px solid rgba(255,255,255,.12);
-
   border-radius:10px;
-
   padding:8px 11px;
-
-  background:rgba(2,6,23,.85);
+  background:rgba(2,6,23,.88);
   color:#cbd5e1;
-
   font-size:9px;
   font-weight:800;
-
   text-decoration:none;
 }
 
 
-/* =========================================================
-   ROUND BAR
-========================================================= */
+/* =====================================================
+   TARGET
+===================================================== */
 
 .round-card{
   margin-top:10px;
-
   padding:13px;
-
   border-radius:17px;
-
   background:rgba(8,13,27,.88);
-
   border:1px solid rgba(148,163,184,.1);
 }
 
@@ -359,139 +272,89 @@ input{
 .round-label{
   color:#64748b;
   font-size:8px;
-  text-transform:uppercase;
   letter-spacing:.8px;
 }
 
 .round-period{
   margin-top:5px;
-
   font-family:monospace;
-
   font-size:12px;
   font-weight:800;
-
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
 }
 
 .timer{
-  min-width:48px;
-  height:34px;
-
+  min-width:50px;
+  height:35px;
   display:grid;
   place-items:center;
-
   border-radius:11px;
-
   background:#111827;
-
   border:1px solid #1e293b;
-
   color:#38bdf8;
-
   font-size:15px;
   font-weight:1000;
 }
 
 
-/* =========================================================
-   AI PREDICTION
-========================================================= */
+/* =====================================================
+   MAIN PREDICTION
+===================================================== */
 
 .prediction-card{
   position:relative;
-
   margin-top:12px;
-
-  min-height:340px;
-
+  min-height:350px;
   display:flex;
-  flex-direction:column;
   align-items:center;
   justify-content:center;
-
-  text-align:center;
-
   overflow:hidden;
-
-  border-radius:25px;
-
+  border-radius:26px;
   background:
-    radial-gradient(
-      circle at 50% 20%,
-      rgba(99,102,241,.14),
-      transparent 45%
-    ),
-    rgba(8,13,27,.94);
-
+    radial-gradient(circle at 50% 20%,rgba(99,102,241,.14),transparent 45%),
+    rgba(8,13,27,.95);
   border:1px solid rgba(99,102,241,.18);
-
-  box-shadow:
-    0 20px 70px rgba(0,0,0,.3);
+  box-shadow:0 20px 70px rgba(0,0,0,.35);
 }
 
-.prediction-card::before{
-  content:"";
-
-  position:absolute;
-
-  width:220px;
-  height:220px;
-
-  border-radius:50%;
-
-  background:
-    radial-gradient(
-      circle,
-      rgba(34,211,238,.06),
-      transparent 70%
-    );
-
-  pointer-events:none;
+.prediction-inner{
+  width:100%;
+  text-align:center;
 }
 
 .ai-label{
   color:#64748b;
-
   font-size:9px;
-  font-weight:800;
-
+  font-weight:900;
   letter-spacing:2px;
-
-  text-transform:uppercase;
 }
 
 .target{
   margin-top:7px;
-
-  color:#94a3b8;
-
+  color:#64748b;
   font-family:monospace;
-
-  font-size:11px;
+  font-size:10px;
 }
 
 .target span{
-  color:#e2e8f0;
+  color:#cbd5e1;
 }
 
 
-/* ANALYZING */
+/* =====================================================
+   ANALYSIS
+===================================================== */
 
 .analysis-screen{
   position:absolute;
   inset:0;
-
   display:flex;
   flex-direction:column;
   align-items:center;
   justify-content:center;
-
-  background:
-    rgba(5,9,20,.97);
-
+  background:rgba(5,9,20,.98);
   z-index:5;
 }
 
@@ -500,21 +363,14 @@ input{
 }
 
 .ai-orbit{
-  width:66px;
-  height:66px;
-
+  width:65px;
+  height:65px;
   border-radius:50%;
-
   border:2px solid rgba(99,102,241,.15);
-
   border-top-color:#22d3ee;
   border-right-color:#8b5cf6;
-
-  animation:
-    spin .8s linear infinite;
-
-  box-shadow:
-    0 0 35px rgba(99,102,241,.18);
+  animation:spin .8s linear infinite;
+  box-shadow:0 0 35px rgba(99,102,241,.18);
 }
 
 @keyframes spin{
@@ -525,50 +381,32 @@ input{
 
 .analysis-title{
   margin-top:17px;
-
   font-size:13px;
   font-weight:900;
 }
 
 .analysis-text{
   margin-top:6px;
-
   color:#64748b;
-
   font-size:9px;
 }
 
 .analysis-progress{
   width:190px;
   height:4px;
-
   margin-top:15px;
-
   overflow:hidden;
-
   border-radius:99px;
-
   background:#111827;
 }
 
 .analysis-progress span{
   display:block;
-
   width:0;
   height:100%;
-
   border-radius:99px;
-
-  background:
-    linear-gradient(
-      90deg,
-      #22d3ee,
-      #6366f1,
-      #a78bfa
-    );
-
-  animation:
-    progress 3s linear forwards;
+  background:linear-gradient(90deg,#22d3ee,#6366f1,#a78bfa);
+  animation:progress 3s linear forwards;
 }
 
 @keyframes progress{
@@ -578,14 +416,11 @@ input{
 }
 
 
-/* FINAL */
+/* =====================================================
+   RESULT
+===================================================== */
 
 .final-content{
-  position:relative;
-  z-index:2;
-
-  width:100%;
-
   display:flex;
   flex-direction:column;
   align-items:center;
@@ -596,73 +431,35 @@ input{
 }
 
 .prediction-side{
-  margin-top:14px;
-
-  font-size:62px;
-
+  margin-top:20px;
+  font-size:66px;
   line-height:1;
-
   font-weight:1000;
-
   letter-spacing:-2px;
 }
 
 .prediction-side.big{
   color:#38bdf8;
-
-  text-shadow:
-    0 0 35px rgba(56,189,248,.25);
+  text-shadow:0 0 35px rgba(56,189,248,.25);
 }
 
 .prediction-side.small{
   color:#a78bfa;
-
-  text-shadow:
-    0 0 35px rgba(167,139,250,.25);
-}
-
-.number-label{
-  margin-top:25px;
-
-  color:#64748b;
-
-  font-size:8px;
-
-  font-weight:800;
-
-  letter-spacing:1.4px;
-}
-
-.prediction-number{
-  margin-top:5px;
-
-  font-size:39px;
-
-  line-height:1;
-
-  font-weight:1000;
-
-  color:#fff;
-
-  text-shadow:
-    0 0 25px rgba(255,255,255,.12);
+  text-shadow:0 0 35px rgba(167,139,250,.25);
 }
 
 .confidence-wrap{
-  width:220px;
-
-  margin-top:23px;
+  width:230px;
+  margin-top:29px;
 }
 
 .confidence-head{
   display:flex;
   justify-content:space-between;
-
-  margin-bottom:6px;
-
+  margin-bottom:7px;
   color:#64748b;
-
   font-size:8px;
+  font-weight:800;
 }
 
 .confidence-head b{
@@ -671,58 +468,38 @@ input{
 
 .confidence-bar{
   width:100%;
-  height:4px;
-
+  height:5px;
   overflow:hidden;
-
   border-radius:99px;
-
   background:#111827;
 }
 
 .confidence-bar span{
   display:block;
-
-  height:100%;
   width:0;
-
+  height:100%;
   border-radius:99px;
-
-  background:
-    linear-gradient(
-      90deg,
-      #22d3ee,
-      #6366f1,
-      #a78bfa
-    );
-
-  transition:
-    width .5s ease;
+  background:linear-gradient(90deg,#22d3ee,#6366f1,#a78bfa);
+  transition:width .5s ease;
 }
 
 .ai-status{
-  margin-top:13px;
-
+  margin-top:14px;
   color:#64748b;
-
   font-size:8px;
+  font-weight:800;
 }
 
 
-/* =========================================================
-   LAST RESULTS
-========================================================= */
+/* =====================================================
+   LAST 30
+===================================================== */
 
 .history-card{
   margin-top:12px;
-
   padding:14px;
-
   border-radius:19px;
-
-  background:
-    rgba(8,13,27,.9);
-
+  background:rgba(8,13,27,.9);
   border:1px solid rgba(148,163,184,.1);
 }
 
@@ -730,8 +507,7 @@ input{
   display:flex;
   align-items:center;
   justify-content:space-between;
-
-  margin-bottom:11px;
+  margin-bottom:10px;
 }
 
 .section-head h2{
@@ -751,39 +527,24 @@ input{
 
 .history-table th{
   padding:7px 4px;
-
   color:#475569;
-
   font-size:7px;
-
   text-align:left;
-
-  text-transform:uppercase;
 }
 
 .history-table td{
   padding:9px 4px;
-
   border-top:1px solid rgba(148,163,184,.06);
-
   color:#cbd5e1;
-
   font-size:9px;
 }
 
 .period-cell{
-  max-width:130px;
-
+  max-width:145px;
   font-family:monospace;
-
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
-}
-
-.num-cell{
-  font-size:12px!important;
-  font-weight:900;
 }
 
 .big-text{
@@ -811,29 +572,22 @@ input{
 }
 
 
-/* =========================================================
+/* =====================================================
    STATS
-========================================================= */
+===================================================== */
 
 .stats{
   display:grid;
   grid-template-columns:repeat(3,1fr);
-
   gap:8px;
-
   margin-top:10px;
 }
 
 .stat{
   padding:12px 8px;
-
   text-align:center;
-
   border-radius:14px;
-
-  background:
-    rgba(8,13,27,.85);
-
+  background:rgba(8,13,27,.85);
   border:1px solid rgba(148,163,184,.08);
 }
 
@@ -844,48 +598,31 @@ input{
 
 .stat-label{
   margin-top:3px;
-
   color:#64748b;
-
   font-size:7px;
-
   text-transform:uppercase;
 }
 
 
-/* =========================================================
-   FOOTER CONTROLS
-========================================================= */
+/* =====================================================
+   CONTROLS
+===================================================== */
 
 .controls{
   display:flex;
-
   gap:8px;
-
   margin-top:10px;
 }
 
 .control-btn{
   flex:1;
-
   padding:11px;
-
   border-radius:12px;
-
   border:1px solid #1e293b;
-
   background:#0b1220;
-
   color:#94a3b8;
-
   font-size:9px;
   font-weight:800;
-
-  cursor:pointer;
-}
-
-.control-btn:active{
-  transform:scale(.97);
 }
 
 .logout{
@@ -893,41 +630,25 @@ input{
 }
 
 
-/* =========================================================
+/* =====================================================
    MUSIC
-========================================================= */
+===================================================== */
 
 .music{
   position:fixed;
-
   left:50%;
   bottom:10px;
-
   transform:translateX(-50%);
-
-  width:min(
-    calc(100% - 24px),
-    600px
-  );
-
+  width:min(calc(100% - 24px),600px);
   z-index:20;
-
   display:flex;
   align-items:center;
   justify-content:space-between;
-
   padding:10px 11px 10px 14px;
-
   border-radius:18px;
-
-  background:
-    rgba(7,12,24,.94);
-
+  background:rgba(7,12,24,.95);
   border:1px solid rgba(148,163,184,.13);
-
-  box-shadow:
-    0 15px 45px rgba(0,0,0,.45);
-
+  box-shadow:0 15px 45px rgba(0,0,0,.45);
   backdrop-filter:blur(14px);
 }
 
@@ -945,34 +666,13 @@ input{
 .music-btn{
   width:46px;
   height:46px;
-
   display:grid;
   place-items:center;
-
   border:0;
   border-radius:14px;
-
-  background:
-    linear-gradient(
-      135deg,
-      #22d3ee,
-      #3b82f6
-    );
-
+  background:linear-gradient(135deg,#22d3ee,#3b82f6);
   color:#fff;
-
   font-size:17px;
-
-  cursor:pointer;
-}
-
-
-/* =========================================================
-   UTIL
-========================================================= */
-
-.hidden{
-  display:none!important;
 }
 
 @media(max-width:430px){
@@ -990,21 +690,19 @@ input{
   }
 
   .prediction-side{
-    font-size:55px;
+    font-size:58px;
   }
 
 }
-
 </style>
 </head>
-
 
 <body>
 
 
-<!-- =======================================================
+<!-- =====================================================
      LOGIN
-======================================================= -->
+===================================================== -->
 
 <div id="loginPage" class="login-page">
 
@@ -1049,10 +747,9 @@ input{
 </div>
 
 
-
-<!-- =======================================================
-     MAIN APP
-======================================================= -->
+<!-- =====================================================
+     APP
+===================================================== -->
 
 <div id="app" class="app hidden">
 
@@ -1074,13 +771,12 @@ input{
         </div>
 
         <div class="brand-sub">
-          WINGO 30S AI ENGINE
+          BIG / SMALL AI ENGINE
         </div>
 
       </div>
 
     </div>
-
 
     <div class="live">
 
@@ -1093,7 +789,6 @@ input{
     </div>
 
   </header>
-
 
 
   <!-- GAME -->
@@ -1122,8 +817,7 @@ input{
   </div>
 
 
-
-  <!-- ROUND -->
+  <!-- TARGET -->
 
   <div class="round-card">
 
@@ -1143,7 +837,6 @@ input{
 
       </div>
 
-
       <div
         id="timer"
         class="timer">
@@ -1155,15 +848,14 @@ input{
   </div>
 
 
-
-  <!-- =====================================================
+  <!-- ===================================================
        PREDICTION
-  ====================================================== -->
+  ==================================================== -->
 
   <div class="prediction-card">
 
 
-    <!-- 3 SECOND ANALYSIS -->
+    <!-- ANALYSIS -->
 
     <div
       id="analysisScreen"
@@ -1188,7 +880,7 @@ input{
     </div>
 
 
-    <!-- FINAL RESULT -->
+    <!-- FINAL -->
 
     <div
       id="finalContent"
@@ -1200,29 +892,14 @@ input{
 
       <div class="target">
         Target:
-        <span id="predictionTarget">
-          —
-        </span>
+        <span id="predictionTarget">—</span>
       </div>
-
 
       <div
         id="predictionSide"
         class="prediction-side">
         —
       </div>
-
-
-      <div class="number-label">
-        SUGGESTED NUMBER
-      </div>
-
-      <div
-        id="predictionNumber"
-        class="prediction-number">
-        —
-      </div>
-
 
       <div class="confidence-wrap">
 
@@ -1244,11 +921,10 @@ input{
 
       </div>
 
-
       <div
         id="aiStatus"
         class="ai-status">
-        AI signal ready
+        AI SIGNAL READY
       </div>
 
     </div>
@@ -1256,17 +932,16 @@ input{
   </div>
 
 
-
-  <!-- =====================================================
+  <!-- ===================================================
        LAST 30
-  ====================================================== -->
+  ==================================================== -->
 
   <div class="history-card">
 
     <div class="section-head">
 
       <h2>
-        LAST 30 RESULTS
+        LAST 30
       </h2>
 
       <span>
@@ -1284,10 +959,6 @@ input{
 
           <th>
             PERIOD
-          </th>
-
-          <th>
-            NUMBER
           </th>
 
           <th>
@@ -1311,7 +982,7 @@ input{
         <tr>
 
           <td
-            colspan="5"
+            colspan="4"
             style="
               text-align:center;
               color:#475569;
@@ -1328,10 +999,7 @@ input{
   </div>
 
 
-
-  <!-- =====================================================
-       STATS
-  ====================================================== -->
+  <!-- STATS -->
 
   <div class="stats">
 
@@ -1382,7 +1050,6 @@ input{
   </div>
 
 
-
   <!-- CONTROLS -->
 
   <div class="controls">
@@ -1402,11 +1069,9 @@ input{
   </div>
 
 
-  <div style="height:75px"></div>
-
+  <div style="height:80px"></div>
 
 </div>
-
 
 
 <!-- MUSIC -->
@@ -1427,7 +1092,6 @@ input{
 
   </div>
 
-
   <button
     id="musicBtn"
     class="music-btn">
@@ -1445,12 +1109,11 @@ input{
 </audio>
 
 
-
 <script>
 
-/* =========================================================
+/* =====================================================
    VARIABLES
-========================================================= */
+===================================================== */
 
 const $ = id =>
   document.getElementById(id);
@@ -1467,12 +1130,10 @@ let analysisRunning = false;
 
 let stateInterval = null;
 
-let musicPlaying = false;
 
-
-/* =========================================================
-   DEVICE ID
-========================================================= */
+/* =====================================================
+   DEVICE
+===================================================== */
 
 function getDeviceId(){
 
@@ -1488,7 +1149,8 @@ function getDeviceId(){
       crypto.randomUUID
     ){
 
-      id = crypto.randomUUID();
+      id =
+        crypto.randomUUID();
 
     }else{
 
@@ -1513,12 +1175,13 @@ function getDeviceId(){
 
 }
 
-deviceId = getDeviceId();
+deviceId =
+  getDeviceId();
 
 
-/* =========================================================
+/* =====================================================
    LOGIN
-========================================================= */
+===================================================== */
 
 $("loginBtn")
   .addEventListener(
@@ -1532,8 +1195,13 @@ $("accessKey")
     "keydown",
     e => {
 
-      if(e.key === "Enter")
+      if(
+        e.key === "Enter"
+      ){
+
         login();
+
+      }
 
     }
   );
@@ -1558,7 +1226,8 @@ async function login(){
   }
 
 
-  $("loginBtn").disabled = true;
+  $("loginBtn").disabled =
+    true;
 
   $("loginBtn").textContent =
     "CHECKING...";
@@ -1578,9 +1247,14 @@ async function login(){
           },
 
           body:JSON.stringify({
+
             access_key:key,
-            device_id:deviceId
+
+            device_id:
+              deviceId
+
           })
+
         }
       );
 
@@ -1589,8 +1263,10 @@ async function login(){
       await response.json();
 
 
-    if(!response.ok ||
-       data.ok === false){
+    if(
+      !response.ok ||
+      data.ok === false
+    ){
 
       throw new Error(
         data.error ||
@@ -1600,7 +1276,9 @@ async function login(){
     }
 
 
-    accessKey = key;
+    accessKey =
+      key;
+
 
     localStorage.setItem(
       "dy_ai_access_key",
@@ -1608,20 +1286,7 @@ async function login(){
     );
 
 
-    $("loginPage")
-      .classList
-      .add("hidden");
-
-    $("app")
-      .classList
-      .remove("hidden");
-
-    $("musicBox")
-      .classList
-      .remove("hidden");
-
-
-    startPolling();
+    openApp();
 
 
   }catch(error){
@@ -1633,7 +1298,8 @@ async function login(){
 
   }finally{
 
-    $("loginBtn").disabled = false;
+    $("loginBtn").disabled =
+      false;
 
     $("loginBtn").textContent =
       "ENTER DY AI";
@@ -1643,7 +1309,28 @@ async function login(){
 }
 
 
-function showLoginError(message){
+function openApp(){
+
+  $("loginPage")
+    .classList
+    .add("hidden");
+
+  $("app")
+    .classList
+    .remove("hidden");
+
+  $("musicBox")
+    .classList
+    .remove("hidden");
+
+  startPolling();
+
+}
+
+
+function showLoginError(
+  message
+){
 
   const box =
     $("loginError");
@@ -1651,14 +1338,16 @@ function showLoginError(message){
   box.textContent =
     message;
 
-  box.classList.add("show");
+  box.classList.add(
+    "show"
+  );
 
 }
 
 
-/* =========================================================
+/* =====================================================
    AUTO LOGIN
-========================================================= */
+===================================================== */
 
 window.addEventListener(
   "load",
@@ -1668,6 +1357,7 @@ window.addEventListener(
       localStorage.getItem(
         "dy_ai_access_key"
       );
+
 
     if(!saved)
       return;
@@ -1687,9 +1377,15 @@ window.addEventListener(
             },
 
             body:JSON.stringify({
-              access_key:saved,
-              device_id:deviceId
+
+              access_key:
+                saved,
+
+              device_id:
+                deviceId
+
             })
+
           }
         );
 
@@ -1698,30 +1394,21 @@ window.addEventListener(
         await response.json();
 
 
-      if(!response.ok ||
-         data.ok === false){
+      if(
+        !response.ok ||
+        data.ok === false
+      ){
 
         throw new Error();
 
       }
 
 
-      accessKey = saved;
-
-      $("loginPage")
-        .classList
-        .add("hidden");
-
-      $("app")
-        .classList
-        .remove("hidden");
-
-      $("musicBox")
-        .classList
-        .remove("hidden");
+      accessKey =
+        saved;
 
 
-      startPolling();
+      openApp();
 
 
     }catch{
@@ -1736,9 +1423,9 @@ window.addEventListener(
 );
 
 
-/* =========================================================
-   STATE POLLING
-========================================================= */
+/* =====================================================
+   POLLING
+===================================================== */
 
 function startPolling(){
 
@@ -1749,10 +1436,6 @@ function startPolling(){
 
   loadState();
 
-
-  /*
-    Smooth UI update every second.
-  */
 
   stateInterval =
     setInterval(
@@ -1805,9 +1488,9 @@ async function loadState(){
 }
 
 
-/* =========================================================
-   UPDATE UI
-========================================================= */
+/* =====================================================
+   UI
+===================================================== */
 
 function updateUI(data){
 
@@ -1818,25 +1501,23 @@ function updateUI(data){
 
   $("targetIssue")
     .textContent =
-      target || "WAITING...";
+      target ||
+      "WAITING...";
 
 
   $("predictionTarget")
     .textContent =
-      target || "—";
+      target ||
+      "—";
 
 
   updateTimer(
-    Number(data.countdown)
+    data.countdown
   );
 
 
   /*
-    Important:
-    Only start the 3 second animation
-    when the prediction target changes.
-
-    It will NOT run every second.
+    Analysis ONLY when target changes.
   */
 
   if(
@@ -1844,7 +1525,8 @@ function updateUI(data){
     target !== lastTarget
   ){
 
-    lastTarget = target;
+    lastTarget =
+      target;
 
     showAnalysis(
       target
@@ -1853,17 +1535,16 @@ function updateUI(data){
   }
 
 
-  updateStats(data);
-
-  updateHistory(
-    data.predictionHistory || []
+  updateStats(
+    data
   );
 
 
-  /*
-    If analysis is not running,
-    display current prediction.
-  */
+  updateHistory(
+    data.predictionHistory ||
+    []
+  );
+
 
   if(
     !analysisRunning &&
@@ -1879,16 +1560,19 @@ function updateUI(data){
 }
 
 
-/* =========================================================
-   3 SECOND AI ANALYSIS
-========================================================= */
+/* =====================================================
+   ANALYSIS
+===================================================== */
 
-function showAnalysis(target){
+function showAnalysis(
+  target
+){
 
   analysisTarget =
     target;
 
-  analysisRunning = true;
+  analysisRunning =
+    true;
 
 
   $("analysisScreen")
@@ -1907,12 +1591,13 @@ function showAnalysis(target){
 
     "Checking trend break...",
 
-    "Comparing signals..."
+    "Comparing BIG / SMALL signals..."
 
   ];
 
 
   let index = 0;
+
 
   $("analysisText")
     .textContent =
@@ -1924,7 +1609,11 @@ function showAnalysis(target){
 
       index++;
 
-      if(index < messages.length){
+
+      if(
+        index <
+        messages.length
+      ){
 
         $("analysisText")
           .textContent =
@@ -1937,19 +1626,19 @@ function showAnalysis(target){
 
   setTimeout(()=>{
 
-    clearInterval(interval);
+    clearInterval(
+      interval
+    );
 
-    analysisRunning = false;
+
+    analysisRunning =
+      false;
+
 
     $("analysisScreen")
       .classList
       .add("hidden");
 
-
-    /*
-      Immediately fetch latest state
-      after analysis finishes.
-    */
 
     loadState();
 
@@ -1958,19 +1647,22 @@ function showAnalysis(target){
 }
 
 
-/* =========================================================
-   SHOW PREDICTION
-========================================================= */
+/* =====================================================
+   PREDICTION
+===================================================== */
 
-function showPrediction(data){
+function showPrediction(
+  data
+){
 
   const side =
     String(
-      data.prediction || ""
+      data.prediction ||
+      ""
     ).toUpperCase();
 
 
-  const sideEl =
+  const element =
     $("predictionSide");
 
 
@@ -1979,18 +1671,18 @@ function showPrediction(data){
     side !== "SMALL"
   ){
 
-    sideEl.textContent =
+    element.textContent =
       "WAIT";
 
-    sideEl.className =
+    element.className =
       "prediction-side";
 
   }else{
 
-    sideEl.textContent =
+    element.textContent =
       side;
 
-    sideEl.className =
+    element.className =
       "prediction-side " +
       (
         side === "BIG"
@@ -2001,15 +1693,10 @@ function showPrediction(data){
   }
 
 
-  $("predictionNumber")
-    .textContent =
-      data.number ??
-      "—";
-
-
   const confidence =
     Number(
-      data.confidence || 0
+      data.confidence ||
+      0
     );
 
 
@@ -2036,33 +1723,47 @@ function showPrediction(data){
     data.analysis?.regime;
 
 
-  if(regime === "POSSIBLE_BREAK"){
-
-    $("aiStatus")
-      .textContent =
-        "BREAK CHECK ACTIVE";
-
-  }else if(
-    regime === "TREND_WEAKENING"
+  if(
+    regime ===
+    "POSSIBLE_BREAK"
   ){
 
     $("aiStatus")
       .textContent =
-        "TREND WEAKENING";
+      "BREAK CHECK ACTIVE";
 
   }else if(
-    regime === "CONFLICT"
+    regime ===
+    "TREND_WEAKENING"
   ){
 
     $("aiStatus")
       .textContent =
-        "SIGNALS IN CONFLICT";
+      "TREND WEAKENING";
+
+  }else if(
+    regime ===
+    "CONFLICT"
+  ){
+
+    $("aiStatus")
+      .textContent =
+      "SIGNALS IN CONFLICT";
+
+  }else if(
+    regime ===
+    "NEW_TREND"
+  ){
+
+    $("aiStatus")
+      .textContent =
+      "NEW TREND";
 
   }else{
 
     $("aiStatus")
       .textContent =
-        "AI SIGNAL READY";
+      "AI SIGNAL READY";
 
   }
 
@@ -2074,50 +1775,62 @@ function showPrediction(data){
 }
 
 
-/* =========================================================
+/* =====================================================
    TIMER
-========================================================= */
+===================================================== */
 
-function updateTimer(value){
+function updateTimer(
+  value
+){
+
+  const seconds =
+    Number(value);
+
 
   if(
-    !Number.isFinite(value)
+    !Number.isFinite(
+      seconds
+    )
   ){
 
     $("timer")
       .textContent =
-        "--";
+      "--";
 
     return;
 
   }
 
 
-  const seconds =
-    Math.max(
-      0,
-      Math.floor(value)
-    );
-
-
   $("timer")
     .textContent =
-      `${seconds}s`;
+    `${Math.max(
+      0,
+      Math.floor(seconds)
+    )}s`;
 
 }
 
 
-/* =========================================================
+/* =====================================================
    STATS
-========================================================= */
+===================================================== */
 
-function updateStats(data){
+function updateStats(
+  data
+){
 
   const wins =
-    Number(data.wins || 0);
+    Number(
+      data.wins || 0
+    );
+
 
   const losses =
-    Number(data.losses || 0);
+    Number(
+      data.losses || 0
+    );
+
 
   const total =
     wins + losses;
@@ -2125,32 +1838,34 @@ function updateStats(data){
 
   $("wins")
     .textContent =
-      wins;
+    wins;
 
 
   $("losses")
     .textContent =
-      losses;
+    losses;
 
 
   $("accuracy")
     .textContent =
-      total
-        ? `${(
-            wins /
-            total *
-            100
-          ).toFixed(1)}%`
-        : "0%";
+    total
+      ? `${(
+          wins /
+          total *
+          100
+        ).toFixed(1)}%`
+      : "0%";
 
 }
 
 
-/* =========================================================
+/* =====================================================
    HISTORY
-========================================================= */
+===================================================== */
 
-function updateHistory(rows){
+function updateHistory(
+  rows
+){
 
   const body =
     $("historyBody");
@@ -2161,14 +1876,18 @@ function updateHistory(rows){
     body.innerHTML = `
 
       <tr>
+
         <td
-          colspan="5"
+          colspan="4"
           style="
             text-align:center;
             color:#475569;
           ">
-          Waiting for results...
+
+          Waiting for live results...
+
         </td>
+
       </tr>
 
     `;
@@ -2179,111 +1898,112 @@ function updateHistory(rows){
 
 
   body.innerHTML =
-    rows.map(row=>{
+    rows.map(
+      row => {
 
-      const actualNumber =
-        row.number ??
-        "—";
-
-
-      const result =
-        Number.isFinite(
-          Number(actualNumber)
-        )
-          ? (
-              Number(actualNumber) >= 5
-                ? "BIG"
-                : "SMALL"
-            )
-          : "—";
+        const actual =
+          row.actual_result ||
+          "—";
 
 
-      const resultClass =
-        result === "BIG"
-          ? "big-text"
-          : result === "SMALL"
-            ? "small-text"
-            : "";
+        const resultClass =
+          actual === "BIG"
+            ? "big-text"
+            : actual === "SMALL"
+              ? "small-text"
+              : "";
 
 
-      const prediction =
-        String(
-          row.prediction ||
-          "—"
-        ).toUpperCase();
+        const prediction =
+          String(
+            row.prediction ||
+            "—"
+          ).toUpperCase();
 
 
-      const predictionClass =
-        prediction === "BIG"
-          ? "big-text"
-          : prediction === "SMALL"
-            ? "small-text"
-            : "";
+        const predictionClass =
+          prediction === "BIG"
+            ? "big-text"
+            : prediction === "SMALL"
+              ? "small-text"
+              : "";
 
 
-      const outcome =
-        String(
-          row.outcome ||
-          "PENDING"
-        ).toUpperCase();
+        const outcome =
+          String(
+            row.outcome ||
+            "PENDING"
+          ).toUpperCase();
 
 
-      const outcomeClass =
-        outcome === "WIN"
-          ? "win"
-          : outcome === "LOSS"
-            ? "loss"
-            : "pending";
+        const outcomeClass =
+          outcome === "WIN"
+            ? "win"
+            : outcome === "LOSS"
+              ? "loss"
+              : "pending";
 
 
-      return `
+        return `
 
-        <tr>
+          <tr>
 
-          <td
-            class="period-cell"
-            title="${escapeHtml(
-              row.target_issue
-            )}">
-            ${escapeHtml(
-              row.target_issue ||
-              "—"
-            )}
-          </td>
+            <td
+              class="period-cell"
+              title="${escapeHtml(
+                row.target_issue
+              )}">
 
-          <td class="num-cell">
-            ${escapeHtml(
-              actualNumber
-            )}
-          </td>
+              ${escapeHtml(
+                row.target_issue ||
+                "—"
+              )}
 
-          <td
-            class="${resultClass}">
-            ${result}
-          </td>
+            </td>
 
-          <td
-            class="${predictionClass}">
-            ${prediction}
-          </td>
 
-          <td
-            class="${outcomeClass}">
-            ${outcome}
-          </td>
+            <td
+              class="${resultClass}">
 
-        </tr>
+              ${escapeHtml(
+                actual
+              )}
 
-      `;
+            </td>
 
-    }).join("");
+
+            <td
+              class="${predictionClass}">
+
+              ${escapeHtml(
+                prediction
+              )}
+
+            </td>
+
+
+            <td
+              class="${outcomeClass}">
+
+              ${escapeHtml(
+                outcome
+              )}
+
+            </td>
+
+          </tr>
+
+        `;
+
+      }
+    ).join("");
 
 }
 
 
-/* =========================================================
+/* =====================================================
    MUSIC
-========================================================= */
+===================================================== */
 
 $("musicControl")
   .addEventListener(
@@ -2312,22 +2032,20 @@ function toggleMusic(){
     audio.play()
       .then(()=>{
 
-        musicPlaying = true;
-
         $("musicBtn")
           .textContent =
-            "Ⅱ";
+          "Ⅱ";
 
         $("musicControl")
           .textContent =
-            "⏸ MUSIC";
+          "⏸ MUSIC";
 
       })
       .catch(()=>{
 
         $("musicBtn")
           .textContent =
-            "▶";
+          "▶";
 
       });
 
@@ -2335,54 +2053,51 @@ function toggleMusic(){
 
     audio.pause();
 
-    musicPlaying = false;
 
     $("musicBtn")
       .textContent =
-        "▶";
+      "▶";
+
 
     $("musicControl")
       .textContent =
-        "🎵 MUSIC";
+      "🎵 MUSIC";
 
   }
 
 }
 
 
-/* =========================================================
+/* =====================================================
    LOGOUT
-========================================================= */
+===================================================== */
 
 $("logoutBtn")
   .addEventListener(
     "click",
-    logout
+    ()=>{
+
+      clearInterval(
+        stateInterval
+      );
+
+      localStorage.removeItem(
+        "dy_ai_access_key"
+      );
+
+      window.location.reload();
+
+    }
   );
 
 
-function logout(){
-
-  clearInterval(
-    stateInterval
-  );
-
-  localStorage.removeItem(
-    "dy_ai_access_key"
-  );
-
-  accessKey = "";
-
-  window.location.reload();
-
-}
-
-
-/* =========================================================
+/* =====================================================
    ESCAPE
-========================================================= */
+===================================================== */
 
-function escapeHtml(value){
+function escapeHtml(
+  value
+){
 
   return String(
     value ?? ""
@@ -2413,4 +2128,4 @@ function escapeHtml(value){
 </script>
 
 </body>
-      </html>
+</html>
