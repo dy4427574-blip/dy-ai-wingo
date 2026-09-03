@@ -80,7 +80,12 @@ button{
   padding:12px 14px;
   font-weight:900;
   background:#16263e;
-  color:#fff
+  color:#fff;
+  cursor:pointer
+}
+
+button:disabled{
+  opacity:.6
 }
 
 .primary{
@@ -146,9 +151,19 @@ button{
   color:#ff727c
 }
 
+/* =================================================
+PREDICTION
+================================================= */
+
 .predCard{
   padding:18px;
-  border-color:#28506e
+  border-color:#28506e;
+  background:
+    radial-gradient(
+      circle at top right,
+      #102d42 0,
+      #0c1625 42%
+    )
 }
 
 .pred{
@@ -190,6 +205,64 @@ button{
   font-weight:1000
 }
 
+/* =================================================
+MODE BADGE
+================================================= */
+
+.modeBadge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:7px 11px;
+  border-radius:10px;
+  font-size:9px;
+  font-weight:1000;
+  letter-spacing:.8px;
+  margin-bottom:7px;
+  border:1px solid #28425e;
+  background:#091524
+}
+
+.aiMode{
+  color:#21d5f5;
+  border-color:#175d70;
+  background:#06212b
+}
+
+.randomMode{
+  color:#ffd35a;
+  border-color:#6c5720;
+  background:#2a2208
+}
+
+.liveMode{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-top:12px;
+  padding:9px 11px;
+  border-radius:11px;
+  background:#07111e;
+  border:1px solid #203650;
+  font-size:9px;
+  font-weight:900;
+  color:#7f94ac
+}
+
+.liveDot{
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:#30dc9c;
+  display:inline-block;
+  margin-right:5px;
+  box-shadow:0 0 9px #30dc9c
+}
+
+/* =================================================
+STATS
+================================================= */
+
 .statgrid{
   display:grid;
   grid-template-columns:repeat(3,1fr);
@@ -216,13 +289,21 @@ button{
   gap:9px
 }
 
+/* =================================================
+GAME
+================================================= */
+
 .game{
   padding:10px
 }
 
+.game h2{
+  padding:5px
+}
+
 .game iframe{
   width:100%;
-  height:430px;
+  height:470px;
   border:0;
   border-radius:14px;
   background:#000
@@ -233,6 +314,10 @@ button{
   margin-top:8px
 }
 
+/* =================================================
+TABLE
+================================================= */
+
 .tableWrap{
   overflow:hidden
 }
@@ -240,7 +325,10 @@ button{
 .tableHead,
 .tr{
   display:grid;
-  grid-template-columns:1fr 1fr 1fr;
+  grid-template-columns:
+    minmax(70px,1fr)
+    minmax(80px,1fr)
+    minmax(70px,1fr);
   align-items:center
 }
 
@@ -258,6 +346,10 @@ button{
   font-weight:900
 }
 
+.tr:last-child{
+  border-bottom:0
+}
+
 .num{
   font-size:18px
 }
@@ -266,15 +358,18 @@ button{
   display:inline-block;
   padding:7px 9px;
   border-radius:10px;
-  font-size:9px
+  font-size:9px;
+  font-weight:1000
 }
 
 .pill.big{
-  background:#271923
+  background:#271923;
+  color:#ff7880
 }
 
 .pill.small{
-  background:#09273a
+  background:#09273a;
+  color:#4dd9ff
 }
 
 .pill.win{
@@ -298,6 +393,10 @@ button{
   padding:10px
 }
 
+/* =================================================
+MUSIC
+================================================= */
+
 .music{
   position:fixed;
   right:14px;
@@ -308,12 +407,31 @@ button{
   padding:0;
   background:#09bdd7;
   color:#001018;
-  z-index:5
+  z-index:5;
+  font-size:18px
 }
 
+/* =================================================
+RESPONSIVE
+================================================= */
+
 @media(max-width:480px){
+
+  .wrap{
+    padding:9px
+  }
+
+  .card{
+    border-radius:17px;
+    padding:13px
+  }
+
+  .game{
+    padding:8px
+  }
+
   .game iframe{
-    height:400px
+    height:450px
   }
 
   .pred{
@@ -323,6 +441,16 @@ button{
   .conf{
     font-size:26px
   }
+
+  .logo{
+    font-size:25px
+  }
+
+  .tableHead,
+  .tr{
+    grid-template-columns:
+      1fr 1fr 1fr
+  }
 }
 </style>
 </head>
@@ -331,7 +459,12 @@ button{
 
 <div class="wrap">
 
+<!-- =================================================
+HEADER
+================================================= -->
+
 <div class="card header">
+
   <div class="logo">
     DY <span>AI</span> WINGO
   </div>
@@ -339,7 +472,12 @@ button{
   <div class="sub">
     30 SECOND STATISTICAL ANALYSIS
   </div>
+
 </div>
+
+<!-- =================================================
+LOGIN
+================================================= -->
 
 <div class="card" id="loginCard">
 
@@ -355,8 +493,7 @@ button{
   <button
     id="loginBtn"
     class="primary"
-    style="width:100%"
-  >
+    style="width:100%">
     UNLOCK
   </button>
 
@@ -364,296 +501,371 @@ button{
 
 </div>
 
+<!-- =================================================
+APP
+================================================= -->
+
 <div id="app" class="hidden">
 
-  <div class="card game">
+<!-- =================================================
+GAME
+================================================= -->
 
-    <h2>🎮 LIVE GAME</h2>
+<div class="card game">
 
-    <iframe
-      id="gameFrame"
-      src="https://www.tojvhr55.com/#/register?invitationCode=761671301584"
-      title="Wingo Game"
-      allow="fullscreen">
-    </iframe>
+  <h2>🎮 LIVE GAME</h2>
 
-    <button
-      class="primary gameBtn"
-      id="openGame">
-      OPEN GAME
-    </button>
+  <iframe
+    id="gameFrame"
+    src="https://www.shreewin38.com/#/register?invitationCode=88523152383"
+    title="Wingo Game"
+    allow="fullscreen"
+    referrerpolicy="no-referrer-when-downgrade">
+  </iframe>
 
-  </div>
+  <button
+    class="primary gameBtn"
+    id="openGame">
+    OPEN GAME
+  </button>
 
-  <div class="card">
+</div>
 
-    <div class="grid2">
+<!-- =================================================
+PERIOD / TIMER
+================================================= -->
 
-      <div class="box">
-        <div class="label">
-          SETTLED PERIOD
-        </div>
+<div class="card">
 
-        <div
-          class="val"
-          id="settled">
-          --
-        </div>
+  <div class="grid2">
+
+    <div class="box">
+
+      <div class="label">
+        SETTLED PERIOD
       </div>
 
-      <div class="box">
-
-        <div class="label">
-          NEXT PERIOD
-        </div>
-
-        <div
-          class="val blue"
-          id="next">
-          --
-        </div>
-
-      </div>
-
-      <div class="box">
-
-        <div class="label">
-          NEXT PREDICTION
-        </div>
-
-        <div
-          class="val blue"
-          id="target">
-          --
-        </div>
-
-      </div>
-
-      <div class="box">
-
-        <div class="label">
-          COUNTDOWN
-        </div>
-
-        <div
-          class="val blue"
-          id="timer">
-          --s
-        </div>
-
+      <div
+        class="val"
+        id="settled">
+        --
       </div>
 
     </div>
 
-  </div>
+    <div class="box">
 
-  <div class="card predCard">
-
-    <div class="grid2">
-
-      <div>
-
-        <div class="label">
-          AI PREDICTION
-        </div>
-
-        <div
-          id="prediction"
-          class="pred wait">
-          WAIT
-        </div>
-
-        <div class="badges">
-
-          <span class="badge">
-            NUMBER:
-            <span id="number">
-              --
-            </span>
-          </span>
-
-          <span
-            class="badge"
-            id="status">
-            LOADING
-          </span>
-
-        </div>
-
+      <div class="label">
+        NEXT PERIOD
       </div>
 
-      <div style="text-align:right">
-
-        <div class="label">
-          CONFIDENCE
-        </div>
-
-        <div
-          id="confidence"
-          class="conf">
-          0%
-        </div>
-
+      <div
+        class="val blue"
+        id="next">
+        --
       </div>
 
     </div>
 
-  </div>
+    <div class="box">
 
-  <div class="card">
-
-    <div class="statgrid">
-
-      <div class="stat">
-
-        <div class="label">
-          WINS
-        </div>
-
-        <b
-          class="green"
-          id="wins">
-          0
-        </b>
-
+      <div class="label">
+        NEXT PREDICTION
       </div>
 
-      <div class="stat">
-
-        <div class="label">
-          LOSSES
-        </div>
-
-        <b
-          class="red"
-          id="losses">
-          0
-        </b>
-
-      </div>
-
-      <div class="stat">
-
-        <div class="label">
-          RATE
-        </div>
-
-        <b id="rate">
-          0%
-        </b>
-
+      <div
+        class="val blue"
+        id="target">
+        --
       </div>
 
     </div>
 
-  </div>
+    <div class="box">
 
-  <div class="card">
-
-    <h2>
-      🧠 AI ANALYSIS
-
-      <span
-        style="float:right;color:#71859e;font-size:9px"
-        id="dataCount">
-        0 DATA
-      </span>
-
-    </h2>
-
-    <div class="analysis">
-
-      <div class="box">
-
-        <div class="label">
-          PATTERN SCORE
-        </div>
-
-        <div
-          class="val"
-          id="pattern">
-          0
-        </div>
-
+      <div class="label">
+        COUNTDOWN
       </div>
 
-      <div class="box">
-
-        <div class="label">
-          MODEL AGREEMENT
-        </div>
-
-        <div
-          class="val"
-          id="agreement">
-          0%
-        </div>
-
-      </div>
-
-      <div class="box">
-
-        <div class="label">
-          BACKTEST SAMPLES
-        </div>
-
-        <div
-          class="val"
-          id="samples">
-          0
-        </div>
-
-      </div>
-
-      <div class="box">
-
-        <div class="label">
-          AVERAGE ACCURACY
-        </div>
-
-        <div
-          class="val"
-          id="accuracy">
-          N/A
-        </div>
-
+      <div
+        class="val blue"
+        id="timer">
+        --s
       </div>
 
     </div>
 
-  </div>
-
-  <div class="card tableWrap">
-
-    <h2>
-
-      LIVE RESULTS + WIN/LOSS
-
-      <span
-        style="float:right;color:#71859e;font-size:9px">
-        LAST 30
-      </span>
-
-    </h2>
-
-    <div class="tableHead">
-
-      <div>NUMBER</div>
-      <div>PRED</div>
-      <div>W/L</div>
-
-    </div>
-
-    <div id="results"></div>
-
-  </div>
-
-  <div class="footer">
-    DY AI statistical analysis ·
-    No prediction is guaranteed
   </div>
 
 </div>
+
+<!-- =================================================
+PREDICTION
+================================================= -->
+
+<div class="card predCard">
+
+  <div class="grid2">
+
+    <div>
+
+      <div class="label">
+        PREDICTION MODE
+      </div>
+
+      <div
+        id="modeBadge"
+        class="modeBadge aiMode">
+        AI MODE
+      </div>
+
+      <div class="label">
+        PREDICTION
+      </div>
+
+      <div
+        id="prediction"
+        class="pred wait">
+        WAIT
+      </div>
+
+      <div class="badges">
+
+        <span class="badge">
+          NUMBER:
+          <span id="number">
+            --
+          </span>
+        </span>
+
+        <span
+          class="badge"
+          id="status">
+          LOADING
+        </span>
+
+      </div>
+
+    </div>
+
+    <div style="text-align:right">
+
+      <div class="label">
+        CONFIDENCE
+      </div>
+
+      <div
+        id="confidence"
+        class="conf">
+        0%
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="liveMode">
+
+    <span>
+      <span class="liveDot"></span>
+      LIVE ANALYSIS
+    </span>
+
+    <span id="mixInfo">
+      AI
+    </span>
+
+  </div>
+
+</div>
+
+<!-- =================================================
+WIN LOSS
+================================================= -->
+
+<div class="card">
+
+  <div class="statgrid">
+
+    <div class="stat">
+
+      <div class="label">
+        WINS
+      </div>
+
+      <b
+        class="green"
+        id="wins">
+        0
+      </b>
+
+    </div>
+
+    <div class="stat">
+
+      <div class="label">
+        LOSSES
+      </div>
+
+      <b
+        class="red"
+        id="losses">
+        0
+      </b>
+
+    </div>
+
+    <div class="stat">
+
+      <div class="label">
+        RATE
+      </div>
+
+      <b id="rate">
+        0%
+      </b>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- =================================================
+AI ANALYSIS
+================================================= -->
+
+<div class="card">
+
+  <h2>
+
+    🧠 AI ANALYSIS
+
+    <span
+      style="
+        float:right;
+        color:#71859e;
+        font-size:9px
+      "
+      id="dataCount">
+      0 DATA
+    </span>
+
+  </h2>
+
+  <div class="analysis">
+
+    <div class="box">
+
+      <div class="label">
+        PATTERN SCORE
+      </div>
+
+      <div
+        class="val"
+        id="pattern">
+        0
+      </div>
+
+    </div>
+
+    <div class="box">
+
+      <div class="label">
+        MODEL AGREEMENT
+      </div>
+
+      <div
+        class="val"
+        id="agreement">
+        0%
+      </div>
+
+    </div>
+
+    <div class="box">
+
+      <div class="label">
+        BACKTEST SAMPLES
+      </div>
+
+      <div
+        class="val"
+        id="samples">
+        0
+      </div>
+
+    </div>
+
+    <div class="box">
+
+      <div class="label">
+        AVERAGE ACCURACY
+      </div>
+
+      <div
+        class="val"
+        id="accuracy">
+        N/A
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- =================================================
+LAST 30
+================================================= -->
+
+<div class="card tableWrap">
+
+  <h2>
+
+    LIVE RESULTS + WIN/LOSS
+
+    <span
+      style="
+        float:right;
+        color:#71859e;
+        font-size:9px
+      ">
+      LAST 30
+    </span>
+
+  </h2>
+
+  <div class="tableHead">
+
+    <div>NUMBER</div>
+    <div>PRED</div>
+    <div>W/L</div>
+
+  </div>
+
+  <div id="results"></div>
+
+</div>
+
+<!-- =================================================
+FOOTER
+================================================= -->
+
+<div class="footer">
+
+  DY AI statistical analysis ·
+  No prediction is guaranteed
+
+</div>
+
+</div>
+
+</div>
+
+<!-- =================================================
+MUSIC
+================================================= -->
 
 <button
   class="music"
@@ -670,8 +882,13 @@ button{
 
 <script>
 
+/* =================================================
+GLOBAL
+================================================= */
+
 const $ =
-  id => document.getElementById(id);
+  id =>
+    document.getElementById(id);
 
 const KEY_STORE =
   "dy_ai_access_key";
@@ -689,11 +906,19 @@ let deviceId =
     DEVICE_STORE
   );
 
+/* =================================================
+DEVICE ID
+================================================= */
+
 if(!deviceId){
 
   deviceId =
-    crypto.randomUUID
+    window.crypto &&
+    typeof crypto.randomUUID ===
+      "function"
+
       ? crypto.randomUUID()
+
       : (
         "dy-" +
         Date.now() +
@@ -710,15 +935,30 @@ if(!deviceId){
 
 }
 
+/* =================================================
+STATE
+================================================= */
+
 let latestState = null;
+
 let lastTarget = "";
+
 let lastSignature = "";
+
 let timerValue = 0;
+
 let timerTick = null;
+
+let refreshing = false;
+
+/* =================================================
+HEADERS
+================================================= */
 
 function headers(){
 
   return {
+
     "X-Access-Key":
       accessKey,
 
@@ -727,23 +967,38 @@ function headers(){
 
     "Cache-Control":
       "no-cache"
+
   };
 
 }
 
+/* =================================================
+LOGIN MESSAGE
+================================================= */
+
 function setMsg(
-  text,
+  message,
   ok = false
 ){
 
-  $("loginMsg").textContent =
-    text;
+  $("loginMsg")
+    .textContent =
+      message;
 
-  $("loginMsg").className =
-    "msg " +
-    (ok ? "ok" : "err");
+  $("loginMsg")
+    .className =
+      "msg " +
+      (
+        ok
+          ? "ok"
+          : "err"
+      );
 
 }
+
+/* =================================================
+LOGIN
+================================================= */
 
 async function login(){
 
@@ -754,58 +1009,65 @@ async function login(){
 
   if(!key){
 
-    return setMsg(
+    setMsg(
       "Access key enter karo."
     );
 
+    return;
+
   }
 
-  $("loginBtn").disabled =
-    true;
+  $("loginBtn")
+    .disabled =
+      true;
 
-  $("loginBtn").textContent =
-    "CHECKING...";
+  $("loginBtn")
+    .textContent =
+      "CHECKING...";
 
   try{
 
-    const r =
+    const response =
       await fetch(
         "/api/key/check",
         {
-          method:"POST",
+          method:
+            "POST",
 
           headers:{
             "Content-Type":
               "application/json"
           },
 
-          body:JSON.stringify({
-            key,
-            device_id:
-              deviceId
-          }),
+          body:
+            JSON.stringify({
+              key,
+              device_id:
+                deviceId
+            }),
 
-          cache:"no-store"
+          cache:
+            "no-store"
         }
       );
 
-    const d =
-      await r.json();
+    const data =
+      await response.json();
 
     if(
-      !r.ok ||
-      d.success !== true
+      !response.ok ||
+      data.success !== true
     ){
 
       throw new Error(
-        d.message ||
-        d.error ||
+        data.message ||
         "Invalid access key."
       );
 
     }
 
-    accessKey = key;
+    accessKey =
+      key;
 
     sessionStorage.setItem(
       KEY_STORE,
@@ -820,57 +1082,96 @@ async function login(){
       .classList
       .remove("hidden");
 
-    await refresh(true);
+    setMsg(
+      "Access granted.",
+      true
+    );
 
-  }catch(e){
+    await refresh(
+      true
+    );
+
+  }catch(error){
 
     setMsg(
-      e.message
+      error.message ||
+      "Login failed."
     );
 
   }finally{
 
-    $("loginBtn").disabled =
-      false;
+    $("loginBtn")
+      .disabled =
+        false;
 
-    $("loginBtn").textContent =
+    $("loginBtn")
+      .textContent =
       "UNLOCK";
 
   }
 
 }
 
-$("loginBtn").onclick =
-  login;
+$("loginBtn")
+  .onclick =
+    login;
 
-$("accessKey").onkeydown =
-  e => {
+$("accessKey")
+  .onkeydown =
+    event => {
 
-    if(e.key === "Enter"){
-      login();
-    }
+      if(
+        event.key ===
+        "Enter"
+      ){
 
-  };
+        login();
+
+      }
+
+    };
+
+/* =================================================
+GET STATE
+================================================= */
 
 async function getState(){
 
-  const r =
+  const response =
     await fetch(
       "/api/state",
       {
+        method:
+          "GET",
+
         headers:
           headers(),
+
         cache:
           "no-store"
       }
     );
 
-  const d =
-    await r.json();
+  let data;
+
+  try{
+
+    data =
+      await response.json();
+
+  }catch{
+
+    throw new Error(
+      "Invalid server response."
+    );
+
+  }
 
   if(
-    r.status === 401 ||
-    r.status === 403
+    response.status ===
+      401 ||
+    response.status ===
+      403
   ){
 
     sessionStorage.removeItem(
@@ -888,51 +1189,126 @@ async function getState(){
       .remove("hidden");
 
     throw new Error(
-      d.message ||
+      data.message ||
       "Access expired."
     );
 
   }
 
   if(
-    !r.ok ||
-    d.success !== true
+    !response.ok ||
+    data.success !== true
   ){
 
     throw new Error(
-      d.message ||
-      d.error ||
-      "State error"
+      data.message ||
+      "State error."
     );
 
   }
 
-  return d;
+  return data;
 
 }
 
-function render(d){
+/* =================================================
+MODE
+================================================= */
 
-  latestState = d;
+function renderMode(data){
+
+  const badge =
+    $("modeBadge");
+
+  const mix =
+    $("mixInfo");
+
+  const analysis =
+    data.analysis || {};
+
+  const randomized =
+    Boolean(
+      data.randomized ??
+      analysis.randomized
+    );
+
+  const mode =
+    String(
+      data.mode ||
+      analysis.mode ||
+      "AI MODE"
+    );
+
+  const aiPrediction =
+    data.aiPrediction ||
+    analysis.aiPrediction ||
+    data.prediction ||
+    analysis.prediction ||
+    "WAIT";
+
+  if(
+    randomized ||
+    mode === "RANDOM MIX"
+  ){
+
+    badge.textContent =
+      "RANDOM MIX";
+
+    badge.className =
+      "modeBadge randomMode";
+
+    mix.textContent =
+      "AI → " +
+      aiPrediction;
+
+  }else{
+
+    badge.textContent =
+      "AI MODE";
+
+    badge.className =
+      "modeBadge aiMode";
+
+    mix.textContent =
+      "AI ACTIVE";
+
+  }
+
+}
+
+/* =================================================
+RENDER
+================================================= */
+
+function render(data){
+
+  latestState =
+    data;
+
+  /* PERIOD */
 
   $("settled")
     .textContent =
-      d.settledIssue ||
+      data.settledIssue ||
       "--";
 
   $("next")
     .textContent =
-      d.nextIssue ||
-      d.targetIssue ||
+      data.nextIssue ||
+      data.targetIssue ||
       "--";
 
   $("target")
     .textContent =
-      d.targetIssue ||
+      data.targetIssue ||
       "--";
 
+  /* TIMER */
+
   timerValue =
-    Number(d.countdown);
+    Number(
+      data.countdown
+    );
 
   if(
     !Number.isFinite(
@@ -954,107 +1330,142 @@ function render(d){
       ) +
       "s";
 
-  const a =
-    d.analysis || {};
+  /* ANALYSIS */
 
-  const p =
-    a.prediction ||
-    d.prediction ||
+  const analysis =
+    data.analysis ||
+    {};
+
+  const prediction =
+    analysis.prediction ||
+    data.prediction ||
     "WAIT";
 
-  const n =
-    a.predictedNumber ??
-    d.predictedNumber ??
+  const number =
+    analysis.predictedNumber ??
+    data.predictedNumber ??
     null;
 
-  const c =
+  const confidence =
     Number(
-      a.confidence ??
-      d.confidence ??
+      analysis.confidence ??
+      data.confidence ??
       0
     );
 
+  /* MODE */
+
+  renderMode(
+    data
+  );
+
+  /* PREDICTION */
+
   $("prediction")
     .textContent =
-      p;
+      prediction;
 
   $("prediction")
     .className =
       "pred " +
       (
-        p === "BIG"
+        prediction ===
+          "BIG"
+
           ? "big"
-          : p === "SMALL"
-            ? "small"
-            : "wait"
+
+          : prediction ===
+            "SMALL"
+
+              ? "small"
+
+              : "wait"
       );
+
+  /* NUMBER */
 
   $("number")
     .textContent =
-      n == null
+      number === null ||
+      number === undefined
         ? "--"
-        : n;
+        : number;
+
+  /* CONFIDENCE */
 
   $("confidence")
     .textContent =
       (
-        Number.isFinite(c)
-          ? c
+        Number.isFinite(
+          confidence
+        )
+          ? confidence
           : 0
       ) +
       "%";
 
+  /* STATUS */
+
   $("status")
     .textContent =
-      a.status ||
-      d.status ||
+      analysis.status ||
+      data.status ||
       "WAITING";
+
+  /* ANALYSIS BOXES */
 
   $("pattern")
     .textContent =
-      a.patternScore ??
-      d.patternScore ??
+      analysis.patternScore ??
+      data.patternScore ??
       0;
 
   $("agreement")
     .textContent =
       (
-        a.agreement ??
-        d.agreement ??
+        analysis.agreement ??
+        data.agreement ??
         0
       ) +
       "%";
 
   $("samples")
     .textContent =
-      a.backtestSamples ??
-      d.backtestSamples ??
+      analysis.backtestSamples ??
+      data.backtestSamples ??
       0;
 
-  const acc =
-    a.avgModelAccuracy ??
-    d.avgModelAccuracy;
+  const accuracy =
+    analysis.avgModelAccuracy ??
+    data.avgModelAccuracy;
 
   $("accuracy")
     .textContent =
-      acc == null
+      accuracy === null ||
+      accuracy === undefined
         ? "N/A"
         : Math.round(
-            Number(acc)
+            Number(
+              accuracy
+            )
           ) +
           "%";
+
+  /* DATA COUNT */
 
   $("dataCount")
     .textContent =
       (
-        d.historyCount ??
-        d.history?.length ??
+        data.historyCount ??
+        data.history?.length ??
         0
       ) +
       " DATA";
 
-  const s =
-    d.winLossStats || {
+  /* W/L */
+
+  const stats =
+    data.winLossStats || {
       win:0,
       loss:0,
       rate:0
@@ -1062,24 +1473,41 @@ function render(d){
 
   $("wins")
     .textContent =
-      s.win ?? 0;
+      stats.win ??
+      0;
 
   $("losses")
     .textContent =
-      s.loss ?? 0;
+      stats.loss ??
+      0;
 
   $("rate")
     .textContent =
       (
-        s.rate ?? 0
+        stats.rate ??
+        0
       ) +
       "%";
 
+  /* TABLE */
+
+  renderResults(
+    data.results
+  );
+
+}
+
+/* =================================================
+RESULT TABLE
+================================================= */
+
+function renderResults(
+  input
+){
+
   const rows =
-    Array.isArray(
-      d.results
-    )
-      ? d.results.slice(
+    Array.isArray(input)
+      ? input.slice(
           0,
           30
         )
@@ -1090,57 +1518,93 @@ function render(d){
       rows.map(
         row => {
 
-          const pred =
+          const number =
+            row.number;
+
+          const prediction =
             row.prediction;
 
-          const out =
+          const outcome =
             row.outcome;
+
+          let predictionHtml =
+            `
+              <span class="muted">
+                —
+              </span>
+            `;
+
+          if(
+            prediction ===
+              "BIG" ||
+            prediction ===
+              "SMALL"
+          ){
+
+            predictionHtml =
+              `
+                <span
+                  class="pill ${
+                    prediction
+                      .toLowerCase()
+                  }">
+                  ${escapeHtml(
+                    prediction
+                  )}
+                </span>
+              `;
+
+          }
+
+          let outcomeHtml =
+            `
+              <span class="muted">
+                —
+              </span>
+            `;
+
+          if(
+            outcome === "WIN"
+          ){
+
+            outcomeHtml =
+              `
+                <span
+                  class="pill win">
+                  WIN
+                </span>
+              `;
+
+          }else if(
+            outcome ===
+              "LOSS"
+          ){
+
+            outcomeHtml =
+              `
+                <span
+                  class="pill loss">
+                  LOSS
+                </span>
+              `;
+
+          }
 
           return `
             <div class="tr">
 
               <div class="num">
                 ${escapeHtml(
-                  row.number
+                  number
                 )}
               </div>
 
               <div>
-
-                ${
-                  pred
-                    ? `
-                      <span
-                        class="pill ${pred.toLowerCase()}">
-                        ${pred}
-                      </span>
-                    `
-                    : `
-                      <span class="muted">
-                        —
-                      </span>
-                    `
-                }
-
+                ${predictionHtml}
               </div>
 
               <div>
-
-                ${
-                  out
-                    ? `
-                      <span
-                        class="pill ${out.toLowerCase()}">
-                        ${out}
-                      </span>
-                    `
-                    : `
-                      <span class="muted">
-                        —
-                      </span>
-                    `
-                }
-
+                ${outcomeHtml}
               </div>
 
             </div>
@@ -1150,17 +1614,18 @@ function render(d){
       ).join("") ||
 
       `
-        <div class="tr">
+        <div
+          class="tr">
 
           <div class="muted">
             —
           </div>
 
-          <div>
+          <div class="muted">
             —
           </div>
 
-          <div>
+          <div class="muted">
             —
           </div>
 
@@ -1169,22 +1634,47 @@ function render(d){
 
 }
 
-function escapeHtml(v){
+/* =================================================
+ESCAPE
+================================================= */
+
+function escapeHtml(value){
 
   return String(
-    v ?? ""
+    value ?? ""
   ).replace(
     /[&<>"']/g,
-    x => ({
-      "&":"&amp;",
-      "<":"&lt;",
-      ">":"&gt;",
-      '"':"&quot;",
-      "'":"&#39;"
-    }[x])
+    character => {
+
+      const map = {
+        "&":
+          "&amp;",
+
+        "<":
+          "&lt;",
+
+        ">":
+          "&gt;",
+
+        '"':
+          "&quot;",
+
+        "'":
+          "&#39;"
+      };
+
+      return map[
+        character
+      ];
+
+    }
   );
 
 }
+
+/* =================================================
+TIMER
+================================================= */
 
 function startTimer(){
 
@@ -1220,60 +1710,99 @@ function startTimer(){
 
 }
 
+/* =================================================
+REFRESH
+================================================= */
+
 async function refresh(
   first = false
 ){
 
+  if(
+    refreshing
+  ){
+
+    return;
+
+  }
+
+  refreshing =
+    true;
+
   try{
 
-    const d =
+    const data =
       await getState();
 
+    const history =
+      Array.isArray(
+        data.history
+      )
+        ? data.history
+        : [];
+
     const signature =
-      (d.history || [])
-        .slice(0,30)
+      history
+        .slice(
+          0,
+          30
+        )
         .map(
-          x =>
-            x.issueNumber +
+          row =>
+            row.issueNumber +
             ":" +
-            x.number
+            row.number
         )
         .join("|");
 
     /*
-      Server only creates a new prediction
-      after settled history changes.
-      Frontend therefore never invents/
-      recalculates a new prediction every second.
+    IMPORTANT:
+
+    Server generates prediction only
+    when settled history changes.
+
+    Frontend does not generate or
+    randomize anything by itself.
     */
 
     if(
       first ||
       signature !==
         lastSignature ||
-      d.targetIssue !==
+      data.targetIssue !==
         lastTarget
     ){
 
-      render(d);
+      render(
+        data
+      );
 
       lastSignature =
         signature;
 
       lastTarget =
-        d.targetIssue ||
+        data.targetIssue ||
         "";
 
     }else{
 
       latestState =
-        d;
+        data;
 
       timerValue =
         Number(
-          d.countdown
-        ) ||
-        timerValue;
+          data.countdown
+        );
+
+      if(
+        !Number.isFinite(
+          timerValue
+        )
+      ){
+
+        timerValue = 0;
+
+      }
 
       $("timer")
         .textContent =
@@ -1289,123 +1818,125 @@ async function refresh(
 
     startTimer();
 
-  }catch(e){
+  }catch(error){
 
-    if(accessKey){
+    console.log(
+      "Refresh:",
+      error.message
+    );
 
-      console.log(
-        e.message
-      );
+  }finally{
 
-    }
+    refreshing =
+      false;
 
   }
 
 }
 
-async function refreshHistory(){
+/* =================================================
+GAME
+================================================= */
 
-  if(!accessKey){
-    return;
-  }
+const GAME_URL =
+  "https://www.shreewin38.com/#/register?invitationCode=88523152383";
 
-  try{
+$("openGame")
+  .onclick =
+    () => {
 
-    const r =
-      await fetch(
-        "/api/state",
-        {
-          headers:
-            headers(),
-          cache:
-            "no-store"
-        }
+      window.open(
+        GAME_URL,
+        "_blank"
       );
 
-    if(r.ok){
+    };
 
-      const d =
-        await r.json();
+/* =================================================
+MUSIC
+================================================= */
 
-      if(
-        d.success === true
+$("musicBtn")
+  .onclick =
+    async () => {
+
+      const audio =
+        $("music");
+
+      try{
+
+        if(
+          audio.paused
+        ){
+
+          await audio.play();
+
+          $("musicBtn")
+            .textContent =
+            "❚❚";
+
+        }else{
+
+          audio.pause();
+
+          $("musicBtn")
+            .textContent =
+            "♫";
+
+        }
+
+      }catch(
+        error
       ){
 
-        render(d);
+        console.log(
+          "Music:",
+          error.message
+        );
 
       }
 
-    }
+    };
 
-  }catch{}
+/* =================================================
+AUTO REFRESH
+================================================= */
 
-}
+/*
+1 second:
+timer/state refresh
+
+3 seconds:
+WingoBot history/server refresh
+
+Actual prediction changes only when
+new settled history arrives.
+*/
 
 setInterval(
   () => {
 
-    if(accessKey){
-      refresh(false);
+    if(
+      accessKey
+    ){
+
+      refresh(
+        false
+      );
+
     }
 
   },
   1000
 );
 
-setInterval(
-  () => {
+/* =================================================
+AUTO LOGIN
+================================================= */
 
-    if(accessKey){
-      refreshHistory();
-    }
-
-  },
-  3000
-);
-
-$("openGame").onclick =
-  () => {
-
-    window.open(
-      "https://www.tojvhr55.com/#/register?invitationCode=761671301584",
-      "_blank"
-    );
-
-  };
-
-$("musicBtn").onclick =
-  async () => {
-
-    const audio =
-      $("music");
-
-    try{
-
-      if(
-        audio.paused
-      ){
-
-        await audio.play();
-
-        $("musicBtn")
-          .textContent =
-          "❚❚";
-
-      }else{
-
-        audio.pause();
-
-        $("musicBtn")
-          .textContent =
-          "♫";
-
-      }
-
-    }catch{}
-
-  };
-
-if(accessKey){
+if(
+  accessKey
+){
 
   $("loginCard")
     .classList
@@ -1415,7 +1946,9 @@ if(accessKey){
     .classList
     .remove("hidden");
 
-  refresh(true);
+  refresh(
+    true
+  );
 
 }
 
