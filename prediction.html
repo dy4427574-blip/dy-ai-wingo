@@ -2,610 +2,442 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<meta name="theme-color" content="#050b14">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
 <title>DY AI Wingo 30S</title>
 
 <style>
-*{box-sizing:border-box}
-
-html,body{
+*{
+  box-sizing:border-box;
   margin:0;
-  padding:0;
-  min-height:100%;
-  background:#050b14;
-  color:#eef5ff;
-  font-family:Arial,sans-serif;
+  padding:0
 }
 
 body{
-  min-height:100vh;
+  font-family:Arial,Helvetica,sans-serif;
+  background:#050a12;
+  color:#eef6ff;
+  min-height:100vh
 }
 
 .wrap{
-  width:min(980px,100%);
+  max-width:700px;
   margin:auto;
-  padding:10px;
-}
-
-.top{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-  margin-bottom:10px;
-}
-
-.brand{
-  font-size:20px;
-  font-weight:900;
-}
-
-.brand span{
-  color:#35c8ff;
-}
-
-.pill{
-  padding:6px 9px;
-  border-radius:9px;
-  border:1px solid #203b55;
-  background:#0a1725;
-  color:#8ea6bd;
-  font-size:10px;
+  padding:12px
 }
 
 .card{
-  background:#081421;
-  border:1px solid #1b344d;
-  border-radius:17px;
-  margin:10px 0;
-  overflow:hidden;
-  box-shadow:0 10px 30px #0005;
+  background:#0c1625;
+  border:1px solid #203650;
+  border-radius:20px;
+  padding:15px;
+  margin-bottom:12px;
+  box-shadow:0 8px 28px #0008
 }
 
-.head{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:13px 14px;
-  border-bottom:1px solid #183047;
+.header{
+  text-align:center;
+  padding:20px 14px;
+  background:linear-gradient(145deg,#111d34,#09111f)
 }
 
-.title{
-  font-size:12px;
-  font-weight:900;
-  letter-spacing:.7px;
+.logo{
+  font-size:28px;
+  font-weight:1000;
+  letter-spacing:1px
+}
+
+.logo span{
+  color:#10d9f5
 }
 
 .sub{
-  font-size:9px;
-  color:#718aa3;
+  margin-top:6px;
+  color:#8295ad;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:1px
 }
 
-.game{
-  position:relative;
-  height:430px;
-  background:#02060b;
+h2{
+  font-size:15px;
+  margin-bottom:12px
 }
 
-.game iframe{
+input{
   width:100%;
-  height:100%;
-  display:block;
-  border:0;
-  background:#02060b;
-}
-
-.fallback{
-  position:absolute;
-  inset:0;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  flex-direction:column;
-  gap:12px;
-  text-align:center;
-  color:#8299af;
-  background:#02060b;
-  padding:20px;
-}
-
-.open-btn{
-  border:0;
-  border-radius:11px;
-  padding:12px 20px;
-  background:#1683ff;
+  background:#050b14;
   color:#fff;
-  font-weight:900;
+  border:1px solid #29405e;
+  border-radius:13px;
+  padding:14px;
+  outline:none;
+  margin:5px 0 9px
 }
 
-.round-grid{
+button{
+  border:0;
+  border-radius:12px;
+  padding:12px 14px;
+  font-weight:900;
+  background:#16263e;
+  color:#fff
+}
+
+.primary{
+  background:#08bdd7;
+  color:#001018
+}
+
+.msg{
+  font-size:11px;
+  margin-top:8px;
+  color:#8ca0b8
+}
+
+.err{
+  color:#ff6974
+}
+
+.ok{
+  color:#30dc9c
+}
+
+.hidden{
+  display:none!important
+}
+
+.grid2{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:8px;
-  padding:11px;
+  gap:9px
 }
 
-.stat{
-  background:#07121e;
-  border:1px solid #19334b;
-  border-radius:12px;
-  padding:11px;
+.box{
+  background:#07111e;
+  border:1px solid #203650;
+  border-radius:14px;
+  padding:12px;
+  min-width:0
 }
 
 .label{
   font-size:9px;
-  color:#718aa3;
-  text-transform:uppercase;
-  letter-spacing:.4px;
+  color:#71859e;
+  font-weight:800;
+  letter-spacing:1px
 }
 
-.value{
-  margin-top:5px;
-  font-size:13px;
+.val{
+  font-size:14px;
   font-weight:900;
-  word-break:break-all;
+  margin-top:6px;
+  word-break:break-all
 }
 
-.timer{
-  font-size:25px;
-  color:#38c8ff;
+.blue{
+  color:#21d5f5
 }
 
-.prediction-box{
-  margin:0 11px 11px;
-  padding:15px;
-  border:1px solid #23415e;
-  border-radius:15px;
-  background:linear-gradient(135deg,#091a2a,#07111d);
+.green{
+  color:#36dfa1
 }
 
-.prediction-top{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:12px;
+.red{
+  color:#ff727c
 }
 
-.prediction-label{
-  color:#7891aa;
-  font-size:9px;
-  text-transform:uppercase;
+.predCard{
+  padding:18px;
+  border-color:#28506e
 }
 
-.prediction{
-  margin-top:4px;
-  font-size:31px;
+.pred{
+  font-size:38px;
   font-weight:1000;
+  margin-top:4px
 }
 
 .big{
-  color:#ff8585;
+  color:#ff7880
 }
 
 .small{
-  color:#53d8ff;
+  color:#4dd9ff
 }
 
-.confidence{
-  font-size:23px;
-  font-weight:1000;
-  text-align:right;
+.wait{
+  color:#e8f0fa
 }
 
-.tags{
+.badges{
   display:flex;
+  gap:8px;
   flex-wrap:wrap;
-  gap:6px;
-  margin-top:9px;
+  margin-top:10px
 }
 
-.tag{
-  padding:6px 9px;
-  border-radius:8px;
-  border:1px solid #203b55;
-  background:#0a1725;
-  color:#91a9c0;
+.badge{
+  border:1px solid #28425e;
+  background:#091524;
+  border-radius:11px;
+  padding:8px 10px;
   font-size:10px;
+  font-weight:900
 }
 
-.wl-grid{
+.conf{
+  font-size:30px;
+  font-weight:1000
+}
+
+.statgrid{
   display:grid;
   grid-template-columns:repeat(3,1fr);
-  gap:8px;
-  padding:0 11px 11px;
+  gap:9px
 }
 
-.wl-box{
-  padding:10px;
+.stat{
   text-align:center;
-  background:#07121e;
-  border:1px solid #19334b;
-  border-radius:11px;
+  background:#07111e;
+  border:1px solid #203650;
+  border-radius:14px;
+  padding:12px
 }
 
-.wl-box b{
+.stat b{
   display:block;
-  margin-top:4px;
-  font-size:18px;
-}
-
-.win{
-  color:#56e6a7;
-}
-
-.loss{
-  color:#ff7777;
+  font-size:21px;
+  margin-top:5px
 }
 
 .analysis{
   display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:8px;
-  padding:11px;
+  grid-template-columns:1fr 1fr;
+  gap:9px
 }
 
-.analysis-box{
-  padding:10px;
-  background:#07121e;
-  border:1px solid #19334b;
-  border-radius:11px;
+.game{
+  padding:10px
 }
 
-.analysis-number{
-  margin-top:5px;
-  font-size:17px;
-  font-weight:900;
-}
-
-.table-wrap{
-  overflow-x:auto;
-  padding:8px 11px 14px;
-}
-
-table{
+.game iframe{
   width:100%;
-  min-width:520px;
-  border-collapse:collapse;
+  height:430px;
+  border:0;
+  border-radius:14px;
+  background:#000
 }
 
-th{
-  padding:9px;
-  text-align:left;
-  border-bottom:1px solid #19334b;
-  color:#718aa3;
+.gameBtn{
+  width:100%;
+  margin-top:8px
+}
+
+.tableWrap{
+  overflow:hidden
+}
+
+.tableHead,
+.tr{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  align-items:center
+}
+
+.tableHead{
+  padding:10px 8px;
+  color:#71859e;
   font-size:9px;
-  text-transform:uppercase;
-}
-
-td{
-  padding:9px;
-  text-align:left;
-  border-bottom:1px solid #142a3f;
-  font-size:11px;
-}
-
-.actual-number{
-  font-size:15px;
   font-weight:900;
+  border-bottom:1px solid #203650
 }
 
-.badge{
+.tr{
+  padding:11px 8px;
+  border-bottom:1px solid #182a40;
+  font-weight:900
+}
+
+.num{
+  font-size:18px
+}
+
+.pill{
   display:inline-block;
-  padding:5px 8px;
-  border-radius:7px;
-  font-size:9px;
-  font-weight:900;
+  padding:7px 9px;
+  border-radius:10px;
+  font-size:9px
 }
 
-.badge-big{
-  background:#ff66661c;
-  color:#ff8888;
+.pill.big{
+  background:#271923
 }
 
-.badge-small{
-  background:#42d5ff1c;
-  color:#55dcff;
+.pill.small{
+  background:#09273a
 }
 
-.badge-win{
-  background:#4de69c1c;
-  color:#59e7a8;
+.pill.win{
+  background:#07372d;
+  color:#34e0a2
 }
 
-.badge-loss{
-  background:#ff66661c;
-  color:#ff7777;
+.pill.loss{
+  background:#301b26;
+  color:#ff7580
 }
 
-.empty{
-  padding:22px;
-  text-align:center;
-  color:#6d849b;
+.muted{
+  color:#667a92
 }
 
 .footer{
-  padding:10px;
   text-align:center;
-  color:#4d647b;
+  color:#52667f;
   font-size:9px;
+  padding:10px
 }
 
-.login{
+.music{
   position:fixed;
-  inset:0;
-  z-index:999;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:20px;
-  background:#040a12;
+  right:14px;
+  bottom:16px;
+  border-radius:50%;
+  width:48px;
+  height:48px;
+  padding:0;
+  background:#09bdd7;
+  color:#001018;
+  z-index:5
 }
 
-.login-box{
-  width:min(390px,100%);
-  padding:23px;
-  background:#091624;
-  border:1px solid #1d3853;
-  border-radius:19px;
-  box-shadow:0 20px 60px #0008;
-}
-
-.login-box h1{
-  margin:0 0 7px;
-  font-size:25px;
-}
-
-.login-box p{
-  margin:0 0 18px;
-  color:#7d95ab;
-  font-size:11px;
-}
-
-.login-box input{
-  width:100%;
-  padding:13px;
-  border-radius:10px;
-  border:1px solid #24415d;
-  outline:0;
-  background:#06101b;
-  color:#fff;
-}
-
-.login-box button{
-  width:100%;
-  margin-top:10px;
-  padding:13px;
-  border:0;
-  border-radius:10px;
-  background:#1683ff;
-  color:#fff;
-  font-weight:900;
-}
-
-.login-error{
-  min-height:16px;
-  margin-top:8px;
-  color:#ff7777;
-  font-size:11px;
-}
-
-.hide{
-  display:none!important;
-}
-
-@media(max-width:650px){
-
-  .brand{
-    font-size:18px;
+@media(max-width:480px){
+  .game iframe{
+    height:400px
   }
 
-  .game{
-    height:430px;
+  .pred{
+    font-size:34px
   }
 
-  .analysis{
-    grid-template-columns:1fr 1fr;
+  .conf{
+    font-size:26px
   }
-
 }
 </style>
 </head>
 
 <body>
 
-<!-- ================= LOGIN ================= -->
+<div class="wrap">
 
-<div id="loginScreen" class="login">
-
-  <div class="login-box">
-
-    <h1>
-      DY <span style="color:#38c8ff">AI</span> Wingo
-    </h1>
-
-    <p>
-      Premium access key enter karo.
-    </p>
-
-    <input
-      id="accessKey"
-      type="text"
-      placeholder="Access Key"
-      autocomplete="off"
-    >
-
-    <button id="loginButton">
-      UNLOCK PREMIUM
-    </button>
-
-    <div
-      id="loginError"
-      class="login-error"
-    ></div>
-
+<div class="card header">
+  <div class="logo">
+    DY <span>AI</span> WINGO
   </div>
+
+  <div class="sub">
+    30 SECOND STATISTICAL ANALYSIS
+  </div>
+</div>
+
+<div class="card" id="loginCard">
+
+  <h2>🔐 Access Key</h2>
+
+  <input
+    id="accessKey"
+    type="password"
+    placeholder="Enter premium access key"
+    autocomplete="off"
+  >
+
+  <button
+    id="loginBtn"
+    class="primary"
+    style="width:100%"
+  >
+    UNLOCK
+  </button>
+
+  <div id="loginMsg" class="msg"></div>
 
 </div>
 
+<div id="app" class="hidden">
 
-<!-- ================= MAIN APP ================= -->
+  <div class="card game">
 
-<main
-  id="mainApp"
-  class="wrap hide"
->
+    <h2>🎮 LIVE GAME</h2>
 
-  <!-- TOP -->
+    <iframe
+      id="gameFrame"
+      src="https://www.tojvhr55.com/#/register?invitationCode=761671301584"
+      title="Wingo Game"
+      allow="fullscreen">
+    </iframe>
 
-  <div class="top">
-
-    <div class="brand">
-      DY <span>AI</span> WINGO 30S
-    </div>
-
-    <div
-      id="connection"
-      class="pill"
-    >
-      CONNECTING...
-    </div>
+    <button
+      class="primary gameBtn"
+      id="openGame">
+      OPEN GAME
+    </button>
 
   </div>
 
+  <div class="card">
 
-  <!-- ================= GAME ================= -->
+    <div class="grid2">
 
-  <section class="card">
-
-    <div class="head">
-
-      <div class="title">
-        LIVE GAME
-      </div>
-
-      <div class="sub">
-        30 SECOND
-      </div>
-
-    </div>
-
-    <div class="game">
-
-      <iframe
-        id="gameFrame"
-        src="https://www.tojvhr55.com/#/register?invitationCode=761671301584"
-        allow="fullscreen"
-        referrerpolicy="no-referrer"
-      ></iframe>
-
-      <div
-        id="gameFallback"
-        class="fallback"
-      >
-
-        <strong>
-          GAME WINDOW BLOCKED
-        </strong>
-
-        <span>
-          External game iframe block kar sakta hai.
-        </span>
-
-        <button
-          class="open-btn"
-          onclick="openGame()"
-        >
-          OPEN GAME
-        </button>
-
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- ================= ROUND CONTROL ================= -->
-
-  <section class="card">
-
-    <div class="head">
-
-      <div class="title">
-        ROUND CONTROL
-      </div>
-
-      <div
-        id="lastUpdated"
-        class="sub"
-      >
-        --
-      </div>
-
-    </div>
-
-
-    <div class="round-grid">
-
-      <div class="stat">
-
+      <div class="box">
         <div class="label">
-          Settled Period
+          SETTLED PERIOD
         </div>
 
         <div
-          id="settledPeriod"
-          class="value"
-        >
+          class="val"
+          id="settled">
+          --
+        </div>
+      </div>
+
+      <div class="box">
+
+        <div class="label">
+          NEXT PERIOD
+        </div>
+
+        <div
+          class="val blue"
+          id="next">
           --
         </div>
 
       </div>
 
-
-      <div class="stat">
+      <div class="box">
 
         <div class="label">
-          Next Period
+          NEXT PREDICTION
         </div>
 
         <div
-          id="nextPeriod"
-          class="value"
-        >
+          class="val blue"
+          id="target">
           --
         </div>
 
       </div>
 
-
-      <div class="stat">
+      <div class="box">
 
         <div class="label">
-          Next Prediction
+          COUNTDOWN
         </div>
 
         <div
-          id="predictionPeriod"
-          class="value"
-        >
-          --
-        </div>
-
-      </div>
-
-
-      <div class="stat">
-
-        <div class="label">
-          Countdown
-        </div>
-
-        <div
-          id="countdown"
-          class="value timer"
-        >
+          class="val blue"
+          id="timer">
           --s
         </div>
 
@@ -613,110 +445,100 @@ td{
 
     </div>
 
+  </div>
 
-    <!-- ================= PREDICTION ================= -->
+  <div class="card predCard">
 
-    <div class="prediction-box">
+    <div class="grid2">
 
-      <div class="prediction-top">
+      <div>
 
-        <div>
+        <div class="label">
+          AI PREDICTION
+        </div>
 
-          <div class="prediction-label">
-            AI Prediction
-          </div>
+        <div
+          id="prediction"
+          class="pred wait">
+          WAIT
+        </div>
 
-          <div
-            id="predictionText"
-            class="prediction"
-          >
-            WAIT
-          </div>
+        <div class="badges">
 
-          <div class="tags">
-
-            <span class="tag">
-              NUMBER:
-              <b id="predictionNumber">
-                --
-              </b>
+          <span class="badge">
+            NUMBER:
+            <span id="number">
+              --
             </span>
+          </span>
 
-            <span
-              id="predictionStatus"
-              class="tag"
-            >
-              INSUFFICIENT DATA
-            </span>
-
-          </div>
+          <span
+            class="badge"
+            id="status">
+            LOADING
+          </span>
 
         </div>
 
+      </div>
 
-        <div>
+      <div style="text-align:right">
 
-          <div class="prediction-label">
-            Confidence
-          </div>
+        <div class="label">
+          CONFIDENCE
+        </div>
 
-          <div
-            id="confidence"
-            class="confidence"
-          >
-            0%
-          </div>
-
+        <div
+          id="confidence"
+          class="conf">
+          0%
         </div>
 
       </div>
 
     </div>
 
+  </div>
 
-    <!-- ================= WIN LOSS ================= -->
+  <div class="card">
 
-    <div class="wl-grid">
+    <div class="statgrid">
 
-      <div class="wl-box">
+      <div class="stat">
 
         <div class="label">
-          Wins
+          WINS
         </div>
 
         <b
-          id="wins"
-          class="win"
-        >
+          class="green"
+          id="wins">
           0
         </b>
 
       </div>
 
-
-      <div class="wl-box">
+      <div class="stat">
 
         <div class="label">
-          Losses
+          LOSSES
         </div>
 
         <b
-          id="losses"
-          class="loss"
-        >
+          class="red"
+          id="losses">
           0
         </b>
 
       </div>
 
-
-      <div class="wl-box">
+      <div class="stat">
 
         <div class="label">
-          Rate
+          RATE
         </div>
 
-        <b id="winRate">
+        <b id="rate">
           0%
         </b>
 
@@ -724,89 +546,74 @@ td{
 
     </div>
 
-  </section>
+  </div>
 
+  <div class="card">
 
-  <!-- ================= AI ANALYSIS ================= -->
+    <h2>
+      🧠 AI ANALYSIS
 
-  <section class="card">
-
-    <div class="head">
-
-      <div class="title">
-        AI ANALYSIS
-      </div>
-
-      <div
-        id="historyCount"
-        class="sub"
-      >
+      <span
+        style="float:right;color:#71859e;font-size:9px"
+        id="dataCount">
         0 DATA
-      </div>
+      </span>
 
-    </div>
-
+    </h2>
 
     <div class="analysis">
 
-      <div class="analysis-box">
+      <div class="box">
 
         <div class="label">
-          Pattern Score
+          PATTERN SCORE
         </div>
 
         <div
-          id="patternScore"
-          class="analysis-number"
-        >
+          class="val"
+          id="pattern">
           0
         </div>
 
       </div>
 
-
-      <div class="analysis-box">
+      <div class="box">
 
         <div class="label">
-          Model Agreement
+          MODEL AGREEMENT
         </div>
 
         <div
-          id="modelAgreement"
-          class="analysis-number"
-        >
+          class="val"
+          id="agreement">
           0%
         </div>
 
       </div>
 
-
-      <div class="analysis-box">
+      <div class="box">
 
         <div class="label">
-          Backtest Samples
+          BACKTEST SAMPLES
         </div>
 
         <div
-          id="backtestSamples"
-          class="analysis-number"
-        >
+          class="val"
+          id="samples">
           0
         </div>
 
       </div>
 
-
-      <div class="analysis-box">
+      <div class="box">
 
         <div class="label">
-          Average Accuracy
+          AVERAGE ACCURACY
         </div>
 
         <div
-          id="accuracy"
-          class="analysis-number"
-        >
+          class="val"
+          id="accuracy">
           N/A
         </div>
 
@@ -814,273 +621,154 @@ td{
 
     </div>
 
-  </section>
-
-
-  <!-- ================= RESULTS ================= -->
-
-  <section class="card">
-
-    <div class="head">
-
-      <div class="title">
-        LIVE RESULTS + WIN/LOSS
-      </div>
-
-      <div class="sub">
-        LAST 30
-      </div>
-
-    </div>
-
-
-    <div class="table-wrap">
-
-      <table>
-
-        <thead>
-
-          <tr>
-
-            <th>
-              Period
-            </th>
-
-            <th>
-              Number
-            </th>
-
-            <th>
-              Pred
-            </th>
-
-            <th>
-              W/L
-            </th>
-
-          </tr>
-
-        </thead>
-
-        <tbody id="resultTable">
-
-          <tr>
-
-            <td
-              colspan="4"
-              class="empty"
-            >
-              Loading live results...
-            </td>
-
-          </tr>
-
-        </tbody>
-
-      </table>
-
-    </div>
-
-  </section>
-
-
-  <div class="footer">
-    DY AI statistical analysis • No prediction is guaranteed
   </div>
 
-</main>
+  <div class="card tableWrap">
 
+    <h2>
 
-<!-- ================= MUSIC ================= -->
+      LIVE RESULTS + WIN/LOSS
+
+      <span
+        style="float:right;color:#71859e;font-size:9px">
+        LAST 30
+      </span>
+
+    </h2>
+
+    <div class="tableHead">
+
+      <div>NUMBER</div>
+      <div>PRED</div>
+      <div>W/L</div>
+
+    </div>
+
+    <div id="results"></div>
+
+  </div>
+
+  <div class="footer">
+    DY AI statistical analysis ·
+    No prediction is guaranteed
+  </div>
+
+</div>
+
+<button
+  class="music"
+  id="musicBtn">
+  ♫
+</button>
 
 <audio
   id="music"
   src="/music.mp3"
-  preload="auto"
   loop
-></audio>
-
+  preload="none">
+</audio>
 
 <script>
 
-/* =========================================================
-   CONFIG
-========================================================= */
+const $ =
+  id => document.getElementById(id);
 
-const GAME_URL =
-  "https://www.tojvhr55.com/#/register?invitationCode=761671301584";
+const KEY_STORE =
+  "dy_ai_access_key";
 
+const DEVICE_STORE =
+  "dy_ai_device_id";
 
-/* =========================================================
-   DEVICE ID
-========================================================= */
+let accessKey =
+  sessionStorage.getItem(
+    KEY_STORE
+  ) || "";
 
 let deviceId =
   localStorage.getItem(
-    "dy_ai_device_id"
+    DEVICE_STORE
   );
 
-if (!deviceId) {
+if(!deviceId){
 
-  if (
-    window.crypto &&
+  deviceId =
     crypto.randomUUID
-  ) {
-
-    deviceId =
-      crypto.randomUUID();
-
-  }
-  else {
-
-    deviceId =
-      "dy-" +
-      Date.now() +
-      "-" +
-      Math.random()
-        .toString(36)
-        .slice(2);
-
-  }
+      ? crypto.randomUUID()
+      : (
+        "dy-" +
+        Date.now() +
+        "-" +
+        Math.random()
+          .toString(36)
+          .slice(2)
+      );
 
   localStorage.setItem(
-    "dy_ai_device_id",
+    DEVICE_STORE,
     deviceId
   );
 
 }
 
+let latestState = null;
+let lastTarget = "";
+let lastSignature = "";
+let timerValue = 0;
+let timerTick = null;
 
-/* =========================================================
-   TIMER
-========================================================= */
+function headers(){
 
-let serverCountdown = 0;
+  return {
+    "X-Access-Key":
+      accessKey,
 
-let countdownUpdatedAt = 0;
+    "X-Device-ID":
+      deviceId,
 
-
-/* =========================================================
-   HELPERS
-========================================================= */
-
-function $(id) {
-
-  return document.getElementById(id);
-
-}
-
-
-function escapeHtml(value) {
-
-  return String(
-    value ?? ""
-  )
-  .replace(
-    /[&<>"']/g,
-    function(char) {
-
-      const map = {
-        "&":"&amp;",
-        "<":"&lt;",
-        ">":"&gt;",
-        '"':"&quot;",
-        "'":"&#039;"
-      };
-
-      return map[char];
-
-    }
-  );
+    "Cache-Control":
+      "no-cache"
+  };
 
 }
 
+function setMsg(
+  text,
+  ok = false
+){
 
-/* =========================================================
-   OPEN GAME
-========================================================= */
+  $("loginMsg").textContent =
+    text;
 
-function openGame() {
-
-  window.open(
-    GAME_URL,
-    "_blank",
-    "noopener,noreferrer"
-  );
-
-}
-
-
-/* =========================================================
-   SHOW APP
-========================================================= */
-
-function showApp() {
-
-  $("loginScreen")
-    .classList
-    .add("hide");
-
-  $("mainApp")
-    .classList
-    .remove("hide");
+  $("loginMsg").className =
+    "msg " +
+    (ok ? "ok" : "err");
 
 }
 
-
-/* =========================================================
-   CONNECTION STATUS
-========================================================= */
-
-function setConnection(
-  online
-) {
-
-  $("connection").textContent =
-    online
-      ? "● LIVE"
-      : "● OFFLINE";
-
-  $("connection").style.color =
-    online
-      ? "#55e6a5"
-      : "#ff7777";
-
-}
-
-
-/* =========================================================
-   LOGIN
-========================================================= */
-
-async function login() {
+async function login(){
 
   const key =
     $("accessKey")
       .value
       .trim();
 
+  if(!key){
 
-  if (!key) {
-
-    $("loginError").textContent =
-      "Access key enter karo.";
-
-    return;
+    return setMsg(
+      "Access key enter karo."
+    );
 
   }
 
-
-  $("loginButton").disabled =
+  $("loginBtn").disabled =
     true;
 
-  $("loginButton").textContent =
+  $("loginBtn").textContent =
     "CHECKING...";
 
+  try{
 
-  try {
-
-    const response =
+    const r =
       await fetch(
         "/api/key/check",
         {
@@ -1092,731 +780,646 @@ async function login() {
           },
 
           body:JSON.stringify({
-            key:key,
-            device_id:deviceId
-          })
+            key,
+            device_id:
+              deviceId
+          }),
+
+          cache:"no-store"
         }
       );
 
+    const d =
+      await r.json();
 
-    const data =
-      await response.json();
-
-
-    if (!data.ok) {
+    if(
+      !r.ok ||
+      d.success !== true
+    ){
 
       throw new Error(
-        data.error ||
-        "Invalid access key"
+        d.message ||
+        d.error ||
+        "Invalid access key."
       );
 
     }
 
+    accessKey = key;
 
-    localStorage.setItem(
-      "dy_ai_access_key",
+    sessionStorage.setItem(
+      KEY_STORE,
       key
     );
 
+    $("loginCard")
+      .classList
+      .add("hidden");
 
-    showApp();
+    $("app")
+      .classList
+      .remove("hidden");
 
+    await refresh(true);
 
-    const music =
-      $("music");
+  }catch(e){
 
-    music.volume =
-      0.35;
+    setMsg(
+      e.message
+    );
 
-    music.play()
-      .catch(
-        function(){}
-      );
+  }finally{
 
-
-    loadState();
-
-  }
-  catch(error) {
-
-    $("loginError").textContent =
-      error.message ||
-      "Login failed";
-
-  }
-  finally {
-
-    $("loginButton").disabled =
+    $("loginBtn").disabled =
       false;
 
-    $("loginButton").textContent =
-      "UNLOCK PREMIUM";
+    $("loginBtn").textContent =
+      "UNLOCK";
 
   }
 
 }
 
+$("loginBtn").onclick =
+  login;
 
-/* =========================================================
-   AUTO LOGIN
-========================================================= */
+$("accessKey").onkeydown =
+  e => {
 
-async function autoLogin() {
+    if(e.key === "Enter"){
+      login();
+    }
 
-  const key =
-    localStorage.getItem(
-      "dy_ai_access_key"
+  };
+
+async function getState(){
+
+  const r =
+    await fetch(
+      "/api/state",
+      {
+        headers:
+          headers(),
+        cache:
+          "no-store"
+      }
     );
 
+  const d =
+    await r.json();
 
-  if (!key) {
-    return;
-  }
+  if(
+    r.status === 401 ||
+    r.status === 403
+  ){
 
+    sessionStorage.removeItem(
+      KEY_STORE
+    );
 
-  try {
+    accessKey = "";
 
-    const response =
-      await fetch(
-        "/api/key/check",
-        {
-          method:"POST",
+    $("app")
+      .classList
+      .add("hidden");
 
-          headers:{
-            "Content-Type":
-              "application/json"
-          },
+    $("loginCard")
+      .classList
+      .remove("hidden");
 
-          body:JSON.stringify({
-            key:key,
-            device_id:deviceId
-          })
-        }
-      );
-
-
-    const data =
-      await response.json();
-
-
-    if (data.ok) {
-
-      showApp();
-
-      loadState();
-
-    }
-    else {
-
-      localStorage.removeItem(
-        "dy_ai_access_key"
-      );
-
-    }
+    throw new Error(
+      d.message ||
+      "Access expired."
+    );
 
   }
-  catch(error) {}
+
+  if(
+    !r.ok ||
+    d.success !== true
+  ){
+
+    throw new Error(
+      d.message ||
+      d.error ||
+      "State error"
+    );
+
+  }
+
+  return d;
 
 }
 
+function render(d){
 
-/* =========================================================
-   RENDER PREDICTION
-========================================================= */
+  latestState = d;
 
-function renderPrediction(
-  prediction
-) {
-
-  if (!prediction) {
-
-    $("predictionText").textContent =
-      "WAIT";
-
-    $("predictionText").className =
-      "prediction";
-
-    $("predictionNumber").textContent =
+  $("settled")
+    .textContent =
+      d.settledIssue ||
       "--";
 
-    $("confidence").textContent =
-      "0%";
+  $("next")
+    .textContent =
+      d.nextIssue ||
+      d.targetIssue ||
+      "--";
 
-    $("predictionStatus").textContent =
-      "INSUFFICIENT DATA";
+  $("target")
+    .textContent =
+      d.targetIssue ||
+      "--";
 
-    return;
+  timerValue =
+    Number(d.countdown);
+
+  if(
+    !Number.isFinite(
+      timerValue
+    )
+  ){
+
+    timerValue = 0;
 
   }
 
+  $("timer")
+    .textContent =
+      Math.max(
+        0,
+        Math.floor(
+          timerValue
+        )
+      ) +
+      "s";
 
-  const type =
-    prediction.prediction ||
+  const a =
+    d.analysis || {};
+
+  const p =
+    a.prediction ||
+    d.prediction ||
     "WAIT";
 
+  const n =
+    a.predictedNumber ??
+    d.predictedNumber ??
+    null;
 
-  $("predictionText").textContent =
-    type;
-
-
-  $("predictionText").className =
-    "prediction " +
-    (
-      type === "BIG"
-        ? "big"
-        : type === "SMALL"
-          ? "small"
-          : ""
+  const c =
+    Number(
+      a.confidence ??
+      d.confidence ??
+      0
     );
 
+  $("prediction")
+    .textContent =
+      p;
 
-  $("predictionNumber").textContent =
-    prediction.predictedNumber ??
-    "--";
+  $("prediction")
+    .className =
+      "pred " +
+      (
+        p === "BIG"
+          ? "big"
+          : p === "SMALL"
+            ? "small"
+            : "wait"
+      );
 
+  $("number")
+    .textContent =
+      n == null
+        ? "--"
+        : n;
 
-  $("confidence").textContent =
-    (
-      prediction.confidence ??
-      0
-    ) +
-    "%";
+  $("confidence")
+    .textContent =
+      (
+        Number.isFinite(c)
+          ? c
+          : 0
+      ) +
+      "%";
 
+  $("status")
+    .textContent =
+      a.status ||
+      d.status ||
+      "WAITING";
 
-  $("predictionStatus").textContent =
-    prediction.status ||
-    "SIGNAL";
+  $("pattern")
+    .textContent =
+      a.patternScore ??
+      d.patternScore ??
+      0;
 
-}
+  $("agreement")
+    .textContent =
+      (
+        a.agreement ??
+        d.agreement ??
+        0
+      ) +
+      "%";
 
+  $("samples")
+    .textContent =
+      a.backtestSamples ??
+      d.backtestSamples ??
+      0;
 
-/* =========================================================
-   RENDER ANALYSIS
-========================================================= */
+  const acc =
+    a.avgModelAccuracy ??
+    d.avgModelAccuracy;
 
-function renderAnalysis(
-  prediction
-) {
+  $("accuracy")
+    .textContent =
+      acc == null
+        ? "N/A"
+        : Math.round(
+            Number(acc)
+          ) +
+          "%";
 
-  if (!prediction) {
-    return;
-  }
+  $("dataCount")
+    .textContent =
+      (
+        d.historyCount ??
+        d.history?.length ??
+        0
+      ) +
+      " DATA";
 
+  const s =
+    d.winLossStats || {
+      win:0,
+      loss:0,
+      rate:0
+    };
 
-  $("patternScore").textContent =
-    prediction.patternScore ??
-    0;
+  $("wins")
+    .textContent =
+      s.win ?? 0;
 
+  $("losses")
+    .textContent =
+      s.loss ?? 0;
 
-  $("modelAgreement").textContent =
-    (
-      prediction.agreement ??
-      0
-    ) +
-    "%";
-
-
-  const backtest =
-    prediction.backtest ||
-    {};
-
-
-  $("backtestSamples").textContent =
-    backtest.samples ??
-    0;
-
-
-  $("accuracy").textContent =
-    backtest.accuracy == null
-      ? "N/A"
-      : Math.round(
-          backtest.accuracy
-        ) +
-        "%";
-
-}
-
-
-/* =========================================================
-   RENDER TABLE
-========================================================= */
-
-function renderTable(
-  liveHistory,
-  winLossRows
-) {
-
-  const table =
-    $("resultTable");
-
+  $("rate")
+    .textContent =
+      (
+        s.rate ?? 0
+      ) +
+      "%";
 
   const rows =
     Array.isArray(
-      liveHistory
+      d.results
     )
-      ? liveHistory.slice(
+      ? d.results.slice(
           0,
           30
         )
       : [];
 
+  $("results")
+    .innerHTML =
+      rows.map(
+        row => {
 
-  const predictions =
-    new Map();
+          const pred =
+            row.prediction;
 
-
-  for (
-    const item of
-    (
-      winLossRows ||
-      []
-    )
-  ) {
-
-    predictions.set(
-      String(
-        item.target_issue
-      ),
-      item
-    );
-
-  }
-
-
-  if (!rows.length) {
-
-    table.innerHTML =
-      `
-      <tr>
-        <td
-          colspan="4"
-          class="empty"
-        >
-          No live results available.
-        </td>
-      </tr>
-      `;
-
-    return;
-
-  }
-
-
-  table.innerHTML =
-    rows
-      .map(
-        function(row) {
-
-          const issue =
-            String(
-              row.issueNumber
-            );
-
-
-          const matched =
-            predictions.get(
-              issue
-            );
-
-
-          let predHtml =
-            `
-            <span
-              style="color:#536c83"
-            >
-              —
-            </span>
-            `;
-
-
-          let resultHtml =
-            `
-            <span
-              style="color:#536c83"
-            >
-              —
-            </span>
-            `;
-
-
-          if (matched) {
-
-            if (
-              matched.prediction ===
-              "BIG"
-            ) {
-
-              predHtml =
-                `
-                <span
-                  class="badge badge-big"
-                >
-                  BIG
-                </span>
-                `;
-
-            }
-            else if (
-              matched.prediction ===
-              "SMALL"
-            ) {
-
-              predHtml =
-                `
-                <span
-                  class="badge badge-small"
-                >
-                  SMALL
-                </span>
-                `;
-
-            }
-
-
-            if (
-              matched.status ===
-              "WIN"
-            ) {
-
-              resultHtml =
-                `
-                <span
-                  class="badge badge-win"
-                >
-                  WIN
-                </span>
-                `;
-
-            }
-            else if (
-              matched.status ===
-              "LOSS"
-            ) {
-
-              resultHtml =
-                `
-                <span
-                  class="badge badge-loss"
-                >
-                  LOSS
-                </span>
-                `;
-
-            }
-
-          }
-
-
-          const shortIssue =
-            issue.length > 8
-              ? issue.slice(-8)
-              : issue;
-
+          const out =
+            row.outcome;
 
           return `
-            <tr>
+            <div class="tr">
 
-              <td>
-                ${escapeHtml(
-                  shortIssue
-                )}
-              </td>
-
-              <td
-                class="actual-number"
-              >
+              <div class="num">
                 ${escapeHtml(
                   row.number
                 )}
-              </td>
+              </div>
 
-              <td>
-                ${predHtml}
-              </td>
+              <div>
 
-              <td>
-                ${resultHtml}
-              </td>
+                ${
+                  pred
+                    ? `
+                      <span
+                        class="pill ${pred.toLowerCase()}">
+                        ${pred}
+                      </span>
+                    `
+                    : `
+                      <span class="muted">
+                        —
+                      </span>
+                    `
+                }
 
-            </tr>
+              </div>
+
+              <div>
+
+                ${
+                  out
+                    ? `
+                      <span
+                        class="pill ${out.toLowerCase()}">
+                        ${out}
+                      </span>
+                    `
+                    : `
+                      <span class="muted">
+                        —
+                      </span>
+                    `
+                }
+
+              </div>
+
+            </div>
           `;
 
         }
-      )
-      .join("");
+      ).join("") ||
+
+      `
+        <div class="tr">
+
+          <div class="muted">
+            —
+          </div>
+
+          <div>
+            —
+          </div>
+
+          <div>
+            —
+          </div>
+
+        </div>
+      `;
 
 }
 
+function escapeHtml(v){
 
-/* =========================================================
-   RENDER COMPLETE STATE
-========================================================= */
-
-function renderState(
-  data
-) {
-
-  $("settledPeriod").textContent =
-    data.settledIssue ||
-    "--";
-
-
-  $("nextPeriod").textContent =
-    data.nextIssue ||
-    "--";
-
-
-  $("predictionPeriod").textContent =
-    data.targetIssue ||
-    "--";
-
-
-  $("historyCount").textContent =
-    (
-      data.historyCount ||
-      0
-    ) +
-    " DATA";
-
-
-  $("lastUpdated").textContent =
-    data.lastFetchAt
-      ? new Date(
-          data.lastFetchAt
-        ).toLocaleTimeString()
-      : "--";
-
-
-  renderPrediction(
-    data.prediction
+  return String(
+    v ?? ""
+  ).replace(
+    /[&<>"']/g,
+    x => ({
+      "&":"&amp;",
+      "<":"&lt;",
+      ">":"&gt;",
+      '"':"&quot;",
+      "'":"&#39;"
+    }[x])
   );
 
+}
 
-  renderAnalysis(
-    data.prediction
+function startTimer(){
+
+  clearInterval(
+    timerTick
   );
 
+  timerTick =
+    setInterval(
+      () => {
 
-  const wl =
-    data.winLoss ||
-    {};
+        if(
+          timerValue > 0
+        ){
 
+          timerValue--;
 
-  $("wins").textContent =
-    wl.wins ??
-    0;
+        }
 
+        $("timer")
+          .textContent =
+            Math.max(
+              0,
+              Math.floor(
+                timerValue
+              )
+            ) +
+            "s";
 
-  $("losses").textContent =
-    wl.losses ??
-    0;
+      },
+      1000
+    );
 
+}
 
-  $("winRate").textContent =
-    (
-      wl.rate ??
-      0
-    ) +
-    "%";
+async function refresh(
+  first = false
+){
 
+  try{
 
-  if (
-    typeof data.countdown ===
-    "number"
-  ) {
+    const d =
+      await getState();
 
-    serverCountdown =
-      Math.max(
-        0,
-        Math.min(
-          30,
-          Math.floor(
-            data.countdown
-          )
+    const signature =
+      (d.history || [])
+        .slice(0,30)
+        .map(
+          x =>
+            x.issueNumber +
+            ":" +
+            x.number
         )
+        .join("|");
+
+    /*
+      Server only creates a new prediction
+      after settled history changes.
+      Frontend therefore never invents/
+      recalculates a new prediction every second.
+    */
+
+    if(
+      first ||
+      signature !==
+        lastSignature ||
+      d.targetIssue !==
+        lastTarget
+    ){
+
+      render(d);
+
+      lastSignature =
+        signature;
+
+      lastTarget =
+        d.targetIssue ||
+        "";
+
+    }else{
+
+      latestState =
+        d;
+
+      timerValue =
+        Number(
+          d.countdown
+        ) ||
+        timerValue;
+
+      $("timer")
+        .textContent =
+          Math.max(
+            0,
+            Math.floor(
+              timerValue
+            )
+          ) +
+          "s";
+
+    }
+
+    startTimer();
+
+  }catch(e){
+
+    if(accessKey){
+
+      console.log(
+        e.message
       );
 
-    countdownUpdatedAt =
-      Date.now();
+    }
 
   }
 
-
-  renderTable(
-    data.history || [],
-    wl.rows || []
-  );
-
-
-  setConnection(
-    !data.error
-  );
-
 }
 
+async function refreshHistory(){
 
-/* =========================================================
-   LOAD STATE
-========================================================= */
+  if(!accessKey){
+    return;
+  }
 
-async function loadState() {
+  try{
 
-  try {
-
-    const response =
+    const r =
       await fetch(
-        "/api/state?t=" +
-        Date.now(),
+        "/api/state",
         {
-          cache:"no-store"
+          headers:
+            headers(),
+          cache:
+            "no-store"
         }
       );
 
+    if(r.ok){
 
-    if (!response.ok) {
-      throw new Error(
-        "Server error"
-      );
-    }
+      const d =
+        await r.json();
 
+      if(
+        d.success === true
+      ){
 
-    const data =
-      await response.json();
-
-
-    if (!data.success) {
-      throw new Error(
-        data.error ||
-        "State unavailable"
-      );
-    }
-
-
-    renderState(
-      data
-    );
-
-  }
-  catch(error) {
-
-    setConnection(
-      false
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   LIVE POLLING
-========================================================= */
-
-setInterval(
-  loadState,
-  1000
-);
-
-
-/* =========================================================
-   SMOOTH TIMER
-========================================================= */
-
-setInterval(
-  function() {
-
-    if (!countdownUpdatedAt) {
-      return;
-    }
-
-
-    const elapsed =
-      Math.floor(
-        (
-          Date.now() -
-          countdownUpdatedAt
-        ) / 1000
-      );
-
-
-    const value =
-      Math.max(
-        0,
-        serverCountdown -
-        elapsed
-      );
-
-
-    $("countdown").textContent =
-      String(value)
-        .padStart(
-          2,
-          "0"
-        ) +
-      "s";
-
-  },
-  250
-);
-
-
-/* =========================================================
-   LOGIN EVENTS
-========================================================= */
-
-$("loginButton")
-  .addEventListener(
-    "click",
-    login
-  );
-
-
-$("accessKey")
-  .addEventListener(
-    "keydown",
-    function(event) {
-
-      if (
-        event.key ===
-        "Enter"
-      ) {
-
-        login();
+        render(d);
 
       }
 
     }
-  );
 
+  }catch{}
 
-/* =========================================================
-   MUSIC
-========================================================= */
+}
 
-document.addEventListener(
-  "click",
-  function() {
+setInterval(
+  () => {
 
-    $("music")
-      .play()
-      .catch(
-        function(){}
-      );
+    if(accessKey){
+      refresh(false);
+    }
 
   },
-  {
-    once:true
-  }
+  1000
 );
 
+setInterval(
+  () => {
 
-/* =========================================================
-   AUTO LOGIN
-========================================================= */
+    if(accessKey){
+      refreshHistory();
+    }
 
-autoLogin();
+  },
+  3000
+);
+
+$("openGame").onclick =
+  () => {
+
+    window.open(
+      "https://www.tojvhr55.com/#/register?invitationCode=761671301584",
+      "_blank"
+    );
+
+  };
+
+$("musicBtn").onclick =
+  async () => {
+
+    const audio =
+      $("music");
+
+    try{
+
+      if(
+        audio.paused
+      ){
+
+        await audio.play();
+
+        $("musicBtn")
+          .textContent =
+          "❚❚";
+
+      }else{
+
+        audio.pause();
+
+        $("musicBtn")
+          .textContent =
+          "♫";
+
+      }
+
+    }catch{}
+
+  };
+
+if(accessKey){
+
+  $("loginCard")
+    .classList
+    .add("hidden");
+
+  $("app")
+    .classList
+    .remove("hidden");
+
+  refresh(true);
+
+}
 
 </script>
 
 </body>
-  </html>
+</html>
