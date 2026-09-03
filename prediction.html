@@ -19,7 +19,8 @@
   -webkit-tap-highlight-color:transparent;
 }
 
-html,body{
+html,
+body{
   margin:0;
   padding:0;
   background:#05070d;
@@ -31,7 +32,8 @@ body{
   min-height:100vh;
 }
 
-button,input{
+button,
+input{
   font:inherit;
 }
 
@@ -64,7 +66,11 @@ button{
   max-width:430px;
   padding:25px;
   border-radius:24px;
-  background:linear-gradient(145deg,#111827,#070b13);
+  background:linear-gradient(
+    145deg,
+    #111827,
+    #070b13
+  );
   border:1px solid #263247;
   box-shadow:0 20px 70px rgba(0,0,0,.45);
 }
@@ -200,7 +206,7 @@ button{
 
 .game-frame{
   width:100%;
-  height:420px;
+  height:430px;
   border:0;
   display:block;
   background:#000;
@@ -223,7 +229,11 @@ button{
   margin-top:12px;
   padding:15px;
   border-radius:18px;
-  background:linear-gradient(145deg,#111827,#080c14);
+  background:linear-gradient(
+    145deg,
+    #111827,
+    #080c14
+  );
   border:1px solid #26344c;
 }
 
@@ -262,6 +272,11 @@ button{
   font-weight:1000;
   letter-spacing:3px;
   color:#00e5ff;
+}
+
+.timer.warning{
+  color:#ff687d;
+  text-shadow:0 0 15px rgba(255,80,100,.3);
 }
 
 .timer-label{
@@ -358,11 +373,29 @@ button{
 
 .prediction-card{
   margin-top:12px;
-  padding:18px 16px;
+  padding:20px 16px;
   border-radius:20px;
-  background:linear-gradient(145deg,#101a28,#080d15);
+  background:linear-gradient(
+    145deg,
+    #101a28,
+    #080d15
+  );
   border:1px solid #2a3a53;
   text-align:center;
+  animation:predictionIn .35s ease;
+}
+
+@keyframes predictionIn{
+
+  from{
+    opacity:0;
+    transform:translateY(8px);
+  }
+
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
 }
 
 .prediction-label{
@@ -373,7 +406,7 @@ button{
 }
 
 .prediction-side{
-  margin-top:6px;
+  margin-top:7px;
   font-size:44px;
   line-height:1;
   font-weight:1000;
@@ -438,7 +471,7 @@ button{
 
 
 /* =========================================================
-   AI EXPLANATION
+   AI SUMMARY
 ========================================================= */
 
 .ai-summary{
@@ -639,6 +672,11 @@ td{
   font-weight:1000;
 }
 
+.skipped{
+  color:#8b98aa;
+  font-weight:1000;
+}
+
 
 /* =========================================================
    BUTTONS
@@ -680,6 +718,10 @@ td{
 }
 
 
+/* =========================================================
+   MOBILE
+========================================================= */
+
 @media(max-width:420px){
 
   .app{
@@ -696,6 +738,39 @@ td{
 
   .details-grid{
     grid-template-columns:repeat(2,1fr);
+  }
+
+  .period-row{
+    gap:7px;
+  }
+
+  .info-value{
+    font-size:12px;
+  }
+
+}
+
+
+/* =========================================================
+   VERY SMALL MOBILE
+========================================================= */
+
+@media(max-width:350px){
+
+  .game-frame{
+    height:390px;
+  }
+
+  .header-title{
+    font-size:18px;
+  }
+
+  .analysis-count{
+    font-size:42px;
+  }
+
+  .prediction-side{
+    font-size:35px;
   }
 
 }
@@ -772,8 +847,11 @@ td{
     </div>
 
     <div class="live">
+
       <div class="live-dot"></div>
+
       LIVE
+
     </div>
 
   </div>
@@ -807,12 +885,15 @@ td{
       src="https://www.shreewin38.com/#/register?invitationCode=88523152383"
       allow="fullscreen"
       loading="eager"
+      referrerpolicy="no-referrer-when-downgrade"
     ></iframe>
 
 
     <div class="game-fallback">
+
       Agar game iframe me load na ho to
       <b>OPEN GAME</b> dabaye.
+
     </div>
 
   </div>
@@ -1011,7 +1092,7 @@ td{
       class="ai-summary-text"
     >
       Expert model is checking recent trend,
-      transition, streak and pattern signals.
+      transitions, streaks and historical patterns.
     </div>
 
   </div>
@@ -1180,11 +1261,27 @@ td{
         <thead>
 
           <tr>
-            <th>PERIOD</th>
-            <th>NUMBER</th>
-            <th>RESULT</th>
-            <th>PREDICT</th>
-            <th>W/L</th>
+
+            <th>
+              PERIOD
+            </th>
+
+            <th>
+              NUMBER
+            </th>
+
+            <th>
+              RESULT
+            </th>
+
+            <th>
+              PREDICT
+            </th>
+
+            <th>
+              W/L
+            </th>
+
           </tr>
 
         </thead>
@@ -1195,9 +1292,11 @@ td{
         >
 
           <tr>
+
             <td colspan="5">
               Loading...
             </td>
+
           </tr>
 
         </tbody>
@@ -1222,6 +1321,7 @@ td{
       🔊 MUSIC OFF
     </button>
 
+
     <button
       id="logoutBtn"
       class="action-btn"
@@ -1232,14 +1332,21 @@ td{
   </div>
 
 
+  <!-- FOOTER -->
+
   <div class="footer">
+
     DY AI Wingo 30S<br>
+
     Actual results come from the live history API.
     AI predictions are estimates only and are not guaranteed.
+
   </div>
 
 </div>
 
+
+<!-- MUSIC -->
 
 <audio
   id="music"
@@ -1446,7 +1553,8 @@ function getDeviceId(){
 
     if(
       window.crypto &&
-      crypto.randomUUID
+      typeof crypto.randomUUID ===
+      "function"
     ){
 
       id =
@@ -1456,6 +1564,7 @@ function getDeviceId(){
 
       id =
         Date.now().toString(36) +
+        "-" +
         Math.random()
           .toString(36)
           .slice(2);
@@ -1517,8 +1626,12 @@ async function login(){
 
           body:
             JSON.stringify({
+
               access_key:key,
-              device_id:getDeviceId()
+
+              device_id:
+                getDeviceId()
+
             })
         }
       );
@@ -1582,6 +1695,15 @@ function getLoginError(error){
   }
 
 
+  if(
+    error ===
+    "DATABASE_NOT_READY"
+  ){
+
+    return "Server database ready nahi hai.";
+  }
+
+
   return (
     error ||
     "Access denied."
@@ -1623,9 +1745,6 @@ let lastTargetIssue =
 
 let analysisRunning =
   false;
-
-let lastState =
-  null;
 
 let refreshBusy =
   false;
@@ -1710,11 +1829,13 @@ if(savedKey){
 
       body:
         JSON.stringify({
+
           access_key:
             savedKey,
 
           device_id:
             getDeviceId()
+
         })
     }
   )
@@ -1745,7 +1866,7 @@ if(savedKey){
 
 
 /* =========================================================
-   GAME
+   OPEN GAME
 ========================================================= */
 
 openGame.addEventListener(
@@ -1788,12 +1909,16 @@ async function refresh(){
       );
 
 
+    if(!response.ok){
+
+      throw new Error(
+        "Server error"
+      );
+    }
+
+
     const data =
       await response.json();
-
-
-    lastState =
-      data;
 
 
     renderState(
@@ -1856,8 +1981,9 @@ function renderState(data){
 
 
   /*
-    New target = new analysis.
-    Same target = prediction does not regenerate.
+    New target = 3-second analysis.
+
+    Same target = keep existing prediction.
   */
 
   if(
@@ -1890,7 +2016,7 @@ function renderState(data){
 
 
 /* =========================================================
-   THREE SECOND EXPERT ANALYSIS
+   THREE SECOND ANALYSIS
 ========================================================= */
 
 function startThreeSecondAnalysis(data){
@@ -1905,6 +2031,10 @@ function startThreeSecondAnalysis(data){
 
   predictionCard.style.display =
     "none";
+
+
+  progressBar.style.width =
+    "0%";
 
 
   const steps = [
@@ -1924,7 +2054,7 @@ function startThreeSecondAnalysis(data){
       word:"ANALYZING",
 
       desc:
-        "Checking trend, streak & transitions..."
+        "Checking recent trend & transitions..."
     },
 
     {
@@ -1933,7 +2063,7 @@ function startThreeSecondAnalysis(data){
       word:"VERIFYING",
 
       desc:
-        "Comparing pattern and model agreement..."
+        "Checking streak, pattern & agreement..."
     }
 
   ];
@@ -1943,11 +2073,7 @@ function startThreeSecondAnalysis(data){
     0;
 
 
-  progressBar.style.width =
-    "0%";
-
-
-  function next(){
+  function nextStep(){
 
     const step =
       steps[index];
@@ -1985,7 +2111,7 @@ function startThreeSecondAnalysis(data){
     ){
 
       setTimeout(
-        next,
+        nextStep,
         1000
       );
 
@@ -2010,7 +2136,7 @@ function startThreeSecondAnalysis(data){
   }
 
 
-  next();
+  nextStep();
 }
 
 
@@ -2027,12 +2153,6 @@ function renderPrediction(data){
   predictionCard.style.display =
     "block";
 
-
-  /*
-    IMPORTANT:
-    Only actual server prediction is displayed.
-    Random mix fields are intentionally ignored.
-  */
 
   const side =
     String(
@@ -2074,6 +2194,10 @@ function renderPrediction(data){
 
 
   predictionNumber.textContent =
+    (
+      side === "BIG" ||
+      side === "SMALL"
+    ) &&
     data.number != null
       ? data.number
       : "—";
@@ -2090,11 +2214,6 @@ function renderPrediction(data){
     data.status ||
     "WAIT";
 
-
-  /*
-    Always display as Expert AI.
-    RANDOM MIX is intentionally hidden.
-  */
 
   modeBadge.textContent =
     "EXPERT AI";
@@ -2177,8 +2296,7 @@ function renderAISummary(data){
     ).toUpperCase();
 
 
-  let text =
-    "Expert model is combining multiple historical signals.";
+  let text;
 
 
   if(
@@ -2267,6 +2385,23 @@ function updateTimer(seconds){
       2,
       "0"
     );
+
+
+  if(
+    s <= 5 &&
+    s > 0
+  ){
+
+    timer.classList.add(
+      "warning"
+    );
+
+  }else{
+
+    timer.classList.remove(
+      "warning"
+    );
+  }
 }
 
 
@@ -2303,8 +2438,10 @@ function renderStats(data){
   accuracy.textContent =
     total
       ? Math.round(
-          w /
-          total *
+          (
+            w /
+            total
+          ) *
           100
         ) +
         "%"
@@ -2368,11 +2505,15 @@ function renderPredictionHistory(data){
   if(!rows.length){
 
     historyBody.innerHTML = `
+
       <tr>
+
         <td colspan="5">
           Waiting for prediction history...
         </td>
+
       </tr>
+
     `;
 
     return;
@@ -2430,11 +2571,13 @@ function renderPredictionHistory(data){
 
 
             resultHtml = `
+
               <span class="${cls}">
                 ${escapeHtml(
                   resultSide || "—"
                 )}
               </span>
+
             `;
           }
 
@@ -2443,34 +2586,57 @@ function renderPredictionHistory(data){
             `<span class="pending">PENDING</span>`;
 
 
+          const outcome =
+            String(
+              row.outcome || ""
+            ).toUpperCase();
+
+
           if(
-            row.outcome === "WIN"
+            outcome === "WIN"
           ){
 
             wlHtml =
               `<span class="win">WIN</span>`;
 
           }else if(
-            row.outcome === "LOSS"
+            outcome === "LOSS"
           ){
 
             wlHtml =
               `<span class="loss">LOSS</span>`;
+
+          }else if(
+            outcome === "SKIPPED"
+          ){
+
+            wlHtml =
+              `<span class="skipped">SKIPPED</span>`;
           }
 
 
-          const predictText =
-            prediction === "WAIT"
-              ? "WAIT"
-              : (
-                  prediction +
-                  (
-                    predictedNumber != null
-                      ? " • " +
-                        predictedNumber
-                      : ""
-                  )
-                );
+          let predictText =
+            "WAIT";
+
+
+          if(
+            prediction === "BIG" ||
+            prediction === "SMALL"
+          ){
+
+            predictText =
+              prediction;
+
+
+            if(
+              predictedNumber != null
+            ){
+
+              predictText +=
+                " • " +
+                predictedNumber;
+            }
+          }
 
 
           return `
@@ -2482,13 +2648,19 @@ function renderPredictionHistory(data){
               </td>
 
               <td>
+
                 <span class="result-number">
+
                   ${
                     number != null
-                      ? number
+                      ? escapeHtml(
+                          number
+                        )
                       : "—"
                   }
+
                 </span>
+
               </td>
 
               <td>
@@ -2496,11 +2668,15 @@ function renderPredictionHistory(data){
               </td>
 
               <td>
+
                 <span class="predicted">
+
                   ${escapeHtml(
                     predictText
                   )}
+
                 </span>
+
               </td>
 
               <td>
