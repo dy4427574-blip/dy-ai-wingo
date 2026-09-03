@@ -1,35 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
 <meta charset="UTF-8">
-
-<meta
-  name="viewport"
-  content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"
->
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
 <title>DY AI Wingo 30S</title>
 
 <style>
-
 *{
   box-sizing:border-box;
+  margin:0;
+  padding:0;
   -webkit-tap-highlight-color:transparent;
 }
 
-html,
-body{
-  margin:0;
-  padding:0;
-  background:#05070d;
-  color:#fff;
-  font-family:Arial,sans-serif;
+:root{
+  --bg:#060914;
+  --card:#0d1324;
+  --card2:#10182c;
+  --line:rgba(255,255,255,.08);
+  --text:#f4f7ff;
+  --muted:#8490aa;
+  --cyan:#19d8ff;
+  --green:#21e69a;
+  --red:#ff5577;
+  --yellow:#ffc857;
+  --purple:#9b7cff;
+  --shadow:0 18px 50px rgba(0,0,0,.35);
 }
 
 body{
   min-height:100vh;
+  background:
+    radial-gradient(circle at 50% -10%,rgba(25,216,255,.13),transparent 35%),
+    radial-gradient(circle at 90% 50%,rgba(155,124,255,.08),transparent 30%),
+    var(--bg);
+  color:var(--text);
+  font-family:Arial,Helvetica,sans-serif;
+  overflow-x:hidden;
 }
 
 button,
@@ -41,897 +50,968 @@ button{
   cursor:pointer;
 }
 
-.app{
-  width:100%;
-  max-width:620px;
-  margin:auto;
-  padding:10px;
+.hidden{
+  display:none!important;
 }
 
+/* ================= LOGIN ================= */
 
-/* =========================================================
-   LOGIN
-========================================================= */
-
-.login-screen{
+#loginScreen{
   min-height:100vh;
   display:flex;
   align-items:center;
   justify-content:center;
-  padding:20px;
+  padding:22px;
 }
 
-.login-card{
+.loginBox{
   width:100%;
   max-width:430px;
-  padding:25px;
+  background:rgba(13,19,36,.94);
+  border:1px solid var(--line);
   border-radius:24px;
-  background:linear-gradient(
-    145deg,
-    #111827,
-    #070b13
-  );
-  border:1px solid #263247;
-  box-shadow:0 20px 70px rgba(0,0,0,.45);
+  padding:28px 22px;
+  box-shadow:var(--shadow);
+  text-align:center;
 }
 
 .logo{
-  text-align:center;
-  font-size:27px;
+  font-size:28px;
   font-weight:900;
+  letter-spacing:1px;
 }
 
 .logo span{
-  color:#00e5ff;
+  color:var(--cyan);
 }
 
-.sub-logo{
-  text-align:center;
-  color:#8491a7;
+.loginSub{
+  color:var(--muted);
   margin-top:7px;
   font-size:13px;
 }
 
-.input{
+.keyInput{
   width:100%;
-  margin-top:25px;
-  padding:15px;
-  background:#070b13;
-  border:1px solid #29364d;
-  border-radius:13px;
+  margin-top:26px;
+  padding:16px;
+  border-radius:14px;
+  border:1px solid var(--line);
+  background:#080d1b;
   color:#fff;
   outline:none;
+  text-align:center;
 }
 
-.input:focus{
-  border-color:#00e5ff;
-  box-shadow:0 0 0 2px rgba(0,229,255,.08);
+.keyInput:focus{
+  border-color:rgba(25,216,255,.55);
 }
 
-.primary-btn{
+.loginBtn{
   width:100%;
   margin-top:13px;
   padding:15px;
   border:0;
-  border-radius:13px;
-  color:#001015;
+  border-radius:14px;
+  background:linear-gradient(135deg,#13cde9,#247bff);
+  color:#fff;
   font-weight:900;
-  background:#00e5ff;
 }
 
-.primary-btn:disabled{
-  opacity:.6;
+.loginMsg{
+  min-height:20px;
+  margin-top:13px;
+  font-size:12px;
+  color:var(--red);
 }
 
-.login-error{
-  margin-top:12px;
-  text-align:center;
-  color:#ff667c;
-  font-size:13px;
+/* ================= APP ================= */
+
+#app{
+  width:100%;
+  max-width:900px;
+  margin:auto;
+  padding:14px 12px 100px;
 }
 
-
-/* =========================================================
-   HEADER
-========================================================= */
-
-.header{
+.topbar{
   display:flex;
+  align-items:center;
   justify-content:space-between;
-  align-items:center;
-  padding:7px 3px 12px;
+  gap:10px;
+  margin-bottom:12px;
 }
 
-.header-title{
-  font-size:20px;
+.brandTitle{
+  font-size:21px;
   font-weight:900;
+  letter-spacing:.5px;
 }
 
-.header-title span{
-  color:#00e5ff;
+.brandTitle span{
+  color:var(--cyan);
 }
 
-.live{
+.brandSub{
+  margin-top:3px;
+  color:var(--muted);
+  font-size:10px;
+}
+
+.topActions{
+  display:flex;
+  gap:7px;
+}
+
+.iconBtn{
+  width:38px;
+  height:38px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:#0d1425;
+  color:#fff;
+}
+
+/* ================= STATUS ================= */
+
+.statusBar{
   display:flex;
   align-items:center;
-  gap:6px;
-  font-size:11px;
-  font-weight:800;
-  color:#72ff9c;
+  justify-content:space-between;
+  gap:10px;
+  padding:11px 13px;
+  margin-bottom:12px;
+  border:1px solid var(--line);
+  border-radius:15px;
+  background:rgba(13,19,36,.75);
 }
 
-.live-dot{
+.statusLeft{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:11px;
+  color:var(--muted);
+}
+
+.dot{
   width:8px;
   height:8px;
   border-radius:50%;
-  background:#39ff73;
-  box-shadow:0 0 12px #39ff73;
+  background:var(--red);
+  box-shadow:0 0 12px currentColor;
 }
 
+.dot.online{
+  background:var(--green);
+}
 
-/* =========================================================
-   GAME
-========================================================= */
+.engineBadge{
+  padding:6px 9px;
+  border-radius:9px;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.8px;
+  background:rgba(25,216,255,.1);
+  color:var(--cyan);
+  border:1px solid rgba(25,216,255,.18);
+}
 
-.game-card{
+/* ================= GAME ================= */
+
+.card{
+  background:linear-gradient(
+    145deg,
+    rgba(16,24,44,.96),
+    rgba(9,14,28,.96)
+  );
+  border:1px solid var(--line);
+  border-radius:19px;
+  box-shadow:0 12px 35px rgba(0,0,0,.22);
   overflow:hidden;
-  border-radius:20px;
-  background:#0a0f19;
-  border:1px solid #243249;
 }
 
-.game-head{
+.sectionTitle{
   display:flex;
-  justify-content:space-between;
   align-items:center;
-  padding:11px 13px;
-  background:#101827;
-  border-bottom:1px solid #253249;
+  justify-content:space-between;
+  padding:13px 15px;
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.5px;
 }
 
-.game-title{
-  font-size:12px;
+.sectionTitle span:last-child{
+  color:var(--muted);
+  font-size:9px;
+}
+
+.gameFrameWrap{
+  position:relative;
+  width:100%;
+  height:440px;
+  background:#02040a;
+}
+
+.gameFrame{
+  width:100%;
+  height:100%;
+  border:0;
+  display:block;
+}
+
+.gameFallback{
+  position:absolute;
+  left:12px;
+  right:12px;
+  bottom:12px;
+  display:flex;
+  justify-content:center;
+  pointer-events:none;
+}
+
+.openGame{
+  pointer-events:auto;
+  text-decoration:none;
+  color:#fff;
+  padding:10px 15px;
+  border-radius:12px;
+  background:rgba(0,0,0,.78);
+  border:1px solid rgba(255,255,255,.12);
+  font-size:11px;
   font-weight:900;
 }
 
-.open-game{
-  border:1px solid #33445e;
-  background:#121d2e;
-  color:#9eefff;
-  padding:7px 10px;
-  border-radius:9px;
-  font-size:11px;
-  font-weight:800;
+@media(max-width:600px){
+  .gameFrameWrap{
+    height:500px;
+  }
 }
 
-.game-frame{
-  width:100%;
-  height:430px;
-  border:0;
-  display:block;
-  background:#000;
-}
+/* ================= ROUND ================= */
 
-.game-fallback{
-  padding:10px;
-  text-align:center;
-  color:#7f8ba0;
-  font-size:11px;
-  background:#070b12;
-}
-
-
-/* =========================================================
-   PERIOD
-========================================================= */
-
-.status-card{
+.roundCard{
   margin-top:12px;
   padding:15px;
-  border-radius:18px;
-  background:linear-gradient(
-    145deg,
-    #111827,
-    #080c14
-  );
-  border:1px solid #26344c;
 }
 
-.period-row{
+.roundGrid{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:10px;
 }
 
-.info-box{
+.roundItem{
   padding:12px;
   border-radius:13px;
-  background:#080d16;
-  border:1px solid #1d2a3f;
+  background:#080e1d;
+  border:1px solid var(--line);
 }
 
-.info-label{
-  color:#728097;
-  font-size:10px;
+.roundLabel{
+  color:var(--muted);
+  font-size:9px;
   font-weight:800;
+  text-transform:uppercase;
 }
 
-.info-value{
-  margin-top:5px;
+.roundValue{
+  margin-top:6px;
   font-size:14px;
   font-weight:900;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
+  word-break:break-all;
 }
 
 .timer{
-  margin-top:13px;
   text-align:center;
+  margin-top:14px;
+  padding:12px;
+  border-radius:13px;
+  background:rgba(25,216,255,.06);
+  border:1px solid rgba(25,216,255,.12);
+}
+
+.timerText{
   font-size:30px;
-  font-weight:1000;
-  letter-spacing:3px;
-  color:#00e5ff;
+  font-weight:900;
+  color:var(--cyan);
 }
 
-.timer.warning{
-  color:#ff687d;
-  text-shadow:0 0 15px rgba(255,80,100,.3);
+.timerSub{
+  color:var(--muted);
+  font-size:9px;
+  margin-top:2px;
 }
 
-.timer-label{
-  text-align:center;
-  color:#69778d;
-  font-size:10px;
-}
+/* ================= ANALYSIS ================= */
 
-
-/* =========================================================
-   ANALYSIS
-========================================================= */
-
-.analysis-card{
+.analysisCard{
   margin-top:12px;
-  padding:19px 16px;
-  border-radius:19px;
-  background:
-    radial-gradient(
-      circle at top,
-      #162b42,
-      #080c14 68%
-    );
-  border:1px solid #27405d;
-  text-align:center;
 }
 
-.analysis-top{
+.analysisHead{
   display:flex;
   justify-content:space-between;
   align-items:center;
+  padding:15px;
+  border-bottom:1px solid var(--line);
 }
 
-.analysis-title{
-  font-size:12px;
-  font-weight:1000;
-  letter-spacing:1px;
+.analysisTitle{
+  font-size:13px;
+  font-weight:900;
 }
 
-.mode-badge{
+.analysisBadge{
   padding:6px 9px;
   border-radius:8px;
-  font-size:9px;
-  font-weight:1000;
-  background:#102537;
-  color:#8feeff;
-  border:1px solid #24516b;
+  font-size:8px;
+  font-weight:900;
+  color:var(--cyan);
+  background:rgba(25,216,255,.1);
+  border:1px solid rgba(25,216,255,.15);
 }
 
-.analysis-main{
-  margin-top:20px;
+.analysisBody{
+  padding:14px;
 }
 
-.analysis-word{
-  font-size:16px;
-  font-weight:1000;
-  letter-spacing:2px;
-}
-
-.analysis-count{
-  margin-top:6px;
-  font-size:48px;
-  line-height:1;
-  font-weight:1000;
-  color:#00e5ff;
-}
-
-.analysis-desc{
-  margin-top:9px;
-  color:#718198;
+.analysisState{
+  text-align:center;
+  padding:18px 5px;
+  color:var(--muted);
   font-size:11px;
-  min-height:16px;
+}
+
+.analysisState .spinner{
+  width:28px;
+  height:28px;
+  border:3px solid rgba(255,255,255,.08);
+  border-top-color:var(--cyan);
+  border-radius:50%;
+  animation:spin .8s linear infinite;
+  margin:0 auto 10px;
+}
+
+@keyframes spin{
+  to{transform:rotate(360deg)}
+}
+
+.analysisContent{
+  display:none;
+}
+
+.analysisContent.show{
+  display:block;
+}
+
+.trendHero{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.trendBox{
+  padding:15px;
+  border-radius:15px;
+  background:#080e1d;
+  border:1px solid var(--line);
+}
+
+.miniLabel{
+  color:var(--muted);
+  font-size:8px;
+  font-weight:900;
+  letter-spacing:.6px;
+}
+
+.trendName{
+  margin-top:7px;
+  font-size:20px;
+  font-weight:900;
+}
+
+.bigText{
+  color:var(--cyan);
+}
+
+.smallText{
+  color:var(--purple);
+}
+
+.trendStatus{
+  margin-top:7px;
+  font-size:10px;
+  font-weight:900;
+}
+
+.metrics{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:8px;
+  margin-top:10px;
+}
+
+.metric{
+  padding:11px;
+  border-radius:12px;
+  background:#080e1d;
+  border:1px solid var(--line);
+}
+
+.metricTop{
+  display:flex;
+  justify-content:space-between;
+  color:var(--muted);
+  font-size:8px;
+  font-weight:800;
+}
+
+.metricValue{
+  margin-top:7px;
+  font-size:16px;
+  font-weight:900;
 }
 
 .progress{
   height:5px;
-  margin-top:16px;
-  overflow:hidden;
-  background:#111b2a;
-  border-radius:10px;
-}
-
-.progress-bar{
-  width:0%;
-  height:100%;
-  background:#00e5ff;
-  transition:width .9s linear;
-}
-
-
-/* =========================================================
-   PREDICTION
-========================================================= */
-
-.prediction-card{
-  margin-top:12px;
-  padding:20px 16px;
+  margin-top:7px;
   border-radius:20px;
-  background:linear-gradient(
-    145deg,
-    #101a28,
-    #080d15
-  );
-  border:1px solid #2a3a53;
-  text-align:center;
-  animation:predictionIn .35s ease;
+  background:#151d31;
+  overflow:hidden;
 }
 
-@keyframes predictionIn{
-
-  from{
-    opacity:0;
-    transform:translateY(8px);
-  }
-
-  to{
-    opacity:1;
-    transform:translateY(0);
-  }
+.progress i{
+  display:block;
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,var(--cyan),var(--purple));
+  border-radius:20px;
+  transition:width .5s ease;
 }
 
-.prediction-label{
-  color:#718198;
+/* ================= SIGNALS ================= */
+
+.signalTitle{
+  margin-top:14px;
+  margin-bottom:8px;
   font-size:10px;
   font-weight:900;
-  letter-spacing:1.5px;
+  letter-spacing:.6px;
 }
 
-.prediction-side{
+.signalGrid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:7px;
+}
+
+.signal{
+  padding:10px;
+  border:1px solid var(--line);
+  border-radius:11px;
+  background:#080e1d;
+}
+
+.signalName{
+  font-size:8px;
+  color:var(--muted);
+  font-weight:800;
+}
+
+.signalValue{
+  margin-top:5px;
+  font-size:11px;
+  font-weight:900;
+}
+
+/* ================= FINAL ================= */
+
+.finalPrediction{
+  margin-top:12px;
+  padding:18px 15px;
+  border-radius:17px;
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(25,216,255,.1),
+      transparent 65%
+    ),
+    #080e1d;
+  border:1px solid rgba(25,216,255,.16);
+  text-align:center;
+}
+
+.finalLabel{
+  color:var(--muted);
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:1px;
+}
+
+.finalSide{
   margin-top:7px;
-  font-size:44px;
+  font-size:42px;
   line-height:1;
   font-weight:1000;
 }
 
-.big{
-  color:#ffbf48;
-  text-shadow:0 0 18px rgba(255,191,72,.16);
-}
-
-.small{
-  color:#5bd7ff;
-  text-shadow:0 0 18px rgba(91,215,255,.16);
-}
-
-.wait{
-  color:#8a97aa;
-}
-
-.number-box{
-  margin:15px auto 0;
-  max-width:210px;
-  padding:11px;
-  border-radius:14px;
-  background:#070c14;
-  border:1px solid #26364e;
-}
-
-.number-label{
-  color:#68768b;
+.finalNumberLabel{
+  margin-top:12px;
+  color:var(--muted);
   font-size:9px;
-  font-weight:900;
 }
 
-.number-value{
-  margin-top:3px;
-  font-size:30px;
+.finalNumber{
+  margin-top:4px;
+  font-size:24px;
   font-weight:1000;
 }
 
-.prediction-meta{
-  display:flex;
-  justify-content:center;
-  flex-wrap:wrap;
-  gap:8px;
+.confidence{
   margin-top:13px;
 }
 
-.meta{
-  padding:6px 9px;
-  border-radius:8px;
-  background:#0b1320;
-  border:1px solid #1e2c40;
-  color:#91a0b5;
+.confidenceRow{
+  display:flex;
+  justify-content:space-between;
   font-size:9px;
-  font-weight:900;
+  color:var(--muted);
 }
 
-.meta strong{
-  color:#fff;
-}
-
-
-/* =========================================================
-   SUMMARY
-========================================================= */
-
-.ai-summary{
+.aiSummary{
   margin-top:12px;
   padding:12px;
-  border-radius:15px;
-  background:#080e17;
-  border:1px solid #1c2c40;
-}
-
-.ai-summary-title{
-  color:#00e5ff;
-  font-size:10px;
-  font-weight:1000;
-  letter-spacing:1px;
-}
-
-.ai-summary-text{
-  margin-top:7px;
-  color:#8290a4;
+  border-radius:12px;
+  background:rgba(155,124,255,.06);
+  border:1px solid rgba(155,124,255,.12);
+  color:#aeb8d0;
   font-size:10px;
   line-height:1.55;
+  text-align:left;
 }
 
+/* ================= STATS ================= */
 
-/* =========================================================
-   STATS
-========================================================= */
-
-.stats{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:8px;
-  margin-top:12px;
-}
-
-.stat{
-  padding:12px 7px;
-  border-radius:14px;
-  background:#0b111c;
-  border:1px solid #1e2b3f;
-  text-align:center;
-}
-
-.stat-value{
-  font-size:20px;
-  font-weight:1000;
-}
-
-.stat-label{
-  margin-top:2px;
-  color:#68758a;
-  font-size:9px;
-  font-weight:800;
-}
-
-
-/* =========================================================
-   MODEL DETAILS
-========================================================= */
-
-.ai-details{
+.statsCard{
   margin-top:12px;
   padding:14px;
-  border-radius:17px;
-  background:#0a101a;
-  border:1px solid #1d2b3f;
 }
 
-.details-title{
-  font-size:11px;
-  font-weight:1000;
-}
-
-.details-grid{
+.statsGrid{
   display:grid;
   grid-template-columns:repeat(4,1fr);
   gap:7px;
-  margin-top:10px;
 }
 
-.detail{
-  padding:9px 4px;
+.stat{
   text-align:center;
-  border-radius:10px;
-  background:#070c14;
+  padding:12px 5px;
+  border-radius:12px;
+  background:#080e1d;
+  border:1px solid var(--line);
 }
 
-.detail-value{
-  font-size:14px;
+.statValue{
+  font-size:18px;
   font-weight:1000;
 }
 
-.detail-label{
-  margin-top:3px;
-  color:#647288;
+.statLabel{
+  margin-top:4px;
+  color:var(--muted);
   font-size:7px;
   font-weight:800;
 }
 
+/* ================= MODEL ================= */
 
-/* =========================================================
-   HISTORY
-========================================================= */
-
-.history-card{
+.modelCard{
   margin-top:12px;
-  overflow:hidden;
-  border-radius:18px;
-  background:#0a1019;
-  border:1px solid #202e42;
+  padding:14px;
 }
 
-.history-head{
+.modelRows{
+  display:grid;
+  gap:7px;
+}
+
+.modelRow{
   display:flex;
-  justify-content:space-between;
   align-items:center;
-  padding:13px;
-  border-bottom:1px solid #202e42;
+  justify-content:space-between;
+  padding:10px 11px;
+  border-radius:10px;
+  background:#080e1d;
+  border:1px solid var(--line);
 }
 
-.history-title{
-  font-size:12px;
-  font-weight:1000;
-}
-
-.last-badge{
-  padding:5px 8px;
-  border-radius:7px;
-  background:#122031;
-  color:#8deeff;
+.modelRow span:first-child{
+  color:var(--muted);
   font-size:9px;
-  font-weight:1000;
+  font-weight:800;
 }
 
-.table-wrap{
+.modelRow span:last-child{
+  font-size:10px;
+  font-weight:900;
+}
+
+/* ================= LAST 30 ================= */
+
+.historyCard{
+  margin-top:12px;
+}
+
+.historyScroll{
+  width:100%;
   overflow-x:auto;
 }
 
-table{
+.historyTable{
   width:100%;
+  min-width:600px;
   border-collapse:collapse;
-  min-width:470px;
 }
 
-th{
-  padding:9px 6px;
-  color:#647289;
+.historyTable th{
+  padding:10px 8px;
+  text-align:left;
+  color:var(--muted);
   font-size:8px;
   font-weight:900;
-  text-align:center;
-  background:#080d15;
+  border-bottom:1px solid var(--line);
 }
 
-td{
-  padding:10px 6px;
-  border-top:1px solid #162234;
-  text-align:center;
-  font-size:10px;
-}
-
-.issue{
-  color:#8997aa;
+.historyTable td{
+  padding:10px 8px;
   font-size:9px;
+  font-weight:800;
+  border-bottom:1px solid rgba(255,255,255,.04);
 }
 
-.result-number{
-  font-size:16px;
+.periodCell{
+  font-family:monospace;
+  color:#aab5ce;
+}
+
+.sidePill,
+.outcomePill{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:52px;
+  padding:5px 7px;
+  border-radius:7px;
+  font-size:8px;
   font-weight:1000;
 }
 
-.result-big{
-  color:#ffbf48;
-  font-weight:1000;
+.bigPill{
+  background:rgba(25,216,255,.1);
+  color:var(--cyan);
 }
 
-.result-small{
-  color:#59d8ff;
-  font-weight:1000;
+.smallPill{
+  background:rgba(155,124,255,.1);
+  color:var(--purple);
 }
 
-.predicted{
-  font-weight:1000;
+.winPill{
+  background:rgba(33,230,154,.1);
+  color:var(--green);
 }
 
-.win{
-  color:#55ff8a;
-  font-weight:1000;
+.lossPill{
+  background:rgba(255,85,119,.1);
+  color:var(--red);
 }
 
-.loss{
-  color:#ff5e75;
-  font-weight:1000;
+.pendingPill{
+  background:rgba(255,200,87,.1);
+  color:var(--yellow);
 }
 
-.pending{
-  color:#ffc85b;
-  font-weight:1000;
-}
-
-.skipped{
-  color:#8b98aa;
-  font-weight:1000;
-}
-
-
-/* =========================================================
-   BUTTONS
-========================================================= */
-
-.bottom-actions{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:9px;
-  margin-top:12px;
-}
-
-.action-btn{
-  padding:12px;
-  border-radius:12px;
-  border:1px solid #24334a;
-  background:#0b111c;
-  color:#a8b5c7;
+.emptyHistory{
+  padding:25px;
+  text-align:center;
+  color:var(--muted);
   font-size:10px;
-  font-weight:900;
 }
 
-.action-btn.active{
-  color:#8ff4ff;
-  border-color:#17617a;
+/* ================= MUSIC ================= */
+
+.musicBar{
+  position:fixed;
+  left:12px;
+  right:12px;
+  bottom:12px;
+  max-width:876px;
+  margin:auto;
+  z-index:20;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:10px 12px;
+  border-radius:15px;
+  background:rgba(9,14,27,.94);
+  border:1px solid var(--line);
+  backdrop-filter:blur(15px);
+  box-shadow:0 15px 40px rgba(0,0,0,.35);
 }
 
+.musicInfo{
+  font-size:9px;
+  color:var(--muted);
+}
 
-/* =========================================================
-   FOOTER
-========================================================= */
+.musicInfo strong{
+  display:block;
+  color:#fff;
+  font-size:10px;
+}
+
+.musicBtn{
+  width:37px;
+  height:37px;
+  border:0;
+  border-radius:11px;
+  background:linear-gradient(135deg,#13cde9,#247bff);
+  color:#fff;
+}
+
+/* ================= FOOTER ================= */
 
 .footer{
-  padding:18px 8px 28px;
   text-align:center;
-  color:#56647a;
-  font-size:9px;
+  margin-top:18px;
+  color:#59647c;
+  font-size:8px;
   line-height:1.5;
 }
 
+/* ================= MOBILE ================= */
 
-/* =========================================================
-   MOBILE
-========================================================= */
+@media(max-width:430px){
 
-@media(max-width:420px){
-
-  .app{
-    padding:9px;
+  #app{
+    padding-left:9px;
+    padding-right:9px;
   }
 
-  .game-frame{
-    height:410px;
+  .gameFrameWrap{
+    height:500px;
   }
 
-  .prediction-side{
-    font-size:38px;
+  .trendHero{
+    grid-template-columns:1fr 1fr;
   }
 
-  .details-grid{
+  .metrics{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .statsGrid{
     grid-template-columns:repeat(2,1fr);
   }
 
-  .period-row{
-    gap:7px;
+  .finalSide{
+    font-size:38px;
   }
-
-  .info-value{
-    font-size:12px;
-  }
-
 }
-
-
-/* =========================================================
-   VERY SMALL MOBILE
-========================================================= */
-
-@media(max-width:350px){
-
-  .game-frame{
-    height:390px;
-  }
-
-  .header-title{
-    font-size:18px;
-  }
-
-  .analysis-count{
-    font-size:42px;
-  }
-
-  .prediction-side{
-    font-size:35px;
-  }
-
-}
-
 </style>
-
 </head>
-
 
 <body>
 
-
-<!-- =======================================================
+<!-- =====================================================
      LOGIN
-======================================================= -->
+===================================================== -->
 
-<div
-  id="loginScreen"
-  class="login-screen"
->
+<section id="loginScreen">
 
-  <div class="login-card">
+  <div class="loginBox">
 
     <div class="logo">
-      <span>DY</span> AI WINGO
+      DY <span>AI</span>
     </div>
 
-    <div class="sub-logo">
-      30 Second Prediction Engine
+    <div class="loginSub">
+      Wingo 30 Second Prediction Engine
     </div>
 
     <input
       id="accessKey"
-      class="input"
-      type="text"
-      placeholder="Enter Access Key"
+      class="keyInput"
+      type="password"
       autocomplete="off"
+      placeholder="Enter access key"
     >
 
     <button
       id="loginBtn"
-      class="primary-btn"
+      class="loginBtn"
+      onclick="login()"
     >
-      ACCESS PREDICTION
+      ACCESS ENGINE
     </button>
 
     <div
-      id="loginError"
-      class="login-error"
+      id="loginMsg"
+      class="loginMsg"
     ></div>
 
   </div>
 
-</div>
+</section>
 
 
-<!-- =======================================================
-     MAIN APP
-======================================================= -->
+<!-- =====================================================
+     APP
+===================================================== -->
 
-<div
-  id="mainApp"
-  class="app"
-  style="display:none;"
+<main
+  id="app"
+  class="hidden"
 >
 
+  <!-- TOP -->
 
-  <!-- HEADER -->
+  <header class="topbar">
 
-  <div class="header">
+    <div>
 
-    <div class="header-title">
-      <span>DY AI</span> WINGO
-    </div>
-
-    <div class="live">
-
-      <div class="live-dot"></div>
-
-      LIVE
-
-    </div>
-
-  </div>
-
-
-  <!-- =====================================================
-       GAME
-  ====================================================== -->
-
-  <div class="game-card">
-
-    <div class="game-head">
-
-      <div class="game-title">
-        WINGO 30S GAME
+      <div class="brandTitle">
+        DY <span>AI</span> WINGO 30S
       </div>
 
+      <div class="brandSub">
+        Multi-Signal Prediction Engine
+      </div>
+
+    </div>
+
+    <div class="topActions">
+
       <button
-        id="openGame"
-        class="open-game"
+        class="iconBtn"
+        onclick="logout()"
+        title="Logout"
       >
-        OPEN GAME
+        ⎋
       </button>
 
     </div>
 
-
-    <iframe
-      id="gameFrame"
-      class="game-frame"
-      src="https://www.shreewin38.com/#/register?invitationCode=88523152383"
-      allow="fullscreen"
-      loading="eager"
-      referrerpolicy="no-referrer-when-downgrade"
-    ></iframe>
+  </header>
 
 
-    <div class="game-fallback">
+  <!-- STATUS -->
 
-      Agar game iframe me load na ho to
-      <b>OPEN GAME</b> dabaye.
+  <div class="statusBar">
 
+    <div class="statusLeft">
+
+      <i
+        id="connectionDot"
+        class="dot"
+      ></i>
+
+      <span id="connectionText">
+        Connecting...
+      </span>
+
+    </div>
+
+    <div
+      id="engineBadge"
+      class="engineBadge"
+    >
+      LIVE ENGINE
     </div>
 
   </div>
 
 
-  <!-- =====================================================
-       PERIOD
-  ====================================================== -->
+  <!-- ===================================================
+       GAME
+  ==================================================== -->
 
-  <div class="status-card">
+  <section class="card">
 
-    <div class="period-row">
+    <div class="sectionTitle">
 
-      <div class="info-box">
+      <span>LIVE GAME</span>
 
-        <div class="info-label">
-          LATEST SETTLED
+      <span>SHREEWIN 30S</span>
+
+    </div>
+
+    <div class="gameFrameWrap">
+
+      <iframe
+        id="gameFrame"
+        class="gameFrame"
+        src="https://www.shreewin38.com/#/register?invitationCode=88523152383"
+        allow="fullscreen"
+        referrerpolicy="no-referrer"
+      ></iframe>
+
+      <div class="gameFallback">
+
+        <a
+          class="openGame"
+          href="https://www.shreewin38.com/#/register?invitationCode=88523152383"
+          target="_blank"
+          rel="noopener"
+        >
+          OPEN GAME
+        </a>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- ===================================================
+       ROUND
+  ==================================================== -->
+
+  <section class="card roundCard">
+
+    <div class="sectionTitle" style="padding:0 0 12px;">
+      <span>ROUND CONTROL</span>
+      <span>SERVER SYNC</span>
+    </div>
+
+    <div class="roundGrid">
+
+      <div class="roundItem">
+
+        <div class="roundLabel">
+          Latest Settled
         </div>
 
         <div
-          id="latestSettled"
-          class="info-value"
+          id="latestIssue"
+          class="roundValue"
         >
           —
         </div>
 
       </div>
 
+      <div class="roundItem">
 
-      <div class="info-box">
-
-        <div class="info-label">
-          TARGET PERIOD
+        <div class="roundLabel">
+          Prediction Target
         </div>
 
         <div
           id="targetIssue"
-          class="info-value"
+          class="roundValue"
         >
           —
         </div>
@@ -940,39 +1020,39 @@ td{
 
     </div>
 
+    <div class="timer">
 
-    <div
-      id="timer"
-      class="timer"
-    >
-      30
+      <div
+        id="timer"
+        class="timerText"
+      >
+        30
+      </div>
+
+      <div class="timerSub">
+        Estimated round countdown
+      </div>
+
     </div>
 
-    <div class="timer-label">
-      ESTIMATED SERVER TIMER
-    </div>
-
-  </div>
+  </section>
 
 
-  <!-- =====================================================
-       ANALYSIS
-  ====================================================== -->
+  <!-- ===================================================
+       AI ANALYSIS
+  ==================================================== -->
 
-  <div
-    id="analysisCard"
-    class="analysis-card"
-  >
+  <section class="card analysisCard">
 
-    <div class="analysis-top">
+    <div class="analysisHead">
 
-      <div class="analysis-title">
+      <div class="analysisTitle">
         PREDICTION ANALYSIS
       </div>
 
       <div
-        id="modeBadge"
-        class="mode-badge"
+        id="analysisBadge"
+        class="analysisBadge"
       >
         LIVE ENGINE
       </div>
@@ -980,325 +1060,461 @@ td{
     </div>
 
 
-    <div class="analysis-main">
+    <div class="analysisBody">
+
+      <!-- ANALYZING -->
 
       <div
-        id="analysisWord"
-        class="analysis-word"
+        id="analysisLoading"
+        class="analysisState"
       >
-        WAITING FOR DATA
+
+        <div class="spinner"></div>
+
+        <div>
+          Waiting for live history...
+        </div>
+
       </div>
+
+
+      <!-- CONTENT -->
 
       <div
-        id="analysisCount"
-        class="analysis-count"
+        id="analysisContent"
+        class="analysisContent"
       >
-        —
-      </div>
 
-      <div
-        id="analysisDesc"
-        class="analysis-desc"
-      >
-        Waiting for latest settled result
-      </div>
+        <!-- TREND HERO -->
 
-      <div class="progress">
+        <div class="trendHero">
 
-        <div
-          id="progressBar"
-          class="progress-bar"
-        ></div>
+          <div class="trendBox">
+
+            <div class="miniLabel">
+              CURRENT TREND
+            </div>
+
+            <div
+              id="trendDirection"
+              class="trendName"
+            >
+              —
+            </div>
+
+            <div
+              id="trendStatus"
+              class="trendStatus"
+            >
+              —
+            </div>
+
+          </div>
+
+
+          <div class="trendBox">
+
+            <div class="miniLabel">
+              TREND BREAK RISK
+            </div>
+
+            <div
+              id="breakRiskBig"
+              class="trendName"
+            >
+              0%
+            </div>
+
+            <div class="progress">
+              <i id="breakProgress"></i>
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- METRICS -->
+
+        <div class="metrics">
+
+          <div class="metric">
+
+            <div class="metricTop">
+              <span>TREND STRENGTH</span>
+              <span id="trendStrength">0%</span>
+            </div>
+
+            <div class="progress">
+              <i id="trendStrengthProgress"></i>
+            </div>
+
+          </div>
+
+
+          <div class="metric">
+
+            <div class="metricTop">
+              <span>TREND AGE</span>
+              <span id="trendAge">0</span>
+            </div>
+
+          </div>
+
+
+          <div class="metric">
+
+            <div class="metricTop">
+              <span>CONTINUATION</span>
+              <span id="continuationScore">50%</span>
+            </div>
+
+            <div class="progress">
+              <i id="continuationProgress"></i>
+            </div>
+
+          </div>
+
+
+          <div class="metric">
+
+            <div class="metricTop">
+              <span>MODEL AGREEMENT</span>
+              <span id="agreementScore">0%</span>
+            </div>
+
+            <div class="progress">
+              <i id="agreementProgress"></i>
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- SIGNAL BREAKDOWN -->
+
+        <div class="signalTitle">
+          MULTI-SIGNAL BREAKDOWN
+        </div>
+
+        <div class="signalGrid">
+
+          <div class="signal">
+            <div class="signalName">
+              SHORT TREND
+            </div>
+            <div
+              id="shortTrend"
+              class="signalValue"
+            >
+              —
+            </div>
+          </div>
+
+
+          <div class="signal">
+            <div class="signalName">
+              MEDIUM TREND
+            </div>
+            <div
+              id="mediumTrend"
+              class="signalValue"
+            >
+              —
+            </div>
+          </div>
+
+
+          <div class="signal">
+            <div class="signalName">
+              TRANSITION
+            </div>
+            <div
+              id="transitionScore"
+              class="signalValue"
+            >
+              —
+            </div>
+          </div>
+
+
+          <div class="signal">
+            <div class="signalName">
+              NUMBER PRESSURE
+            </div>
+            <div
+              id="numberPressure"
+              class="signalValue"
+            >
+              —
+            </div>
+          </div>
+
+
+          <div class="signal">
+            <div class="signalName">
+              HISTORICAL MATCH
+            </div>
+            <div
+              id="historicalMatch"
+              class="signalValue"
+            >
+              0
+            </div>
+          </div>
+
+
+          <div class="signal">
+            <div class="signalName">
+              STREAK STRUCTURE
+            </div>
+            <div
+              id="streakType"
+              class="signalValue"
+            >
+              —
+            </div>
+          </div>
+
+        </div>
+
+
+        <!-- FINAL -->
+
+        <div class="finalPrediction">
+
+          <div class="finalLabel">
+            FINAL SIGNAL
+          </div>
+
+          <div
+            id="finalSide"
+            class="finalSide"
+          >
+            —
+          </div>
+
+          <div class="finalNumberLabel">
+            SUGGESTED NUMBER
+          </div>
+
+          <div
+            id="finalNumber"
+            class="finalNumber"
+          >
+            —
+          </div>
+
+
+          <div class="confidence">
+
+            <div class="confidenceRow">
+
+              <span>
+                MODEL CONFIDENCE
+              </span>
+
+              <strong
+                id="confidenceText"
+              >
+                0%
+              </strong>
+
+            </div>
+
+            <div class="progress">
+              <i id="confidenceProgress"></i>
+            </div>
+
+          </div>
+
+
+          <div
+            id="aiSummary"
+            class="aiSummary"
+          >
+            Waiting for analysis...
+          </div>
+
+        </div>
 
       </div>
 
     </div>
 
-  </div>
+  </section>
 
 
-  <!-- =====================================================
-       PREDICTION
-  ====================================================== -->
-
-  <div
-    id="predictionCard"
-    class="prediction-card"
-    style="display:none;"
-  >
-
-    <div class="prediction-label">
-      NEXT PERIOD PREDICTION
-    </div>
-
-
-    <div
-      id="predictionSide"
-      class="prediction-side wait"
-    >
-      WAIT
-    </div>
-
-
-    <div class="number-box">
-
-      <div class="number-label">
-        SUGGESTED NUMBER
-      </div>
-
-      <div
-        id="predictionNumber"
-        class="number-value"
-      >
-        —
-      </div>
-
-    </div>
-
-
-    <div class="prediction-meta">
-
-      <div class="meta">
-        CONFIDENCE:
-        <strong id="confidence">
-          0%
-        </strong>
-      </div>
-
-      <div class="meta">
-        STATUS:
-        <strong id="signalStatus">
-          WAIT
-        </strong>
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <!-- =====================================================
-       SUMMARY
-  ====================================================== -->
-
-  <div class="ai-summary">
-
-    <div class="ai-summary-title">
-      DECISION ENGINE
-    </div>
-
-    <div
-      id="aiSummaryText"
-      class="ai-summary-text"
-    >
-      Prediction engine is checking recent
-      trend, transitions, streaks and
-      historical patterns.
-    </div>
-
-  </div>
-
-
-  <!-- =====================================================
+  <!-- ===================================================
        STATS
-  ====================================================== -->
+  ==================================================== -->
 
-  <div class="stats">
+  <section class="card statsCard">
 
-    <div class="stat">
-
-      <div
-        id="wins"
-        class="stat-value"
-      >
-        0
-      </div>
-
-      <div class="stat-label">
-        WIN
-      </div>
-
+    <div class="sectionTitle" style="padding:0 0 12px;">
+      <span>SESSION PERFORMANCE</span>
+      <span>LIVE</span>
     </div>
 
+    <div class="statsGrid">
 
-    <div class="stat">
-
-      <div
-        id="losses"
-        class="stat-value"
-      >
-        0
-      </div>
-
-      <div class="stat-label">
-        LOSS
-      </div>
-
-    </div>
-
-
-    <div class="stat">
-
-      <div
-        id="accuracy"
-        class="stat-value"
-      >
-        0%
-      </div>
-
-      <div class="stat-label">
-        SESSION
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <!-- =====================================================
-       MODEL DETAILS
-  ====================================================== -->
-
-  <div class="ai-details">
-
-    <div class="details-title">
-      MODEL DETAILS
-    </div>
-
-
-    <div class="details-grid">
-
-      <div class="detail">
+      <div class="stat">
 
         <div
-          id="patternScore"
-          class="detail-value"
+          id="wins"
+          class="statValue"
         >
           0
         </div>
 
-        <div class="detail-label">
-          PATTERN
+        <div class="statLabel">
+          WINS
         </div>
 
       </div>
 
 
-      <div class="detail">
+      <div class="stat">
 
         <div
-          id="agreement"
-          class="detail-value"
+          id="losses"
+          class="statValue"
+        >
+          0
+        </div>
+
+        <div class="statLabel">
+          LOSSES
+        </div>
+
+      </div>
+
+
+      <div class="stat">
+
+        <div
+          id="accuracy"
+          class="statValue"
         >
           0%
         </div>
 
-        <div class="detail-label">
-          AGREEMENT
+        <div class="statLabel">
+          ACCURACY
         </div>
 
       </div>
 
 
-      <div class="detail">
+      <div class="stat">
 
         <div
-          id="backtest"
-          class="detail-value"
+          id="backtestAccuracy"
+          class="statValue"
         >
-          0
+          —
         </div>
 
-        <div class="detail-label">
+        <div class="statLabel">
           BACKTEST
         </div>
 
       </div>
 
+    </div>
 
-      <div class="detail">
+  </section>
 
-        <div
-          id="avgAccuracy"
-          class="detail-value"
-        >
-          N/A
-        </div>
 
-        <div class="detail-label">
-          AVG ACCURACY
-        </div>
+  <!-- ===================================================
+       MODEL DETAILS
+  ==================================================== -->
 
+  <section class="card modelCard">
+
+    <div class="sectionTitle" style="padding:0 0 12px;">
+      <span>AI ENGINE DETAILS</span>
+      <span>MULTI-SIGNAL</span>
+    </div>
+
+    <div class="modelRows">
+
+      <div class="modelRow">
+        <span>Trend Direction</span>
+        <span id="detailTrend">—</span>
+      </div>
+
+      <div class="modelRow">
+        <span>Break Risk</span>
+        <span id="detailBreak">—</span>
+      </div>
+
+      <div class="modelRow">
+        <span>Continuation</span>
+        <span id="detailContinue">—</span>
+      </div>
+
+      <div class="modelRow">
+        <span>Historical Samples</span>
+        <span id="detailHistory">—</span>
+      </div>
+
+      <div class="modelRow">
+        <span>Pattern Score</span>
+        <span id="detailPattern">—</span>
+      </div>
+
+      <div class="modelRow">
+        <span>Number Probability</span>
+        <span id="detailNumber">—</span>
       </div>
 
     </div>
 
-  </div>
+  </section>
 
 
-  <!-- =====================================================
-       HISTORY
-  ====================================================== -->
+  <!-- ===================================================
+       LAST 30
+  ==================================================== -->
 
-  <div class="history-card">
+  <section class="card historyCard">
 
-    <div class="history-head">
+    <div class="sectionTitle">
 
-      <div class="history-title">
-        LIVE RESULTS + WIN/LOSS
-      </div>
+      <span>LAST 30 RESULTS</span>
 
-      <div class="last-badge">
-        LAST 30
-      </div>
+      <span>EXACT PERIOD SETTLEMENT</span>
 
     </div>
 
 
-    <div class="table-wrap">
+    <div class="historyScroll">
 
-      <table>
+      <table class="historyTable">
 
         <thead>
 
           <tr>
 
-            <th>
-              PERIOD
-            </th>
+            <th>PERIOD</th>
 
-            <th>
-              NUMBER
-            </th>
+            <th>NUMBER</th>
 
-            <th>
-              RESULT
-            </th>
+            <th>RESULT</th>
 
-            <th>
-              PREDICT
-            </th>
+            <th>PREDICT</th>
 
-            <th>
-              W/L
-            </th>
+            <th>AI NO.</th>
+
+            <th>W/L</th>
 
           </tr>
 
         </thead>
 
-
-        <tbody
-          id="historyBody"
-        >
-
-          <tr>
-
-            <td colspan="5">
-              Loading...
-            </td>
-
-          </tr>
+        <tbody id="historyBody">
 
         </tbody>
 
@@ -1306,48 +1522,46 @@ td{
 
     </div>
 
-  </div>
+  </section>
 
-
-  <!-- =====================================================
-       BUTTONS
-  ====================================================== -->
-
-  <div class="bottom-actions">
-
-    <button
-      id="musicBtn"
-      class="action-btn"
-    >
-      🔊 MUSIC OFF
-    </button>
-
-
-    <button
-      id="logoutBtn"
-      class="action-btn"
-    >
-      LOGOUT
-    </button>
-
-  </div>
-
-
-  <!-- FOOTER -->
 
   <div class="footer">
-
-    DY AI Wingo 30S<br>
-
     Actual results come from the live history API.
-    Predictions are estimates only and are not guaranteed.
+    AI signals are estimates only and are not guaranteed.
+  </div>
+
+</main>
+
+
+<!-- =====================================================
+     MUSIC
+===================================================== -->
+
+<div
+  id="musicBar"
+  class="musicBar hidden"
+>
+
+  <div class="musicInfo">
+
+    <strong>
+      DY AI MUSIC
+    </strong>
+
+    Background audio
 
   </div>
+
+  <button
+    id="musicBtn"
+    class="musicBtn"
+    onclick="toggleMusic()"
+  >
+    ▶
+  </button>
 
 </div>
 
-
-<!-- MUSIC -->
 
 <audio
   id="music"
@@ -1358,222 +1572,74 @@ td{
 
 
 <script>
+"use strict";
 
-/* =========================================================
+/* ========================================================
    CONFIG
-========================================================= */
+======================================================== */
 
-const GAME_URL =
-  "https://www.shreewin38.com/#/register?invitationCode=88523152383";
+const API = "";
 
-const DEVICE_STORAGE =
-  "dy_ai_device_id";
-
-const ACCESS_STORAGE =
+const STORAGE_KEY =
   "dy_ai_access_key";
 
-
-/* =========================================================
-   ELEMENTS
-========================================================= */
-
-const loginScreen =
-  document.getElementById(
-    "loginScreen"
-  );
-
-const mainApp =
-  document.getElementById(
-    "mainApp"
-  );
-
-const accessKeyInput =
-  document.getElementById(
-    "accessKey"
-  );
-
-const loginBtn =
-  document.getElementById(
-    "loginBtn"
-  );
-
-const loginError =
-  document.getElementById(
-    "loginError"
-  );
-
-const gameFrame =
-  document.getElementById(
-    "gameFrame"
-  );
-
-const openGame =
-  document.getElementById(
-    "openGame"
-  );
-
-const latestSettled =
-  document.getElementById(
-    "latestSettled"
-  );
-
-const targetIssue =
-  document.getElementById(
-    "targetIssue"
-  );
-
-const timer =
-  document.getElementById(
-    "timer"
-  );
-
-const analysisWord =
-  document.getElementById(
-    "analysisWord"
-  );
-
-const analysisCount =
-  document.getElementById(
-    "analysisCount"
-  );
-
-const analysisDesc =
-  document.getElementById(
-    "analysisDesc"
-  );
-
-const progressBar =
-  document.getElementById(
-    "progressBar"
-  );
-
-const predictionCard =
-  document.getElementById(
-    "predictionCard"
-  );
-
-const predictionSide =
-  document.getElementById(
-    "predictionSide"
-  );
-
-const predictionNumber =
-  document.getElementById(
-    "predictionNumber"
-  );
-
-const confidence =
-  document.getElementById(
-    "confidence"
-  );
-
-const signalStatus =
-  document.getElementById(
-    "signalStatus"
-  );
-
-const modeBadge =
-  document.getElementById(
-    "modeBadge"
-  );
-
-const wins =
-  document.getElementById(
-    "wins"
-  );
-
-const losses =
-  document.getElementById(
-    "losses"
-  );
-
-const accuracy =
-  document.getElementById(
-    "accuracy"
-  );
-
-const patternScore =
-  document.getElementById(
-    "patternScore"
-  );
-
-const agreement =
-  document.getElementById(
-    "agreement"
-  );
-
-const backtest =
-  document.getElementById(
-    "backtest"
-  );
-
-const avgAccuracy =
-  document.getElementById(
-    "avgAccuracy"
-  );
-
-const historyBody =
-  document.getElementById(
-    "historyBody"
-  );
-
-const aiSummaryText =
-  document.getElementById(
-    "aiSummaryText"
-  );
-
-const musicBtn =
-  document.getElementById(
-    "musicBtn"
-  );
-
-const logoutBtn =
-  document.getElementById(
-    "logoutBtn"
-  );
-
-const music =
-  document.getElementById(
-    "music"
-  );
+const DEVICE_KEY =
+  "dy_ai_device_id";
 
 
-/* =========================================================
+/* ========================================================
+   STATE
+======================================================== */
+
+let currentState = null;
+
+let previousTarget = null;
+
+let analysisTimer = null;
+
+let countdownValue = 30;
+
+let countdownInterval = null;
+
+let loggedIn = false;
+
+
+/* ========================================================
+   ELEMENT
+======================================================== */
+
+const $ = id =>
+  document.getElementById(id);
+
+
+/* ========================================================
    DEVICE ID
-========================================================= */
+======================================================== */
 
 function getDeviceId(){
 
   let id =
     localStorage.getItem(
-      DEVICE_STORAGE
+      DEVICE_KEY
     );
 
 
   if(!id){
 
-    if(
-      window.crypto &&
-      typeof window.crypto.randomUUID ===
-      "function"
-    ){
-
-      id =
-        window.crypto.randomUUID();
-
-    }else{
-
-      id =
-        Date.now().toString(36) +
-        "-" +
-        Math.random()
-          .toString(36)
-          .slice(2);
-    }
+    id =
+      crypto.randomUUID
+        ? crypto.randomUUID()
+        : (
+            Date.now()
+            + "-" +
+            Math.random()
+              .toString(36)
+              .slice(2)
+          );
 
 
     localStorage.setItem(
-      DEVICE_STORAGE,
+      DEVICE_KEY,
       id
     );
   }
@@ -1583,41 +1649,44 @@ function getDeviceId(){
 }
 
 
-/* =========================================================
+/* ========================================================
    LOGIN
-========================================================= */
+======================================================== */
 
 async function login(){
 
   const key =
-    accessKeyInput.value.trim();
+    $("accessKey")
+      .value
+      .trim();
 
 
   if(!key){
 
-    loginError.textContent =
+    $("loginMsg")
+      .textContent =
       "Access key enter karo.";
 
     return;
   }
 
 
-  loginBtn.disabled =
-    true;
+  $("loginBtn")
+    .disabled = true;
 
-  loginBtn.textContent =
-    "CHECKING...";
-
-  loginError.textContent =
-    "";
+  $("loginBtn")
+    .textContent =
+    "VERIFYING...";
 
 
   try{
 
     const response =
       await fetch(
+        API +
         "/api/key/check",
         {
+
           method:"POST",
 
           headers:{
@@ -1644,276 +1713,224 @@ async function login(){
 
     if(!data.success){
 
-      throw new Error(
-        getLoginError(
+      $("loginMsg")
+        .textContent =
+        formatLoginError(
           data.error
-        )
-      );
+        );
+
+      return;
     }
 
 
     localStorage.setItem(
-      ACCESS_STORAGE,
+      STORAGE_KEY,
       key
     );
 
 
+    loggedIn = true;
+
     showApp();
+
 
   }catch(error){
 
-    loginError.textContent =
-      error.message;
+    $("loginMsg")
+      .textContent =
+      "Server connection failed.";
 
   }finally{
 
-    loginBtn.disabled =
-      false;
+    $("loginBtn")
+      .disabled = false;
 
-    loginBtn.textContent =
-      "ACCESS PREDICTION";
+    $("loginBtn")
+      .textContent =
+      "ACCESS ENGINE";
   }
 }
 
 
-function getLoginError(error){
+/* ========================================================
+   LOGIN ERROR
+======================================================== */
 
-  if(
-    error ===
-    "INVALID_ACCESS_KEY"
-  ){
+function formatLoginError(error){
 
-    return "Invalid access key.";
-  }
+  const map = {
 
+    INVALID_ACCESS_KEY:
+      "Invalid access key.",
 
-  if(
-    error ===
-    "KEY_ALREADY_USED_ON_ANOTHER_DEVICE"
-  ){
+    KEY_ALREADY_USED_ON_ANOTHER_DEVICE:
+      "Ye key kisi aur device par active hai.",
 
-    return "Ye key kisi aur device par bound hai.";
-  }
+    DEVICE_ID_REQUIRED:
+      "Device verification required."
 
-
-  if(
-    error ===
-    "DATABASE_NOT_READY"
-  ){
-
-    return "Server database ready nahi hai.";
-  }
+  };
 
 
   return (
+    map[error] ||
     error ||
     "Access denied."
   );
 }
 
 
-loginBtn.addEventListener(
-  "click",
-  login
-);
-
-
-accessKeyInput.addEventListener(
-  "keydown",
-  event => {
-
-    if(
-      event.key ===
-      "Enter"
-    ){
-
-      login();
-    }
-
-  }
-);
-
-
-/* =========================================================
-   APP STATE
-========================================================= */
-
-let refreshInterval =
-  null;
-
-let lastTargetIssue =
-  "";
-
-let analysisRunning =
-  false;
-
-let refreshBusy =
-  false;
-
-
-/* =========================================================
+/* ========================================================
    SHOW APP
-========================================================= */
+======================================================== */
 
 function showApp(){
 
-  loginScreen.style.display =
-    "none";
-
-  mainApp.style.display =
-    "block";
+  $("loginScreen")
+    .classList
+    .add("hidden");
 
 
-  gameFrame.src =
-    GAME_URL;
+  $("app")
+    .classList
+    .remove("hidden");
 
 
-  refresh();
+  $("musicBar")
+    .classList
+    .remove("hidden");
 
 
-  if(!refreshInterval){
+  startPolling();
 
-    refreshInterval =
-      setInterval(
-        refresh,
-        1000
-      );
-  }
+  startCountdown();
 }
 
 
-/* =========================================================
+/* ========================================================
    LOGOUT
-========================================================= */
+======================================================== */
 
 function logout(){
 
   localStorage.removeItem(
-    ACCESS_STORAGE
+    STORAGE_KEY
   );
+
+
+  loggedIn = false;
+
 
   location.reload();
 }
 
 
-logoutBtn.addEventListener(
-  "click",
-  logout
-);
-
-
-/* =========================================================
+/* ========================================================
    AUTO LOGIN
-========================================================= */
+======================================================== */
 
-const savedKey =
-  localStorage.getItem(
-    ACCESS_STORAGE
-  );
+async function autoLogin(){
 
-
-if(savedKey){
-
-  accessKeyInput.value =
-    savedKey;
-
-
-  fetch(
-    "/api/key/check",
-    {
-      method:"POST",
-
-      headers:{
-        "Content-Type":
-          "application/json"
-      },
-
-      body:
-        JSON.stringify({
-
-          access_key:
-            savedKey,
-
-          device_id:
-            getDeviceId()
-
-        })
-    }
-  )
-  .then(
-    response =>
-      response.json()
-  )
-  .then(
-    data => {
-
-      if(data.success){
-
-        showApp();
-
-      }else{
-
-        localStorage.removeItem(
-          ACCESS_STORAGE
-        );
-      }
-
-    }
-  )
-  .catch(
-    () => {}
-  );
-}
-
-
-/* =========================================================
-   OPEN GAME
-========================================================= */
-
-openGame.addEventListener(
-  "click",
-  () => {
-
-    window.open(
-      GAME_URL,
-      "_blank",
-      "noopener,noreferrer"
+  const key =
+    localStorage.getItem(
+      STORAGE_KEY
     );
 
-  }
-);
 
-
-/* =========================================================
-   REFRESH
-========================================================= */
-
-async function refresh(){
-
-  if(refreshBusy)
+  if(!key){
     return;
-
-
-  refreshBusy =
-    true;
+  }
 
 
   try{
 
     const response =
       await fetch(
+        API +
+        "/api/key/check",
+        {
+
+          method:"POST",
+
+          headers:{
+            "Content-Type":
+              "application/json"
+          },
+
+          body:
+            JSON.stringify({
+
+              access_key:key,
+
+              device_id:
+                getDeviceId()
+
+            })
+        }
+      );
+
+
+    const data =
+      await response.json();
+
+
+    if(data.success){
+
+      loggedIn = true;
+
+      showApp();
+
+    }else{
+
+      localStorage.removeItem(
+        STORAGE_KEY
+      );
+    }
+
+  }catch{
+
+    /*
+      Server temporarily unavailable.
+      Keep login screen.
+    */
+  }
+}
+
+
+/* ========================================================
+   POLLING
+======================================================== */
+
+let pollBusy = false;
+
+
+async function pollState(){
+
+  if(pollBusy){
+    return;
+  }
+
+
+  pollBusy = true;
+
+
+  try{
+
+    const response =
+      await fetch(
+        API +
         "/api/state?t=" +
         Date.now(),
         {
+
           cache:"no-store"
         }
       );
 
 
     if(!response.ok){
-
       throw new Error(
-        "Server error"
+        "State request failed"
       );
     }
 
@@ -1922,616 +1939,740 @@ async function refresh(){
       await response.json();
 
 
-    renderState(
+    if(!data.success){
+      throw new Error(
+        "Invalid state"
+      );
+    }
+
+
+    currentState = data;
+
+
+    renderConnection(
       data
     );
 
+
+    renderRound(
+      data
+    );
+
+
+    renderPerformance(
+      data
+    );
+
+
+    renderAnalysis(
+      data
+    );
+
+
+    renderHistory(
+      data
+    );
+
+
+    /*
+      New target detected.
+
+      Start 3-second analysis animation.
+    */
+
+    if(
+      data.targetIssue &&
+      data.targetIssue !==
+      previousTarget
+    ){
+
+      previousTarget =
+        data.targetIssue;
+
+      startAnalysisAnimation();
+    }
+
+
   }catch(error){
 
-    analysisDesc.textContent =
-      "Server connection waiting...";
+    renderConnection({
+      providerOnline:false
+    });
 
   }finally{
 
-    refreshBusy =
-      false;
+    pollBusy = false;
   }
 }
 
 
-/* =========================================================
-   RENDER STATE
-========================================================= */
+/* ========================================================
+   START POLLING
+======================================================== */
 
-function renderState(data){
+function startPolling(){
 
-  if(!data)
-    return;
+  pollState();
 
 
-  latestSettled.textContent =
+  setInterval(
+    pollState,
+    1000
+  );
+}
+
+
+/* ========================================================
+   CONNECTION
+======================================================== */
+
+function renderConnection(data){
+
+  const online =
+    !!data.providerOnline;
+
+
+  $("connectionDot")
+    .classList
+    .toggle(
+      "online",
+      online
+    );
+
+
+  $("connectionText")
+    .textContent =
+    online
+      ? "LIVE HISTORY CONNECTED"
+      : "CONNECTING TO HISTORY...";
+}
+
+
+/* ========================================================
+   ROUND
+======================================================== */
+
+function renderRound(data){
+
+  $("latestIssue")
+    .textContent =
     data.latestSettledIssue ||
     "—";
 
 
-  targetIssue.textContent =
+  $("targetIssue")
+    .textContent =
     data.targetIssue ||
     "—";
 
 
-  updateTimer(
+  countdownValue =
     Number(
-      data.countdown || 0
-    )
-  );
-
-
-  renderStats(data);
-
-  renderDetails(data);
-
-  renderMode();
-
-  renderAISummary(data);
-
-
-  const target =
-    String(
-      data.targetIssue || ""
+      data.countdown ?? 30
     );
 
 
-  /*
-    New target = 3-second analysis.
-
-    Same target = keep existing prediction.
-  */
-
-  if(
-    target &&
-    target !== lastTargetIssue
-  ){
-
-    lastTargetIssue =
-      target;
+  updateTimer();
+}
 
 
-    startThreeSecondAnalysis(
-      data
-    );
+/* ========================================================
+   COUNTDOWN
+======================================================== */
 
-  }else if(
-    !analysisRunning
-  ){
+function startCountdown(){
 
-    renderPrediction(
-      data
+  updateTimer();
+
+
+  if(countdownInterval){
+    clearInterval(
+      countdownInterval
     );
   }
 
 
-  renderPredictionHistory(
+  countdownInterval =
+    setInterval(
+      () => {
+
+        if(
+          countdownValue > 0
+        ){
+
+          countdownValue--;
+
+        }else{
+
+          countdownValue =
+            30;
+        }
+
+
+        updateTimer();
+
+      },
+      1000
+    );
+}
+
+
+function updateTimer(){
+
+  const value =
+    Math.max(
+      0,
+      Math.min(
+        30,
+        Number(
+          countdownValue
+        ) || 0
+      )
+    );
+
+
+  $("timer")
+    .textContent =
+    String(
+      value
+    ).padStart(
+      2,
+      "0"
+    );
+}
+
+
+/* ========================================================
+   ANALYSIS ANIMATION
+======================================================== */
+
+function startAnalysisAnimation(){
+
+  if(analysisTimer){
+
+    clearTimeout(
+      analysisTimer
+    );
+  }
+
+
+  $("analysisLoading")
+    .style
+    .display = "block";
+
+
+  $("analysisLoading")
+    .innerHTML = `
+      <div class="spinner"></div>
+      <div>
+        Analyzing trend, transitions & patterns...
+      </div>
+    `;
+
+
+  $("analysisContent")
+    .classList
+    .remove("show");
+
+
+  analysisTimer =
+    setTimeout(
+      () => {
+
+        $("analysisLoading")
+          .style
+          .display = "none";
+
+
+        $("analysisContent")
+          .classList
+          .add("show");
+
+      },
+      3000
+    );
+}
+
+
+/* ========================================================
+   ANALYSIS
+======================================================== */
+
+function renderAnalysis(data){
+
+  const a =
+    data.analysis ||
+    {};
+
+
+  if(
+    !data.prediction
+  ){
+
+    $("analysisLoading")
+      .style
+      .display = "block";
+
+
+    $("analysisContent")
+      .classList
+      .remove("show");
+
+    return;
+  }
+
+
+  /*
+    If this is initial render,
+    show content immediately after data arrives.
+  */
+
+  if(
+    previousTarget ===
+    data.targetIssue
+  ){
+
+    $("analysisLoading")
+      .style
+      .display = "none";
+
+
+    $("analysisContent")
+      .classList
+      .add("show");
+  }
+
+
+  renderText(
+    "trendDirection",
+    a.trendDirection ||
+    "NONE"
+  );
+
+
+  renderText(
+    "trendStatus",
+    a.trendStatus ||
+    "NO CLEAR TREND"
+  );
+
+
+  renderText(
+    "breakRiskBig",
+    percent(
+      a.breakRisk
+    )
+  );
+
+
+  renderText(
+    "trendStrength",
+    percent(
+      a.trendStrength
+    )
+  );
+
+
+  renderText(
+    "trendAge",
+    a.trendAge ??
+    0
+  );
+
+
+  renderText(
+    "continuationScore",
+    percent(
+      a.continuationScore
+    )
+  );
+
+
+  renderText(
+    "agreementScore",
+    percent(
+      a.modelAgreement
+    )
+  );
+
+
+  renderText(
+    "shortTrend",
+    a.shortTrend ||
+    "NONE"
+  );
+
+
+  renderText(
+    "mediumTrend",
+    a.mediumTrend ||
+    "NONE"
+  );
+
+
+  renderText(
+    "transitionScore",
+    percent(
+      a.transitionScore
+    )
+  );
+
+
+  renderText(
+    "numberPressure",
+    a.numberPressure ||
+    "BALANCED"
+  );
+
+
+  renderText(
+    "historicalMatch",
+    String(
+      a.historicalMatches ??
+      0
+    )
+  );
+
+
+  renderText(
+    "streakType",
+    a.streakType ||
+    "MIXED"
+  );
+
+
+  renderText(
+    "finalSide",
+    data.prediction ||
+    "—"
+  );
+
+
+  renderText(
+    "finalNumber",
+    data.number ??
+    "—"
+  );
+
+
+  renderText(
+    "confidenceText",
+    percent(
+      data.confidence
+    )
+  );
+
+
+  setProgress(
+    "breakProgress",
+    a.breakRisk
+  );
+
+
+  setProgress(
+    "trendStrengthProgress",
+    a.trendStrength
+  );
+
+
+  setProgress(
+    "continuationProgress",
+    a.continuationScore
+  );
+
+
+  setProgress(
+    "agreementProgress",
+    a.modelAgreement
+  );
+
+
+  setProgress(
+    "confidenceProgress",
+    data.confidence
+  );
+
+
+  colorSide(
+    $("trendDirection"),
+    a.trendDirection
+  );
+
+
+  colorSide(
+    $("finalSide"),
+    data.prediction
+  );
+
+
+  renderDetails(
+    data
+  );
+
+
+  renderAISummary(
     data
   );
 }
 
 
-/* =========================================================
-   THREE SECOND ANALYSIS
-========================================================= */
+/* ========================================================
+   DETAILS
+======================================================== */
 
-function startThreeSecondAnalysis(data){
+function renderDetails(data){
 
-  if(analysisRunning)
-    return;
+  const a =
+    data.analysis ||
+    {};
 
 
-  analysisRunning =
-    true;
+  renderText(
+    "detailTrend",
+    a.trendDirection ||
+    "NONE"
+  );
 
 
-  predictionCard.style.display =
-    "none";
+  renderText(
+    "detailBreak",
+    percent(
+      a.breakRisk
+    )
+  );
 
 
-  progressBar.style.width =
-    "0%";
+  renderText(
+    "detailContinue",
+    percent(
+      a.continuationScore
+    )
+  );
 
 
-  const steps = [
+  renderText(
+    "detailHistory",
+    a.historicalMatches ??
+    0
+  );
 
-    {
-      number:3,
 
-      word:"SCANNING",
+  renderText(
+    "detailPattern",
+    percent(
+      a.patternScore
+    )
+  );
 
-      desc:
-        "Reading latest settled results..."
-    },
 
-    {
-      number:2,
-
-      word:"ANALYZING",
-
-      desc:
-        "Checking recent trend & transitions..."
-    },
-
-    {
-      number:1,
-
-      word:"VERIFYING",
-
-      desc:
-        "Checking streak, pattern & agreement..."
-    }
-
-  ];
-
-
-  let index =
-    0;
-
-
-  function nextStep(){
-
-    const step =
-      steps[index];
-
-
-    analysisWord.textContent =
-      step.word;
-
-
-    analysisCount.textContent =
-      step.number;
-
-
-    analysisDesc.textContent =
-      step.desc;
-
-
-    progressBar.style.width =
-      (
-        (
-          index + 1
-        ) /
-        steps.length *
-        100
-      ) +
-      "%";
-
-
-    index++;
-
-
-    if(
-      index <
-      steps.length
-    ){
-
-      setTimeout(
-        nextStep,
-        1000
-      );
-
-      return;
-    }
-
-
-    setTimeout(
-      () => {
-
-        analysisRunning =
-          false;
-
-
-        renderPrediction(
-          data
-        );
-
-      },
-      250
-    );
-  }
-
-
-  nextStep();
-}
-
-
-/* =========================================================
-   PREDICTION
-========================================================= */
-
-function renderPrediction(data){
-
-  if(!data)
-    return;
-
-
-  predictionCard.style.display =
-    "block";
-
-
-  const side =
-    String(
-      data.prediction ||
-      "WAIT"
-    ).toUpperCase();
-
-
-  predictionSide.textContent =
-    side;
-
-
-  predictionSide.className =
-    "prediction-side";
-
-
-  if(
-    side === "BIG"
-  ){
-
-    predictionSide.classList.add(
-      "big"
-    );
-
-  }else if(
-    side === "SMALL"
-  ){
-
-    predictionSide.classList.add(
-      "small"
-    );
-
-  }else{
-
-    predictionSide.classList.add(
-      "wait"
-    );
-  }
-
-
-  predictionNumber.textContent =
-    (
-      side === "BIG" ||
-      side === "SMALL"
-    ) &&
-    data.number != null
-      ? data.number
-      : "—";
-
-
-  confidence.textContent =
-    Number(
-      data.confidence || 0
-    ) +
-    "%";
-
-
-  signalStatus.textContent =
-    cleanStatus(
-      data.status ||
-      "SIGNAL READY"
-    );
-
-
-  renderMode();
-
-
-  if(!analysisRunning){
-
-    analysisWord.textContent =
-      "ANALYSIS COMPLETE";
-
-
-    analysisCount.textContent =
-      "✓";
-
-
-    analysisDesc.textContent =
-      (
-        cleanStatus(
-          data.status ||
-          "SIGNAL READY"
+  renderText(
+    "detailNumber",
+    a.numberShare
+      ? percent(
+          a.numberShare
         )
-      ) +
-      " • Prediction ready";
+      : "—"
+  );
 
 
-    progressBar.style.width =
-      "100%";
-  }
-}
-
-
-/* =========================================================
-   CLEAN STATUS
-========================================================= */
-
-function cleanStatus(value){
-
-  let text =
-    String(
-      value ||
-      "SIGNAL READY"
-    );
-
-
-  /*
-    Hide internal test wording from the UI.
-  */
-
-  text =
-    text.replace(
-      /random/gi,
-      ""
-    )
-    .replace(
-      /\s+/g,
-      " "
-    )
-    .trim();
-
-
-  if(!text){
-
-    return "SIGNAL READY";
-  }
-
-
-  return text;
-}
-
-
-/* =========================================================
-   DISPLAY LABEL
-========================================================= */
-
-function renderMode(){
-
-  modeBadge.textContent =
+  $("analysisBadge")
+    .textContent =
+    data.status ||
     "LIVE ENGINE";
-
-  modeBadge.className =
-    "mode-badge";
 }
 
 
-/* =========================================================
+/* ========================================================
    AI SUMMARY
-========================================================= */
+======================================================== */
 
 function renderAISummary(data){
 
   const a =
-    data.analysis || {};
+    data.analysis ||
+    {};
 
 
-  const pattern =
+  if(
+    !data.prediction
+  ){
+
+    $("aiSummary")
+      .textContent =
+      "Waiting for enough settled history to analyze the next period.";
+
+    return;
+  }
+
+
+  const trend =
+    a.trendDirection ||
+    "NONE";
+
+
+  const status =
+    a.trendStatus ||
+    "NO CLEAR TREND";
+
+
+  const breakRisk =
     Number(
-      a.patternScore || 0
+      a.breakRisk || 0
     );
 
 
-  const agree =
+  const continuation =
+    Number(
+      a.continuationScore || 50
+    );
+
+
+  const agreement =
     Number(
       a.modelAgreement || 0
     );
 
 
-  const bt =
+  const matches =
     Number(
-      a.backtestSamples || 0
+      a.historicalMatches || 0
     );
 
 
-  const side =
-    String(
-      data.prediction ||
-      "WAIT"
-    ).toUpperCase();
-
-
-  let text;
+  let message =
+    `Current structure: ${trend}. `;
 
 
   if(
-    side === "BIG"
+    status ===
+    "POSSIBLE BREAK"
   ){
 
-    text =
-      "Current signals lean toward BIG after checking recent balance, transitions, streaks and historical patterns.";
+    message +=
+      `The detected trend is showing elevated break risk (${breakRisk}%). `;
 
   }else if(
-    side === "SMALL"
+    status ===
+    "TREND WEAKENING"
   ){
 
-    text =
-      "Current signals lean toward SMALL after checking recent balance, transitions, streaks and historical patterns.";
+    message +=
+      `The trend is weakening, so the engine is reducing directional confidence. `;
 
   }else{
 
-    text =
-      "Signals are currently being evaluated before displaying a direction.";
+    message +=
+      `The recent sequence is being evaluated for continuation rather than blindly followed. `;
   }
+
+
+  message +=
+    `Continuation score is ${continuation}% and multi-signal agreement is ${agreement}%. `;
 
 
   if(
-    pattern >= 70
+    matches > 0
   ){
 
-    text +=
-      " Pattern strength is relatively high.";
+    message +=
+      `${matches} similar historical pattern match${matches === 1 ? "" : "es"} were found. `;
   }
+
+
+  message +=
+    `Final signal: ${data.prediction}`;
 
 
   if(
-    agree >= 70
+    data.number !==
+    null &&
+    data.number !==
+    undefined
   ){
 
-    text +=
-      " Multiple model signals agree.";
+    message +=
+      ` with suggested number ${data.number}.`;
   }
 
 
-  if(
-    bt >= 20
-  ){
-
-    text +=
-      " Walk-forward historical testing data is available.";
-  }
-
-
-  aiSummaryText.textContent =
-    text;
+  $("aiSummary")
+    .textContent =
+    message;
 }
 
 
-/* =========================================================
-   TIMER
-========================================================= */
+/* ========================================================
+   PERFORMANCE
+======================================================== */
 
-function updateTimer(seconds){
+function renderPerformance(data){
 
-  let s =
-    Number(seconds);
-
-
-  if(
-    !Number.isFinite(s)
-  ){
-
-    s = 30;
-  }
-
-
-  s =
-    Math.max(
-      0,
-      Math.min(
-        30,
-        Math.floor(s)
-      )
-    );
-
-
-  timer.textContent =
-    String(s).padStart(
-      2,
-      "0"
-    );
-
-
-  if(
-    s <= 5 &&
-    s > 0
-  ){
-
-    timer.classList.add(
-      "warning"
-    );
-
-  }else{
-
-    timer.classList.remove(
-      "warning"
-    );
-  }
-}
-
-
-/* =========================================================
-   STATS
-========================================================= */
-
-function renderStats(data){
-
-  const w =
+  const wins =
     Number(
       data.wins || 0
     );
 
 
-  const l =
+  const losses =
     Number(
       data.losses || 0
     );
 
 
-  wins.textContent =
-    w;
-
-
-  losses.textContent =
-    l;
-
-
   const total =
-    w + l;
+    wins +
+    losses;
 
 
-  accuracy.textContent =
+  const accuracy =
     total
       ? Math.round(
-          (
-            w /
-            total
-          ) *
+          wins /
+          total *
           100
-        ) +
-        "%"
-      : "0%";
-}
+        )
+      : 0;
 
 
-/* =========================================================
-   MODEL DETAILS
-========================================================= */
-
-function renderDetails(data){
-
-  const a =
-    data.analysis || {};
+  $("wins")
+    .textContent =
+    wins;
 
 
-  patternScore.textContent =
-    Number(
-      a.patternScore || 0
-    );
+  $("losses")
+    .textContent =
+    losses;
 
 
-  agreement.textContent =
-    Number(
-      a.modelAgreement || 0
-    ) +
+  $("accuracy")
+    .textContent =
+    accuracy +
     "%";
 
 
-  backtest.textContent =
-    Number(
-      a.backtestSamples || 0
-    );
+  const backtest =
+    data.analysis
+      ?.avgModelAccuracy;
 
 
-  avgAccuracy.textContent =
-    a.avgModelAccuracy == null
-      ? "N/A"
-      : Number(
-          a.avgModelAccuracy
-        ) +
-        "%";
+  $("backtestAccuracy")
+    .textContent =
+    backtest === null ||
+    backtest === undefined
+      ? "—"
+      : backtest + "%";
 }
 
 
-/* =========================================================
+/* ========================================================
    HISTORY
-========================================================= */
+======================================================== */
 
-function renderPredictionHistory(data){
+function renderHistory(data){
+
+  const body =
+    $("historyBody");
+
 
   const rows =
     Array.isArray(
@@ -2543,187 +2684,88 @@ function renderPredictionHistory(data){
 
   if(!rows.length){
 
-    historyBody.innerHTML = `
-
+    body.innerHTML = `
       <tr>
-
-        <td colspan="5">
-          Waiting for prediction history...
+        <td
+          colspan="6"
+          class="emptyHistory"
+        >
+          Waiting for live results...
         </td>
-
       </tr>
-
     `;
 
     return;
   }
 
 
-  historyBody.innerHTML =
+  body.innerHTML =
     rows
-      .slice(0,30)
       .map(
         row => {
 
-          const issue =
-            escapeHtml(
-              row.target_issue
+          const resultSide =
+            row.result_side ||
+            sideFromNumber(
+              row.result_number
             );
 
 
-          const number =
-            row.result_number != null
-              ? Number(
-                  row.result_number
-                )
-              : null;
-
-
-          const resultSide =
-            String(
-              row.result_side || ""
-            ).toUpperCase();
-
-
           const prediction =
-            String(
-              row.prediction || "WAIT"
-            ).toUpperCase();
-
-
-          const predictedNumber =
-            row.predicted_number;
-
-
-          let resultHtml =
+            row.prediction ||
             "—";
 
 
-          if(
-            number != null
-          ){
-
-            const cls =
-              resultSide === "BIG"
-                ? "result-big"
-                : "result-small";
-
-
-            resultHtml = `
-
-              <span class="${cls}">
-                ${escapeHtml(
-                  resultSide || "—"
-                )}
-              </span>
-
-            `;
-          }
-
-
-          let wlHtml =
-            `<span class="pending">PENDING</span>`;
-
-
           const outcome =
-            String(
-              row.outcome || ""
-            ).toUpperCase();
-
-
-          if(
-            outcome === "WIN"
-          ){
-
-            wlHtml =
-              `<span class="win">WIN</span>`;
-
-          }else if(
-            outcome === "LOSS"
-          ){
-
-            wlHtml =
-              `<span class="loss">LOSS</span>`;
-
-          }else if(
-            outcome === "SKIPPED"
-          ){
-
-            wlHtml =
-              `<span class="skipped">SKIPPED</span>`;
-          }
-
-
-          let predictText =
-            "WAIT";
-
-
-          if(
-            prediction === "BIG" ||
-            prediction === "SMALL"
-          ){
-
-            predictText =
-              prediction;
-
-
-            if(
-              predictedNumber != null
-            ){
-
-              predictText +=
-                " • " +
-                predictedNumber;
-            }
-          }
+            row.outcome ||
+            "PENDING";
 
 
           return `
-
             <tr>
 
-              <td class="issue">
-                ${issue}
+              <td class="periodCell">
+                ${escapeHtml(
+                  row.target_issue ||
+                  "—"
+                )}
               </td>
 
               <td>
-
-                <span class="result-number">
-
+                <strong>
                   ${
-                    number != null
-                      ? escapeHtml(
-                          number
-                        )
-                      : "—"
+                    row.result_number ??
+                    "—"
                   }
-
-                </span>
-
+                </strong>
               </td>
 
               <td>
-                ${resultHtml}
+                ${sidePill(
+                  resultSide
+                )}
               </td>
 
               <td>
-
-                <span class="predicted">
-
-                  ${escapeHtml(
-                    predictText
-                  )}
-
-                </span>
-
+                ${sidePill(
+                  prediction
+                )}
               </td>
 
               <td>
-                ${wlHtml}
+                ${
+                  row.predicted_number ??
+                  "—"
+                }
+              </td>
+
+              <td>
+                ${outcomePill(
+                  outcome
+                )}
               </td>
 
             </tr>
-
           `;
         }
       )
@@ -2731,95 +2773,376 @@ function renderPredictionHistory(data){
 }
 
 
-/* =========================================================
-   ESCAPE HTML
-========================================================= */
+/* ========================================================
+   SIDE PILL
+======================================================== */
 
-function escapeHtml(value){
+function sidePill(side){
+
+  if(
+    side ===
+    "BIG"
+  ){
+
+    return `
+      <span
+        class="sidePill bigPill"
+      >
+        BIG
+      </span>
+    `;
+  }
+
+
+  if(
+    side ===
+    "SMALL"
+  ){
+
+    return `
+      <span
+        class="sidePill smallPill"
+      >
+        SMALL
+      </span>
+    `;
+  }
+
+
+  return `
+    <span
+      class="sidePill"
+      style="color:#8490aa"
+    >
+      —
+    </span>
+  `;
+}
+
+
+/* ========================================================
+   OUTCOME PILL
+======================================================== */
+
+function outcomePill(outcome){
+
+  if(
+    outcome ===
+    "WIN"
+  ){
+
+    return `
+      <span
+        class="outcomePill winPill"
+      >
+        WIN
+      </span>
+    `;
+  }
+
+
+  if(
+    outcome ===
+    "LOSS"
+  ){
+
+    return `
+      <span
+        class="outcomePill lossPill"
+      >
+        LOSS
+      </span>
+    `;
+  }
+
+
+  return `
+    <span
+      class="outcomePill pendingPill"
+    >
+      PENDING
+    </span>
+  `;
+}
+
+
+/* ========================================================
+   PROGRESS
+======================================================== */
+
+function setProgress(
+  id,
+  value
+){
+
+  const element =
+    $(id);
+
+
+  if(!element){
+    return;
+  }
+
+
+  const number =
+    Math.max(
+      0,
+      Math.min(
+        100,
+        Number(
+          value || 0
+        )
+      )
+    );
+
+
+  element.style.width =
+    number + "%";
+}
+
+
+/* ========================================================
+   COLOR SIDE
+======================================================== */
+
+function colorSide(
+  element,
+  side
+){
+
+  if(!element){
+    return;
+  }
+
+
+  element.classList
+    .remove(
+      "bigText",
+      "smallText"
+    );
+
+
+  if(
+    side ===
+    "BIG"
+  ){
+
+    element.classList
+      .add(
+        "bigText"
+      );
+
+  }else if(
+    side ===
+    "SMALL"
+  ){
+
+    element.classList
+      .add(
+        "smallText"
+      );
+  }
+}
+
+
+/* ========================================================
+   RENDER TEXT
+======================================================== */
+
+function renderText(
+  id,
+  value
+){
+
+  const element =
+    $(id);
+
+
+  if(
+    element
+  ){
+
+    element.textContent =
+      value;
+  }
+}
+
+
+/* ========================================================
+   PERCENT
+======================================================== */
+
+function percent(value){
+
+  const n =
+    Number(
+      value
+    );
+
+
+  if(
+    !Number.isFinite(n)
+  ){
+
+    return "0%";
+  }
+
+
+  return (
+    Math.round(
+      Math.max(
+        0,
+        Math.min(
+          100,
+          n
+        )
+      )
+    ) +
+    "%"
+  );
+}
+
+
+/* ========================================================
+   SIDE FROM NUMBER
+======================================================== */
+
+function sideFromNumber(
+  number
+){
+
+  const n =
+    Number(
+      number
+    );
+
+
+  if(
+    !Number.isInteger(n)
+  ){
+
+    return null;
+  }
+
+
+  return n >= 5
+    ? "BIG"
+    : "SMALL";
+}
+
+
+/* ========================================================
+   ESCAPE
+======================================================== */
+
+function escapeHtml(
+  value
+){
 
   return String(
     value ?? ""
   )
-  .replaceAll(
-    "&",
+  .replace(
+    /&/g,
     "&amp;"
   )
-  .replaceAll(
-    "<",
+  .replace(
+    /</g,
     "&lt;"
   )
-  .replaceAll(
-    ">",
+  .replace(
+    />/g,
     "&gt;"
   )
-  .replaceAll(
-    '"',
+  .replace(
+    /"/g,
     "&quot;"
   )
-  .replaceAll(
-    "'",
+  .replace(
+    /'/g,
     "&#039;"
   );
 }
 
 
-/* =========================================================
+/* ========================================================
    MUSIC
-========================================================= */
+======================================================== */
 
-let musicOn =
+let musicPlaying =
   false;
 
 
-musicBtn.addEventListener(
-  "click",
-  async () => {
+async function toggleMusic(){
 
-    try{
-
-      if(!musicOn){
-
-        await music.play();
+  const music =
+    $("music");
 
 
-        musicOn =
-          true;
+  try{
 
+    if(
+      musicPlaying
+    ){
 
-        musicBtn.textContent =
-          "🔊 MUSIC ON";
+      music.pause();
 
+      musicPlaying =
+        false;
 
-        musicBtn.classList.add(
-          "active"
-        );
+      $("musicBtn")
+        .textContent =
+        "▶";
 
-      }else{
-
-        music.pause();
-
-
-        musicOn =
-          false;
-
-
-        musicBtn.textContent =
-          "🔇 MUSIC OFF";
-
-
-        musicBtn.classList.remove(
-          "active"
-        );
-      }
-
-    }catch(error){
-
-      musicBtn.textContent =
-        "🔊 TAP AGAIN";
+      return;
     }
 
+
+    await music.play();
+
+
+    musicPlaying =
+      true;
+
+
+    $("musicBtn")
+      .textContent =
+      "Ⅱ";
+
+  }catch{
+
+    alert(
+      "Music start nahi ho paayi."
+    );
   }
-);
+}
+
+
+/* ========================================================
+   ENTER KEY LOGIN
+======================================================== */
+
+$("accessKey")
+  .addEventListener(
+    "keydown",
+    event => {
+
+      if(
+        event.key ===
+        "Enter"
+      ){
+
+        login();
+      }
+    }
+  );
+
+
+/* ========================================================
+   START
+======================================================== */
+
+autoLogin();
 
 </script>
 
