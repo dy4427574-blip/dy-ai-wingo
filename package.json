@@ -1,7 +1,7 @@
 {
   "name": "dy-ai-wingo-30s",
   "version": "1.0.0",
-  "description": "DY AI Wingo 30 Second Prediction Engine",
+  "description": "DY AI Wingo 30 Seconds prediction system",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
