@@ -47,7 +47,9 @@ button{
 }
 
 
-/* LOGIN */
+/* =========================================================
+   LOGIN
+========================================================= */
 
 .login-screen{
   min-height:100vh;
@@ -95,6 +97,11 @@ button{
   outline:none;
 }
 
+.input:focus{
+  border-color:#00e5ff;
+  box-shadow:0 0 0 2px rgba(0,229,255,.08);
+}
+
 .primary-btn{
   width:100%;
   margin-top:13px;
@@ -106,6 +113,10 @@ button{
   background:#00e5ff;
 }
 
+.primary-btn:disabled{
+  opacity:.6;
+}
+
 .login-error{
   margin-top:12px;
   text-align:center;
@@ -114,7 +125,9 @@ button{
 }
 
 
-/* HEADER */
+/* =========================================================
+   HEADER
+========================================================= */
 
 .header{
   display:flex;
@@ -150,7 +163,9 @@ button{
 }
 
 
-/* GAME */
+/* =========================================================
+   GAME
+========================================================= */
 
 .game-card{
   overflow:hidden;
@@ -185,7 +200,7 @@ button{
 
 .game-frame{
   width:100%;
-  height:390px;
+  height:420px;
   border:0;
   display:block;
   background:#000;
@@ -200,7 +215,9 @@ button{
 }
 
 
-/* PERIOD */
+/* =========================================================
+   PERIOD
+========================================================= */
 
 .status-card{
   margin-top:12px;
@@ -254,13 +271,20 @@ button{
 }
 
 
-/* ANALYSIS */
+/* =========================================================
+   EXPERT AI ANALYSIS
+========================================================= */
 
 .analysis-card{
   margin-top:12px;
   padding:19px 16px;
   border-radius:19px;
-  background:radial-gradient(circle at top,#132339,#080c14 65%);
+  background:
+    radial-gradient(
+      circle at top,
+      #162b42,
+      #080c14 68%
+    );
   border:1px solid #27405d;
   text-align:center;
 }
@@ -287,12 +311,6 @@ button{
   border:1px solid #24516b;
 }
 
-.mode-badge.random{
-  background:#2c1d0a;
-  color:#ffca67;
-  border-color:#6b481c;
-}
-
 .analysis-main{
   margin-top:20px;
 }
@@ -315,6 +333,7 @@ button{
   margin-top:9px;
   color:#718198;
   font-size:11px;
+  min-height:16px;
 }
 
 .progress{
@@ -333,7 +352,9 @@ button{
 }
 
 
-/* PREDICTION */
+/* =========================================================
+   PREDICTION
+========================================================= */
 
 .prediction-card{
   margin-top:12px;
@@ -353,17 +374,19 @@ button{
 
 .prediction-side{
   margin-top:6px;
-  font-size:42px;
+  font-size:44px;
   line-height:1;
   font-weight:1000;
 }
 
 .big{
   color:#ffbf48;
+  text-shadow:0 0 18px rgba(255,191,72,.16);
 }
 
 .small{
   color:#5bd7ff;
+  text-shadow:0 0 18px rgba(91,215,255,.16);
 }
 
 .wait{
@@ -413,25 +436,37 @@ button{
   color:#fff;
 }
 
-.random-note{
+
+/* =========================================================
+   AI EXPLANATION
+========================================================= */
+
+.ai-summary{
   margin-top:12px;
-  padding:9px;
-  border-radius:10px;
-  background:#281b09;
-  border:1px solid #5b411c;
-  color:#ffc75d;
-  font-size:10px;
-  font-weight:800;
+  padding:12px;
+  border-radius:15px;
+  background:#080e17;
+  border:1px solid #1c2c40;
 }
 
-.ai-original{
-  margin-top:8px;
-  color:#718198;
+.ai-summary-title{
+  color:#00e5ff;
   font-size:10px;
+  font-weight:1000;
+  letter-spacing:1px;
+}
+
+.ai-summary-text{
+  margin-top:7px;
+  color:#8290a4;
+  font-size:10px;
+  line-height:1.55;
 }
 
 
-/* STATS */
+/* =========================================================
+   STATS
+========================================================= */
 
 .stats{
   display:grid;
@@ -461,7 +496,9 @@ button{
 }
 
 
-/* MODEL */
+/* =========================================================
+   MODEL DETAILS
+========================================================= */
 
 .ai-details{
   margin-top:12px;
@@ -503,7 +540,9 @@ button{
 }
 
 
-/* HISTORY */
+/* =========================================================
+   HISTORY
+========================================================= */
 
 .history-card{
   margin-top:12px;
@@ -601,7 +640,9 @@ td{
 }
 
 
-/* BUTTONS */
+/* =========================================================
+   BUTTONS
+========================================================= */
 
 .bottom-actions{
   display:grid;
@@ -626,7 +667,9 @@ td{
 }
 
 
-/* FOOTER */
+/* =========================================================
+   FOOTER
+========================================================= */
 
 .footer{
   padding:18px 8px 28px;
@@ -665,7 +708,9 @@ td{
 <body>
 
 
-<!-- LOGIN -->
+<!-- =======================================================
+     LOGIN
+======================================================= -->
 
 <div
   id="loginScreen"
@@ -679,7 +724,7 @@ td{
     </div>
 
     <div class="sub-logo">
-      30 Second Prediction System
+      30 Second Expert AI Prediction
     </div>
 
     <input
@@ -707,7 +752,9 @@ td{
 </div>
 
 
-<!-- APP -->
+<!-- =======================================================
+     MAIN APP
+======================================================= -->
 
 <div
   id="mainApp"
@@ -732,7 +779,9 @@ td{
   </div>
 
 
-  <!-- GAME -->
+  <!-- =====================================================
+       GAME
+  ====================================================== -->
 
   <div class="game-card">
 
@@ -769,7 +818,9 @@ td{
   </div>
 
 
-  <!-- PERIOD -->
+  <!-- =====================================================
+       PERIOD
+  ====================================================== -->
 
   <div class="status-card">
 
@@ -823,7 +874,9 @@ td{
   </div>
 
 
-  <!-- ANALYSIS -->
+  <!-- =====================================================
+       EXPERT AI ANALYSIS
+  ====================================================== -->
 
   <div
     id="analysisCard"
@@ -833,14 +886,14 @@ td{
     <div class="analysis-top">
 
       <div class="analysis-title">
-        AI ANALYSIS
+        EXPERT AI ANALYSIS
       </div>
 
       <div
         id="modeBadge"
         class="mode-badge"
       >
-        AI MODE
+        EXPERT AI
       </div>
 
     </div>
@@ -883,7 +936,9 @@ td{
   </div>
 
 
-  <!-- PREDICTION -->
+  <!-- =====================================================
+       PREDICTION
+  ====================================================== -->
 
   <div
     id="predictionCard"
@@ -892,7 +947,7 @@ td{
   >
 
     <div class="prediction-label">
-      NEXT PREDICTION
+      NEXT PERIOD PREDICTION
     </div>
 
 
@@ -938,26 +993,33 @@ td{
 
     </div>
 
+  </div>
 
-    <div
-      id="randomNote"
-      class="random-note"
-      style="display:none;"
-    >
-      RANDOM MIX ACTIVE
+
+  <!-- =====================================================
+       AI SUMMARY
+  ====================================================== -->
+
+  <div class="ai-summary">
+
+    <div class="ai-summary-title">
+      AI DECISION ENGINE
     </div>
 
-
     <div
-      id="aiOriginal"
-      class="ai-original"
-      style="display:none;"
-    ></div>
+      id="aiSummaryText"
+      class="ai-summary-text"
+    >
+      Expert model is checking recent trend,
+      transition, streak and pattern signals.
+    </div>
 
   </div>
 
 
-  <!-- STATS -->
+  <!-- =====================================================
+       STATS
+  ====================================================== -->
 
   <div class="stats">
 
@@ -1011,12 +1073,14 @@ td{
   </div>
 
 
-  <!-- MODEL DETAILS -->
+  <!-- =====================================================
+       MODEL DETAILS
+  ====================================================== -->
 
   <div class="ai-details">
 
     <div class="details-title">
-      MODEL DETAILS
+      EXPERT MODEL DETAILS
     </div>
 
 
@@ -1090,7 +1154,9 @@ td{
   </div>
 
 
-  <!-- HISTORY -->
+  <!-- =====================================================
+       HISTORY
+  ====================================================== -->
 
   <div class="history-card">
 
@@ -1143,7 +1209,9 @@ td{
   </div>
 
 
-  <!-- BUTTONS -->
+  <!-- =====================================================
+       BUTTONS
+  ====================================================== -->
 
   <div class="bottom-actions">
 
@@ -1167,7 +1235,7 @@ td{
   <div class="footer">
     DY AI Wingo 30S<br>
     Actual results come from the live history API.
-    Predictions are estimates only and are not guaranteed.
+    AI predictions are estimates only and are not guaranteed.
   </div>
 
 </div>
@@ -1301,16 +1369,6 @@ const modeBadge =
     "modeBadge"
   );
 
-const randomNote =
-  document.getElementById(
-    "randomNote"
-  );
-
-const aiOriginal =
-  document.getElementById(
-    "aiOriginal"
-  );
-
 const wins =
   document.getElementById(
     "wins"
@@ -1351,6 +1409,11 @@ const historyBody =
     "historyBody"
   );
 
+const aiSummaryText =
+  document.getElementById(
+    "aiSummaryText"
+  );
+
 const musicBtn =
   document.getElementById(
     "musicBtn"
@@ -1368,7 +1431,7 @@ const music =
 
 
 /* =========================================================
-   DEVICE
+   DEVICE ID
 ========================================================= */
 
 function getDeviceId(){
@@ -1379,9 +1442,9 @@ function getDeviceId(){
     );
 
 
-  if (!id){
+  if(!id){
 
-    if (
+    if(
       window.crypto &&
       crypto.randomUUID
     ){
@@ -1392,8 +1455,7 @@ function getDeviceId(){
     }else{
 
       id =
-        Date.now()
-          .toString(36) +
+        Date.now().toString(36) +
         Math.random()
           .toString(36)
           .slice(2);
@@ -1418,12 +1480,10 @@ function getDeviceId(){
 async function login(){
 
   const key =
-    accessKeyInput
-      .value
-      .trim();
+    accessKeyInput.value.trim();
 
 
-  if (!key){
+  if(!key){
 
     loginError.textContent =
       "Access key enter karo.";
@@ -1448,8 +1508,7 @@ async function login(){
       await fetch(
         "/api/key/check",
         {
-          method:
-            "POST",
+          method:"POST",
 
           headers:{
             "Content-Type":
@@ -1458,11 +1517,8 @@ async function login(){
 
           body:
             JSON.stringify({
-              access_key:
-                key,
-
-              device_id:
-                getDeviceId()
+              access_key:key,
+              device_id:getDeviceId()
             })
         }
       );
@@ -1472,7 +1528,7 @@ async function login(){
       await response.json();
 
 
-    if (!data.success){
+    if(!data.success){
 
       throw new Error(
         getLoginError(
@@ -1506,11 +1562,9 @@ async function login(){
 }
 
 
-function getLoginError(
-  error
-){
+function getLoginError(error){
 
-  if (
+  if(
     error ===
     "INVALID_ACCESS_KEY"
   ){
@@ -1519,7 +1573,7 @@ function getLoginError(
   }
 
 
-  if (
+  if(
     error ===
     "KEY_ALREADY_USED_ON_ANOTHER_DEVICE"
   ){
@@ -1545,7 +1599,7 @@ accessKeyInput.addEventListener(
   "keydown",
   event => {
 
-    if (
+    if(
       event.key ===
       "Enter"
     ){
@@ -1558,7 +1612,7 @@ accessKeyInput.addEventListener(
 
 
 /* =========================================================
-   APP
+   APP STATE
 ========================================================= */
 
 let refreshInterval =
@@ -1573,6 +1627,13 @@ let analysisRunning =
 let lastState =
   null;
 
+let refreshBusy =
+  false;
+
+
+/* =========================================================
+   SHOW APP
+========================================================= */
 
 function showApp(){
 
@@ -1590,9 +1651,7 @@ function showApp(){
   refresh();
 
 
-  if (
-    !refreshInterval
-  ){
+  if(!refreshInterval){
 
     refreshInterval =
       setInterval(
@@ -1602,6 +1661,10 @@ function showApp(){
   }
 }
 
+
+/* =========================================================
+   LOGOUT
+========================================================= */
 
 function logout(){
 
@@ -1629,7 +1692,7 @@ const savedKey =
   );
 
 
-if (savedKey){
+if(savedKey){
 
   accessKeyInput.value =
     savedKey;
@@ -1638,8 +1701,7 @@ if (savedKey){
   fetch(
     "/api/key/check",
     {
-      method:
-        "POST",
+      method:"POST",
 
       headers:{
         "Content-Type":
@@ -1663,9 +1725,7 @@ if (savedKey){
   .then(
     data => {
 
-      if (
-        data.success
-      ){
+      if(data.success){
 
         showApp();
 
@@ -1675,6 +1735,7 @@ if (savedKey){
           ACCESS_STORAGE
         );
       }
+
     }
   )
   .catch(
@@ -1705,15 +1766,9 @@ openGame.addEventListener(
    REFRESH
 ========================================================= */
 
-let refreshBusy =
-  false;
-
-
 async function refresh(){
 
-  if (
-    refreshBusy
-  )
+  if(refreshBusy)
     return;
 
 
@@ -1728,8 +1783,7 @@ async function refresh(){
         "/api/state?t=" +
         Date.now(),
         {
-          cache:
-            "no-store"
+          cache:"no-store"
         }
       );
 
@@ -1760,12 +1814,14 @@ async function refresh(){
 
 
 /* =========================================================
-   STATE
+   RENDER STATE
 ========================================================= */
 
-function renderState(
-  data
-){
+function renderState(data){
+
+  if(!data)
+    return;
+
 
   latestSettled.textContent =
     data.latestSettledIssue ||
@@ -1784,38 +1840,29 @@ function renderState(
   );
 
 
-  renderStats(
-    data
-  );
+  renderStats(data);
 
+  renderDetails(data);
 
-  renderDetails(
-    data
-  );
+  renderMode();
 
+  renderAISummary(data);
 
-  renderMode(
-    data
-  );
-
-
-  /*
-    IMPORTANT:
-    Analysis starts only when target
-    period changes.
-  */
 
   const target =
     String(
-      data.targetIssue ||
-      ""
+      data.targetIssue || ""
     );
 
 
-  if (
+  /*
+    New target = new analysis.
+    Same target = prediction does not regenerate.
+  */
+
+  if(
     target &&
-    target !==
-      lastTargetIssue
+    target !== lastTargetIssue
   ){
 
     lastTargetIssue =
@@ -1826,13 +1873,9 @@ function renderState(
       data
     );
 
-  }else if (
+  }else if(
     !analysisRunning
   ){
-
-    /*
-      Existing prediction stays visible.
-    */
 
     renderPrediction(
       data
@@ -1847,16 +1890,12 @@ function renderState(
 
 
 /* =========================================================
-   3 SECOND ANALYSIS
+   THREE SECOND EXPERT ANALYSIS
 ========================================================= */
 
-function startThreeSecondAnalysis(
-  data
-){
+function startThreeSecondAnalysis(data){
 
-  if (
-    analysisRunning
-  )
+  if(analysisRunning)
     return;
 
 
@@ -1871,36 +1910,30 @@ function startThreeSecondAnalysis(
   const steps = [
 
     {
-      number:
-        3,
+      number:3,
 
-      word:
-        "ANALYZING",
+      word:"SCANNING",
 
       desc:
-        "Reading latest settled history..."
+        "Reading latest settled results..."
     },
 
     {
-      number:
-        2,
+      number:2,
 
-      word:
-        "ANALYZING",
+      word:"ANALYZING",
 
       desc:
-        "Checking trend, transition & pattern..."
+        "Checking trend, streak & transitions..."
     },
 
     {
-      number:
-        1,
+      number:1,
 
-      word:
-        "ANALYZING",
+      word:"VERIFYING",
 
       desc:
-        "Comparing model signals..."
+        "Comparing pattern and model agreement..."
     }
 
   ];
@@ -1935,11 +1968,9 @@ function startThreeSecondAnalysis(
     progressBar.style.width =
       (
         (
-          (
-            index + 1
-          ) /
-          steps.length
-        ) *
+          index + 1
+        ) /
+        steps.length *
         100
       ) +
       "%";
@@ -1948,7 +1979,7 @@ function startThreeSecondAnalysis(
     index++;
 
 
-    if (
+    if(
       index <
       steps.length
     ){
@@ -1987,17 +2018,21 @@ function startThreeSecondAnalysis(
    PREDICTION
 ========================================================= */
 
-function renderPrediction(
-  data
-){
+function renderPrediction(data){
 
-  if (!data)
+  if(!data)
     return;
 
 
   predictionCard.style.display =
     "block";
 
+
+  /*
+    IMPORTANT:
+    Only actual server prediction is displayed.
+    Random mix fields are intentionally ignored.
+  */
 
   const side =
     String(
@@ -2014,7 +2049,7 @@ function renderPrediction(
     "prediction-side";
 
 
-  if (
+  if(
     side === "BIG"
   ){
 
@@ -2022,7 +2057,7 @@ function renderPrediction(
       "big"
     );
 
-  }else if (
+  }else if(
     side === "SMALL"
   ){
 
@@ -2039,15 +2074,16 @@ function renderPrediction(
 
 
   predictionNumber.textContent =
-    data.number ??
-    "—";
+    data.number != null
+      ? data.number
+      : "—";
 
 
   confidence.textContent =
-    `${Number(
-      data.confidence ||
-      0
-    )}%`;
+    Number(
+      data.confidence || 0
+    ) +
+    "%";
 
 
   signalStatus.textContent =
@@ -2055,55 +2091,20 @@ function renderPrediction(
     "WAIT";
 
 
-  renderMode(
-    data
-  );
+  /*
+    Always display as Expert AI.
+    RANDOM MIX is intentionally hidden.
+  */
+
+  modeBadge.textContent =
+    "EXPERT AI";
 
 
-  if (
-    data.randomized
-  ){
-
-    randomNote.style.display =
-      "block";
+  modeBadge.className =
+    "mode-badge";
 
 
-    randomNote.textContent =
-      `RANDOM MIX ACTIVE • ${Number(
-        data.randomMixPercent ||
-        0
-      )}%`;
-
-
-    aiOriginal.style.display =
-      "block";
-
-
-    aiOriginal.textContent =
-      `AI original: ${
-        data.aiPrediction ||
-        "WAIT"
-      }${
-        data.aiNumber != null
-          ? " • Number " +
-            data.aiNumber
-          : ""
-      }`;
-
-  }else{
-
-    randomNote.style.display =
-      "none";
-
-
-    aiOriginal.style.display =
-      "none";
-  }
-
-
-  if (
-    !analysisRunning
-  ){
+  if(!analysisRunning){
 
     analysisWord.textContent =
       "ANALYSIS COMPLETE";
@@ -2114,7 +2115,11 @@ function renderPrediction(
 
 
     analysisDesc.textContent =
-      `${data.status || "SIGNAL"} • Prediction ready`;
+      (
+        data.status ||
+        "SIGNAL"
+      ) +
+      " • Prediction ready";
 
 
     progressBar.style.width =
@@ -2127,35 +2132,105 @@ function renderPrediction(
    MODE
 ========================================================= */
 
-function renderMode(
-  data
-){
-
-  const randomized =
-    Boolean(
-      data.randomized ||
-      data.analysis?.randomized
-    );
-
+function renderMode(){
 
   modeBadge.textContent =
-    randomized
-      ? "RANDOM MIX"
-      : "AI MODE";
-
+    "EXPERT AI";
 
   modeBadge.className =
     "mode-badge";
+}
 
 
-  if (
-    randomized
+/* =========================================================
+   AI SUMMARY
+========================================================= */
+
+function renderAISummary(data){
+
+  const a =
+    data.analysis || {};
+
+
+  const pattern =
+    Number(
+      a.patternScore || 0
+    );
+
+
+  const agree =
+    Number(
+      a.modelAgreement || 0
+    );
+
+
+  const bt =
+    Number(
+      a.backtestSamples || 0
+    );
+
+
+  const side =
+    String(
+      data.prediction ||
+      "WAIT"
+    ).toUpperCase();
+
+
+  let text =
+    "Expert model is combining multiple historical signals.";
+
+
+  if(
+    side === "BIG"
   ){
 
-    modeBadge.classList.add(
-      "random"
-    );
+    text =
+      "Model signals currently lean toward BIG after checking recent balance, transitions, streaks and historical patterns.";
+
+  }else if(
+    side === "SMALL"
+  ){
+
+    text =
+      "Model signals currently lean toward SMALL after checking recent balance, transitions, streaks and historical patterns.";
+
+  }else{
+
+    text =
+      "Signals are not sufficiently aligned. Expert model is keeping the decision on WAIT instead of forcing a prediction.";
   }
+
+
+  if(
+    pattern >= 70
+  ){
+
+    text +=
+      " Pattern strength is relatively high.";
+  }
+
+
+  if(
+    agree >= 70
+  ){
+
+    text +=
+      " Multiple model signals agree.";
+  }
+
+
+  if(
+    bt >= 20
+  ){
+
+    text +=
+      " Walk-forward backtest data is available.";
+  }
+
+
+  aiSummaryText.textContent =
+    text;
 }
 
 
@@ -2163,17 +2238,13 @@ function renderMode(
    TIMER
 ========================================================= */
 
-function updateTimer(
-  seconds
-){
+function updateTimer(seconds){
 
   let s =
-    Number(
-      seconds
-    );
+    Number(seconds);
 
 
-  if (
+  if(
     !Number.isFinite(s)
   ){
 
@@ -2203,21 +2274,17 @@ function updateTimer(
    STATS
 ========================================================= */
 
-function renderStats(
-  data
-){
+function renderStats(data){
 
   const w =
     Number(
-      data.wins ||
-      0
+      data.wins || 0
     );
 
 
   const l =
     Number(
-      data.losses ||
-      0
+      data.losses || 0
     );
 
 
@@ -2236,10 +2303,8 @@ function renderStats(
   accuracy.textContent =
     total
       ? Math.round(
-          (
-            w /
-            total
-          ) *
+          w /
+          total *
           100
         ) +
         "%"
@@ -2251,40 +2316,33 @@ function renderStats(
    MODEL DETAILS
 ========================================================= */
 
-function renderDetails(
-  data
-){
+function renderDetails(data){
 
   const a =
-    data.analysis ||
-    {};
+    data.analysis || {};
 
 
   patternScore.textContent =
     Number(
-      a.patternScore ||
-      0
+      a.patternScore || 0
     );
 
 
   agreement.textContent =
     Number(
-      a.modelAgreement ||
-      0
+      a.modelAgreement || 0
     ) +
     "%";
 
 
   backtest.textContent =
     Number(
-      a.backtestSamples ||
-      0
+      a.backtestSamples || 0
     );
 
 
   avgAccuracy.textContent =
-    a.avgModelAccuracy ==
-    null
+    a.avgModelAccuracy == null
       ? "N/A"
       : Number(
           a.avgModelAccuracy
@@ -2294,12 +2352,10 @@ function renderDetails(
 
 
 /* =========================================================
-   PREDICTION HISTORY
+   HISTORY
 ========================================================= */
 
-function renderPredictionHistory(
-  data
-){
+function renderPredictionHistory(data){
 
   const rows =
     Array.isArray(
@@ -2309,7 +2365,7 @@ function renderPredictionHistory(
       : [];
 
 
-  if (!rows.length){
+  if(!rows.length){
 
     historyBody.innerHTML = `
       <tr>
@@ -2336,8 +2392,7 @@ function renderPredictionHistory(
 
 
           const number =
-            row.result_number !=
-            null
+            row.result_number != null
               ? Number(
                   row.result_number
                 )
@@ -2346,15 +2401,13 @@ function renderPredictionHistory(
 
           const resultSide =
             String(
-              row.result_side ||
-              ""
+              row.result_side || ""
             ).toUpperCase();
 
 
           const prediction =
             String(
-              row.prediction ||
-              "WAIT"
+              row.prediction || "WAIT"
             ).toUpperCase();
 
 
@@ -2366,13 +2419,12 @@ function renderPredictionHistory(
             "—";
 
 
-          if (
+          if(
             number != null
           ){
 
             const cls =
-              resultSide ===
-              "BIG"
+              resultSide === "BIG"
                 ? "result-big"
                 : "result-small";
 
@@ -2380,7 +2432,7 @@ function renderPredictionHistory(
             resultHtml = `
               <span class="${cls}">
                 ${escapeHtml(
-                  resultSide
+                  resultSide || "—"
                 )}
               </span>
             `;
@@ -2391,17 +2443,15 @@ function renderPredictionHistory(
             `<span class="pending">PENDING</span>`;
 
 
-          if (
-            row.outcome ===
-            "WIN"
+          if(
+            row.outcome === "WIN"
           ){
 
             wlHtml =
               `<span class="win">WIN</span>`;
 
-          }else if (
-            row.outcome ===
-            "LOSS"
+          }else if(
+            row.outcome === "LOSS"
           ){
 
             wlHtml =
@@ -2410,16 +2460,17 @@ function renderPredictionHistory(
 
 
           const predictText =
-            prediction ===
-              "WAIT"
+            prediction === "WAIT"
               ? "WAIT"
-              : `${prediction}${
-                  predictedNumber !=
-                  null
-                    ? " • " +
-                      predictedNumber
-                    : ""
-                }`;
+              : (
+                  prediction +
+                  (
+                    predictedNumber != null
+                      ? " • " +
+                        predictedNumber
+                      : ""
+                  )
+                );
 
 
           return `
@@ -2466,12 +2517,10 @@ function renderPredictionHistory(
 
 
 /* =========================================================
-   ESCAPE
+   ESCAPE HTML
 ========================================================= */
 
-function escapeHtml(
-  value
-){
+function escapeHtml(value){
 
   return String(
     value ?? ""
@@ -2513,7 +2562,7 @@ musicBtn.addEventListener(
 
     try{
 
-      if (!musicOn){
+      if(!musicOn){
 
         await music.play();
 
