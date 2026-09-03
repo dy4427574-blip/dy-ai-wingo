@@ -17,6 +17,7 @@ const WINGOBOT_URL =
 
 const ROUND_SECONDS = 30;
 
+
 /* =====================================================
    DATABASE
 ===================================================== */
@@ -128,13 +129,17 @@ function readBody(req) {
     req.on("end", () => {
 
       try {
+
         resolve(
           data
             ? JSON.parse(data)
             : {}
         );
+
       } catch {
+
         resolve({});
+
       }
 
     });
@@ -163,7 +168,9 @@ function classify(number) {
     return null;
   }
 
-  return n >= 5 ? "BIG" : "SMALL";
+  return n >= 5
+    ? "BIG"
+    : "SMALL";
 }
 
 
@@ -200,9 +207,11 @@ function compareIssues(a, b) {
 
 function nextIssue(value) {
 
-  const s = cleanIssue(value);
+  const s =
+    cleanIssue(value);
 
-  const match = s.match(/^(.*?)(\d+)$/);
+  const match =
+    s.match(/^(.*?)(\d+)$/);
 
   if (!match) {
     return null;
@@ -210,18 +219,23 @@ function nextIssue(value) {
 
   try {
 
-    const prefix = match[1];
-    const digits = match[2];
+    const prefix =
+      match[1];
+
+    const digits =
+      match[2];
 
     const next =
       BigInt(digits) + 1n;
 
     return (
       prefix +
-      next.toString().padStart(
-        digits.length,
-        "0"
-      )
+      next
+        .toString()
+        .padStart(
+          digits.length,
+          "0"
+        )
     );
 
   } catch {
@@ -241,15 +255,23 @@ function normalizeHistory(data) {
 
   const rows =
     Array.isArray(data?.history)
+
       ? data.history
 
-      : Array.isArray(data?.data?.history)
+      : Array.isArray(
+          data?.data?.history
+        )
+
         ? data.data.history
 
-        : Array.isArray(data?.data)
+        : Array.isArray(
+            data?.data
+          )
+
           ? data.data
 
           : [];
+
 
   return rows
     .map(row => {
@@ -284,9 +306,12 @@ function normalizeHistory(data) {
       };
 
     })
+
     .filter(row =>
       row.issueNumber &&
-      Number.isFinite(row.number)
+      Number.isFinite(
+        row.number
+      )
     );
 
 }
@@ -301,20 +326,30 @@ function extractCountdown(data) {
   const values = [
 
     data?.countdown,
+
     data?.remainingSeconds,
+
     data?.seconds,
+
     data?.timeLeft,
 
     data?.current?.countdown,
+
     data?.current?.remainingSeconds,
+
     data?.current?.seconds,
+
     data?.current?.timeLeft
 
   ];
 
-  for (const value of values) {
 
-    const n = Number(value);
+  for (
+    const value of values
+  ) {
+
+    const n =
+      Number(value);
 
     if (
       Number.isFinite(n) &&
@@ -328,7 +363,9 @@ function extractCountdown(data) {
 
   }
 
+
   return null;
+
 }
 
 
@@ -346,19 +383,23 @@ async function fetchWingoData() {
 
   }
 
+
   const response =
     await fetch(
       WINGOBOT_URL,
       {
         headers: {
+
           Authorization:
             `Bearer ${WINGOBOT_TOKEN}`,
 
           Accept:
             "application/json"
+
         }
       }
     );
+
 
   if (!response.ok) {
 
@@ -368,7 +409,9 @@ async function fetchWingoData() {
 
   }
 
+
   return response.json();
+
 }
 
 
@@ -376,18 +419,29 @@ async function fetchWingoData() {
    SEQUENCE
 ===================================================== */
 
-function getSequence(history, limit = 80) {
+function getSequence(
+  history,
+  limit = 80
+) {
 
   return history
-    .slice(0, limit)
+
+    .slice(
+      0,
+      limit
+    )
+
     .map(row => {
 
       const side =
-        classify(row.number);
+        classify(
+          row.number
+        );
 
       return side;
 
     })
+
     .filter(Boolean);
 
 }
@@ -403,20 +457,17 @@ function numberFeature(history) {
     return null;
   }
 
+
   const n =
-    Number(history[0].number);
+    Number(
+      history[0].number
+    );
+
 
   if (!Number.isFinite(n)) {
     return null;
   }
 
-  /*
-    Number itself is NOT used as a
-    direct "number prediction".
-
-    It is only converted into
-    structural features.
-  */
 
   return {
 
@@ -442,24 +493,35 @@ function numberFeature(history) {
 
 /* =====================================================
    MODEL 1
-   RECENT TRANSITION
+   TRANSITION
 ===================================================== */
 
 function transitionModel(sequence) {
 
-  if (sequence.length < 10) {
+  if (
+    sequence.length < 10
+  ) {
+
     return null;
+
   }
+
 
   const current =
     sequence[0];
 
+
   const votes = {
+
     BIG: 0,
+
     SMALL: 0
+
   };
 
+
   let matches = 0;
+
 
   for (
     let i = 1;
@@ -468,40 +530,59 @@ function transitionModel(sequence) {
   ) {
 
     if (
-      sequence[i] !== current
+      sequence[i] !==
+      current
     ) {
+
       continue;
+
     }
+
 
     const next =
       sequence[i - 1];
 
+
     if (!next) continue;
+
 
     votes[next] +=
       1 /
-      (1 + i * 0.04);
+      (
+        1 +
+        i * 0.04
+      );
+
 
     matches++;
 
   }
 
+
   if (!matches) {
+
     return null;
+
   }
 
+
   const side =
-    votes.BIG >= votes.SMALL
+    votes.BIG >=
+    votes.SMALL
       ? "BIG"
       : "SMALL";
+
 
   const total =
     votes.BIG +
     votes.SMALL;
 
+
   return {
 
-    name: "Transition",
+    name:
+      "Transition",
+
     side,
 
     strength:
@@ -521,38 +602,58 @@ function transitionModel(sequence) {
 
 /* =====================================================
    MODEL 2
-   SEQUENCE MATCH
+   SEQUENCE
 ===================================================== */
 
 function sequenceModel(sequence) {
 
-  if (sequence.length < 14) {
+  if (
+    sequence.length < 14
+  ) {
+
     return null;
+
   }
+
 
   const lengths =
     [3, 4, 5, 6, 7];
 
+
   const votes = {
+
     BIG: 0,
+
     SMALL: 0
+
   };
+
 
   let matches = 0;
 
-  for (const len of lengths) {
+
+  for (
+    const len of lengths
+  ) {
 
     if (
       sequence.length <
       len + 2
     ) {
+
       continue;
+
     }
+
 
     const current =
       sequence
-        .slice(0, len)
+        .slice(
+          0,
+          len
+        )
         .join("");
+
 
     for (
       let i = len + 1;
@@ -562,23 +663,42 @@ function sequenceModel(sequence) {
 
       const old =
         sequence
-          .slice(i, i + len)
+          .slice(
+            i,
+            i + len
+          )
           .join("");
 
-      if (old !== current) {
+
+      if (
+        old !== current
+      ) {
+
         continue;
+
       }
+
 
       const result =
         sequence[i - 1];
 
-      if (!result) continue;
+
+      if (!result) {
+        continue;
+      }
+
 
       const weight =
         1 /
-        (1 + i * 0.06);
+        (
+          1 +
+          i * 0.06
+        );
 
-      votes[result] += weight;
+
+      votes[result] +=
+        weight;
+
 
       matches++;
 
@@ -586,19 +706,27 @@ function sequenceModel(sequence) {
 
   }
 
+
   if (!matches) {
+
     return null;
+
   }
+
 
   const total =
     votes.BIG +
     votes.SMALL;
 
+
   return {
 
-    name: "Sequence",
+    name:
+      "Sequence",
+
     side:
-      votes.BIG >= votes.SMALL
+      votes.BIG >=
+      votes.SMALL
         ? "BIG"
         : "SMALL",
 
@@ -624,26 +752,37 @@ function sequenceModel(sequence) {
 
 function runModel(sequence) {
 
-  if (sequence.length < 8) {
+  if (
+    sequence.length < 8
+  ) {
+
     return null;
+
   }
+
 
   let run = 1;
 
+
   while (
     run < sequence.length &&
-    sequence[run] === sequence[0]
+    sequence[run] ===
+      sequence[0]
   ) {
 
     run++;
 
   }
 
+
   const current =
     sequence[0];
 
+
   let sameRun = 0;
+
   let oppositeAfter = 0;
+
 
   for (
     let i = 0;
@@ -652,12 +791,17 @@ function runModel(sequence) {
   ) {
 
     if (
-      sequence[i] !== current
+      sequence[i] !==
+      current
     ) {
+
       continue;
+
     }
 
+
     let length = 1;
+
 
     while (
       i + length <
@@ -670,12 +814,14 @@ function runModel(sequence) {
 
     }
 
+
     if (
       length === run &&
       i > 0
     ) {
 
       sameRun++;
+
 
       if (
         sequence[i - 1] !==
@@ -690,34 +836,30 @@ function runModel(sequence) {
 
   }
 
+
   if (!sameRun) {
+
     return null;
+
   }
 
-  /*
-    This model is intentionally cautious.
-    It does not simply assume every run
-    must reverse.
-  */
 
   const reversalRate =
-    oppositeAfter / sameRun;
+    oppositeAfter /
+    sameRun;
 
-  let side;
 
-  if (reversalRate >= 0.60) {
+  const side =
+    reversalRate >= 0.60
+      ? opposite(current)
+      : current;
 
-    side = opposite(current);
-
-  } else {
-
-    side = current;
-
-  }
 
   return {
 
-    name: "Run/Reversal",
+    name:
+      "Run/Reversal",
+
     side,
 
     strength:
@@ -725,7 +867,8 @@ function runModel(sequence) {
         reversalRate - 0.5
       ) * 2,
 
-    matches: sameRun
+    matches:
+      sameRun
 
   };
 
@@ -734,20 +877,29 @@ function runModel(sequence) {
 
 /* =====================================================
    MODEL 4
-   ALTERNATION / BREAK
+   ALTERNATION
 ===================================================== */
 
 function alternationModel(sequence) {
 
-  if (sequence.length < 10) {
+  if (
+    sequence.length < 10
+  ) {
+
     return null;
+
   }
+
 
   let alternating = 0;
 
+
   for (
     let i = 0;
-    i < Math.min(8, sequence.length - 1);
+    i < Math.min(
+      8,
+      sequence.length - 1
+    );
     i++
   ) {
 
@@ -762,23 +914,35 @@ function alternationModel(sequence) {
 
   }
 
+
   const rate =
     alternating / 8;
 
-  if (rate < 0.625) {
+
+  if (
+    rate < 0.625
+  ) {
+
     return null;
+
   }
+
 
   return {
 
-    name: "Alternation",
+    name:
+      "Alternation",
+
     side:
-      opposite(sequence[0]),
+      opposite(
+        sequence[0]
+      ),
 
     strength:
       rate,
 
-    matches: alternating
+    matches:
+      alternating
 
   };
 
@@ -792,27 +956,46 @@ function alternationModel(sequence) {
 
 function numberStructureModel(history) {
 
-  if (history.length < 12) {
+  if (
+    history.length < 12
+  ) {
+
     return null;
+
   }
+
 
   const current =
-    numberFeature(history);
+    numberFeature(
+      history
+    );
+
 
   if (!current) {
+
     return null;
+
   }
 
+
   const votes = {
+
     BIG: 0,
+
     SMALL: 0
+
   };
+
 
   let matches = 0;
 
+
   for (
     let i = 1;
-    i < Math.min(history.length, 50);
+    i < Math.min(
+      history.length,
+      50
+    );
     i++
   ) {
 
@@ -821,73 +1004,108 @@ function numberStructureModel(history) {
         history.slice(i)
       );
 
-    if (!feature) continue;
+
+    if (!feature) {
+      continue;
+    }
+
 
     let similarity = 0;
+
 
     if (
       feature.parity ===
       current.parity
     ) {
+
       similarity += 0.25;
+
     }
+
 
     if (
       feature.low ===
       current.low
     ) {
+
       similarity += 0.25;
+
     }
+
 
     if (
       feature.middle ===
       current.middle
     ) {
+
       similarity += 0.25;
+
     }
+
 
     if (
       feature.high ===
       current.high
     ) {
+
       similarity += 0.25;
+
     }
+
 
     if (
       similarity < 0.50
     ) {
+
       continue;
+
     }
+
 
     const result =
       classify(
         history[i - 1].number
       );
 
-    if (!result) continue;
+
+    if (!result) {
+      continue;
+    }
+
 
     votes[result] +=
       similarity /
-      (1 + i * 0.05);
+      (
+        1 +
+        i * 0.05
+      );
+
 
     matches++;
 
   }
 
+
   if (!matches) {
+
     return null;
+
   }
+
 
   const total =
     votes.BIG +
     votes.SMALL;
 
+
   return {
 
-    name: "Number Structure",
+    name:
+      "Number Structure",
 
     side:
-      votes.BIG >= votes.SMALL
+      votes.BIG >=
+      votes.SMALL
         ? "BIG"
         : "SMALL",
 
@@ -908,33 +1126,49 @@ function numberStructureModel(history) {
 
 /* =====================================================
    MODEL 6
-   RECENCY WEIGHTED TRANSITIONS
+   MULTI WINDOW
 ===================================================== */
 
 function recencyModel(sequence) {
 
-  if (sequence.length < 12) {
+  if (
+    sequence.length < 12
+  ) {
+
     return null;
+
   }
+
 
   const windows =
     [5, 8, 12, 20];
 
+
   const votes = {
+
     BIG: 0,
+
     SMALL: 0
+
   };
+
 
   let used = 0;
 
-  for (const window of windows) {
+
+  for (
+    const window of windows
+  ) {
 
     if (
       sequence.length <
       window
     ) {
+
       continue;
+
     }
+
 
     const part =
       sequence.slice(
@@ -942,14 +1176,11 @@ function recencyModel(sequence) {
         window
       );
 
+
     let big = 0;
+
     let small = 0;
 
-    /*
-      Not used as raw frequency.
-      We compare directional transitions
-      inside the window.
-    */
 
     for (
       let i = 0;
@@ -957,60 +1188,94 @@ function recencyModel(sequence) {
       i++
     ) {
 
-      const a = part[i];
-      const b = part[i + 1];
+      const a =
+        part[i];
 
-      if (a === b) {
+      const b =
+        part[i + 1];
 
-        if (a === "BIG") {
+
+      if (
+        a === b
+      ) {
+
+        if (
+          a === "BIG"
+        ) {
+
           big += 0.25;
+
         } else {
+
           small += 0.25;
+
         }
 
       } else {
 
-        if (a === "BIG") {
+        if (
+          a === "BIG"
+        ) {
+
           small += 0.50;
+
         } else {
+
           big += 0.50;
+
         }
 
       }
 
     }
 
+
     const total =
       big + small;
 
-    if (!total) continue;
+
+    if (!total) {
+      continue;
+    }
+
 
     const side =
       big >= small
         ? "BIG"
         : "SMALL";
 
+
     const confidence =
-      Math.abs(big - small) /
-      total;
+      Math.abs(
+        big - small
+      ) / total;
+
 
     votes[side] +=
       confidence /
       Math.sqrt(window);
 
+
     used++;
 
   }
 
+
   if (!used) {
+
     return null;
+
   }
+
 
   return {
 
-    name: "Multi Window",
+    name:
+      "Multi Window",
+
     side:
-      votes.BIG >= votes.SMALL
+      votes.BIG >=
+      votes.SMALL
         ? "BIG"
         : "SMALL",
 
@@ -1025,7 +1290,8 @@ function recencyModel(sequence) {
         votes.SMALL
       ),
 
-    matches: used
+    matches:
+      used
 
   };
 
@@ -1043,6 +1309,7 @@ function generateModels(history) {
       history,
       80
     );
+
 
   return [
 
@@ -1087,21 +1354,30 @@ function backtestModel(
   const chronological =
     [...history].reverse();
 
+
   if (
     chronological.length < 30
   ) {
 
     return {
+
       tested: 0,
+
       wins: 0,
+
       losses: 0,
+
       accuracy: 50
+
     };
 
   }
 
+
   let wins = 0;
+
   let losses = 0;
+
 
   const maxTests =
     Math.min(
@@ -1109,31 +1385,43 @@ function backtestModel(
       100
     );
 
+
   for (
     let i = 12;
-    i < chronological.length &&
-    i < 12 + maxTests;
+
+    i <
+      chronological.length &&
+    i <
+      12 + maxTests;
+
     i++
   ) {
 
     const training =
       chronological
-        .slice(0, i)
+        .slice(
+          0,
+          i
+        )
         .reverse();
+
 
     const actual =
       classify(
         chronological[i].number
       );
 
+
     if (!actual) {
       continue;
     }
+
 
     const models =
       generateModels(
         training
       );
+
 
     const model =
       models.find(
@@ -1142,9 +1430,11 @@ function backtestModel(
           modelName
       );
 
+
     if (!model) {
       continue;
     }
+
 
     if (
       model.side ===
@@ -1161,20 +1451,27 @@ function backtestModel(
 
   }
 
+
   const total =
     wins + losses;
 
+
   return {
 
-    tested: total,
+    tested:
+      total,
+
     wins,
+
     losses,
 
     accuracy:
       total
         ? Math.round(
-            wins * 1000 / total
+            wins * 1000 /
+            total
           ) / 10
+
         : 50
 
   };
@@ -1183,7 +1480,7 @@ function backtestModel(
 
 
 /* =====================================================
-   ADAPTIVE MODEL WEIGHTS
+   ADAPTIVE WEIGHTS
 ===================================================== */
 
 function getAdaptiveWeights(
@@ -1193,7 +1490,10 @@ function getAdaptiveWeights(
 
   const result = {};
 
-  for (const model of models) {
+
+  for (
+    const model of models
+  ) {
 
     const stats =
       backtestModel(
@@ -1201,27 +1501,21 @@ function getAdaptiveWeights(
         model.name
       );
 
-    /*
-      Baseline weight.
-      Accuracy does NOT directly mean
-      future certainty.
-    */
 
     const accuracy =
       stats.accuracy;
+
 
     const distance =
       Math.abs(
         accuracy - 50
       );
 
+
     let weight =
       0.70 +
       distance * 0.035;
 
-    /*
-      Weak sample size = lower influence.
-    */
 
     if (
       stats.tested < 15
@@ -1231,6 +1525,7 @@ function getAdaptiveWeights(
 
     }
 
+
     if (
       stats.tested < 8
     ) {
@@ -1239,7 +1534,10 @@ function getAdaptiveWeights(
 
     }
 
-    result[model.name] = {
+
+    result[
+      model.name
+    ] = {
 
       weight,
 
@@ -1259,6 +1557,7 @@ function getAdaptiveWeights(
 
   }
 
+
   return result;
 
 }
@@ -1276,6 +1575,7 @@ function adaptiveEnsemble(
     generateModels(
       history
     );
+
 
   if (!models.length) {
 
@@ -1302,41 +1602,48 @@ function adaptiveEnsemble(
 
   }
 
+
   const weights =
     getAdaptiveWeights(
       history,
       models
     );
 
+
   let big = 0;
+
   let small = 0;
+
 
   const details = [];
 
-  for (const model of models) {
+
+  for (
+    const model of models
+  ) {
 
     const info =
       weights[
         model.name
       ];
 
-    const weight =
-      info?.weight || 0.5;
 
-    /*
-      Strength controls influence.
-      Weak model signals are not allowed
-      to dominate the ensemble.
-    */
+    const weight =
+      info?.weight ||
+      0.5;
+
 
     const strength =
       Math.max(
         0.15,
         Math.min(
           1,
-          Number(model.strength) || 0
+          Number(
+            model.strength
+          ) || 0
         )
       );
+
 
     const contribution =
       weight *
@@ -1345,18 +1652,22 @@ function adaptiveEnsemble(
         strength * 0.45
       );
 
+
     if (
       model.side ===
       "BIG"
     ) {
 
-      big += contribution;
+      big +=
+        contribution;
 
     } else {
 
-      small += contribution;
+      small +=
+        contribution;
 
     }
+
 
     details.push({
 
@@ -1396,20 +1707,25 @@ function adaptiveEnsemble(
 
   }
 
+
   const total =
     big + small;
+
 
   const prediction =
     big >= small
       ? "BIG"
       : "SMALL";
 
+
   const margin =
     total
       ? Math.abs(
           big - small
         ) / total
+
       : 0;
+
 
   const predictionModels =
     details.filter(
@@ -1418,17 +1734,14 @@ function adaptiveEnsemble(
         prediction
     ).length;
 
+
   const agreement =
     details.length
       ? predictionModels /
         details.length
+
       : 0;
 
-  /*
-    Confidence deliberately capped.
-    Historical patterns cannot justify
-    fake 90-100% certainty.
-  */
 
   let confidence =
     50 +
@@ -1437,6 +1750,7 @@ function adaptiveEnsemble(
       0,
       agreement - 0.5
     ) * 24;
+
 
   confidence =
     Math.round(
@@ -1449,31 +1763,40 @@ function adaptiveEnsemble(
       )
     );
 
-  /*
-    Strong agreement but weak backtest
-    should still remain cautious.
-  */
 
   const tested =
     details.reduce(
-      (sum, x) =>
-        sum + x.tested,
+      (
+        sum,
+        x
+      ) =>
+        sum +
+        x.tested,
+
       0
     );
 
+
   const avgAccuracy =
     details.length
+
       ? details.reduce(
-          (sum, x) =>
-            sum + Number(x.accuracy || 50),
+          (
+            sum,
+            x
+          ) =>
+            sum +
+            Number(
+              x.accuracy ||
+              50
+            ),
+
           0
-        ) / details.length
+        ) /
+        details.length
+
       : 50;
 
-  /*
-    Pattern score measures structural
-    agreement, not probability of winning.
-  */
 
   const patternScore =
     Math.round(
@@ -1491,8 +1814,10 @@ function adaptiveEnsemble(
       )
     );
 
+
   let status =
     "LOW SIGNAL";
+
 
   if (
     agreement >= 0.67 &&
@@ -1505,6 +1830,7 @@ function adaptiveEnsemble(
 
   }
 
+
   if (
     agreement >= 0.80 &&
     margin >= 0.20 &&
@@ -1516,10 +1842,6 @@ function adaptiveEnsemble(
 
   }
 
-  /*
-    If models are nearly tied, don't pretend
-    there is a strong directional signal.
-  */
 
   if (
     margin < 0.05 ||
@@ -1530,6 +1852,7 @@ function adaptiveEnsemble(
       "LOW SIGNAL";
 
   }
+
 
   return {
 
@@ -1607,6 +1930,7 @@ async function savePrediction(
 
   }
 
+
   await pool.query(
     `
     INSERT INTO predictions
@@ -1632,11 +1956,17 @@ async function savePrediction(
     DO NOTHING
     `,
     [
+
       targetIssue,
+
       analysis.prediction,
+
       analysis.confidence,
+
       analysis.patternScore,
+
       Date.now()
+
     ]
   );
 
@@ -1644,7 +1974,7 @@ async function savePrediction(
 
 
 /* =====================================================
-   SETTLE
+   SETTLE PREDICTION
 ===================================================== */
 
 async function settlePrediction(row) {
@@ -1658,33 +1988,48 @@ async function settlePrediction(row) {
 
   }
 
+
   const actual =
-    classify(row.number);
+    classify(
+      row.number
+    );
+
 
   if (!actual) {
     return;
   }
 
+
   await pool.query(
     `
     UPDATE predictions
+
     SET
+
       actual = $1,
+
       result =
         CASE
           WHEN prediction = $1
           THEN 'WIN'
           ELSE 'LOSS'
         END,
+
       settled_at = $2
+
     WHERE
       target_issue = $3
+
       AND result IS NULL
     `,
     [
+
       actual,
+
       Date.now(),
+
       row.issueNumber
+
     ]
   );
 
@@ -1693,70 +2038,114 @@ async function settlePrediction(row) {
 
 /* =====================================================
    WIN / LOSS
+   ONLY LAST 25 DISPLAYED
 ===================================================== */
 
 async function getWinLoss() {
 
-  if (!process.env.DATABASE_URL) {
+  if (
+    !process.env.DATABASE_URL
+  ) {
 
     return {
 
       rows: [],
 
       stats: {
+
         total: 0,
+
         win: 0,
+
         loss: 0,
+
         rate: 0,
+
         streak: "-"
+
       }
 
     };
 
   }
 
+
+  /*
+    IMPORTANT:
+    Only the latest 25 settled
+    prediction records are returned.
+    Old database records remain safe.
+  */
+
   const result =
     await pool.query(
       `
       SELECT
+
         target_issue,
+
         prediction,
+
         confidence,
+
         pattern_score,
+
         created_at,
+
         actual,
+
         result,
+
         settled_at
+
       FROM predictions
+
       WHERE result IS NOT NULL
+
       ORDER BY id DESC
-      LIMIT 100
+
+      LIMIT 25
       `
     );
+
 
   const rows =
     result.rows;
 
+
   const win =
     rows.filter(
-      x => x.result === "WIN"
+      x =>
+        x.result ===
+        "WIN"
     ).length;
+
 
   const loss =
     rows.filter(
-      x => x.result === "LOSS"
+      x =>
+        x.result ===
+        "LOSS"
     ).length;
+
 
   let streak = "-";
 
-  if (rows.length) {
+
+  if (
+    rows.length
+  ) {
 
     const first =
       rows[0].result;
 
+
     let count = 0;
 
-    for (const row of rows) {
+
+    for (
+      const row of rows
+    ) {
 
       if (
         row.result !==
@@ -1767,14 +2156,17 @@ async function getWinLoss() {
 
       }
 
+
       count++;
 
     }
+
 
     streak =
       `${first} ${count}`;
 
   }
+
 
   return {
 
@@ -1783,7 +2175,8 @@ async function getWinLoss() {
     stats: {
 
       total:
-        win + loss,
+        win +
+        loss,
 
       win,
 
@@ -1791,10 +2184,15 @@ async function getWinLoss() {
 
       rate:
         win + loss
+
           ? Math.round(
               win * 1000 /
-              (win + loss)
+              (
+                win +
+                loss
+              )
             ) / 10
+
           : 0,
 
       streak
@@ -1817,12 +2215,16 @@ async function updateCache() {
     const data =
       await fetchWingoData();
 
+
     const history =
       normalizeHistory(
         data
       );
 
-    if (!history.length) {
+
+    if (
+      !history.length
+    ) {
 
       throw new Error(
         "No history received"
@@ -1830,14 +2232,18 @@ async function updateCache() {
 
     }
 
+
     const settledIssue =
-      history[0].issueNumber;
+      history[0]
+        .issueNumber;
+
 
     const providerCurrent =
       cleanIssue(
         data?.current
           ?.issueNumber
       );
+
 
     const targetIssue =
       providerCurrent &&
@@ -1852,47 +2258,59 @@ async function updateCache() {
             settledIssue
           );
 
+
     const signature =
       history
-        .slice(0, 8)
+        .slice(
+          0,
+          8
+        )
         .map(
           row =>
             `${row.issueNumber}:${row.number}`
         )
         .join("|");
 
+
     const changed =
       signature !==
       cache.historySignature;
 
+
     cache.history =
       history;
+
 
     cache.currentIssue =
       providerCurrent ||
       settledIssue;
 
+
     cache.settledIssue =
       settledIssue;
 
+
     cache.targetIssue =
       targetIssue;
+
 
     cache.providerCountdown =
       extractCountdown(
         data
       );
 
+
     cache.lastUpdated =
       Date.now();
+
 
     cache.error =
       null;
 
+
     /*
-      IMPORTANT:
-      Analysis changes only after a
-      genuinely new settled result.
+      Analysis changes only when
+      settled history changes.
     */
 
     if (changed) {
@@ -1900,20 +2318,21 @@ async function updateCache() {
       cache.historySignature =
         signature;
 
+
       cache.historyVersion++;
 
+
       /*
-        First settle the result that
-        just became available.
+        First settle previous prediction.
       */
 
       await settlePrediction(
         history[0]
       );
 
+
       /*
-        Then calculate a completely new
-        adaptive analysis.
+        Generate fresh adaptive analysis.
       */
 
       cache.analysis =
@@ -1921,15 +2340,18 @@ async function updateCache() {
           history
         );
 
+
       cache.modelStats =
         cache.analysis?.modelStats ||
         {};
 
+
       cache.anchorTime =
         Date.now();
 
+
       /*
-        Save prediction for next target.
+        Save prediction for target issue.
       */
 
       await savePrediction(
@@ -1937,15 +2359,20 @@ async function updateCache() {
         cache.analysis
       );
 
+
       console.log(
         "NEW RESULT:",
         settledIssue,
+
         "TARGET:",
         targetIssue,
+
         "PRED:",
         cache.analysis?.prediction,
+
         "CONF:",
         cache.analysis?.confidence,
+
         "STATUS:",
         cache.analysis?.status
       );
@@ -1956,6 +2383,7 @@ async function updateCache() {
 
     cache.error =
       error.message;
+
 
     console.error(
       "Provider error:",
@@ -1987,22 +2415,30 @@ function getTiming() {
           cache.providerCountdown
         ),
 
-      exact: true
+      exact:
+        true
 
     };
 
   }
 
-  if (!cache.anchorTime) {
+
+  if (
+    !cache.anchorTime
+  ) {
 
     return {
 
-      seconds: 30,
-      exact: false
+      seconds:
+        30,
+
+      exact:
+        false
 
     };
 
   }
+
 
   const elapsed =
     Math.floor(
@@ -2012,6 +2448,7 @@ function getTiming() {
       ) / 1000
     );
 
+
   let seconds =
     ROUND_SECONDS -
     (
@@ -2019,14 +2456,23 @@ function getTiming() {
       ROUND_SECONDS
     );
 
-  if (seconds === 0) {
-    seconds = ROUND_SECONDS;
+
+  if (
+    seconds === 0
+  ) {
+
+    seconds =
+      ROUND_SECONDS;
+
   }
+
 
   return {
 
     seconds,
-    exact: false
+
+    exact:
+      false
 
   };
 
@@ -2040,7 +2486,9 @@ function getTiming() {
 function isAdmin(req) {
 
   return (
-    req.headers["x-admin-key"] ===
+    req.headers[
+      "x-admin-key"
+    ] ===
     ADMIN_KEY
   );
 
@@ -2057,7 +2505,9 @@ async function handleAPI(
   url
 ) {
 
-  /* ---------------- HEALTH ---------------- */
+  /* =================================================
+     HEALTH
+  ================================================= */
 
   if (
     url.pathname ===
@@ -2068,15 +2518,22 @@ async function handleAPI(
       res,
       200,
       {
-        ok: true,
-        time: Date.now()
+
+        ok:
+          true,
+
+        time:
+          Date.now()
+
       }
     );
 
   }
 
 
-  /* ---------------- STATE ---------------- */
+  /* =================================================
+     STATE
+  ================================================= */
 
   if (
     url.pathname ===
@@ -2090,7 +2547,8 @@ async function handleAPI(
       200,
       {
 
-        ok: true,
+        ok:
+          true,
 
         history:
           cache.history.slice(
@@ -2128,7 +2586,9 @@ async function handleAPI(
   }
 
 
-  /* ---------------- WIN LOSS ---------------- */
+  /* =================================================
+     WIN LOSS
+  ================================================= */
 
   if (
     url.pathname ===
@@ -2146,7 +2606,9 @@ async function handleAPI(
   }
 
 
-  /* ---------------- KEY CHECK ---------------- */
+  /* =================================================
+     ACCESS KEY
+  ================================================= */
 
   if (
     url.pathname ===
@@ -2156,12 +2618,16 @@ async function handleAPI(
   ) {
 
     const data =
-      await readBody(req);
+      await readBody(
+        req
+      );
+
 
     const key =
       String(
         data.key || ""
       ).trim();
+
 
     const device =
       String(
@@ -2172,6 +2638,7 @@ async function handleAPI(
         ""
       ).trim();
 
+
     if (
       !process.env.DATABASE_URL
     ) {
@@ -2180,13 +2647,18 @@ async function handleAPI(
         res,
         503,
         {
-          ok: false,
+
+          ok:
+            false,
+
           message:
             "Database not configured"
+
         }
       );
 
     }
+
 
     if (!key) {
 
@@ -2194,13 +2666,18 @@ async function handleAPI(
         res,
         400,
         {
-          ok: false,
+
+          ok:
+            false,
+
           message:
             "Access key required"
+
         }
       );
 
     }
+
 
     const result =
       await pool.query(
@@ -2212,62 +2689,90 @@ async function handleAPI(
         [key]
       );
 
-    if (!result.rowCount) {
+
+    if (
+      !result.rowCount
+    ) {
 
       return sendJSON(
         res,
         401,
         {
-          ok: false,
+
+          ok:
+            false,
+
           message:
             "Invalid access key"
+
         }
       );
 
     }
 
+
     const row =
       result.rows[0];
 
+
     if (
       row.device_id &&
-      row.device_id !== device
+      row.device_id !==
+        device
     ) {
 
       return sendJSON(
         res,
         403,
         {
-          ok: false,
+
+          ok:
+            false,
+
           message:
             "Key already bound to another device"
+
         }
       );
 
     }
 
+
     await pool.query(
       `
       UPDATE access_keys
+
       SET
+
         device_id = $1,
+
         last_seen = $2
+
       WHERE id = $3
       `,
       [
+
         device,
+
         Date.now(),
+
         row.id
+
       ]
     );
+
 
     return sendJSON(
       res,
       200,
       {
-        ok: true,
+
+        ok:
+          true,
+
         message:
           "Access granted"
+
       }
     );
 
@@ -2290,9 +2795,13 @@ async function handleAPI(
         res,
         401,
         {
-          ok: false,
+
+          ok:
+            false,
+
           message:
             "Unauthorized"
+
         }
       );
 
@@ -2310,12 +2819,19 @@ async function handleAPI(
         res,
         200,
         {
-          ok: true,
-          time: Date.now(),
+
+          ok:
+            true,
+
+          time:
+            Date.now(),
+
           provider:
             !!WINGOBOT_TOKEN,
+
           database:
             !!process.env.DATABASE_URL
+
         }
       );
 
@@ -2334,7 +2850,8 @@ async function handleAPI(
         200,
         {
 
-          ok: true,
+          ok:
+            true,
 
           database:
             !!process.env.DATABASE_URL,
@@ -2372,12 +2889,14 @@ async function handleAPI(
         const data =
           await fetchWingoData();
 
+
         return sendJSON(
           res,
           200,
           {
 
-            ok: true,
+            ok:
+              true,
 
             current:
               data.current ||
@@ -2400,9 +2919,13 @@ async function handleAPI(
           res,
           500,
           {
-            ok: false,
+
+            ok:
+              false,
+
             message:
               error.message
+
           }
         );
 
@@ -2425,12 +2948,14 @@ async function handleAPI(
             cache.history
           );
 
+
         return sendJSON(
           res,
           200,
           {
 
-            ok: true,
+            ok:
+              true,
 
             prediction:
               analysis.prediction,
@@ -2465,9 +2990,13 @@ async function handleAPI(
           res,
           500,
           {
-            ok: false,
+
+            ok:
+              false,
+
             message:
               error.message
+
           }
         );
 
@@ -2493,35 +3022,52 @@ async function handleAPI(
           res,
           503,
           {
-            ok: false,
+
+            ok:
+              false,
+
             message:
               "Database not configured"
+
           }
         );
 
       }
 
+
       const result =
         await pool.query(
           `
           SELECT
+
             id,
+
             access_key,
+
             device_id,
+
             created_at,
+
             last_seen
+
           FROM access_keys
+
           ORDER BY id DESC
           `
         );
+
 
       return sendJSON(
         res,
         200,
         {
-          ok: true,
+
+          ok:
+            true,
+
           keys:
             result.rows
+
         }
       );
 
@@ -2545,16 +3091,24 @@ async function handleAPI(
           res,
           503,
           {
-            ok: false,
+
+            ok:
+              false,
+
             message:
               "Database not configured"
+
           }
         );
 
       }
 
+
       const data =
-        await readBody(req);
+        await readBody(
+          req
+        );
+
 
       const count =
         Math.max(
@@ -2562,12 +3116,15 @@ async function handleAPI(
           Math.min(
             100,
             Number(
-              data.count || 1
+              data.count ||
+              1
             )
           )
         );
 
+
       const keys = [];
+
 
       for (
         let i = 0;
@@ -2575,16 +3132,25 @@ async function handleAPI(
         i++
       ) {
 
-        let created = false;
+        let created =
+          false;
 
-        while (!created) {
+
+        while (
+          !created
+        ) {
 
           const key =
             "DY-" +
             crypto
-              .randomBytes(5)
-              .toString("hex")
+              .randomBytes(
+                5
+              )
+              .toString(
+                "hex"
+              )
               .toUpperCase();
+
 
           const result =
             await pool.query(
@@ -2604,17 +3170,25 @@ async function handleAPI(
               RETURNING access_key
               `,
               [
+
                 key,
+
                 Date.now()
+
               ]
             );
+
 
           if (
             result.rowCount
           ) {
 
-            keys.push(key);
-            created = true;
+            keys.push(
+              key
+            );
+
+            created =
+              true;
 
           }
 
@@ -2622,12 +3196,17 @@ async function handleAPI(
 
       }
 
+
       return sendJSON(
         res,
         200,
         {
-          ok: true,
+
+          ok:
+            true,
+
           keys
+
         }
       );
 
@@ -2644,7 +3223,10 @@ async function handleAPI(
     ) {
 
       const data =
-        await readBody(req);
+        await readBody(
+          req
+        );
+
 
       await pool.query(
         `
@@ -2654,11 +3236,15 @@ async function handleAPI(
         [data.id]
       );
 
+
       return sendJSON(
         res,
         200,
         {
-          ok: true
+
+          ok:
+            true
+
         }
       );
 
@@ -2675,28 +3261,38 @@ async function handleAPI(
     ) {
 
       const data =
-        await readBody(req);
+        await readBody(
+          req
+        );
+
 
       await pool.query(
         `
         UPDATE access_keys
+
         SET device_id = NULL
+
         WHERE id = $1
         `,
         [data.id]
       );
 
+
       return sendJSON(
         res,
         200,
         {
-          ok: true
+
+          ok:
+            true
+
         }
       );
 
     }
 
   }
+
 
   return null;
 
@@ -2718,6 +3314,7 @@ function serveStatic(
       ? "/prediction.html"
       : url.pathname;
 
+
   if (
     filename.includes("..")
   ) {
@@ -2726,17 +3323,22 @@ function serveStatic(
       res,
       400,
       {
-        ok: false
+
+        ok:
+          false
+
       }
     );
 
   }
+
 
   const filePath =
     path.join(
       __dirname,
       filename
     );
+
 
   if (
     !fs.existsSync(
@@ -2748,13 +3350,18 @@ function serveStatic(
       res,
       404,
       {
-        ok: false,
+
+        ok:
+          false,
+
         message:
           "File not found"
+
       }
     );
 
   }
+
 
   const ext =
     path
@@ -2762,6 +3369,7 @@ function serveStatic(
         filePath
       )
       .toLowerCase();
+
 
   const types = {
 
@@ -2796,8 +3404,10 @@ function serveStatic(
         filePath
       );
 
+
     const range =
       req.headers.range;
+
 
     if (range) {
 
@@ -2806,21 +3416,30 @@ function serveStatic(
           /bytes=(\d+)-(\d*)/
         );
 
+
       if (match) {
 
         const start =
-          Number(match[1]);
+          Number(
+            match[1]
+          );
+
 
         let end =
           match[2]
-            ? Number(match[2])
+            ? Number(
+                match[2]
+              )
+
             : stat.size - 1;
+
 
         end =
           Math.min(
             end,
             stat.size - 1
           );
+
 
         if (
           start >= 0 &&
@@ -2849,6 +3468,7 @@ function serveStatic(
             }
           );
 
+
           return fs
             .createReadStream(
               filePath,
@@ -2865,6 +3485,7 @@ function serveStatic(
 
     }
 
+
     res.writeHead(
       200,
       {
@@ -2880,6 +3501,7 @@ function serveStatic(
 
       }
     );
+
 
     return fs
       .createReadStream(
@@ -2901,6 +3523,7 @@ function serveStatic(
     }
   );
 
+
   fs
     .createReadStream(
       filePath
@@ -2916,7 +3539,10 @@ function serveStatic(
 
 const server =
   http.createServer(
-    async (req, res) => {
+    async (
+      req,
+      res
+    ) => {
 
       try {
 
@@ -2926,12 +3552,14 @@ const server =
             `http://${req.headers.host || "localhost"}`
           );
 
+
         const handled =
           await handleAPI(
             req,
             res,
             url
           );
+
 
         if (
           handled !== null
@@ -2940,6 +3568,7 @@ const server =
           return;
 
         }
+
 
         serveStatic(
           req,
@@ -2954,13 +3583,18 @@ const server =
           error
         );
 
+
         sendJSON(
           res,
           500,
           {
-            ok: false,
+
+            ok:
+              false,
+
             message:
               error.message
+
           }
         );
 
@@ -2980,20 +3614,15 @@ const server =
 
     await initDatabase();
 
-    /*
-      First provider fetch.
-    */
 
     await updateCache();
 
-    /*
-      Keep provider data fresh.
-    */
 
     setInterval(
       updateCache,
       1000
     );
+
 
     server.listen(
       PORT,
@@ -3013,7 +3642,10 @@ const server =
       error
     );
 
-    process.exit(1);
+
+    process.exit(
+      1
+    );
 
   }
 
