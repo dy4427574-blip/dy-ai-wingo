@@ -1,888 +1,1069 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
 <meta charset="UTF-8">
-
-<meta
-  name="viewport"
-  content="width=device-width,initial-scale=1.0,user-scalable=no"
->
-
-<title>DY AI WINGO</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#050b14">
+<title>DY AI Wingo 30S</title>
 
 <style>
+*{box-sizing:border-box}
 
-*{
-  box-sizing:border-box;
+html,body{
   margin:0;
   padding:0;
-  font-family:Arial,Helvetica,sans-serif;
+  min-height:100%;
+  background:#050b14;
+  color:#eef5ff;
+  font-family:Arial,sans-serif;
 }
 
 body{
-  background:#060a13;
-  color:#fff;
+  min-height:100vh;
 }
 
-.container{
-  max-width:560px;
+.wrap{
+  width:min(980px,100%);
   margin:auto;
   padding:10px;
 }
 
-.header,
-.card,
-.section,
-.status{
-  background:
-    linear-gradient(
-      145deg,
-      #111b31,
-      #0b1324
-    );
-
-  border:1px solid #293a5b;
-  border-radius:19px;
-
-  box-shadow:
-    0 8px 25px #0007;
-}
-
-.header{
-  padding:16px;
-  text-align:center;
-  margin-bottom:10px;
-}
-
-.logo{
-  font-size:26px;
-  font-weight:1000;
-}
-
-.logo span{
-  color:#00e5ff;
-}
-
-.sub{
-  color:#94a3b8;
-  font-size:10px;
-  margin-top:5px;
-}
-
-.topbar{
-  display:flex;
-  gap:8px;
-  margin-top:13px;
-}
-
-.topbar button{
-  flex:1;
-  border:1px solid #293957;
-  border-radius:12px;
-  padding:11px;
-  background:#18243b;
-  color:#fff;
-  font-weight:900;
-}
-
-.login{
-  background:#10182a;
-  border:1px solid #263553;
-  border-radius:18px;
-  padding:18px;
-}
-
-input{
-  width:100%;
-  padding:13px;
-  margin:9px 0;
-  border-radius:12px;
-  border:1px solid #34415d;
-  background:#080d18;
-  color:#fff;
-  outline:none;
-}
-
-.loginBtn{
-  width:100%;
-  padding:13px;
-  border:0;
-  border-radius:12px;
-  background:#00bcd4;
-  color:#001018;
-  font-weight:900;
-}
-
-.main{
-  display:none;
-}
-
-
-/* GAME */
-
-.game{
-  overflow:hidden;
-  border-radius:20px;
-  border:1px solid #293a5b;
-  background:#000;
-  margin-bottom:10px;
-}
-
-.game iframe{
-  width:100%;
-  height:460px;
-  border:0;
-  display:block;
-}
-
-.openGame{
-  display:block;
-  padding:13px;
-  text-align:center;
-  color:#00e5ff;
-  background:#0d192d;
-  text-decoration:none;
-  font-weight:900;
-}
-
-
-/* STATUS */
-
-.status{
-  padding:13px;
-  margin-bottom:10px;
-}
-
-.statusRow{
+.top{
   display:flex;
   justify-content:space-between;
-  margin-bottom:8px;
+  align-items:center;
+  gap:10px;
+  margin-bottom:10px;
 }
 
-.statusRow:last-child{
-  margin-bottom:0;
-}
-
-.label{
-  color:#94a3b8;
-  font-size:11px;
-}
-
-.value{
-  font-size:12px;
+.brand{
+  font-size:20px;
   font-weight:900;
 }
 
-.online{
-  color:#22c55e;
+.brand span{
+  color:#35c8ff;
 }
 
-.offline{
-  color:#ef4444;
-}
-
-
-/* PREDICTION */
-
-.predGrid{
-  display:grid;
-  grid-template-columns:1.15fr .85fr;
-  gap:9px;
-  margin-bottom:10px;
+.pill{
+  padding:6px 9px;
+  border-radius:9px;
+  border:1px solid #203b55;
+  background:#0a1725;
+  color:#8ea6bd;
+  font-size:10px;
 }
 
 .card{
-  padding:15px;
-}
-
-.title{
-  color:#94a3b8;
-  font-size:11px;
-  font-weight:900;
-}
-
-.period{
-  margin-top:7px;
-  font-size:13px;
-  font-weight:900;
+  background:#081421;
+  border:1px solid #1b344d;
+  border-radius:17px;
+  margin:10px 0;
   overflow:hidden;
-  white-space:nowrap;
-  text-overflow:ellipsis;
-}
-
-.timer{
-  text-align:center;
-  color:#00e5ff;
-  font-size:38px;
-  font-weight:1000;
-  margin-top:10px;
-}
-
-.pred{
-  text-align:center;
-  font-size:31px;
-  font-weight:1000;
-  margin-top:4px;
-}
-
-.big{
-  color:#22c55e;
-}
-
-.small{
-  color:#f59e0b;
-}
-
-.wait{
-  color:#64748b;
-}
-
-.conf{
-  text-align:center;
-  color:#cbd5e1;
-  font-size:11px;
-  margin-top:6px;
-}
-
-.signal{
-  text-align:center;
-  color:#00e5ff;
-  font-size:9px;
-  font-weight:900;
-  margin-top:8px;
-}
-
-
-/* WIN LOSS */
-
-.winloss{
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-}
-
-.wl{
-  display:flex;
-  justify-content:space-around;
-  margin-top:13px;
-  text-align:center;
-}
-
-.wlNum{
-  font-size:29px;
-  font-weight:1000;
-}
-
-.win{
-  color:#22c55e;
-}
-
-.loss{
-  color:#ef4444;
-}
-
-.wlLabel{
-  color:#94a3b8;
-  font-size:9px;
-}
-
-.rate{
-  text-align:center;
-  color:#cbd5e1;
-  font-size:11px;
-  margin-top:10px;
-}
-
-
-/* AI */
-
-.section{
-  padding:14px;
-  margin-bottom:10px;
+  box-shadow:0 10px 30px #0005;
 }
 
 .head{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  margin-bottom:11px;
+  padding:13px 14px;
+  border-bottom:1px solid #183047;
 }
 
-.headTitle{
-  font-size:14px;
-  font-weight:1000;
+.title{
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.7px;
 }
 
-.badge{
-  background:#17243b;
-  color:#00e5ff;
-  border-radius:8px;
-  padding:5px 8px;
-  font-size:8px;
+.sub{
+  font-size:9px;
+  color:#718aa3;
+}
+
+.game{
+  position:relative;
+  height:430px;
+  background:#02060b;
+}
+
+.game iframe{
+  width:100%;
+  height:100%;
+  display:block;
+  border:0;
+  background:#02060b;
+}
+
+.fallback{
+  position:absolute;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  gap:12px;
+  text-align:center;
+  color:#8299af;
+  background:#02060b;
+  padding:20px;
+}
+
+.open-btn{
+  border:0;
+  border-radius:11px;
+  padding:12px 20px;
+  background:#1683ff;
+  color:#fff;
   font-weight:900;
 }
 
-.aiGrid{
+.round-grid{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:8px;
+  padding:11px;
 }
 
-.metric{
-  background:#080e1a;
-  border-radius:11px;
-  padding:10px;
+.stat{
+  background:#07121e;
+  border:1px solid #19334b;
+  border-radius:12px;
+  padding:11px;
 }
 
-.metricLabel{
-  color:#64748b;
+.label{
   font-size:9px;
+  color:#718aa3;
+  text-transform:uppercase;
+  letter-spacing:.4px;
 }
 
-.metricValue{
+.value{
   margin-top:5px;
-  font-weight:1000;
-}
-
-
-/* HISTORY */
-
-.historyHeader,
-.historyRow{
-  display:grid;
-
-  grid-template-columns:
-    1.55fr
-    .55fr
-    .75fr
-    .55fr;
-
-  gap:5px;
-
-  align-items:center;
-}
-
-.historyHeader{
-  padding:
-    0 7px 7px;
-
-  color:#64748b;
-  font-size:8px;
+  font-size:13px;
   font-weight:900;
-  text-align:center;
+  word-break:break-all;
 }
 
-.historyHeader div:first-child{
-  text-align:left;
+.timer{
+  font-size:25px;
+  color:#38c8ff;
 }
 
-.historyRow{
-  background:#080e1a;
-  border-radius:11px;
-  padding:11px 7px;
-  margin-bottom:7px;
+.prediction-box{
+  margin:0 11px 11px;
+  padding:15px;
+  border:1px solid #23415e;
+  border-radius:15px;
+  background:linear-gradient(135deg,#091a2a,#07111d);
+}
+
+.prediction-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+}
+
+.prediction-label{
+  color:#7891aa;
   font-size:9px;
+  text-transform:uppercase;
 }
 
-.issue{
-  overflow:hidden;
-  white-space:nowrap;
-  text-overflow:ellipsis;
-  font-weight:800;
-}
-
-.number{
-  text-align:center;
-  color:#fff;
-  font-size:12px;
+.prediction{
+  margin-top:4px;
+  font-size:31px;
   font-weight:1000;
 }
 
-.predText{
-  text-align:center;
+.big{
+  color:#ff8585;
+}
+
+.small{
+  color:#53d8ff;
+}
+
+.confidence{
+  font-size:23px;
   font-weight:1000;
+  text-align:right;
 }
 
-.winText{
-  color:#22c55e;
-  text-align:center;
-  font-weight:1000;
-}
-
-.lossText{
-  color:#ef4444;
-  text-align:center;
-  font-weight:1000;
-}
-
-.pending{
-  color:#64748b;
-  text-align:center;
-}
-
-.notice{
-  color:#64748b;
-  font-size:9px;
-  line-height:1.5;
+.tags{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
   margin-top:9px;
 }
 
-.empty{
+.tag{
+  padding:6px 9px;
+  border-radius:8px;
+  border:1px solid #203b55;
+  background:#0a1725;
+  color:#91a9c0;
+  font-size:10px;
+}
+
+.wl-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  padding:0 11px 11px;
+}
+
+.wl-box{
+  padding:10px;
   text-align:center;
-  padding:20px;
-  color:#64748b;
+  background:#07121e;
+  border:1px solid #19334b;
+  border-radius:11px;
+}
+
+.wl-box b{
+  display:block;
+  margin-top:4px;
+  font-size:18px;
+}
+
+.win{
+  color:#56e6a7;
+}
+
+.loss{
+  color:#ff7777;
+}
+
+.analysis{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+  padding:11px;
+}
+
+.analysis-box{
+  padding:10px;
+  background:#07121e;
+  border:1px solid #19334b;
+  border-radius:11px;
+}
+
+.analysis-number{
+  margin-top:5px;
+  font-size:17px;
+  font-weight:900;
+}
+
+.table-wrap{
+  overflow-x:auto;
+  padding:8px 11px 14px;
+}
+
+table{
+  width:100%;
+  min-width:520px;
+  border-collapse:collapse;
+}
+
+th{
+  padding:9px;
+  text-align:left;
+  border-bottom:1px solid #19334b;
+  color:#718aa3;
+  font-size:9px;
+  text-transform:uppercase;
+}
+
+td{
+  padding:9px;
+  text-align:left;
+  border-bottom:1px solid #142a3f;
   font-size:11px;
 }
 
-.footer{
-  text-align:center;
-  color:#475569;
+.actual-number{
+  font-size:15px;
+  font-weight:900;
+}
+
+.badge{
+  display:inline-block;
+  padding:5px 8px;
+  border-radius:7px;
   font-size:9px;
-  padding:10px 0 25px;
+  font-weight:900;
 }
 
+.badge-big{
+  background:#ff66661c;
+  color:#ff8888;
+}
 
-@media(max-width:380px){
+.badge-small{
+  background:#42d5ff1c;
+  color:#55dcff;
+}
 
-  .predGrid{
-    grid-template-columns:1fr;
+.badge-win{
+  background:#4de69c1c;
+  color:#59e7a8;
+}
+
+.badge-loss{
+  background:#ff66661c;
+  color:#ff7777;
+}
+
+.empty{
+  padding:22px;
+  text-align:center;
+  color:#6d849b;
+}
+
+.footer{
+  padding:10px;
+  text-align:center;
+  color:#4d647b;
+  font-size:9px;
+}
+
+.login{
+  position:fixed;
+  inset:0;
+  z-index:999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background:#040a12;
+}
+
+.login-box{
+  width:min(390px,100%);
+  padding:23px;
+  background:#091624;
+  border:1px solid #1d3853;
+  border-radius:19px;
+  box-shadow:0 20px 60px #0008;
+}
+
+.login-box h1{
+  margin:0 0 7px;
+  font-size:25px;
+}
+
+.login-box p{
+  margin:0 0 18px;
+  color:#7d95ab;
+  font-size:11px;
+}
+
+.login-box input{
+  width:100%;
+  padding:13px;
+  border-radius:10px;
+  border:1px solid #24415d;
+  outline:0;
+  background:#06101b;
+  color:#fff;
+}
+
+.login-box button{
+  width:100%;
+  margin-top:10px;
+  padding:13px;
+  border:0;
+  border-radius:10px;
+  background:#1683ff;
+  color:#fff;
+  font-weight:900;
+}
+
+.login-error{
+  min-height:16px;
+  margin-top:8px;
+  color:#ff7777;
+  font-size:11px;
+}
+
+.hide{
+  display:none!important;
+}
+
+@media(max-width:650px){
+
+  .brand{
+    font-size:18px;
   }
 
-  .game iframe{
-    height:420px;
+  .game{
+    height:430px;
+  }
+
+  .analysis{
+    grid-template-columns:1fr 1fr;
   }
 
 }
-
 </style>
-
 </head>
-
 
 <body>
 
-<div class="container">
+<!-- ================= LOGIN ================= -->
 
+<div id="loginScreen" class="login">
 
-<div class="header">
+  <div class="login-box">
 
-  <div class="logo">
-    DY <span>AI</span> WINGO
-  </div>
+    <h1>
+      DY <span style="color:#38c8ff">AI</span> Wingo
+    </h1>
 
-  <div class="sub">
-    30 SECOND STATISTICAL ANALYSIS
-  </div>
+    <p>
+      Premium access key enter karo.
+    </p>
 
-  <div class="topbar">
+    <input
+      id="accessKey"
+      type="text"
+      placeholder="Access Key"
+      autocomplete="off"
+    >
 
-    <button id="musicBtn">
-      🔇 Music OFF
+    <button id="loginButton">
+      UNLOCK PREMIUM
     </button>
 
-    <button id="refreshBtn">
-      🔄 Refresh
-    </button>
+    <div
+      id="loginError"
+      class="login-error"
+    ></div>
 
   </div>
 
 </div>
 
 
-<div
-  id="loginBox"
-  class="login"
+<!-- ================= MAIN APP ================= -->
+
+<main
+  id="mainApp"
+  class="wrap hide"
 >
 
-  <b>🔐 Access Key</b>
+  <!-- TOP -->
 
-  <input
-    id="keyInput"
-    placeholder="Enter access key"
-    autocomplete="off"
-  >
+  <div class="top">
 
-  <button
-    id="loginBtn"
-    class="loginBtn"
-  >
-    LOGIN
-  </button>
+    <div class="brand">
+      DY <span>AI</span> WINGO 30S
+    </div>
 
-  <div
-    id="loginMsg"
-    class="notice"
-  ></div>
-
-</div>
-
-
-<div
-  id="main"
-  class="main"
->
-
-
-<!-- GAME -->
-
-<div class="game">
-
-  <iframe
-    src="https://www.tojvhr55.com/#/register?invitationCode=761671301584"
-    allow="fullscreen"
-  ></iframe>
-
-  <a
-    class="openGame"
-    href="https://www.tojvhr55.com/#/register?invitationCode=761671301584"
-    target="_blank"
-    rel="noopener"
-  >
-    🎮 OPEN GAME
-  </a>
-
-</div>
-
-
-<!-- STATUS -->
-
-<div class="status">
-
-  <div class="statusRow">
-    <span class="label">Connection</span>
-    <span
+    <div
       id="connection"
-      class="value online"
+      class="pill"
     >
-      CONNECTING
-    </span>
-  </div>
-
-  <div class="statusRow">
-    <span class="label">Settled Period</span>
-    <span
-      id="settledIssue"
-      class="value"
-    >-</span>
-  </div>
-
-  <div class="statusRow">
-    <span class="label">Next Period</span>
-    <span
-      id="targetIssue"
-      class="value"
-    >-</span>
-  </div>
-
-</div>
-
-
-<!-- PREDICTION -->
-
-<div class="predGrid">
-
-  <div class="card">
-
-    <div class="title">
-      🎯 NEXT PREDICTION
-    </div>
-
-    <div
-      id="predictionPeriod"
-      class="period"
-    >
-      -
-    </div>
-
-    <div
-      id="timer"
-      class="timer"
-    >
-      30
-    </div>
-
-    <div
-      id="prediction"
-      class="pred wait"
-    >
-      WAIT
-    </div>
-
-    <div
-      id="confidence"
-      class="conf"
-    >
-      Confidence: -
-    </div>
-
-    <div
-      id="signal"
-      class="signal"
-    >
-      WAITING
+      CONNECTING...
     </div>
 
   </div>
 
 
-  <div class="card winloss">
+  <!-- ================= GAME ================= -->
 
-    <div class="title">
-      📊 WIN / LOSS
+  <section class="card">
+
+    <div class="head">
+
+      <div class="title">
+        LIVE GAME
+      </div>
+
+      <div class="sub">
+        30 SECOND
+      </div>
+
     </div>
 
-    <div class="wl">
+    <div class="game">
 
-      <div>
+      <iframe
+        id="gameFrame"
+        src="https://www.tojvhr55.com/#/register?invitationCode=761671301584"
+        allow="fullscreen"
+        referrerpolicy="no-referrer"
+      ></iframe>
+
+      <div
+        id="gameFallback"
+        class="fallback"
+      >
+
+        <strong>
+          GAME WINDOW BLOCKED
+        </strong>
+
+        <span>
+          External game iframe block kar sakta hai.
+        </span>
+
+        <button
+          class="open-btn"
+          onclick="openGame()"
+        >
+          OPEN GAME
+        </button>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- ================= ROUND CONTROL ================= -->
+
+  <section class="card">
+
+    <div class="head">
+
+      <div class="title">
+        ROUND CONTROL
+      </div>
+
+      <div
+        id="lastUpdated"
+        class="sub"
+      >
+        --
+      </div>
+
+    </div>
+
+
+    <div class="round-grid">
+
+      <div class="stat">
+
+        <div class="label">
+          Settled Period
+        </div>
+
         <div
-          id="winCount"
-          class="wlNum win"
+          id="settledPeriod"
+          class="value"
+        >
+          --
+        </div>
+
+      </div>
+
+
+      <div class="stat">
+
+        <div class="label">
+          Next Period
+        </div>
+
+        <div
+          id="nextPeriod"
+          class="value"
+        >
+          --
+        </div>
+
+      </div>
+
+
+      <div class="stat">
+
+        <div class="label">
+          Next Prediction
+        </div>
+
+        <div
+          id="predictionPeriod"
+          class="value"
+        >
+          --
+        </div>
+
+      </div>
+
+
+      <div class="stat">
+
+        <div class="label">
+          Countdown
+        </div>
+
+        <div
+          id="countdown"
+          class="value timer"
+        >
+          --s
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- ================= PREDICTION ================= -->
+
+    <div class="prediction-box">
+
+      <div class="prediction-top">
+
+        <div>
+
+          <div class="prediction-label">
+            AI Prediction
+          </div>
+
+          <div
+            id="predictionText"
+            class="prediction"
+          >
+            WAIT
+          </div>
+
+          <div class="tags">
+
+            <span class="tag">
+              NUMBER:
+              <b id="predictionNumber">
+                --
+              </b>
+            </span>
+
+            <span
+              id="predictionStatus"
+              class="tag"
+            >
+              INSUFFICIENT DATA
+            </span>
+
+          </div>
+
+        </div>
+
+
+        <div>
+
+          <div class="prediction-label">
+            Confidence
+          </div>
+
+          <div
+            id="confidence"
+            class="confidence"
+          >
+            0%
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- ================= WIN LOSS ================= -->
+
+    <div class="wl-grid">
+
+      <div class="wl-box">
+
+        <div class="label">
+          Wins
+        </div>
+
+        <b
+          id="wins"
+          class="win"
+        >
+          0
+        </b>
+
+      </div>
+
+
+      <div class="wl-box">
+
+        <div class="label">
+          Losses
+        </div>
+
+        <b
+          id="losses"
+          class="loss"
+        >
+          0
+        </b>
+
+      </div>
+
+
+      <div class="wl-box">
+
+        <div class="label">
+          Rate
+        </div>
+
+        <b id="winRate">
+          0%
+        </b>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- ================= AI ANALYSIS ================= -->
+
+  <section class="card">
+
+    <div class="head">
+
+      <div class="title">
+        AI ANALYSIS
+      </div>
+
+      <div
+        id="historyCount"
+        class="sub"
+      >
+        0 DATA
+      </div>
+
+    </div>
+
+
+    <div class="analysis">
+
+      <div class="analysis-box">
+
+        <div class="label">
+          Pattern Score
+        </div>
+
+        <div
+          id="patternScore"
+          class="analysis-number"
         >
           0
         </div>
 
-        <div class="wlLabel">
-          WIN
-        </div>
       </div>
 
-      <div>
+
+      <div class="analysis-box">
+
+        <div class="label">
+          Model Agreement
+        </div>
+
         <div
-          id="lossCount"
-          class="wlNum loss"
+          id="modelAgreement"
+          class="analysis-number"
+        >
+          0%
+        </div>
+
+      </div>
+
+
+      <div class="analysis-box">
+
+        <div class="label">
+          Backtest Samples
+        </div>
+
+        <div
+          id="backtestSamples"
+          class="analysis-number"
         >
           0
         </div>
 
-        <div class="wlLabel">
-          LOSS
+      </div>
+
+
+      <div class="analysis-box">
+
+        <div class="label">
+          Average Accuracy
         </div>
+
+        <div
+          id="accuracy"
+          class="analysis-number"
+        >
+          N/A
+        </div>
+
       </div>
 
     </div>
 
-    <div
-      id="winRate"
-      class="rate"
-    >
-      Rate: 0%
+  </section>
+
+
+  <!-- ================= RESULTS ================= -->
+
+  <section class="card">
+
+    <div class="head">
+
+      <div class="title">
+        LIVE RESULTS + WIN/LOSS
+      </div>
+
+      <div class="sub">
+        LAST 30
+      </div>
+
     </div>
 
+
+    <div class="table-wrap">
+
+      <table>
+
+        <thead>
+
+          <tr>
+
+            <th>
+              Period
+            </th>
+
+            <th>
+              Number
+            </th>
+
+            <th>
+              Pred
+            </th>
+
+            <th>
+              W/L
+            </th>
+
+          </tr>
+
+        </thead>
+
+        <tbody id="resultTable">
+
+          <tr>
+
+            <td
+              colspan="4"
+              class="empty"
+            >
+              Loading live results...
+            </td>
+
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </section>
+
+
+  <div class="footer">
+    DY AI statistical analysis • No prediction is guaranteed
   </div>
 
-</div>
+</main>
 
 
-<!-- AI -->
-
-<div class="section">
-
-  <div class="head">
-
-    <div class="headTitle">
-      🧠 AI ANALYSIS
-    </div>
-
-    <div
-      id="signalBadge"
-      class="badge"
-    >
-      LOW SIGNAL
-    </div>
-
-  </div>
-
-
-  <div class="aiGrid">
-
-    <div class="metric">
-
-      <div class="metricLabel">
-        Pattern Score
-      </div>
-
-      <div
-        id="patternScore"
-        class="metricValue"
-      >
-        -
-      </div>
-
-    </div>
-
-
-    <div class="metric">
-
-      <div class="metricLabel">
-        Model Agreement
-      </div>
-
-      <div
-        id="agreement"
-        class="metricValue"
-      >
-        -
-      </div>
-
-    </div>
-
-
-    <div class="metric">
-
-      <div class="metricLabel">
-        Backtest Samples
-      </div>
-
-      <div
-        id="backtest"
-        class="metricValue"
-      >
-        -
-      </div>
-
-    </div>
-
-
-    <div class="metric">
-
-      <div class="metricLabel">
-        Average Accuracy
-      </div>
-
-      <div
-        id="accuracy"
-        class="metricValue"
-      >
-        -
-      </div>
-
-    </div>
-
-  </div>
-
-  <div class="notice">
-    Adaptive statistical analysis. Future outcomes are not guaranteed.
-  </div>
-
-</div>
-
-
-<!-- 25 HISTORY -->
-
-<div class="section">
-
-  <div class="head">
-
-    <div class="headTitle">
-      🎯 LIVE RESULT + WIN/LOSS
-    </div>
-
-    <div class="badge">
-      LAST 25
-    </div>
-
-  </div>
-
-
-  <div class="historyHeader">
-
-    <div>PERIOD</div>
-    <div>NUMBER</div>
-    <div>PRED</div>
-    <div>W/L</div>
-
-  </div>
-
-
-  <div
-    id="history"
-  >
-
-    <div class="empty">
-      Loading...
-    </div>
-
-  </div>
-
-</div>
-
-
-<div class="footer">
-  DY AI Wingo • Adaptive Statistical Analyzer
-</div>
-
-
-</div>
-
-</div>
-
+<!-- ================= MUSIC ================= -->
 
 <audio
   id="music"
   src="/music.mp3"
+  preload="auto"
   loop
 ></audio>
 
 
 <script>
 
-const $ =
-  id =>
-  document.getElementById(id);
+/* =========================================================
+   CONFIG
+========================================================= */
+
+const GAME_URL =
+  "https://www.tojvhr55.com/#/register?invitationCode=761671301584";
 
 
-/* DEVICE */
+/* =========================================================
+   DEVICE ID
+========================================================= */
 
 let deviceId =
   localStorage.getItem(
-    "dy_device_id"
+    "dy_ai_device_id"
   );
 
+if (!deviceId) {
 
-if(!deviceId){
+  if (
+    window.crypto &&
+    crypto.randomUUID
+  ) {
 
-  deviceId =
-    crypto.randomUUID();
+    deviceId =
+      crypto.randomUUID();
+
+  }
+  else {
+
+    deviceId =
+      "dy-" +
+      Date.now() +
+      "-" +
+      Math.random()
+        .toString(36)
+        .slice(2);
+
+  }
 
   localStorage.setItem(
-    "dy_device_id",
+    "dy_ai_device_id",
     deviceId
   );
 
 }
 
 
-/* KEY */
+/* =========================================================
+   TIMER
+========================================================= */
 
-const savedKey =
-  localStorage.getItem(
-    "dy_access_key"
-  );
+let serverCountdown = 0;
+
+let countdownUpdatedAt = 0;
 
 
-if(savedKey){
+/* =========================================================
+   HELPERS
+========================================================= */
 
-  $("keyInput").value =
-    savedKey;
+function $(id) {
+
+  return document.getElementById(id);
 
 }
 
 
-/* LOGIN */
+function escapeHtml(value) {
 
-async function login(){
+  return String(
+    value ?? ""
+  )
+  .replace(
+    /[&<>"']/g,
+    function(char) {
+
+      const map = {
+        "&":"&amp;",
+        "<":"&lt;",
+        ">":"&gt;",
+        '"':"&quot;",
+        "'":"&#039;"
+      };
+
+      return map[char];
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   OPEN GAME
+========================================================= */
+
+function openGame() {
+
+  window.open(
+    GAME_URL,
+    "_blank",
+    "noopener,noreferrer"
+  );
+
+}
+
+
+/* =========================================================
+   SHOW APP
+========================================================= */
+
+function showApp() {
+
+  $("loginScreen")
+    .classList
+    .add("hide");
+
+  $("mainApp")
+    .classList
+    .remove("hide");
+
+}
+
+
+/* =========================================================
+   CONNECTION STATUS
+========================================================= */
+
+function setConnection(
+  online
+) {
+
+  $("connection").textContent =
+    online
+      ? "● LIVE"
+      : "● OFFLINE";
+
+  $("connection").style.color =
+    online
+      ? "#55e6a5"
+      : "#ff7777";
+
+}
+
+
+/* =========================================================
+   LOGIN
+========================================================= */
+
+async function login() {
 
   const key =
-    $("keyInput")
+    $("accessKey")
       .value
       .trim();
 
 
-  if(!key){
+  if (!key) {
 
-    $("loginMsg")
-      .textContent =
+    $("loginError").textContent =
       "Access key enter karo.";
 
     return;
@@ -890,30 +1071,30 @@ async function login(){
   }
 
 
-  try{
+  $("loginButton").disabled =
+    true;
+
+  $("loginButton").textContent =
+    "CHECKING...";
+
+
+  try {
 
     const response =
       await fetch(
         "/api/key/check",
         {
-
           method:"POST",
 
           headers:{
             "Content-Type":
-              "application/json",
-
-            "x-device-id":
-              deviceId
+              "application/json"
           },
 
-          body:
-            JSON.stringify({
-              key,
-              device_id:
-                deviceId
-            })
-
+          body:JSON.stringify({
+            key:key,
+            device_id:deviceId
+          })
         }
       );
 
@@ -922,151 +1103,94 @@ async function login(){
       await response.json();
 
 
-    if(
-      !response.ok ||
-      !data.ok
-    ){
+    if (!data.ok) {
 
-      $("loginMsg")
-        .textContent =
-        data.message ||
-        "Invalid key.";
-
-      return;
+      throw new Error(
+        data.error ||
+        "Invalid access key"
+      );
 
     }
 
 
     localStorage.setItem(
-      "dy_access_key",
+      "dy_ai_access_key",
       key
     );
 
 
-    $("loginBox")
-      .style.display =
-      "none";
+    showApp();
 
 
-    $("main")
-      .style.display =
-      "block";
+    const music =
+      $("music");
+
+    music.volume =
+      0.35;
+
+    music.play()
+      .catch(
+        function(){}
+      );
 
 
-    start();
+    loadState();
 
-  }catch{
+  }
+  catch(error) {
 
-    $("loginMsg")
-      .textContent =
-      "Server error.";
+    $("loginError").textContent =
+      error.message ||
+      "Login failed";
+
+  }
+  finally {
+
+    $("loginButton").disabled =
+      false;
+
+    $("loginButton").textContent =
+      "UNLOCK PREMIUM";
 
   }
 
 }
 
 
-$("loginBtn")
-.addEventListener(
-  "click",
-  login
-);
+/* =========================================================
+   AUTO LOGIN
+========================================================= */
+
+async function autoLogin() {
+
+  const key =
+    localStorage.getItem(
+      "dy_ai_access_key"
+    );
 
 
-/* MUSIC */
-
-const music =
-  $("music");
-
-let musicOn =
-  false;
-
-
-$("musicBtn")
-.addEventListener(
-  "click",
-  async () => {
-
-    try{
-
-      if(musicOn){
-
-        music.pause();
-
-        musicOn =
-          false;
-
-        $("musicBtn")
-          .textContent =
-          "🔇 Music OFF";
-
-      }else{
-
-        await music.play();
-
-        musicOn =
-          true;
-
-        $("musicBtn")
-          .textContent =
-          "🔊 Music ON";
-
-      }
-
-    }catch{
-
-      $("musicBtn")
-        .textContent =
-        "▶️ TAP AGAIN";
-
-    }
-
+  if (!key) {
+    return;
   }
-);
 
 
-/* STATE */
-
-let started =
-  false;
-
-let lastVersion =
-  -1;
-
-let state =
-  null;
-
-let wlData =
-  null;
-
-
-/* ESCAPE */
-
-function esc(value){
-
-  return String(
-    value ?? ""
-  )
-  .replace(/&/g,"&amp;")
-  .replace(/</g,"&lt;")
-  .replace(/>/g,"&gt;")
-  .replace(/"/g,"&quot;")
-  .replace(/'/g,"&#039;");
-
-}
-
-
-/* LOAD STATE */
-
-async function loadState(){
-
-  try{
+  try {
 
     const response =
       await fetch(
-        "/api/state",
+        "/api/key/check",
         {
-          cache:"no-store"
+          method:"POST",
+
+          headers:{
+            "Content-Type":
+              "application/json"
+          },
+
+          body:JSON.stringify({
+            key:key,
+            device_id:deviceId
+          })
         }
       );
 
@@ -1075,279 +1199,202 @@ async function loadState(){
       await response.json();
 
 
-    state =
-      data;
+    if (data.ok) {
 
+      showApp();
 
-    $("connection")
-      .textContent =
-      "ONLINE";
-
-
-    $("connection")
-      .className =
-      "value online";
-
-
-    $("settledIssue")
-      .textContent =
-      data.settledIssue ||
-      "-";
-
-
-    $("targetIssue")
-      .textContent =
-      data.targetIssue ||
-      "-";
-
-
-    $("predictionPeriod")
-      .textContent =
-      data.targetIssue ||
-      "-";
-
-
-    if(data.timing){
-
-      let seconds =
-        Number(
-          data.timing.seconds
-        );
-
-
-      if(!Number.isFinite(seconds)){
-        seconds = 30;
-      }
-
-
-      $("timer")
-        .textContent =
-        String(
-          Math.max(
-            0,
-            Math.min(
-              30,
-              Math.floor(seconds)
-            )
-          )
-        ).padStart(
-          2,
-          "0"
-        );
+      loadState();
 
     }
+    else {
 
-
-    /*
-      Only new provider result
-      changes prediction.
-    */
-
-    if(
-      data.historyVersion !==
-      lastVersion
-    ){
-
-      lastVersion =
-        data.historyVersion;
-
-      renderAnalysis(
-        data.analysis
+      localStorage.removeItem(
+        "dy_ai_access_key"
       );
 
     }
 
-
-    renderHistory(
-      data.history ||
-      []
-    );
-
-  }catch{
-
-    $("connection")
-      .textContent =
-      "OFFLINE";
-
-    $("connection")
-      .className =
-      "value offline";
-
   }
+  catch(error) {}
 
 }
 
 
-/* ANALYSIS */
+/* =========================================================
+   RENDER PREDICTION
+========================================================= */
 
-function renderAnalysis(
-  a
-){
+function renderPrediction(
+  prediction
+) {
 
-  if(!a){
+  if (!prediction) {
 
-    $("prediction")
-      .textContent =
+    $("predictionText").textContent =
       "WAIT";
 
-    $("prediction")
-      .className =
-      "pred wait";
+    $("predictionText").className =
+      "prediction";
+
+    $("predictionNumber").textContent =
+      "--";
+
+    $("confidence").textContent =
+      "0%";
+
+    $("predictionStatus").textContent =
+      "INSUFFICIENT DATA";
 
     return;
 
   }
 
 
-  const p =
-    a.prediction;
-
-
-  $("prediction")
-    .textContent =
-    p ||
+  const type =
+    prediction.prediction ||
     "WAIT";
 
 
-  $("prediction")
-    .className =
-    "pred " +
+  $("predictionText").textContent =
+    type;
+
+
+  $("predictionText").className =
+    "prediction " +
     (
-      p === "BIG"
+      type === "BIG"
         ? "big"
-        : p === "SMALL"
+        : type === "SMALL"
           ? "small"
-          : "wait"
+          : ""
     );
 
 
-  $("confidence")
-    .textContent =
-    `Confidence: ${
-      a.confidence ??
+  $("predictionNumber").textContent =
+    prediction.predictedNumber ??
+    "--";
+
+
+  $("confidence").textContent =
+    (
+      prediction.confidence ??
       0
-    }%`;
+    ) +
+    "%";
 
 
-  $("signal")
-    .textContent =
-    a.status ||
-    "LOW SIGNAL";
+  $("predictionStatus").textContent =
+    prediction.status ||
+    "SIGNAL";
+
+}
 
 
-  $("signalBadge")
-    .textContent =
-    a.status ||
-    "LOW SIGNAL";
+/* =========================================================
+   RENDER ANALYSIS
+========================================================= */
+
+function renderAnalysis(
+  prediction
+) {
+
+  if (!prediction) {
+    return;
+  }
 
 
-  $("patternScore")
-    .textContent =
-    a.patternScore ??
-    "-";
-
-
-  $("agreement")
-    .textContent =
-    a.agreement != null
-      ? a.agreement + "%"
-      : "-";
-
-
-  $("backtest")
-    .textContent =
-    a.backtestSamples ??
+  $("patternScore").textContent =
+    prediction.patternScore ??
     0;
 
 
-  $("accuracy")
-    .textContent =
-    a.avgModelAccuracy != null
-      ? a.avgModelAccuracy + "%"
-      : "N/A";
+  $("modelAgreement").textContent =
+    (
+      prediction.agreement ??
+      0
+    ) +
+    "%";
+
+
+  const backtest =
+    prediction.backtest ||
+    {};
+
+
+  $("backtestSamples").textContent =
+    backtest.samples ??
+    0;
+
+
+  $("accuracy").textContent =
+    backtest.accuracy == null
+      ? "N/A"
+      : Math.round(
+          backtest.accuracy
+        ) +
+        "%";
 
 }
 
 
-/* WIN LOSS */
+/* =========================================================
+   RENDER TABLE
+========================================================= */
 
-async function loadWinLoss(){
+function renderTable(
+  liveHistory,
+  winLossRows
+) {
 
-  try{
-
-    const response =
-      await fetch(
-        "/api/history",
-        {
-          cache:"no-store"
-        }
-      );
+  const table =
+    $("resultTable");
 
 
-    const data =
-      await response.json();
+  const rows =
+    Array.isArray(
+      liveHistory
+    )
+      ? liveHistory.slice(
+          0,
+          30
+        )
+      : [];
 
 
-    wlData =
-      data;
+  const predictions =
+    new Map();
 
 
-    const stats =
-      data.stats ||
-      {};
+  for (
+    const item of
+    (
+      winLossRows ||
+      []
+    )
+  ) {
+
+    predictions.set(
+      String(
+        item.target_issue
+      ),
+      item
+    );
+
+  }
 
 
-    $("winCount")
-      .textContent =
-      stats.win ??
-      0;
+  if (!rows.length) {
 
-
-    $("lossCount")
-      .textContent =
-      stats.loss ??
-      0;
-
-
-    $("winRate")
-      .textContent =
-      `Rate: ${
-        stats.rate ??
-        0
-      }%`;
-
-
-    if(state){
-
-      renderHistory(
-        state.history ||
-        []
-      );
-
-    }
-
-  }catch{}
-
-}
-
-
-/* HISTORY */
-
-function renderHistory(
-  rows
-){
-
-  const box =
-    $("history");
-
-
-  if(!rows.length){
-
-    box.innerHTML =
+    table.innerHTML =
       `
-      <div class="empty">
-        No live results
-      </div>
+      <tr>
+        <td
+          colspan="4"
+          class="empty"
+        >
+          No live results available.
+        </td>
+      </tr>
       `;
 
     return;
@@ -1355,46 +1402,10 @@ function renderHistory(
   }
 
 
-  /*
-    Exact latest 25.
-  */
-
-  const latest =
-    rows.slice(
-      0,
-      25
-    );
-
-
-  const predictionMap =
-    new Map();
-
-
-  /*
-    Exact period mapping.
-  */
-
-  (
-    wlData?.rows ||
-    []
-  ).forEach(
-    row => {
-
-      predictionMap.set(
-        String(
-          row.target_issue
-        ),
-        row
-      );
-
-    }
-  );
-
-
-  box.innerHTML =
-    latest
+  table.innerHTML =
+    rows
       .map(
-        row => {
+        function(row) {
 
           const issue =
             String(
@@ -1402,94 +1413,132 @@ function renderHistory(
             );
 
 
-          const number =
-            Number(
-              row.number
-            );
-
-
-          const record =
-            predictionMap.get(
+          const matched =
+            predictions.get(
               issue
             );
 
 
-          const prediction =
-            record?.prediction;
+          let predHtml =
+            `
+            <span
+              style="color:#536c83"
+            >
+              —
+            </span>
+            `;
 
 
-          const result =
-            record?.result;
+          let resultHtml =
+            `
+            <span
+              style="color:#536c83"
+            >
+              —
+            </span>
+            `;
 
 
-          let predHTML =
-            `<span class="pending">-</span>`;
+          if (matched) {
+
+            if (
+              matched.prediction ===
+              "BIG"
+            ) {
+
+              predHtml =
+                `
+                <span
+                  class="badge badge-big"
+                >
+                  BIG
+                </span>
+                `;
+
+            }
+            else if (
+              matched.prediction ===
+              "SMALL"
+            ) {
+
+              predHtml =
+                `
+                <span
+                  class="badge badge-small"
+                >
+                  SMALL
+                </span>
+                `;
+
+            }
 
 
-          if(prediction){
+            if (
+              matched.status ===
+              "WIN"
+            ) {
 
-            predHTML =
-              `
-              <span class="${
-                prediction === "BIG"
-                  ? "big"
-                  : "small"
-              }">
-                ${esc(
-                  prediction
-                )}
-              </span>
-              `;
+              resultHtml =
+                `
+                <span
+                  class="badge badge-win"
+                >
+                  WIN
+                </span>
+                `;
+
+            }
+            else if (
+              matched.status ===
+              "LOSS"
+            ) {
+
+              resultHtml =
+                `
+                <span
+                  class="badge badge-loss"
+                >
+                  LOSS
+                </span>
+                `;
+
+            }
 
           }
 
 
-          let resultHTML =
-            `<span class="pending">-</span>`;
-
-
-          if(result === "WIN"){
-
-            resultHTML =
-              `<span class="winText">
-                WIN
-              </span>`;
-
-          }
-
-
-          if(result === "LOSS"){
-
-            resultHTML =
-              `<span class="lossText">
-                LOSS
-              </span>`;
-
-          }
+          const shortIssue =
+            issue.length > 8
+              ? issue.slice(-8)
+              : issue;
 
 
           return `
+            <tr>
 
-          <div class="historyRow">
+              <td>
+                ${escapeHtml(
+                  shortIssue
+                )}
+              </td>
 
-            <div class="issue">
-              ${esc(issue)}
-            </div>
+              <td
+                class="actual-number"
+              >
+                ${escapeHtml(
+                  row.number
+                )}
+              </td>
 
-            <div class="number">
-              ${esc(number)}
-            </div>
+              <td>
+                ${predHtml}
+              </td>
 
-            <div class="predText">
-              ${predHTML}
-            </div>
+              <td>
+                ${resultHtml}
+              </td>
 
-            <div>
-              ${resultHTML}
-            </div>
-
-          </div>
-
+            </tr>
           `;
 
         }
@@ -1499,62 +1548,275 @@ function renderHistory(
 }
 
 
-/* START */
+/* =========================================================
+   RENDER COMPLETE STATE
+========================================================= */
 
-function start(){
+function renderState(
+  data
+) {
 
-  if(started){
-    return;
-  }
-
-
-  started =
-    true;
-
-
-  loadState();
-
-  loadWinLoss();
+  $("settledPeriod").textContent =
+    data.settledIssue ||
+    "--";
 
 
-  setInterval(
-    loadState,
-    1000
+  $("nextPeriod").textContent =
+    data.nextIssue ||
+    "--";
+
+
+  $("predictionPeriod").textContent =
+    data.targetIssue ||
+    "--";
+
+
+  $("historyCount").textContent =
+    (
+      data.historyCount ||
+      0
+    ) +
+    " DATA";
+
+
+  $("lastUpdated").textContent =
+    data.lastFetchAt
+      ? new Date(
+          data.lastFetchAt
+        ).toLocaleTimeString()
+      : "--";
+
+
+  renderPrediction(
+    data.prediction
   );
 
 
-  setInterval(
-    loadWinLoss,
-    3000
+  renderAnalysis(
+    data.prediction
+  );
+
+
+  const wl =
+    data.winLoss ||
+    {};
+
+
+  $("wins").textContent =
+    wl.wins ??
+    0;
+
+
+  $("losses").textContent =
+    wl.losses ??
+    0;
+
+
+  $("winRate").textContent =
+    (
+      wl.rate ??
+      0
+    ) +
+    "%";
+
+
+  if (
+    typeof data.countdown ===
+    "number"
+  ) {
+
+    serverCountdown =
+      Math.max(
+        0,
+        Math.min(
+          30,
+          Math.floor(
+            data.countdown
+          )
+        )
+      );
+
+    countdownUpdatedAt =
+      Date.now();
+
+  }
+
+
+  renderTable(
+    data.history || [],
+    wl.rows || []
+  );
+
+
+  setConnection(
+    !data.error
   );
 
 }
 
 
-/* REFRESH */
+/* =========================================================
+   LOAD STATE
+========================================================= */
 
-$("refreshBtn")
-.addEventListener(
+async function loadState() {
+
+  try {
+
+    const response =
+      await fetch(
+        "/api/state?t=" +
+        Date.now(),
+        {
+          cache:"no-store"
+        }
+      );
+
+
+    if (!response.ok) {
+      throw new Error(
+        "Server error"
+      );
+    }
+
+
+    const data =
+      await response.json();
+
+
+    if (!data.success) {
+      throw new Error(
+        data.error ||
+        "State unavailable"
+      );
+    }
+
+
+    renderState(
+      data
+    );
+
+  }
+  catch(error) {
+
+    setConnection(
+      false
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   LIVE POLLING
+========================================================= */
+
+setInterval(
+  loadState,
+  1000
+);
+
+
+/* =========================================================
+   SMOOTH TIMER
+========================================================= */
+
+setInterval(
+  function() {
+
+    if (!countdownUpdatedAt) {
+      return;
+    }
+
+
+    const elapsed =
+      Math.floor(
+        (
+          Date.now() -
+          countdownUpdatedAt
+        ) / 1000
+      );
+
+
+    const value =
+      Math.max(
+        0,
+        serverCountdown -
+        elapsed
+      );
+
+
+    $("countdown").textContent =
+      String(value)
+        .padStart(
+          2,
+          "0"
+        ) +
+      "s";
+
+  },
+  250
+);
+
+
+/* =========================================================
+   LOGIN EVENTS
+========================================================= */
+
+$("loginButton")
+  .addEventListener(
+    "click",
+    login
+  );
+
+
+$("accessKey")
+  .addEventListener(
+    "keydown",
+    function(event) {
+
+      if (
+        event.key ===
+        "Enter"
+      ) {
+
+        login();
+
+      }
+
+    }
+  );
+
+
+/* =========================================================
+   MUSIC
+========================================================= */
+
+document.addEventListener(
   "click",
-  () => {
+  function() {
 
-    loadState();
+    $("music")
+      .play()
+      .catch(
+        function(){}
+      );
 
-    loadWinLoss();
-
+  },
+  {
+    once:true
   }
 );
 
 
-/* AUTO LOGIN */
+/* =========================================================
+   AUTO LOGIN
+========================================================= */
 
-if(savedKey){
-
-  login();
-
-}
+autoLogin();
 
 </script>
 
 </body>
-</html>
+  </html>
