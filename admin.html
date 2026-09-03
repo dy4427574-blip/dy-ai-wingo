@@ -1,11 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1.0,user-scalable=no"
+>
+
 <title>DY AI Admin Panel</title>
 
 <style>
+
 *{
   box-sizing:border-box;
   margin:0;
@@ -27,12 +34,22 @@ body{
 }
 
 .header{
-  background:linear-gradient(145deg,#111b31,#0b1222);
+  background:linear-gradient(
+    145deg,
+    #111b31,
+    #0b1222
+  );
+
   border:1px solid #293957;
+
   border-radius:20px;
+
   padding:18px;
+
   text-align:center;
+
   margin-bottom:12px;
+
   box-shadow:0 10px 30px #0008;
 }
 
@@ -53,10 +70,15 @@ body{
 
 .login,
 .panel{
+
   background:#10182a;
+
   border:1px solid #263553;
+
   border-radius:18px;
+
   padding:15px;
+
   margin-bottom:12px;
 }
 
@@ -65,24 +87,41 @@ body{
 }
 
 input{
+
   width:100%;
+
   padding:13px;
+
   border-radius:12px;
+
   border:1px solid #34415d;
+
   background:#080d18;
+
   color:#fff;
+
   outline:none;
+
   margin:8px 0;
+
 }
 
 button{
+
   border:0;
+
   border-radius:11px;
+
   padding:11px 14px;
+
   background:#18243b;
+
   color:#fff;
+
   font-weight:800;
+
   cursor:pointer;
+
 }
 
 button:active{
@@ -110,15 +149,25 @@ button:active{
   color:#00e5ff;
 }
 
+.yellow{
+  color:#facc15;
+}
+
 .sectionTitle{
+
   font-size:15px;
+
   font-weight:900;
+
   margin-bottom:12px;
 }
 
 .row{
+
   display:flex;
+
   gap:8px;
+
   align-items:center;
 }
 
@@ -127,526 +176,822 @@ button:active{
 }
 
 .stats{
+
   display:grid;
-  grid-template-columns:repeat(3,1fr);
+
+  grid-template-columns:
+    repeat(3,1fr);
+
   gap:8px;
 }
 
 .stat{
+
   background:#080e1a;
+
   border-radius:12px;
+
   padding:12px;
+
   text-align:center;
 }
 
 .statLabel{
+
   color:#64748b;
+
   font-size:10px;
 }
 
 .statValue{
+
   font-size:20px;
+
   font-weight:900;
+
   margin-top:4px;
 }
 
 .statusGrid{
+
   display:grid;
-  grid-template-columns:1fr 1fr;
+
+  grid-template-columns:
+    1fr 1fr;
+
   gap:8px;
 }
 
 .statusItem{
+
   background:#080e1a;
+
   border-radius:11px;
+
   padding:11px;
 }
 
 .label{
+
   color:#64748b;
+
   font-size:10px;
 }
 
 .value{
+
   margin-top:5px;
+
   font-size:13px;
+
   font-weight:900;
+
+  word-break:break-word;
 }
 
 .keyList{
+
   display:flex;
+
   flex-direction:column;
+
   gap:8px;
+
   margin-top:12px;
 }
 
 .key{
+
   background:#080e1a;
+
   border:1px solid #1e2a42;
+
   border-radius:12px;
+
   padding:11px;
 }
 
 .keyTop{
+
   display:flex;
+
   justify-content:space-between;
+
   gap:8px;
+
   align-items:center;
 }
 
 .keyCode{
+
   color:#00e5ff;
+
   font-weight:900;
+
   font-size:13px;
+
   word-break:break-all;
 }
 
 .keyMeta{
+
   color:#64748b;
+
   font-size:9px;
+
   margin-top:7px;
+
   line-height:1.5;
 }
 
 .actions{
+
   display:flex;
+
   gap:6px;
+
   margin-top:9px;
 }
 
 .actions button{
+
   flex:1;
+
   font-size:10px;
+
   padding:9px;
 }
 
 .testResult{
+
   margin-top:10px;
+
   background:#080e1a;
+
   border-radius:12px;
+
   padding:12px;
+
   font-size:11px;
+
   line-height:1.7;
+
   white-space:pre-wrap;
+
   overflow:auto;
+
   max-height:350px;
 }
 
-.model{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  background:#080e1a;
-  padding:9px;
-  border-radius:9px;
-  margin-top:6px;
-  font-size:11px;
-}
-
 .notice{
+
   color:#64748b;
+
   font-size:10px;
+
   line-height:1.5;
+
   margin-top:10px;
 }
 
+.successMsg{
+
+  color:#22c55e;
+
+  font-size:11px;
+
+  margin-top:8px;
+
+  line-height:1.5;
+}
+
+.errorMsg{
+
+  color:#ef4444;
+
+  font-size:11px;
+
+  margin-top:8px;
+
+  line-height:1.5;
+}
+
 .logout{
+
   width:100%;
+
   margin-top:4px;
 }
 
+.divider{
+
+  height:1px;
+
+  background:#1e2a42;
+
+  margin:16px 0;
+}
+
 @media(max-width:420px){
+
   .stats{
-    grid-template-columns:1fr 1fr 1fr;
+
+    grid-template-columns:
+      1fr 1fr 1fr;
+
   }
 
   .statusGrid{
-    grid-template-columns:1fr 1fr;
+
+    grid-template-columns:
+      1fr 1fr;
+
   }
 
   .actions{
+
     flex-wrap:wrap;
+
   }
+
 }
+
 </style>
+
 </head>
 
 <body>
 
+
 <div class="container">
 
-  <div class="header">
-    <div class="logo">
-      DY <span>AI</span> ADMIN
-    </div>
 
-    <div class="sub">
-      WINGO 30S CONTROL PANEL
-    </div>
+<!-- =====================================================
+     HEADER
+===================================================== -->
+
+<div class="header">
+
+  <div class="logo">
+
+    DY <span>AI</span> ADMIN
+
+  </div>
+
+  <div class="sub">
+
+    WINGO 30S CONTROL PANEL
+
+  </div>
+
+</div>
+
+
+<!-- =====================================================
+     LOGIN
+===================================================== -->
+
+<div
+  class="login"
+  id="loginBox"
+>
+
+  <div class="sectionTitle">
+
+    🔐 Admin Login
+
   </div>
 
 
-  <!-- LOGIN -->
-
-  <div
-    class="login"
-    id="loginBox"
+  <input
+    id="adminKey"
+    type="password"
+    placeholder="Enter admin key"
+    autocomplete="off"
   >
 
-    <div class="sectionTitle">
-      🔐 Admin Login
-    </div>
 
-    <input
-      id="adminKey"
-      type="password"
-      placeholder="Enter admin key"
-      autocomplete="off"
-    >
-
-    <button
-      id="loginBtn"
-      class="primary"
-      style="width:100%;margin-top:4px"
-    >
-      LOGIN
-    </button>
-
-    <div
-      id="loginMsg"
-      class="notice"
-    ></div>
-
-  </div>
-
-
-  <!-- PANEL -->
-
-  <div
-    class="panel"
-    id="adminPanel"
+  <button
+    id="loginBtn"
+    class="primary"
+    style="width:100%;margin-top:4px"
   >
 
-    <!-- STATUS -->
+    LOGIN
 
-    <div class="sectionTitle">
-      📡 System Status
-    </div>
-
-    <div class="statusGrid">
-
-      <div class="statusItem">
-        <div class="label">
-          Server
-        </div>
-
-        <div
-          id="serverStatus"
-          class="value"
-        >
-          Checking...
-        </div>
-      </div>
-
-      <div class="statusItem">
-        <div class="label">
-          Database
-        </div>
-
-        <div
-          id="dbStatus"
-          class="value"
-        >
-          Checking...
-        </div>
-      </div>
-
-      <div class="statusItem">
-        <div class="label">
-          WingoBot
-        </div>
-
-        <div
-          id="wingoStatus"
-          class="value"
-        >
-          Checking...
-        </div>
-      </div>
-
-      <div class="statusItem">
-        <div class="label">
-          Target Period
-        </div>
-
-        <div
-          id="targetIssue"
-          class="value blue"
-        >
-          -
-        </div>
-      </div>
-
-    </div>
+  </button>
 
 
-    <!-- WIN LOSS -->
+  <div
+    id="loginMsg"
+    class="notice"
+  ></div>
 
-    <div
-      class="sectionTitle"
-      style="margin-top:18px"
-    >
-      📊 Performance
-    </div>
-
-    <div class="stats">
-
-      <div class="stat">
-
-        <div class="statLabel">
-          WIN
-        </div>
-
-        <div
-          id="wins"
-          class="statValue green"
-        >
-          0
-        </div>
-
-      </div>
-
-      <div class="stat">
-
-        <div class="statLabel">
-          LOSS
-        </div>
-
-        <div
-          id="losses"
-          class="statValue red"
-        >
-          0
-        </div>
-
-      </div>
-
-      <div class="stat">
-
-        <div class="statLabel">
-          RATE
-        </div>
-
-        <div
-          id="rate"
-          class="statValue blue"
-        >
-          0%
-        </div>
-
-      </div>
-
-    </div>
+</div>
 
 
-    <!-- KEY GENERATOR -->
+<!-- =====================================================
+     ADMIN PANEL
+===================================================== -->
 
-    <div
-      class="sectionTitle"
-      style="margin-top:20px"
-    >
-      🔑 Access Key Generator
-    </div>
+<div
+  class="panel"
+  id="adminPanel"
+>
 
-    <div class="row">
 
-      <input
-        id="keyCount"
-        type="number"
-        min="1"
-        max="100"
-        value="1"
-        placeholder="Number of keys"
-      >
+<!-- =====================================================
+     STATUS
+===================================================== -->
 
-      <button
-        id="generateBtn"
-        class="primary"
-      >
-        GENERATE
-      </button>
+<div class="sectionTitle">
 
+  📡 System Status
+
+</div>
+
+
+<div class="statusGrid">
+
+
+  <div class="statusItem">
+
+    <div class="label">
+      Server
     </div>
 
     <div
-      id="generated"
-      class="testResult"
-      style="display:none"
-    ></div>
-
-
-    <!-- KEY LIST -->
-
-    <div
-      class="sectionTitle"
-      style="margin-top:20px"
+      id="serverStatus"
+      class="value"
     >
-      🔐 Access Keys
+      Checking...
     </div>
-
-    <div
-      id="keyList"
-      class="keyList"
-    >
-      <div class="notice">
-        Loading keys...
-      </div>
-    </div>
-
-
-    <!-- PROVIDER TEST -->
-
-    <div
-      class="sectionTitle"
-      style="margin-top:20px"
-    >
-      🌐 Provider Test
-    </div>
-
-    <div class="row">
-
-      <button
-        id="wingoTestBtn"
-        class="primary"
-        style="flex:1"
-      >
-        TEST WINGOBOT
-      </button>
-
-      <button
-        id="pingBtn"
-        style="flex:1"
-      >
-        PING
-      </button>
-
-    </div>
-
-    <div
-      id="providerResult"
-      class="testResult"
-    >
-      No test run.
-    </div>
-
-
-    <!-- MODEL TEST -->
-
-    <div
-      class="sectionTitle"
-      style="margin-top:20px"
-    >
-      🧠 AI Model Diagnostics
-    </div>
-
-    <button
-      id="modelTestBtn"
-      class="primary"
-      style="width:100%"
-    >
-      RUN MODEL TEST
-    </button>
-
-    <div
-      id="modelResult"
-      class="testResult"
-    >
-      No model test run.
-    </div>
-
-
-    <!-- CURRENT PREDICTION -->
-
-    <div
-      class="sectionTitle"
-      style="margin-top:20px"
-    >
-      🎯 Current Analysis
-    </div>
-
-    <div class="statusGrid">
-
-      <div class="statusItem">
-        <div class="label">
-          Prediction
-        </div>
-
-        <div
-          id="prediction"
-          class="value blue"
-        >
-          -
-        </div>
-      </div>
-
-      <div class="statusItem">
-        <div class="label">
-          Confidence
-        </div>
-
-        <div
-          id="confidence"
-          class="value"
-        >
-          -
-        </div>
-      </div>
-
-      <div class="statusItem">
-        <div class="label">
-          Pattern Score
-        </div>
-
-        <div
-          id="patternScore"
-          class="value"
-        >
-          -
-        </div>
-      </div>
-
-      <div class="statusItem">
-        <div class="label">
-          Agreement
-        </div>
-
-        <div
-          id="agreement"
-          class="value"
-        >
-          -
-        </div>
-      </div>
-
-    </div>
-
-
-    <div class="notice">
-      Prediction engine is an adaptive statistical analyzer.
-      It does not guarantee future game outcomes or winnings.
-    </div>
-
-
-    <!-- LOGOUT -->
-
-    <button
-      id="logoutBtn"
-      class="danger logout"
-    >
-      LOGOUT
-    </button>
 
   </div>
+
+
+  <div class="statusItem">
+
+    <div class="label">
+      Database
+    </div>
+
+    <div
+      id="dbStatus"
+      class="value"
+    >
+      Checking...
+    </div>
+
+  </div>
+
+
+  <div class="statusItem">
+
+    <div class="label">
+      WingoBot
+    </div>
+
+    <div
+      id="wingoStatus"
+      class="value"
+    >
+      Checking...
+    </div>
+
+  </div>
+
+
+  <div class="statusItem">
+
+    <div class="label">
+      History
+    </div>
+
+    <div
+      id="historyCount"
+      class="value blue"
+    >
+      -
+    </div>
+
+  </div>
+
+
+  <div class="statusItem">
+
+    <div class="label">
+      Target Period
+    </div>
+
+    <div
+      id="targetIssue"
+      class="value blue"
+    >
+      -
+    </div>
+
+  </div>
+
+
+  <div class="statusItem">
+
+    <div class="label">
+      Model Version
+    </div>
+
+    <div
+      id="modelVersion"
+      class="value green"
+    >
+      ADAPTIVE
+    </div>
+
+  </div>
+
+
+</div>
+
+
+<!-- =====================================================
+     PERFORMANCE
+===================================================== -->
+
+<div
+  class="sectionTitle"
+  style="margin-top:18px"
+>
+
+  📊 Performance
+
+</div>
+
+
+<div class="stats">
+
+
+  <div class="stat">
+
+    <div class="statLabel">
+      WIN
+    </div>
+
+    <div
+      id="wins"
+      class="statValue green"
+    >
+      0
+    </div>
+
+  </div>
+
+
+  <div class="stat">
+
+    <div class="statLabel">
+      LOSS
+    </div>
+
+    <div
+      id="losses"
+      class="statValue red"
+    >
+      0
+    </div>
+
+  </div>
+
+
+  <div class="stat">
+
+    <div class="statLabel">
+      RATE
+    </div>
+
+    <div
+      id="rate"
+      class="statValue blue"
+    >
+      0%
+    </div>
+
+  </div>
+
+
+</div>
+
+
+<!-- =====================================================
+     KEY GENERATOR
+===================================================== -->
+
+<div
+  class="sectionTitle"
+  style="margin-top:20px"
+>
+
+  🔑 Access Key Generator
+
+</div>
+
+
+<div class="row">
+
+
+  <input
+    id="keyCount"
+    type="number"
+    min="1"
+    max="100"
+    value="1"
+    placeholder="Number of keys"
+  >
+
+
+  <button
+    id="generateBtn"
+    class="primary"
+  >
+
+    GENERATE
+
+  </button>
+
+
+</div>
+
+
+<div
+  id="generated"
+  class="testResult"
+  style="display:none"
+></div>
+
+
+<!-- =====================================================
+     ACCESS KEYS
+===================================================== -->
+
+<div
+  class="sectionTitle"
+  style="margin-top:20px"
+>
+
+  🔐 Access Keys
+
+</div>
+
+
+<div
+  id="keyList"
+  class="keyList"
+>
+
+  <div class="notice">
+
+    Loading keys...
+
+  </div>
+
+</div>
+
+
+<!-- =====================================================
+     PROVIDER TEST
+===================================================== -->
+
+<div
+  class="sectionTitle"
+  style="margin-top:20px"
+>
+
+  🌐 Provider Test
+
+</div>
+
+
+<div class="row">
+
+
+  <button
+    id="wingoTestBtn"
+    class="primary"
+    style="flex:1"
+  >
+
+    TEST WINGOBOT
+
+  </button>
+
+
+  <button
+    id="pingBtn"
+    style="flex:1"
+  >
+
+    PING
+
+  </button>
+
+
+</div>
+
+
+<div
+  id="providerResult"
+  class="testResult"
+>
+
+  No test run.
+
+</div>
+
+
+<!-- =====================================================
+     MODEL TEST
+===================================================== -->
+
+<div
+  class="sectionTitle"
+  style="margin-top:20px"
+>
+
+  🧠 AI Model Diagnostics
+
+</div>
+
+
+<button
+  id="modelTestBtn"
+  class="primary"
+  style="width:100%"
+>
+
+  RUN MODEL TEST
+
+</button>
+
+
+<div
+  id="modelResult"
+  class="testResult"
+>
+
+  No model test run.
+
+</div>
+
+
+<!-- =====================================================
+     CURRENT ANALYSIS
+===================================================== -->
+
+<div
+  class="sectionTitle"
+  style="margin-top:20px"
+>
+
+  🎯 Current Analysis
+
+</div>
+
+
+<div class="statusGrid">
+
+
+  <div class="statusItem">
+
+    <div class="label">
+      Prediction
+    </div>
+
+    <div
+      id="prediction"
+      class="value blue"
+    >
+      -
+    </div>
+
+  </div>
+
+
+  <div class="statusItem">
+
+    <div class="label">
+      Confidence
+    </div>
+
+    <div
+      id="confidence"
+      class="value"
+    >
+      -
+    </div>
+
+  </div>
+
+
+  <div class="statusItem">
+
+    <div class="label">
+      Pattern Score
+    </div>
+
+    <div
+      id="patternScore"
+      class="value"
+    >
+      -
+    </div>
+
+  </div>
+
+
+  <div class="statusItem">
+
+    <div class="label">
+      Agreement
+    </div>
+
+    <div
+      id="agreement"
+      class="value"
+    >
+      -
+    </div>
+
+  </div>
+
+
+  <div class="statusItem">
+
+    <div class="label">
+      Backtest Samples
+    </div>
+
+    <div
+      id="backtestSamples"
+      class="value"
+    >
+      -
+    </div>
+
+  </div>
+
+
+  <div class="statusItem">
+
+    <div class="label">
+      Backtest Accuracy
+    </div>
+
+    <div
+      id="backtestAccuracy"
+      class="value"
+    >
+      -
+    </div>
+
+  </div>
+
+
+</div>
+
+
+<div
+  id="analysisStatus"
+  class="notice"
+>
+
+  Waiting for analysis...
+
+</div>
+
+
+<div class="notice">
+
+  Prediction engine is an adaptive statistical analyzer.
+  It does not guarantee future game outcomes or winnings.
+
+</div>
+
+
+<!-- =====================================================
+     LOGOUT
+===================================================== -->
+
+<button
+  id="logoutBtn"
+  class="danger logout"
+>
+
+  LOGOUT
+
+</button>
+
+
+</div>
+
 
 </div>
 
@@ -676,7 +1021,7 @@ function escapeHTML(value){
 
 
 /* =====================================================
-   ADMIN KEY
+   ADMIN SESSION
 ===================================================== */
 
 let adminKey =
@@ -684,6 +1029,10 @@ let adminKey =
     "dy_admin_key"
   );
 
+
+/* =====================================================
+   AUTO LOGIN
+===================================================== */
 
 if(adminKey){
 
@@ -706,9 +1055,12 @@ $("loginBtn")
 $("adminKey")
 .addEventListener(
   "keydown",
-  e => {
+  event => {
 
-    if(e.key === "Enter"){
+    if(
+      event.key ===
+      "Enter"
+    ){
 
       login();
 
@@ -729,6 +1081,10 @@ async function login(){
   if(!key){
 
     $("loginMsg")
+      .className =
+      "errorMsg";
+
+    $("loginMsg")
       .textContent =
       "Admin key enter karo.";
 
@@ -737,9 +1093,18 @@ async function login(){
   }
 
 
+  $("loginBtn")
+    .textContent =
+    "CHECKING...";
+
+
+  $("loginMsg")
+    .className =
+    "notice";
+
   $("loginMsg")
     .textContent =
-    "Checking...";
+    "Server se verify ho raha hai...";
 
 
   try{
@@ -749,9 +1114,15 @@ async function login(){
         "/api/admin/ping",
         {
 
+          method:
+            "GET",
+
           headers:{
-            "x-admin-key":
-              key
+            "X-Admin-Key":
+              key,
+
+            "Cache-Control":
+              "no-cache"
           },
 
           cache:
@@ -765,11 +1136,23 @@ async function login(){
       await response.json();
 
 
-    if(!response.ok ||
-       !data.ok){
+    /*
+      IMPORTANT:
+      Server success:true bhejta hai.
+    */
+
+    if(
+      !response.ok ||
+      data.success !== true
+    ){
+
+      $("loginMsg")
+        .className =
+        "errorMsg";
 
       $("loginMsg")
         .textContent =
+        data.error ||
         "Invalid admin key.";
 
       return;
@@ -787,13 +1170,31 @@ async function login(){
     );
 
 
+    $("loginMsg")
+      .textContent =
+      "";
+
+
     showPanel();
 
-  }catch{
+
+  }
+  catch(error){
+
+    $("loginMsg")
+      .className =
+      "errorMsg";
 
     $("loginMsg")
       .textContent =
       "Server connection error.";
+
+  }
+  finally{
+
+    $("loginBtn")
+      .textContent =
+      "LOGIN";
 
   }
 
@@ -809,6 +1210,7 @@ function showPanel(){
   $("loginBox")
     .style.display =
     "none";
+
 
   $("adminPanel")
     .style.display =
@@ -829,35 +1231,51 @@ async function adminFetch(
   options = {}
 ){
 
-  options.headers = {
+  const headers = {
 
     ...(options.headers || {}),
 
-    "x-admin-key":
-      adminKey,
-
-    "Content-Type":
-      "application/json"
+    "X-Admin-Key":
+      adminKey
 
   };
+
+
+  /*
+   Content-Type sirf body hone par.
+  */
+
+  if(options.body){
+
+    headers[
+      "Content-Type"
+    ] =
+      "application/json";
+
+  }
 
 
   const response =
     await fetch(
       url,
-      options
+      {
+        ...options,
+        headers,
+        cache:
+          "no-store"
+      }
     );
 
 
   if(
     response.status ===
-    401
+    403
   ){
 
     logout();
 
     throw new Error(
-      "Unauthorized"
+      "Invalid admin session"
     );
 
   }
@@ -874,7 +1292,7 @@ async function adminFetch(
 
 async function loadEverything(){
 
-  await Promise.all([
+  await Promise.allSettled([
 
     loadStatus(),
 
@@ -907,8 +1325,16 @@ async function loadStatus(){
       await response.json();
 
 
-    if(!data.ok){
-      return;
+    if(
+      !response.ok ||
+      data.success !== true
+    ){
+
+      throw new Error(
+        data.error ||
+        "Status error"
+      );
+
     }
 
 
@@ -916,35 +1342,64 @@ async function loadStatus(){
       .textContent =
       "ONLINE";
 
+
     $("serverStatus")
       .className =
       "value green";
 
 
+    /*
+     Server successful response means
+     database initialization passed.
+    */
+
     $("dbStatus")
       .textContent =
-      data.database
-        ? "CONNECTED"
-        : "OFF";
+      "CONNECTED";
+
 
     $("dbStatus")
       .className =
-      data.database
-        ? "value green"
-        : "value red";
+      "value green";
 
 
-    $("wingoStatus")
+    /*
+     Wingo token/provider status is
+     inferred from live history.
+    */
+
+    if(
+      Number(
+        data.providerFetched || 0
+      ) > 0
+    ){
+
+      $("wingoStatus")
+        .textContent =
+        "CONNECTED";
+
+      $("wingoStatus")
+        .className =
+        "value green";
+
+    }
+    else{
+
+      $("wingoStatus")
+        .textContent =
+        "CHECKING";
+
+      $("wingoStatus")
+        .className =
+        "value yellow";
+
+    }
+
+
+    $("historyCount")
       .textContent =
-      data.wingobot
-        ? "CONFIGURED"
-        : "OFF";
-
-    $("wingoStatus")
-      .className =
-      data.wingobot
-        ? "value green"
-        : "value red";
+      data.historyLength ??
+      "-";
 
 
     $("targetIssue")
@@ -952,7 +1407,9 @@ async function loadStatus(){
       data.targetIssue ||
       "-";
 
-  }catch{
+
+  }
+  catch(error){
 
     $("serverStatus")
       .textContent =
@@ -962,13 +1419,31 @@ async function loadStatus(){
       .className =
       "value red";
 
+
+    $("dbStatus")
+      .textContent =
+      "UNKNOWN";
+
+    $("dbStatus")
+      .className =
+      "value red";
+
+
+    $("wingoStatus")
+      .textContent =
+      "UNKNOWN";
+
+    $("wingoStatus")
+      .className =
+      "value red";
+
   }
 
 }
 
 
 /* =====================================================
-   STATE
+   LIVE STATE
 ===================================================== */
 
 async function loadState(){
@@ -989,8 +1464,14 @@ async function loadState(){
       await response.json();
 
 
-    const analysis =
-      data.analysis;
+    if(
+      !response.ok ||
+      data.success !== true
+    ){
+
+      return;
+
+    }
 
 
     $("targetIssue")
@@ -999,44 +1480,101 @@ async function loadState(){
       "-";
 
 
-    if(analysis){
-
-      $("prediction")
-        .textContent =
-        analysis.prediction ||
-        "-";
-
-
-      $("confidence")
-        .textContent =
-        (
-          analysis.confidence ??
-          0
-        ) + "%";
+    $("historyCount")
+      .textContent =
+      data.historyCount ??
+      (
+        data.history
+          ?.length ??
+        "-"
+      );
 
 
-      $("patternScore")
-        .textContent =
-        analysis.patternScore ??
-        "-";
+    const prediction =
+      data.prediction;
 
 
-      $("agreement")
-        .textContent =
-        (
-          analysis.agreement ??
-          0
-        ) + "%";
+    if(!prediction){
+
+      return;
 
     }
 
-  }catch{}
+
+    $("prediction")
+      .textContent =
+      prediction.prediction ||
+      "-";
+
+
+    $("confidence")
+      .textContent =
+      (
+        prediction.confidence ??
+        0
+      ) +
+      "%";
+
+
+    $("patternScore")
+      .textContent =
+      prediction.patternScore ??
+      "-";
+
+
+    $("agreement")
+      .textContent =
+      (
+        prediction.agreement ??
+        0
+      ) +
+      "%";
+
+
+    $("backtestSamples")
+      .textContent =
+      prediction.backtest
+        ?.samples ??
+      0;
+
+
+    const accuracy =
+      prediction.backtest
+        ?.accuracy;
+
+
+    $("backtestAccuracy")
+      .textContent =
+      accuracy == null
+        ? "N/A"
+        : Math.round(
+            Number(
+              accuracy
+            )
+          ) + "%";
+
+
+    $("analysisStatus")
+      .textContent =
+      prediction.status ||
+      "ACTIVE";
+
+
+  }
+  catch(error){
+
+    console.log(
+      "STATE ERROR",
+      error
+    );
+
+  }
 
 }
 
 
 /* =====================================================
-   KEYS
+   ACCESS KEYS
 ===================================================== */
 
 async function loadKeys(){
@@ -1053,13 +1591,28 @@ async function loadKeys(){
       await response.json();
 
 
+    if(
+      !response.ok ||
+      data.success !== true
+    ){
+
+      throw new Error(
+        data.error ||
+        "Unable to load keys"
+      );
+
+    }
+
+
     const box =
       $("keyList");
 
 
     if(
-      !data.ok ||
-      !data.keys?.length
+      !Array.isArray(
+        data.keys
+      ) ||
+      !data.keys.length
     ){
 
       box.innerHTML =
@@ -1082,12 +1635,15 @@ async function loadKeys(){
             <div class="keyTop">
 
               <div class="keyCode">
+
                 ${escapeHTML(
                   key.access_key
                 )}
+
               </div>
 
             </div>
+
 
             <div class="keyMeta">
 
@@ -1123,6 +1679,7 @@ async function loadKeys(){
 
             </div>
 
+
             <div class="actions">
 
               <button
@@ -1130,8 +1687,11 @@ async function loadKeys(){
                   key.id
                 )})"
               >
+
                 RESET DEVICE
+
               </button>
+
 
               <button
                 class="danger"
@@ -1139,7 +1699,9 @@ async function loadKeys(){
                   key.id
                 )})"
               >
+
                 DELETE
+
               </button>
 
             </div>
@@ -1150,12 +1712,16 @@ async function loadKeys(){
         )
         .join("");
 
-  }catch{
+
+  }
+  catch(error){
 
     $("keyList")
       .innerHTML =
-      `<div class="notice">
-        Unable to load keys.
+      `<div class="errorMsg">
+        ${escapeHTML(
+          error.message
+        )}
       </div>`;
 
   }
@@ -1164,15 +1730,17 @@ async function loadKeys(){
 
 
 /* =====================================================
-   FORMAT TIME
+   TIME
 ===================================================== */
 
 function formatTime(
   timestamp
 ){
 
-  if(!timestamp ||
-     Number(timestamp) <= 0){
+  if(
+    !timestamp ||
+    Number(timestamp) <= 0
+  ){
 
     return "-";
 
@@ -1186,7 +1754,8 @@ function formatTime(
     )
     .toLocaleString();
 
-  }catch{
+  }
+  catch{
 
     return "-";
 
@@ -1196,7 +1765,7 @@ function formatTime(
 
 
 /* =====================================================
-   GENERATE
+   GENERATE KEYS
 ===================================================== */
 
 $("generateBtn")
@@ -1226,41 +1795,70 @@ async function generateKeys(){
 
 
   $("generateBtn")
+    .disabled =
+    true;
+
+
+  $("generateBtn")
     .textContent =
     "GENERATING...";
 
 
+  const generatedKeys = [];
+
+
   try{
 
-    const response =
-      await adminFetch(
-        "/api/admin/keys",
-        {
+    /*
+     Current server creates one key per POST.
+     So count times API call karenge.
+    */
 
-          method:
-            "POST",
+    for(
+      let i = 0;
+      i < count;
+      i++
+    ){
 
-          body:
-            JSON.stringify({
-              count
-            })
+      const response =
+        await adminFetch(
+          "/api/admin/keys",
+          {
 
-        }
-      );
+            method:
+              "POST",
+
+            body:
+              JSON.stringify({})
+
+          }
+        );
 
 
-    const data =
-      await response.json();
+      const data =
+        await response.json();
 
 
-    if(!data.ok){
+      if(
+        !response.ok ||
+        data.success !== true
+      ){
 
-      alert(
-        data.message ||
-        "Failed"
-      );
+        throw new Error(
+          data.error ||
+          "Key generation failed"
+        );
 
-      return;
+      }
+
+
+      if(data.key){
+
+        generatedKeys.push(
+          data.key
+        );
+
+      }
 
     }
 
@@ -1272,20 +1870,34 @@ async function generateKeys(){
 
     $("generated")
       .textContent =
-      data.keys.join(
+      generatedKeys.join(
         "\n"
       );
 
 
     await loadKeys();
 
-  }catch(error){
 
-    alert(
-      error.message
-    );
+  }
+  catch(error){
 
-  }finally{
+    $("generated")
+      .style.display =
+      "block";
+
+
+    $("generated")
+      .textContent =
+      "ERROR: " +
+      error.message;
+
+  }
+  finally{
+
+    $("generateBtn")
+      .disabled =
+      false;
+
 
     $("generateBtn")
       .textContent =
@@ -1338,21 +1950,24 @@ async function resetDevice(
       await response.json();
 
 
-    if(!data.ok){
+    if(
+      !response.ok ||
+      data.success !== true
+    ){
 
-      alert(
-        data.message ||
-        "Failed"
+      throw new Error(
+        data.error ||
+        "Reset failed"
       );
-
-      return;
 
     }
 
 
     await loadKeys();
 
-  }catch(error){
+
+  }
+  catch(error){
 
     alert(
       error.message
@@ -1405,21 +2020,24 @@ async function deleteKey(
       await response.json();
 
 
-    if(!data.ok){
+    if(
+      !response.ok ||
+      data.success !== true
+    ){
 
-      alert(
-        data.message ||
-        "Failed"
+      throw new Error(
+        data.error ||
+        "Delete failed"
       );
-
-      return;
 
     }
 
 
     await loadKeys();
 
-  }catch(error){
+
+  }
+  catch(error){
 
     alert(
       error.message
@@ -1452,31 +2070,46 @@ async function loadPerformance(){
       await response.json();
 
 
-    const stats =
-      data.stats ||
-      {};
+    if(
+      !response.ok ||
+      data.success !== true
+    ){
+
+      return;
+
+    }
 
 
     $("wins")
       .textContent =
-      stats.win ??
+      data.wins ??
       0;
 
 
     $("losses")
       .textContent =
-      stats.loss ??
+      data.losses ??
       0;
 
 
     $("rate")
       .textContent =
       (
-        stats.rate ??
+        data.rate ??
         0
-      ) + "%";
+      ) +
+      "%";
 
-  }catch{}
+
+  }
+  catch(error){
+
+    console.log(
+      "PERFORMANCE ERROR",
+      error
+    );
+
+  }
 
 }
 
@@ -1514,31 +2147,54 @@ async function testWingo(){
       await response.json();
 
 
-    if(!data.ok){
+    if(
+      !response.ok ||
+      data.success !== true
+    ){
 
-      box.textContent =
-        "ERROR: " +
-        (
-          data.message ||
-          "Unknown error"
-        );
-
-      return;
+      throw new Error(
+        data.error ||
+        "WingoBot test failed"
+      );
 
     }
 
 
     box.textContent =
+      "WINGOBOT CONNECTED\n\n" +
+
+      "Fetched: " +
+      (
+        data.fetched ??
+        0
+      ) +
+
+      "\n\nHistory Received: " +
+      (
+        data.historyLength ??
+        0
+      ) +
+
+      "\n\nCurrent:\n" +
       JSON.stringify(
-        data,
+        data.current,
+        null,
+        2
+      ) +
+
+      "\n\nLatest:\n" +
+      JSON.stringify(
+        data.latest,
         null,
         2
       );
 
-  }catch(error){
+
+  }
+  catch(error){
 
     box.textContent =
-      "ERROR: " +
+      "ERROR:\n" +
       error.message;
 
   }
@@ -1579,17 +2235,36 @@ async function testPing(){
       await response.json();
 
 
-    box.textContent =
-      JSON.stringify(
-        data,
-        null,
-        2
+    if(
+      !response.ok ||
+      data.success !== true
+    ){
+
+      throw new Error(
+        data.error ||
+        "Ping failed"
       );
 
-  }catch(error){
+    }
+
 
     box.textContent =
-      "ERROR: " +
+      "SERVER ONLINE\n\n" +
+      (
+        data.message ||
+        "DY AI server online"
+      ) +
+      "\n\nTime: " +
+      formatTime(
+        data.time
+      );
+
+
+  }
+  catch(error){
+
+    box.textContent =
+      "ERROR:\n" +
       error.message;
 
   }
@@ -1630,130 +2305,166 @@ async function testModel(){
       await response.json();
 
 
-    if(!data.ok){
+    if(
+      !response.ok ||
+      data.success !== true
+    ){
 
-      box.textContent =
-        "ERROR: " +
-        (
-          data.message ||
-          "Unknown error"
-        );
-
-      return;
+      throw new Error(
+        data.error ||
+        "Model test failed"
+      );
 
     }
 
 
-    let text =
-      "";
+    const analysis =
+      data.analysis ||
+      {};
 
 
-    text +=
-      "Prediction: " +
+    let output = "";
+
+
+    output +=
+      "HISTORY USED: " +
       (
-        data.prediction ||
+        data.history ??
+        0
+      ) +
+      "\n\n";
+
+
+    output +=
+      "PREDICTION: " +
+      (
+        analysis.prediction ||
         "-"
       ) +
       "\n";
 
 
-    text +=
-      "Confidence: " +
+    output +=
+      "CONFIDENCE: " +
       (
-        data.confidence ??
-        "-"
+        analysis.confidence ??
+        0
       ) +
       "%\n";
 
 
-    text +=
-      "Pattern Score: " +
+    output +=
+      "PATTERN SCORE: " +
       (
-        data.patternScore ??
+        analysis.patternScore ??
+        0
+      ) +
+      "\n";
+
+
+    output +=
+      "AGREEMENT: " +
+      (
+        analysis.agreement ??
+        0
+      ) +
+      "%\n";
+
+
+    output +=
+      "STATUS: " +
+      (
+        analysis.status ||
         "-"
       ) +
       "\n";
 
 
-    text +=
-      "Agreement: " +
+    output +=
+      "BACKTEST SAMPLES: " +
       (
-        data.agreement ??
-        "-"
-      ) +
-      "%\n";
-
-
-    text +=
-      "Average Accuracy: " +
-      (
-        data.avgModelAccuracy ??
-        "-"
-      ) +
-      "%\n";
-
-
-    text +=
-      "Backtest Samples: " +
-      (
-        data.backtestSamples ??
-        "-"
+        analysis.backtest
+          ?.samples ??
+        0
       ) +
       "\n";
 
 
-    text +=
+    output +=
+      "BACKTEST WINS: " +
+      (
+        analysis.backtest
+          ?.wins ??
+        0
+      ) +
+      "\n";
+
+
+    output +=
+      "BACKTEST LOSSES: " +
+      (
+        analysis.backtest
+          ?.losses ??
+        0
+      ) +
+      "\n";
+
+
+    output +=
+      "BACKTEST ACCURACY: " +
+      (
+        analysis.backtest
+          ?.accuracy == null
+          ? "N/A"
+          : Math.round(
+              Number(
+                analysis.backtest
+                  .accuracy
+              )
+            ) + "%"
+      ) +
+      "\n";
+
+
+    output +=
       "\nMODEL DETAILS\n";
 
 
     (
-      data.models ||
+      analysis.models ||
       []
     )
     .forEach(
       model => {
 
-        text +=
+        output +=
           "\n" +
           model.name +
           "\n";
 
-        text +=
-          "Side: " +
-          model.side +
+        output +=
+          "Prediction: " +
+          model.prediction +
           "\n";
 
-        text +=
-          "Accuracy: " +
-          model.accuracy +
+        output +=
+          "Confidence: " +
+          model.confidence +
           "%\n";
-
-        text +=
-          "Weight: " +
-          model.weight +
-          "\n";
-
-        text +=
-          "Strength: " +
-          model.strength +
-          "%\n";
-
-        text +=
-          "Tested: " +
-          model.tested +
-          "\n";
 
       }
     );
 
 
     box.textContent =
-      text;
+      output;
 
-  }catch(error){
+
+  }
+  catch(error){
 
     box.textContent =
-      "ERROR: " +
+      "ERROR:\n" +
       error.message;
 
   }
@@ -1768,9 +2479,7 @@ async function testModel(){
 setInterval(
   () => {
 
-    if(
-      adminKey
-    ){
+    if(adminKey){
 
       loadStatus();
 
@@ -1788,9 +2497,7 @@ setInterval(
 setInterval(
   () => {
 
-    if(
-      adminKey
-    ){
+    if(adminKey){
 
       loadKeys();
 
@@ -1837,9 +2544,19 @@ function logout(){
     .value =
     "";
 
+
+  $("loginMsg")
+    .className =
+    "notice";
+
+
+  $("loginMsg")
+    .textContent =
+    "";
+
 }
 
 </script>
 
 </body>
-</html>
+  </html>
