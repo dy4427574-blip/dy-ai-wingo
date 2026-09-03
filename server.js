@@ -22,43 +22,82 @@ const WINGOBOT_URL = String(
 ).trim();
 
 const ROUND_SECONDS = 30;
+
 const LIVE_RESULTS_LIMIT = 30;
 const WINLOSS_LIMIT = 30;
 const BACKTEST_MAX_TESTS = 120;
 
+/*
+=========================================================
+RANDOM MIX TEST MODE
+=========================================================
+
+0  = Pure AI
+25 = 25% controlled random exploration
+50 = 50% random exploration
+
+Actual game result/history is NEVER changed.
+Only the prediction side is mixed.
+*/
+const RANDOM_MIX_PERCENT = Math.max(
+  0,
+  Math.min(
+    100,
+    Number(
+      process.env.RANDOM_MIX_PERCENT || 25
+    )
+  )
+);
+
 const ROOT = __dirname;
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL
-    ? { rejectUnauthorized: false }
-    : false,
+  connectionString:
+    process.env.DATABASE_URL,
+
+  ssl:
+    process.env.DATABASE_URL
+      ? { rejectUnauthorized: false }
+      : false,
+
   max: 5,
+
   idleTimeoutMillis: 30000,
+
   connectionTimeoutMillis: 10000
 });
 
 const state = {
   ready: false,
+
   database: false,
+
   wingobot: false,
 
   history: [],
+
   analysis: null,
 
   settledIssue: null,
+
   targetIssue: null,
 
   providerCurrentIssue: null,
+
   providerCountdown: null,
 
   historySignature: "",
+
   lastHistoryUpdate: 0,
 
   timerAnchorMs: Date.now(),
 
   lastError: null
 };
+
+/* =========================================================
+HELPERS
+========================================================= */
 
 function now() {
   return Date.now();
@@ -95,7 +134,9 @@ function text(
 ) {
   res.writeHead(status, {
     "Content-Type": type,
+
     "Cache-Control": "no-store",
+
     "Access-Control-Allow-Origin": "*"
   });
 
@@ -138,7 +179,7 @@ function parseBody(req) {
 }
 
 /* =========================================================
-   AUTH
+AUTH
 ========================================================= */
 
 function requireAdmin(req, res) {
@@ -182,7 +223,7 @@ function getDeviceId(req) {
 }
 
 /* =========================================================
-   BASIC HELPERS
+ISSUE / NUMBER HELPERS
 ========================================================= */
 
 function cleanIssue(value) {
@@ -234,25 +275,21 @@ function classifyNumber(number) {
     return null;
   }
 
-  if (n >= 5) {
-    return "BIG";
-  }
-
-  return "SMALL";
+  return n >= 5 ? "BIG" : "SMALL";
 }
 
 function normalizeSide(value, number) {
-  const s = String(
+  const side = String(
     value || ""
   )
     .trim()
     .toUpperCase();
 
   if (
-    s === "BIG" ||
-    s === "SMALL"
+    side === "BIG" ||
+    side === "SMALL"
   ) {
-    return s;
+    return side;
   }
 
   return classifyNumber(number);
@@ -264,6 +301,7 @@ function compareIssueDesc(a, b) {
     const y = BigInt(String(b));
 
     if (x === y) return 0;
+
     return x > y ? -1 : 1;
   } catch {
     return String(b).localeCompare(
@@ -295,7 +333,7 @@ function makeHistorySignature(history) {
 }
 
 /* =========================================================
-   WINGOBOT DATA
+WINGOBOT
 ========================================================= */
 
 function extractRows(data) {
@@ -351,6 +389,7 @@ function extractRows(data) {
 
     normalized.push({
       issueNumber: issue,
+
       number,
 
       side: normalizeSide(
@@ -381,9 +420,7 @@ function extractRows(data) {
 
   for (const row of normalized) {
     if (
-      !unique.has(
-        row.issueNumber
-      )
+      !unique.has(row.issueNumber)
     ) {
       unique.set(
         row.issueNumber,
@@ -502,7 +539,7 @@ async function fetchWingo() {
 }
 
 /* =========================================================
-   TIMER
+TIMER
 ========================================================= */
 
 function updateTimerAnchor() {
@@ -552,7 +589,7 @@ function getEstimatedCountdown() {
 }
 
 /* =========================================================
-   MODEL DATA
+MODEL HELPERS
 ========================================================= */
 
 function getSequence(history) {
@@ -586,9 +623,7 @@ function rateFor(values) {
       x => x === "BIG"
     ).length;
 
-  return (
-    big / values.length
-  );
+  return big / values.length;
 }
 
 function scoreToSide(
@@ -607,8 +642,7 @@ function scoreToSide(
 }
 
 /* =========================================================
-   MODEL 1
-   MULTI WINDOW RECENCY
+MODEL 1 - RECENCY
 ========================================================= */
 
 function recencyEvidence(seq) {
@@ -617,33 +651,23 @@ function recencyEvidence(seq) {
   }
 
   const windows = [
-    {
-      size: 3,
-      weight: 0.90
-    },
-    {
-      size: 5,
-      weight: 1.00
-    },
-    {
-      size: 8,
-      weight: 0.80
-    },
-    {
-      size: 10,
-      weight: 0.55
-    }
+    [3, 0.90],
+    [5, 1.00],
+    [8, 0.80],
+    [10, 0.55]
   ];
 
   let score = 0;
-  let totalWeight = 0;
+  let total = 0;
 
-  for (const window of windows) {
+  for (
+    const [size, weight] of windows
+  ) {
     const slice =
       seq.slice(
         0,
         Math.min(
-          window.size,
+          size,
           seq.length
         )
       );
@@ -658,18 +682,17 @@ function recencyEvidence(seq) {
     score +=
       (p - 0.5) *
       2 *
-      window.weight;
+      weight;
 
-    totalWeight +=
-      window.weight;
+    total += weight;
   }
 
-  if (!totalWeight) {
+  if (!total) {
     return null;
   }
 
   const normalized =
-    score / totalWeight;
+    score / total;
 
   const side =
     scoreToSide(
@@ -706,8 +729,7 @@ function recencyEvidence(seq) {
 }
 
 /* =========================================================
-   MODEL 2
-   CONDITIONAL TRANSITION
+MODEL 2 - TRANSITION
 ========================================================= */
 
 function transitionEvidence(seq) {
@@ -722,10 +744,6 @@ function transitionEvidence(seq) {
   let flip = 0;
   let samples = 0;
 
-  /*
-   * Historical cases where the same current side
-   * appeared and what followed it.
-   */
   for (
     let i = 1;
     i < seq.length - 1;
@@ -795,8 +813,7 @@ function transitionEvidence(seq) {
 }
 
 /* =========================================================
-   MODEL 3
-   SEQUENCE PATTERN
+MODEL 3 - SEQUENCE
 ========================================================= */
 
 function patternEvidence(seq) {
@@ -883,8 +900,7 @@ function patternEvidence(seq) {
           edge * 40
         ),
 
-      sample:
-        matches,
+      sample: matches,
 
       edge
     };
@@ -895,8 +911,7 @@ function patternEvidence(seq) {
         best.sample *
           best.edge
     ) {
-      best =
-        candidate;
+      best = candidate;
     }
   }
 
@@ -904,8 +919,7 @@ function patternEvidence(seq) {
 }
 
 /* =========================================================
-   MODEL 4
-   STREAK + TRANSITION
+MODEL 4 - STREAK
 ========================================================= */
 
 function streakEvidence(seq) {
@@ -966,7 +980,7 @@ function streakEvidence(seq) {
 }
 
 /* =========================================================
-   MODEL COLLECTION
+MODEL COLLECTION
 ========================================================= */
 
 function runModels(history) {
@@ -985,9 +999,9 @@ function runModels(history) {
   ].filter(Boolean);
 
   /*
-   * Recent balance has deliberately low weight.
-   * It can never dominate all other models.
-   */
+  Low-weight balance model.
+  It cannot dominate the ensemble.
+  */
   if (seq.length >= 8) {
     const recent =
       seq.slice(
@@ -1029,8 +1043,7 @@ function runModels(history) {
 
         edge,
 
-        lowWeight:
-          true
+        lowWeight: true
       });
     }
   }
@@ -1039,7 +1052,7 @@ function runModels(history) {
 }
 
 /* =========================================================
-   ENSEMBLE
+AI ENSEMBLE
 ========================================================= */
 
 function predictSide(history) {
@@ -1077,9 +1090,6 @@ function predictSide(history) {
         )
       );
 
-    /*
-     * Sample size helps but cannot dominate.
-     */
     const sampleFactor =
       Math.min(
         1.25,
@@ -1133,10 +1143,6 @@ function predictSide(history) {
       1
     );
 
-  /*
-   * With only 10 results, don't force a prediction
-   * when the models disagree.
-   */
   const minimumEdge =
     history.length < 15
       ? 0.16
@@ -1209,15 +1215,19 @@ function predictSide(history) {
 
   return {
     side,
+
     confidence,
+
     agreement,
+
     patternScore,
+
     models
   };
 }
 
 /* =========================================================
-   BACKTEST
+BACKTEST
 ========================================================= */
 
 function backtest(history) {
@@ -1254,12 +1264,6 @@ function backtest(history) {
         i
       );
 
-    if (
-      training.length < 5
-    ) {
-      continue;
-    }
-
     const actual =
       chronological[i]?.side;
 
@@ -1282,8 +1286,7 @@ function backtest(history) {
     tested++;
 
     if (
-      result.side ===
-      actual
+      result.side === actual
     ) {
       wins++;
     }
@@ -1300,7 +1303,9 @@ function backtest(history) {
 
   return {
     samples: tested,
+
     wins,
+
     losses:
       tested - wins,
 
@@ -1314,7 +1319,7 @@ function backtest(history) {
 }
 
 /* =========================================================
-   NUMBER PREDICTION
+NUMBER PICK
 ========================================================= */
 
 function chooseNumber(
@@ -1377,11 +1382,6 @@ function chooseNumber(
       }
     );
 
-  /*
-   * Don't blindly repeat the most frequent number.
-   * Choose the least represented candidate from the
-   * predicted BIG/SMALL class.
-   */
   let best =
     allowed[0];
 
@@ -1392,8 +1392,7 @@ function chooseNumber(
     const number of allowed
   ) {
     const value =
-      score.get(number) ||
-      0;
+      score.get(number) || 0;
 
     if (
       value < bestScore
@@ -1407,7 +1406,7 @@ function chooseNumber(
 }
 
 /* =========================================================
-   FINAL AI ANALYSIS
+BASE ANALYSIS
 ========================================================= */
 
 function adaptiveEnsemble(history) {
@@ -1420,10 +1419,6 @@ function adaptiveEnsemble(history) {
   let confidence =
     prediction.confidence;
 
-  /*
-   * Backtest matters only when enough historical
-   * samples are available.
-   */
   if (
     validation.samples >= 20 &&
     validation.accuracy !== null
@@ -1466,26 +1461,21 @@ function adaptiveEnsemble(history) {
   let status;
 
   if (!prediction.side) {
-    status =
-      "NO CLEAR EDGE";
+    status = "NO CLEAR EDGE";
   } else if (
     validation.samples < 20
   ) {
-    status =
-      "EARLY SIGNAL";
+    status = "EARLY SIGNAL";
   } else if (
     confidence >= 70
   ) {
-    status =
-      "STRONGER SIGNAL";
+    status = "STRONGER SIGNAL";
   } else if (
     confidence >= 62
   ) {
-    status =
-      "MODERATE SIGNAL";
+    status = "MODERATE SIGNAL";
   } else {
-    status =
-      "WEAK SIGNAL";
+    status = "WEAK SIGNAL";
   }
 
   return {
@@ -1552,7 +1542,145 @@ function adaptiveEnsemble(history) {
 }
 
 /* =========================================================
-   DATABASE
+CONTROLLED RANDOM MIX
+========================================================= */
+
+/*
+This function changes ONLY the prediction.
+
+Actual WingoBot history is untouched.
+
+The random decision happens only when a NEW
+settled history signature arrives, so the prediction
+does not randomly change every second.
+*/
+
+function applyRandomMix(
+  analysis,
+  history
+) {
+  if (!analysis) {
+    return analysis;
+  }
+
+  const original =
+    analysis.prediction;
+
+  if (
+    original !== "BIG" &&
+    original !== "SMALL"
+  ) {
+    return {
+      ...analysis,
+
+      mode: "AI MODE",
+
+      randomized: false,
+
+      aiPrediction: original,
+
+      randomMixPercent:
+        RANDOM_MIX_PERCENT
+    };
+  }
+
+  if (
+    RANDOM_MIX_PERCENT <= 0
+  ) {
+    return {
+      ...analysis,
+
+      mode: "AI MODE",
+
+      randomized: false,
+
+      aiPrediction: original,
+
+      randomMixPercent: 0
+    };
+  }
+
+  /*
+   * If data is very low, don't randomize.
+   */
+  if (history.length < 10) {
+    return {
+      ...analysis,
+
+      mode: "AI MODE",
+
+      randomized: false,
+
+      aiPrediction: original,
+
+      randomMixPercent:
+        RANDOM_MIX_PERCENT
+    };
+  }
+
+  const roll =
+    Math.random() * 100;
+
+  if (
+    roll >= RANDOM_MIX_PERCENT
+  ) {
+    return {
+      ...analysis,
+
+      mode: "AI MODE",
+
+      randomized: false,
+
+      aiPrediction: original,
+
+      randomMixPercent:
+        RANDOM_MIX_PERCENT
+    };
+  }
+
+  const mixedSide =
+    original === "BIG"
+      ? "SMALL"
+      : "BIG";
+
+  return {
+    ...analysis,
+
+    prediction:
+      mixedSide,
+
+    predictedNumber:
+      chooseNumber(
+        history,
+        mixedSide
+      ),
+
+    confidence:
+      Math.min(
+        Number(
+          analysis.confidence || 0
+        ),
+        55
+      ),
+
+    status:
+      "RANDOM MIX",
+
+    mode:
+      "RANDOM MIX",
+
+    randomized: true,
+
+    aiPrediction:
+      original,
+
+    randomMixPercent:
+      RANDOM_MIX_PERCENT
+  };
+}
+
+/* =========================================================
+DATABASE
 ========================================================= */
 
 async function ensureDatabase() {
@@ -1600,9 +1728,7 @@ async function ensureDatabase() {
     `ALTER TABLE predictions ADD COLUMN IF NOT EXISTS outcome TEXT`
   ];
 
-  for (
-    const sql of migrations
-  ) {
+  for (const sql of migrations) {
     try {
       await pool.query(sql);
     } catch (e) {
@@ -1617,7 +1743,7 @@ async function ensureDatabase() {
 }
 
 /* =========================================================
-   ACCESS KEY CHECK
+ACCESS KEY
 ========================================================= */
 
 async function checkAccessKey(
@@ -1664,8 +1790,7 @@ async function checkAccessKey(
 
   if (
     row.device_id &&
-    row.device_id !==
-      deviceId
+    row.device_id !== deviceId
   ) {
     return {
       ok: false,
@@ -1674,33 +1799,20 @@ async function checkAccessKey(
     };
   }
 
-  if (!row.device_id) {
-    await pool.query(
-      `
-      UPDATE access_keys
-      SET device_id = $1,
-          last_seen = $2
-      WHERE id = $3
-      `,
-      [
-        deviceId,
-        now(),
-        row.id
-      ]
-    );
-  } else {
-    await pool.query(
-      `
-      UPDATE access_keys
-      SET last_seen = $1
-      WHERE id = $2
-      `,
-      [
-        now(),
-        row.id
-      ]
-    );
-  }
+  await pool.query(
+    `
+    UPDATE access_keys
+    SET
+      device_id = COALESCE(device_id, $1),
+      last_seen = $2
+    WHERE id = $3
+    `,
+    [
+      deviceId,
+      now(),
+      row.id
+    ]
+  );
 
   return {
     ok: true
@@ -1742,8 +1854,7 @@ async function requireAccess(req) {
 
   if (
     !row.device_id ||
-    row.device_id !==
-      deviceId
+    row.device_id !== deviceId
   ) {
     return false;
   }
@@ -1764,7 +1875,7 @@ async function requireAccess(req) {
 }
 
 /* =========================================================
-   SAVE PREDICTION
+SAVE PREDICTION
 ========================================================= */
 
 async function savePrediction(
@@ -1781,8 +1892,7 @@ async function savePrediction(
 
   if (
     !analysis.prediction ||
-    analysis.prediction ===
-      "WAIT"
+    analysis.prediction === "WAIT"
   ) {
     return;
   }
@@ -1839,7 +1949,7 @@ async function savePrediction(
 }
 
 /* =========================================================
-   SETTLE WIN / LOSS
+SETTLE
 ========================================================= */
 
 async function settlePredictions(
@@ -1858,9 +1968,7 @@ async function settlePredictions(
       WINLOSS_LIMIT
     );
 
-  for (
-    const row of rows
-  ) {
+  for (const row of rows) {
     if (
       !row.issueNumber ||
       row.number === null
@@ -1910,13 +2018,16 @@ async function settlePredictions(
     await pool.query(
       `
       UPDATE predictions
-      SET settled_number = $1,
-          outcome = $2
+      SET
+        settled_number = $1,
+        outcome = $2
       WHERE id = $3
       `,
       [
         row.number,
+
         outcome,
+
         result.rows[0].id
       ]
     );
@@ -1924,7 +2035,7 @@ async function settlePredictions(
 }
 
 /* =========================================================
-   WIN LOSS STATS
+WIN LOSS
 ========================================================= */
 
 async function getWinLossStats() {
@@ -1969,6 +2080,7 @@ async function getWinLossStats() {
 
   return {
     win,
+
     loss,
 
     rate:
@@ -1983,7 +2095,7 @@ async function getWinLossStats() {
 }
 
 /* =========================================================
-   COMBINED LIVE RESULTS
+COMBINED RESULTS
 ========================================================= */
 
 async function getCombinedResults() {
@@ -2023,9 +2135,7 @@ async function getCombinedResults() {
         [issues]
       );
 
-    for (
-      const row of result.rows
-    ) {
+    for (const row of result.rows) {
       map.set(
         String(
           row.target_issue
@@ -2035,43 +2145,41 @@ async function getCombinedResults() {
     }
   }
 
-  return rows.map(
-    row => {
-      const prediction =
-        map.get(
-          String(
-            row.issueNumber
-          )
-        );
+  return rows.map(row => {
+    const prediction =
+      map.get(
+        String(
+          row.issueNumber
+        )
+      );
 
-      return {
-        issueNumber:
-          row.issueNumber,
+    return {
+      issueNumber:
+        row.issueNumber,
 
-        number:
-          row.number,
+      number:
+        row.number,
 
-        colour:
-          row.colour,
+      colour:
+        row.colour,
 
-        prediction:
-          prediction?.prediction ||
-          null,
+      prediction:
+        prediction?.prediction ||
+        null,
 
-        predictedNumber:
-          prediction?.predicted_number ??
-          null,
+      predictedNumber:
+        prediction?.predicted_number ??
+        null,
 
-        outcome:
-          prediction?.outcome ||
-          null
-      };
-    }
-  );
+      outcome:
+        prediction?.outcome ||
+        null
+    };
+  });
 }
 
 /* =========================================================
-   UPDATE LIVE STATE
+UPDATE LIVE STATE
 ========================================================= */
 
 async function updateLiveState() {
@@ -2123,37 +2231,47 @@ async function updateLiveState() {
         settled?.issueNumber ||
         null;
 
-      /*
-       * IMPORTANT:
-       * Target is always latest settled + 1.
-       */
       state.targetIssue =
         incrementIssue(
           state.settledIssue
         );
 
       /*
-       * Prediction is recalculated ONLY
-       * when new settled history arrives.
-       */
-      state.analysis =
+      First calculate the actual AI analysis.
+      */
+      const ai =
         adaptiveEnsemble(
           history
         );
 
+      /*
+      Then apply controlled random testing.
+      */
+      state.analysis =
+        applyRandomMix(
+          ai,
+          history
+        );
+
+      /*
+      Settle previous predictions first.
+      */
       await settlePredictions(
         history
       );
 
+      /*
+      Save the final displayed prediction.
+      */
       await savePrediction(
         state.targetIssue,
         state.analysis
       );
+
+      console.log(
+        `[PREDICTION] ${state.targetIssue} => ${state.analysis.prediction} | mode=${state.analysis.mode} | AI=${state.analysis.aiPrediction || state.analysis.prediction}`
+      );
     } else {
-      /*
-       * Do NOT generate another prediction
-       * here.
-       */
       const settled =
         history[0] ||
         null;
@@ -2169,10 +2287,6 @@ async function updateLiveState() {
       }
     }
 
-    /*
-     * If provider gives countdown,
-     * synchronize timer anchor.
-     */
     if (
       data.providerCountdown !==
         null &&
@@ -2207,7 +2321,7 @@ async function updateLiveState() {
 }
 
 /* =========================================================
-   STATE
+STATE
 ========================================================= */
 
 async function buildState() {
@@ -2225,6 +2339,7 @@ async function buildState() {
 
   return {
     success: true,
+
     ok: true,
 
     ready:
@@ -2288,6 +2403,22 @@ async function buildState() {
     status:
       analysis.status,
 
+    mode:
+      analysis.mode ||
+      "AI MODE",
+
+    randomized:
+      Boolean(
+        analysis.randomized
+      ),
+
+    aiPrediction:
+      analysis.aiPrediction ||
+      analysis.prediction,
+
+    randomMixPercent:
+      RANDOM_MIX_PERCENT,
+
     winLossStats:
       stats,
 
@@ -2300,7 +2431,7 @@ async function buildState() {
 }
 
 /* =========================================================
-   USER API
+USER API
 ========================================================= */
 
 async function keyCheck(req, res) {
@@ -2331,7 +2462,9 @@ async function keyCheck(req, res) {
     if (!result.ok) {
       json(res, 401, {
         success: false,
+
         ok: false,
+
         message:
           result.message
       });
@@ -2341,14 +2474,18 @@ async function keyCheck(req, res) {
 
     json(res, 200, {
       success: true,
+
       ok: true,
+
       message:
         "Access granted"
     });
   } catch (e) {
     json(res, 500, {
       success: false,
+
       ok: false,
+
       message:
         e.message
     });
@@ -2363,7 +2500,9 @@ async function stateApi(req, res) {
     if (!allowed) {
       json(res, 401, {
         success: false,
+
         ok: false,
+
         message:
           "Unauthorized"
       });
@@ -2379,7 +2518,9 @@ async function stateApi(req, res) {
   } catch (e) {
     json(res, 500, {
       success: false,
+
       ok: false,
+
       message:
         e.message
     });
@@ -2394,7 +2535,9 @@ async function historyApi(req, res) {
     if (!allowed) {
       json(res, 401, {
         success: false,
+
         ok: false,
+
         message:
           "Unauthorized"
       });
@@ -2404,6 +2547,7 @@ async function historyApi(req, res) {
 
     json(res, 200, {
       success: true,
+
       ok: true,
 
       history:
@@ -2424,7 +2568,9 @@ async function historyApi(req, res) {
   } catch (e) {
     json(res, 500, {
       success: false,
+
       ok: false,
+
       message:
         e.message
     });
@@ -2432,35 +2578,32 @@ async function historyApi(req, res) {
 }
 
 /* =========================================================
-   ADMIN API
+ADMIN
 ========================================================= */
 
-async function adminPing(
-  req,
-  res
-) {
+async function adminPing(req, res) {
   if (!requireAdmin(req, res)) {
     return;
   }
 
   json(res, 200, {
     success: true,
+
     ok: true,
+
     message:
       "Admin API working"
   });
 }
 
-async function adminStatus(
-  req,
-  res
-) {
+async function adminStatus(req, res) {
   if (!requireAdmin(req, res)) {
     return;
   }
 
   json(res, 200, {
     success: true,
+
     ok: true,
 
     ready:
@@ -2487,6 +2630,13 @@ async function adminStatus(
     countdown:
       getEstimatedCountdown(),
 
+    randomMixPercent:
+      RANDOM_MIX_PERCENT,
+
+    mode:
+      state.analysis?.mode ||
+      "AI MODE",
+
     lastHistoryUpdate:
       state.lastHistoryUpdate,
 
@@ -2495,10 +2645,7 @@ async function adminStatus(
   });
 }
 
-async function adminKeysGet(
-  req,
-  res
-) {
+async function adminKeysGet(req, res) {
   if (!requireAdmin(req, res)) {
     return;
   }
@@ -2506,7 +2653,9 @@ async function adminKeysGet(
   if (!state.database) {
     json(res, 500, {
       success: false,
+
       ok: false,
+
       message:
         "Database not configured"
     });
@@ -2530,7 +2679,9 @@ async function adminKeysGet(
 
   json(res, 200, {
     success: true,
+
     ok: true,
+
     keys:
       result.rows
   });
@@ -2546,10 +2697,7 @@ function generateKey() {
   );
 }
 
-async function adminKeysCreate(
-  req,
-  res
-) {
+async function adminKeysCreate(req, res) {
   if (!requireAdmin(req, res)) {
     return;
   }
@@ -2557,7 +2705,9 @@ async function adminKeysCreate(
   if (!state.database) {
     json(res, 500, {
       success: false,
+
       ok: false,
+
       message:
         "Database not configured"
     });
@@ -2646,6 +2796,7 @@ async function adminKeysCreate(
 
   json(res, 200, {
     success: true,
+
     ok: true,
 
     key:
@@ -2655,10 +2806,7 @@ async function adminKeysCreate(
   });
 }
 
-async function adminKeysDelete(
-  req,
-  res
-) {
+async function adminKeysDelete(req, res) {
   if (!requireAdmin(req, res)) {
     return;
   }
@@ -2666,7 +2814,9 @@ async function adminKeysDelete(
   if (!state.database) {
     json(res, 500, {
       success: false,
+
       ok: false,
+
       message:
         "Database not configured"
     });
@@ -2710,7 +2860,9 @@ async function adminKeysDelete(
   } else {
     json(res, 400, {
       success: false,
+
       ok: false,
+
       message:
         "Key or id required"
     });
@@ -2720,16 +2872,15 @@ async function adminKeysDelete(
 
   json(res, 200, {
     success: true,
+
     ok: true,
+
     deleted:
       result.rowCount
   });
 }
 
-async function adminResetDevice(
-  req,
-  res
-) {
+async function adminResetDevice(req, res) {
   if (!requireAdmin(req, res)) {
     return;
   }
@@ -2737,7 +2888,9 @@ async function adminResetDevice(
   if (!state.database) {
     json(res, 500, {
       success: false,
+
       ok: false,
+
       message:
         "Database not configured"
     });
@@ -2799,7 +2952,9 @@ async function adminResetDevice(
   } else {
     json(res, 400, {
       success: false,
+
       ok: false,
+
       message:
         "Key or id required"
     });
@@ -2809,6 +2964,7 @@ async function adminResetDevice(
 
   json(res, 200, {
     success: true,
+
     ok: true,
 
     reset:
@@ -2820,10 +2976,7 @@ async function adminResetDevice(
   });
 }
 
-async function adminWingoTest(
-  req,
-  res
-) {
+async function adminWingoTest(req, res) {
   if (!requireAdmin(req, res)) {
     return;
   }
@@ -2834,6 +2987,7 @@ async function adminWingoTest(
 
     json(res, 200, {
       success: true,
+
       ok: true,
 
       current:
@@ -2854,17 +3008,16 @@ async function adminWingoTest(
   } catch (e) {
     json(res, 500, {
       success: false,
+
       ok: false,
+
       message:
         e.message
     });
   }
 }
 
-async function adminModelTest(
-  req,
-  res
-) {
+async function adminModelTest(req, res) {
   if (!requireAdmin(req, res)) {
     return;
   }
@@ -2876,13 +3029,20 @@ async function adminModelTest(
       await updateLiveState();
     }
 
-    const analysis =
+    const ai =
       adaptiveEnsemble(
+        state.history
+      );
+
+    const analysis =
+      applyRandomMix(
+        ai,
         state.history
       );
 
     json(res, 200, {
       success: true,
+
       ok: true,
 
       analysis,
@@ -2915,12 +3075,26 @@ async function adminModelTest(
         analysis.confidence,
 
       status:
-        analysis.status
+        analysis.status,
+
+      mode:
+        analysis.mode,
+
+      randomized:
+        analysis.randomized,
+
+      aiPrediction:
+        analysis.aiPrediction,
+
+      randomMixPercent:
+        RANDOM_MIX_PERCENT
     });
   } catch (e) {
     json(res, 500, {
       success: false,
+
       ok: false,
+
       message:
         e.message
     });
@@ -2928,7 +3102,7 @@ async function adminModelTest(
 }
 
 /* =========================================================
-   STATIC FILES
+STATIC FILES
 ========================================================= */
 
 const MIME = {
@@ -3120,9 +3294,18 @@ function serveStatic(
       );
   }
 
+  const normalizedRoot =
+    path.resolve(ROOT);
+
+  const normalizedFile =
+    path.resolve(filePath);
+
   if (
-    !filePath.startsWith(
-      ROOT
+    normalizedFile !==
+      normalizedRoot &&
+    !normalizedFile.startsWith(
+      normalizedRoot +
+        path.sep
     )
   ) {
     text(
@@ -3135,7 +3318,7 @@ function serveStatic(
   }
 
   fs.stat(
-    filePath,
+    normalizedFile,
     (err, stat) => {
       if (
         err ||
@@ -3152,7 +3335,7 @@ function serveStatic(
 
       const ext =
         path.extname(
-          filePath
+          normalizedFile
         ).toLowerCase();
 
       const mime =
@@ -3165,7 +3348,7 @@ function serveStatic(
         serveAudio(
           req,
           res,
-          filePath
+          normalizedFile
         );
 
         return;
@@ -3180,14 +3363,14 @@ function serveStatic(
       });
 
       fs.createReadStream(
-        filePath
+        normalizedFile
       ).pipe(res);
     }
   );
 }
 
 /* =========================================================
-   ROUTER
+ROUTER
 ========================================================= */
 
 async function router(
@@ -3225,14 +3408,14 @@ async function router(
     return;
   }
 
-  /* HEALTH */
-
   if (
     pathname === "/health"
   ) {
     json(res, 200, {
       success: true,
+
       ok: true,
+
       status:
         "healthy",
 
@@ -3243,7 +3426,10 @@ async function router(
         state.database,
 
       wingobot:
-        state.wingobot
+        state.wingobot,
+
+      randomMixPercent:
+        RANDOM_MIX_PERCENT
     });
 
     return;
@@ -3396,8 +3582,6 @@ async function router(
     return;
   }
 
-  /* STATIC */
-
   serveStatic(
     req,
     res,
@@ -3406,7 +3590,7 @@ async function router(
 }
 
 /* =========================================================
-   HTTP SERVER
+SERVER
 ========================================================= */
 
 const server =
@@ -3434,7 +3618,9 @@ const server =
             500,
             {
               success: false,
+
               ok: false,
+
               message:
                 e.message ||
                 "Internal server error"
@@ -3448,7 +3634,7 @@ const server =
   );
 
 /* =========================================================
-   START
+START
 ========================================================= */
 
 async function start() {
@@ -3460,8 +3646,7 @@ async function start() {
       state.database
     );
   } catch (e) {
-    state.database =
-      false;
+    state.database = false;
 
     console.error(
       "Database setup error:",
@@ -3469,15 +3654,19 @@ async function start() {
     );
   }
 
-  state.ready =
-    true;
+  state.ready = true;
+
+  console.log(
+    "Random Mix:",
+    `${RANDOM_MIX_PERCENT}%`
+  );
 
   await updateLiveState();
 
   /*
-   * WingoBot history refresh:
-   * every 3 seconds.
-   */
+  WingoBot refresh every 3 seconds.
+  Prediction changes only when history changes.
+  */
   setInterval(
     async () => {
       await updateLiveState();
@@ -3492,12 +3681,16 @@ async function start() {
       console.log(
         `DY AI running on port ${PORT}`
       );
+
+      console.log(
+        `Random Mix ${RANDOM_MIX_PERCENT}% enabled`
+      );
     }
   );
 }
 
 /* =========================================================
-   PROCESS SAFETY
+PROCESS SAFETY
 ========================================================= */
 
 process.on(
