@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 
-<title>DY AI • WinGo 30S</title>
+<title>DY AI WinGo 30S</title>
 
 <style>
 *{
@@ -12,807 +12,643 @@
   -webkit-tap-highlight-color:transparent;
 }
 
-:root{
-  --bg:#f8f9fc;
-  --card:#ffffff;
-  --text:#111827;
-  --muted:#64748b;
-  --line:#eee5c8;
-  --orange:#ff9d00;
-  --orange2:#ff6500;
-  --red:#f0184d;
-  --purple:#5b42e8;
-  --green:#0ca678;
-  --dark:#17243a;
-}
-
 html,body{
   margin:0;
-  padding:0;
-  width:100%;
   min-height:100%;
-  background:var(--bg);
-  color:var(--text);
-  font-family:
-    Inter,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  background:#070b16;
+  color:#fff;
+  font-family:Arial,Helvetica,sans-serif;
 }
 
 body{
-  overflow-x:hidden;
+  padding:12px;
 }
 
-/* TOP HEADER */
+.app{
+  width:min(620px,100%);
+  margin:auto;
+}
+
+/* ================= HEADER ================= */
 
 .header{
-  height:78px;
-  background:#fff;
-  border-bottom:1px solid #e9edf3;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  position:sticky;
-  top:0;
-  z-index:50;
-  box-shadow:0 3px 18px rgba(20,30,50,.06);
-}
-
-.header-inner{
-  width:min(100%,680px);
-  padding:0 22px;
+  height:64px;
   display:flex;
   align-items:center;
   justify-content:space-between;
+  padding:0 5px;
 }
 
 .menu{
-  width:42px;
-  height:42px;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  gap:6px;
-  cursor:pointer;
+  width:40px;
+  height:40px;
+  border:1px solid #202943;
+  border-radius:13px;
+  background:#101629;
+  color:#fff;
+  font-size:20px;
 }
 
-.menu span{
-  display:block;
-  width:27px;
-  height:2.5px;
-  border-radius:20px;
-  background:#17202e;
-}
-
-.logo{
+.brand{
   display:flex;
   align-items:center;
   gap:8px;
-  font-size:24px;
-  font-weight:900;
-  letter-spacing:-1px;
 }
 
-.logo-ai{
-  color:#18b86b;
+.brand-ai{
+  font-size:25px;
+  font-weight:1000;
+  color:#20e58b;
   font-style:italic;
 }
 
-.logo-win{
-  color:#17202e;
+.brand-name{
+  font-size:20px;
+  font-weight:1000;
+  font-style:italic;
 }
 
-.logo-go{
-  color:#ef6a13;
+.brand-name span{
+  color:#ff7517;
 }
 
 .avatar{
-  width:43px;
-  height:43px;
-  border-radius:50%;
-  background:linear-gradient(145deg,#5735ce,#7a4ff0);
-  color:#fff;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:18px;
-  font-weight:800;
-  box-shadow:0 5px 15px rgba(91,66,232,.22);
+  width:40px;
+  height:40px;
+  display:grid;
+  place-items:center;
+  border-radius:14px;
+  background:linear-gradient(135deg,#5648ff,#00bfff);
+  font-weight:1000;
 }
 
-/* PAGE */
+/* ================= LOGIN ================= */
 
-.page{
-  width:min(100%,680px);
-  margin:auto;
-  padding:22px 16px 50px;
+#loginScreen{
+  padding:20px 5px;
 }
 
-/* HERO */
-
-.hero{
-  border:1px solid #f2dd85;
-  border-radius:28px;
-  padding:23px 18px 20px;
+.login-card{
+  margin-top:50px;
+  padding:25px 20px;
+  border-radius:27px;
   background:
-    radial-gradient(circle at 100% 0%,rgba(255,91,118,.12),transparent 40%),
-    radial-gradient(circle at 0% 100%,rgba(255,166,0,.15),transparent 42%),
-    linear-gradient(135deg,#fff4dd,#fff1f1);
-  box-shadow:0 8px 30px rgba(95,75,25,.08);
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(104,73,255,.20),
+      transparent 38%
+    ),
+    #0e1424;
+  border:1px solid #252e49;
+  box-shadow:0 25px 70px rgba(0,0,0,.35);
 }
 
-.hero-label{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  padding:9px 18px;
-  border-radius:30px;
-  color:#fff;
-  font-size:15px;
-  font-weight:800;
-  background:linear-gradient(100deg,#ffab00,#ff7a00);
-  box-shadow:0 5px 14px rgba(255,139,0,.23);
-}
-
-.pulse{
-  width:9px;
-  height:9px;
-  border-radius:50%;
-  background:#fff;
-  box-shadow:0 0 0 5px rgba(255,255,255,.17);
-  animation:pulse 1.3s infinite;
-}
-
-@keyframes pulse{
-  50%{opacity:.4;transform:scale(.75)}
-}
-
-.hero h1{
-  margin:16px 4px 8px;
+.robot{
+  width:74px;
+  height:74px;
+  margin:auto;
+  display:grid;
+  place-items:center;
+  border-radius:24px;
+  background:linear-gradient(135deg,#5946ff,#bd42ff);
+  box-shadow:0 0 45px rgba(102,68,255,.3);
   font-size:34px;
-  line-height:1.12;
-  letter-spacing:-1.4px;
 }
 
-.hero h1 span{
-  color:#ed591b;
+.login-card h1{
+  margin:18px 0 7px;
+  text-align:center;
+  font-size:25px;
 }
 
-.hero p{
-  margin:0 4px 17px;
-  color:#566276;
-  font-size:15.5px;
+.login-card p{
+  margin:0 0 22px;
+  text-align:center;
+  color:#8590a9;
+  font-size:12px;
   line-height:1.6;
 }
 
-.mode-switch{
-  background:#fff;
-  border:1px solid #e5e6eb;
-  padding:5px;
+.input{
+  width:100%;
+  border:1px solid #29334e;
+  border-radius:14px;
+  background:#080d19;
+  color:#fff;
+  padding:15px;
+  outline:none;
+  font-size:14px;
+}
+
+.input:focus{
+  border-color:#6956ff;
+  box-shadow:0 0 0 3px rgba(105,86,255,.12);
+}
+
+.connect{
+  width:100%;
+  margin-top:11px;
+  border:0;
+  border-radius:14px;
+  padding:15px;
+  color:#fff;
+  font-size:13px;
+  font-weight:1000;
+  background:linear-gradient(90deg,#5544ff,#9f43ff);
+}
+
+/* ================= MAIN ================= */
+
+.hidden{
+  display:none!important;
+}
+
+main{
+  padding-bottom:25px;
+}
+
+/* ================= HERO ================= */
+
+.hero{
+  padding:22px 18px;
+  border-radius:28px;
+  border:1px solid #29304a;
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(255,91,43,.15),
+      transparent 35%
+    ),
+    radial-gradient(
+      circle at 0% 100%,
+      rgba(89,65,255,.16),
+      transparent 35%
+    ),
+    #0d1322;
+  box-shadow:0 20px 55px rgba(0,0,0,.25);
+}
+
+.pill{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  padding:9px 13px;
   border-radius:30px;
+  background:linear-gradient(90deg,#ff9700,#ff174f);
+  font-size:10px;
+  font-weight:1000;
+}
+
+.hero h1{
+  margin:16px 0 7px;
+  font-size:28px;
+  line-height:1.13;
+}
+
+.hero h1 span{
+  color:#ff6d1a;
+}
+
+.hero p{
+  margin:0;
+  color:#8791a9;
+  font-size:12px;
+  line-height:1.55;
+}
+
+.mode-tabs{
   display:flex;
-  box-shadow:0 3px 12px rgba(0,0,0,.07);
+  gap:5px;
+  margin-top:18px;
+  padding:5px;
+  border-radius:17px;
+  background:#080d19;
+  border:1px solid #202943;
 }
 
 .mode{
   flex:1;
-  padding:13px 8px;
-  border-radius:25px;
   text-align:center;
-  font-size:14px;
-  font-weight:800;
-  color:#5f6877;
+  padding:11px 6px;
+  border-radius:12px;
+  color:#77829a;
+  font-size:11px;
+  font-weight:900;
 }
 
 .mode.active{
   color:#fff;
-  background:linear-gradient(100deg,#ff9f00,#f0184d);
-  box-shadow:0 4px 12px rgba(240,24,77,.18);
+  background:linear-gradient(90deg,#ff9700,#ff174f);
 }
 
-/* MAIN CARD */
+/* ================= PERIOD ================= */
 
-.main-card{
-  margin-top:18px;
-  background:#fff;
-  border:1px solid #f0df9e;
-  border-radius:31px;
-  padding:22px 18px 18px;
-  box-shadow:0 9px 32px rgba(72,55,20,.09);
+.period-card{
+  margin-top:15px;
+  padding:19px;
+  border-radius:28px;
+  border:1px solid #343a4e;
+  background:#111827;
 }
 
 .period-head{
   display:flex;
-  align-items:center;
-  gap:12px;
+  align-items:flex-start;
+  justify-content:space-between;
 }
 
-.period-icon{
-  width:48px;
-  height:48px;
-  flex:none;
-  border-radius:16px;
-  background:linear-gradient(145deg,#ffad12,#ff8800);
-  color:#fff;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:25px;
-  box-shadow:0 5px 13px rgba(255,144,0,.2);
-}
-
-.period-title{
-  font-size:12px;
-  color:#824b24;
-  font-weight:700;
-  letter-spacing:.8px;
-}
-
-.period-id{
-  margin-top:3px;
-  font-size:17px;
-  font-weight:900;
-  letter-spacing:.2px;
-}
-
-/* TIMER */
-
-.timer-row{
-  margin-top:17px;
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-
-.timer{
-  height:55px;
-  min-width:230px;
-  padding:0 18px;
-  border-radius:30px;
-  background:#17243a;
-  color:#fff;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:12px;
-  box-shadow:0 6px 15px rgba(23,36,58,.16);
-}
-
-.timer-icon{
-  color:#ffc000;
-  font-size:20px;
-}
-
-.timer-value{
-  font-size:21px;
-  font-weight:900;
+.label{
+  color:#77839d;
+  font-size:10px;
+  text-transform:uppercase;
   letter-spacing:1px;
-}
-
-.timer-sep{
-  width:1px;
-  height:25px;
-  background:#718097;
-}
-
-.timer-total{
-  color:#ccd5e4;
-  font-size:14px;
-  font-weight:700;
-}
-
-.small-action{
-  width:55px;
-  height:55px;
-  border-radius:17px;
-  border:2px solid #f2df9b;
-  background:#fff;
-  color:#975018;
-  font-size:22px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  cursor:pointer;
-}
-
-/* PROGRESS */
-
-.progress-head{
-  margin-top:22px;
-  padding-top:16px;
-  border-top:1px solid #f1e7c9;
-  display:flex;
-  justify-content:space-between;
-  font-size:13px;
   font-weight:800;
-  color:#8b542a;
 }
 
-.progress{
-  margin-top:10px;
-  width:100%;
-  height:9px;
-  background:#fae7a6;
-  border-radius:20px;
-  overflow:hidden;
-}
-
-.progress-bar{
-  height:100%;
-  width:54%;
-  border-radius:20px;
-  background:linear-gradient(90deg,#ffc000,#ff7113,#ee164d);
-  transition:width .5s linear;
-}
-
-/* AI RESULT */
-
-.result{
-  position:relative;
-  overflow:hidden;
-  margin-top:27px;
-  min-height:375px;
-  border-radius:30px;
-  padding:30px 20px 24px;
-  color:#fff;
-  text-align:center;
-  background:
-    radial-gradient(circle at 50% 0%,rgba(255,255,255,.12),transparent 35%),
-    linear-gradient(145deg,#8e280e,#d30d21 53%,#510811);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.14),
-    0 14px 30px rgba(128,17,23,.18);
-}
-
-.result::before{
-  content:"";
-  position:absolute;
-  width:220px;
-  height:220px;
-  border-radius:50%;
-  background:rgba(255,130,0,.09);
-  filter:blur(15px);
-  top:-100px;
-  left:50%;
-  transform:translateX(-50%);
-}
-
-.result-label{
-  position:relative;
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  padding:9px 20px;
-  border-radius:25px;
-  border:1px solid rgba(255,255,255,.22);
-  background:rgba(70,0,0,.28);
-  color:#ffd84a;
-  font-size:13px;
-  font-weight:900;
-  letter-spacing:.5px;
-}
-
-.result-value{
-  position:relative;
-  margin-top:26px;
-  font-size:67px;
-  line-height:1;
-  font-weight:950;
-  letter-spacing:3px;
-  text-shadow:0 5px 20px rgba(0,0,0,.18);
-}
-
-.result-status{
-  position:relative;
-  margin-top:13px;
-  color:#ffd8d8;
-  font-size:13px;
-}
-
-.divider{
-  position:relative;
-  margin:28px 20px 20px;
-  height:1px;
-  background:rgba(255,255,255,.22);
-}
-
-.analyze-btn{
-  position:relative;
-  width:100%;
-  border:0;
-  border-radius:25px;
-  padding:17px 12px;
-  color:#fff;
-  font-size:15px;
-  font-weight:900;
-  background:linear-gradient(100deg,#ffa900,#ff8b00,#f0134d);
-  box-shadow:0 8px 20px rgba(0,0,0,.17);
-  cursor:pointer;
-}
-
-.analyze-btn:active{
-  transform:scale(.98);
-}
-
-/* BUTTONS */
-
-.quick-actions{
-  display:grid;
-  grid-template-columns:1fr 1fr 1fr;
-  gap:10px;
-  margin-top:20px;
-}
-
-.quick{
-  height:59px;
-  border:2px solid #f1dfa0;
-  border-radius:27px;
-  background:#fff;
-  color:#74461e;
-  font-size:14px;
-  font-weight:900;
-  cursor:pointer;
-}
-
-.quick.vip{
-  color:#fff;
-  border:0;
-  background:linear-gradient(100deg,#ffac00,#ff6900);
-}
-
-/* ANALYSIS PANEL */
-
-.analysis{
-  margin-top:18px;
-  padding:19px;
-  background:#fff;
-  border:1px solid #e9edf3;
-  border-radius:25px;
-  box-shadow:0 7px 24px rgba(20,30,50,.05);
-}
-
-.section-title{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  margin-bottom:17px;
-}
-
-.section-title h2{
-  margin:0;
-  font-size:20px;
-  letter-spacing:-.4px;
+.period{
+  margin-top:7px;
+  font-size:18px;
+  font-weight:1000;
+  font-family:monospace;
+  word-break:break-all;
 }
 
 .live{
   display:flex;
   align-items:center;
   gap:6px;
-  color:#0b9a6a;
-  font-size:11px;
-  font-weight:900;
+  color:#2ee68f;
+  font-size:10px;
+  font-weight:1000;
 }
 
 .live-dot{
   width:7px;
   height:7px;
-  background:#13b77b;
   border-radius:50%;
-  animation:pulse 1s infinite;
+  background:#2ee68f;
+  box-shadow:0 0 12px #2ee68f;
+}
+
+/* ================= TIMER ================= */
+
+.timer-row{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  margin-top:17px;
+}
+
+.timer{
+  flex:1;
+  height:48px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  border-radius:15px;
+  background:#080d18;
+  border:1px solid #252d43;
+  font-size:18px;
+  font-weight:1000;
+  font-family:monospace;
+}
+
+.timer small{
+  color:#7d879c;
+  font-family:Arial;
+  font-size:9px;
+}
+
+.icon-btn{
+  width:48px;
+  height:48px;
+  border:1px solid #293249;
+  border-radius:15px;
+  background:#151c2d;
+  color:#fff;
+  font-size:18px;
+}
+
+.progress-info{
+  display:flex;
+  justify-content:space-between;
+  margin-top:14px;
+  color:#6f7b94;
+  font-size:9px;
+  font-weight:900;
+}
+
+.progress{
+  height:7px;
+  margin-top:7px;
+  overflow:hidden;
+  border-radius:20px;
+  background:#20283c;
+}
+
+.progress-bar{
+  width:0%;
+  height:100%;
+  border-radius:20px;
+  background:linear-gradient(90deg,#ff9b00,#ff1451);
+  transition:width .3s linear;
+}
+
+/* ================= AI PANEL ================= */
+
+.ai-panel{
+  position:relative;
+  overflow:hidden;
+  margin-top:16px;
+  min-height:310px;
+  padding:22px 18px;
+  border-radius:28px;
+  background:
+    radial-gradient(
+      circle at 15% 10%,
+      rgba(255,145,0,.32),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 90% 90%,
+      rgba(255,0,80,.23),
+      transparent 34%
+    ),
+    linear-gradient(
+      135deg,
+      #39160f,
+      #4a0716 50%,
+      #1a0812
+    );
+  border:1px solid #663326;
+  box-shadow:0 20px 60px rgba(70,10,10,.25);
+}
+
+.ai-grid{
+  position:absolute;
+  inset:0;
+  opacity:.08;
+  background-image:
+    linear-gradient(#fff 1px,transparent 1px),
+    linear-gradient(90deg,#fff 1px,transparent 1px);
+  background-size:25px 25px;
+}
+
+.ai-content{
+  position:relative;
+  z-index:2;
+  text-align:center;
+}
+
+.ai-badge{
+  display:inline-block;
+  padding:8px 15px;
+  border-radius:30px;
+  background:rgba(0,0,0,.2);
+  border:1px solid rgba(255,255,255,.17);
+  color:#ffd7bf;
+  font-size:10px;
+  font-weight:1000;
+  letter-spacing:.7px;
 }
 
 .signal{
-  padding:14px;
-  border-radius:17px;
-  background:#f8fafc;
-  margin-bottom:9px;
+  margin:28px 0 9px;
+  font-size:56px;
+  line-height:1;
+  font-weight:1000;
+  letter-spacing:1px;
 }
 
-.signal-top{
-  display:flex;
-  justify-content:space-between;
-  font-size:13px;
-  font-weight:800;
+.signal.big{
+  color:#38e39b;
+  text-shadow:0 0 35px rgba(56,227,155,.3);
 }
 
-.signal-name{
-  color:#334155;
+.signal.small{
+  color:#ff6689;
+  text-shadow:0 0 35px rgba(255,102,137,.3);
 }
 
-.signal-score{
-  color:#5b42e8;
+.signal.wait{
+  color:#fff;
+  font-size:34px;
 }
 
-.signal-track{
-  height:7px;
-  margin-top:10px;
-  background:#e8edf3;
-  border-radius:10px;
-  overflow:hidden;
+.analysis-status{
+  color:#f0bfa9;
+  font-size:11px;
+  min-height:18px;
 }
 
-.signal-fill{
-  height:100%;
-  width:72%;
-  border-radius:10px;
-  background:linear-gradient(90deg,#5b42e8,#ff7a00);
+.confidence{
+  margin-top:15px;
+  display:inline-block;
+  padding:8px 13px;
+  border-radius:30px;
+  background:rgba(0,0,0,.18);
+  color:#ffd9c9;
+  font-size:10px;
+  font-weight:900;
 }
 
-/* HISTORY */
+.scan{
+  animation:scanPulse 1s infinite;
+}
+
+@keyframes scanPulse{
+  0%,100%{
+    opacity:.35;
+  }
+  50%{
+    opacity:1;
+  }
+}
+
+/* ================= ACTIONS ================= */
+
+.actions{
+  display:grid;
+  grid-template-columns:1.4fr 1fr 1fr;
+  gap:8px;
+  margin-top:14px;
+}
+
+.action{
+  min-height:45px;
+  border-radius:14px;
+  border:1px solid #30394f;
+  background:#151c2d;
+  color:#dce2ef;
+  font-size:10px;
+  font-weight:1000;
+}
+
+.action.primary{
+  border:0;
+  background:linear-gradient(90deg,#ff9700,#ff174f);
+  color:#fff;
+}
+
+/* ================= HISTORY ================= */
 
 .history-card{
-  margin-top:18px;
-  background:#fff;
-  border:1px solid #eadba9;
-  border-radius:29px;
+  margin-top:16px;
   padding:18px;
-  box-shadow:0 8px 28px rgba(70,55,20,.07);
+  border-radius:28px;
+  border:1px solid #293249;
+  background:#101725;
 }
 
 .history-head{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  padding-bottom:15px;
-  border-bottom:1px solid #eee8d8;
+  padding-bottom:14px;
+  border-bottom:1px solid #20283a;
 }
 
-.history-title{
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-
-.history-icon{
-  width:44px;
-  height:44px;
-  border:1px solid #efdfb0;
-  border-radius:15px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  color:#ef7411;
-  font-size:22px;
-}
-
-.history-title h2{
+.history-head h2{
   margin:0;
-  font-size:19px;
+  font-size:16px;
 }
 
-.top10{
-  padding:8px 12px;
+.last30{
+  padding:8px 11px;
   border-radius:20px;
-  background:#fff7dc;
-  color:#9b5b16;
-  font-size:11px;
-  font-weight:900;
+  color:#ffd58e;
+  background:#2b2111;
+  border:1px solid #58401b;
+  font-size:9px;
+  font-weight:1000;
 }
 
-.rows{
-  margin-top:11px;
+.history{
+  margin-top:5px;
 }
 
-.row{
+.history-row{
   display:grid;
-  grid-template-columns:1fr 86px 65px;
+  grid-template-columns:1.35fr .7fr .65fr .65fr;
   align-items:center;
-  min-height:58px;
-  padding:6px 7px;
-  margin-bottom:7px;
-  border:1px solid #f1eddd;
-  border-radius:18px;
-  background:#fffefa;
+  min-height:47px;
+  gap:5px;
+  border-bottom:1px solid #1d2536;
+  font-size:10px;
 }
 
-.row-id{
-  font-size:14px;
+.history-row:last-child{
+  border-bottom:0;
+}
+
+.issue{
+  color:#dbe1ec;
+  font-family:monospace;
   font-weight:900;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
 }
 
-.row-time{
-  margin-left:6px;
-  color:#8993a4;
-  font-size:12px;
-  font-weight:600;
-}
-
-.badge{
+.side{
   justify-self:center;
-  padding:7px 12px;
-  border-radius:10px;
-  font-size:12px;
-  font-weight:950;
+  padding:6px 9px;
+  border-radius:9px;
+  font-size:9px;
+  font-weight:1000;
 }
 
-.badge.big{
-  color:#087d70;
-  background:#e6fbf7;
-  border:1px solid #9ee6db;
+.side.big{
+  color:#27d998;
+  background:#092b22;
 }
 
-.badge.small{
-  color:#9f234a;
-  background:#fff0f3;
-  border:1px solid #f3c6d2;
+.side.small{
+  color:#ff6d8b;
+  background:#30111b;
+}
+
+.side.pending{
+  color:#8a94a7;
+  background:#202638;
+}
+
+.number{
+  text-align:center;
+  color:#d6dbea;
+  font-weight:1000;
 }
 
 .outcome{
-  justify-self:end;
-  display:flex;
-  align-items:center;
-  gap:7px;
+  text-align:right;
+  font-weight:1000;
 }
 
-.num{
-  width:32px;
-  height:32px;
-  border-radius:50%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  color:#fff;
-  font-size:14px;
-  font-weight:950;
+.outcome.win{
+  color:#26d991;
 }
 
-.num.red{
-  background:linear-gradient(145deg,#ff6979,#dc163e);
+.outcome.loss{
+  color:#ff607c;
 }
 
-.num.green{
-  background:linear-gradient(145deg,#43d68a,#0aa963);
+.outcome.pending{
+  color:#717b90;
 }
 
-.dot{
-  width:13px;
-  height:13px;
-  border-radius:50%;
-}
-
-.dot.red{background:#f51e55}
-.dot.green{background:#10b981}
-
-.history-foot{
-  margin-top:13px;
-  padding-top:13px;
-  border-top:1px solid #eee8d8;
-  display:flex;
-  justify-content:space-between;
-  color:#8c5528;
-  font-size:12px;
-  font-weight:800;
-}
-
-/* NOTICE */
-
-.notice{
-  margin-top:18px;
-  padding:18px;
-  border-radius:22px;
-  background:#f6f8fb;
-  border:1px solid #e4e9f0;
-  color:#596579;
-  font-size:12px;
-  line-height:1.6;
-}
-
-/* FOOTER */
+/* ================= FOOTER ================= */
 
 .footer{
-  text-align:center;
-  padding:28px 10px 5px;
-  color:#98a1af;
-  font-size:11px;
+  display:flex;
+  justify-content:space-between;
+  padding:13px 3px 0;
+  color:#59657d;
+  font-size:9px;
 }
 
-/* MOBILE */
+/* ================= TOAST ================= */
+
+#toast{
+  position:fixed;
+  left:50%;
+  bottom:20px;
+  transform:translate(-50%,25px);
+  opacity:0;
+  pointer-events:none;
+  z-index:100;
+  padding:12px 16px;
+  max-width:90%;
+  border-radius:13px;
+  background:#1a2235;
+  border:1px solid #303b58;
+  color:#fff;
+  font-size:11px;
+  text-align:center;
+  transition:.25s;
+}
+
+#toast.show{
+  opacity:1;
+  transform:translate(-50%,0);
+}
 
 @media(max-width:420px){
 
-  .header{
-    height:70px;
-  }
-
-  .logo{
-    font-size:21px;
-  }
-
-  .page{
-    padding:16px 12px 40px;
-  }
-
-  .hero{
-    border-radius:24px;
-    padding:19px 14px;
+  body{
+    padding:8px;
   }
 
   .hero h1{
-    font-size:29px;
+    font-size:25px;
   }
 
-  .mode{
-    font-size:12px;
+  .signal{
+    font-size:50px;
   }
 
-  .main-card{
-    padding:18px 13px 15px;
-    border-radius:27px;
-  }
-
-  .period-id{
-    font-size:15px;
-  }
-
-  .timer-row{
-    gap:7px;
-  }
-
-  .timer{
-    min-width:0;
-    flex:1;
-    padding:0 11px;
-    gap:8px;
-  }
-
-  .timer-value{
-    font-size:19px;
-  }
-
-  .small-action{
-    width:49px;
-    height:49px;
-  }
-
-  .result{
-    min-height:350px;
-    padding:27px 15px 20px;
-  }
-
-  .result-value{
-    font-size:58px;
-  }
-
-  .quick-actions{
-    gap:7px;
-  }
-
-  .quick{
-    font-size:12px;
-    padding:0 4px;
-  }
-
-  .row{
-    grid-template-columns:1fr 78px 57px;
-  }
-
-  .row-id{
-    font-size:12px;
-  }
-
-  .row-time{
-    display:block;
-    margin-left:0;
-    margin-top:2px;
-  }
-
-  .badge{
-    font-size:11px;
-    padding:6px 8px;
-  }
-
-  .num{
-    width:29px;
-    height:29px;
-  }
-
-  .dot{
-    width:11px;
-    height:11px;
+  .history-row{
+    grid-template-columns:1.25fr .75fr .55fr .65fr;
   }
 }
 </style>
@@ -820,56 +656,97 @@ body{
 
 <body>
 
+<div class="app">
+
 <header class="header">
-  <div class="header-inner">
 
-    <div class="menu" onclick="menuClick()">
-      <span></span>
-      <span></span>
-      <span></span>
+  <button
+    class="menu"
+    type="button">
+    ☰
+  </button>
+
+  <div class="brand">
+    <div class="brand-ai">AI</div>
+    <div class="brand-name">
+      WinGo<span>Signals</span>
     </div>
-
-    <div class="logo">
-      <span class="logo-ai">AI</span>
-      <span class="logo-win">WinGo</span><span class="logo-go">Signals</span>
-    </div>
-
-    <div class="avatar">D</div>
-
   </div>
+
+  <div class="avatar">
+    D
+  </div>
+
 </header>
 
 
-<main class="page">
+<!-- ================= LOGIN ================= -->
 
-  <!-- HERO -->
+<section id="loginScreen">
+
+  <div class="login-card">
+
+    <div class="robot">
+      🤖
+    </div>
+
+    <h1>
+      DY AI WinGo
+    </h1>
+
+    <p>
+      Connect your authorized access key
+      to start live 30-second sequence analysis.
+    </p>
+
+    <input
+      id="accessKey"
+      class="input"
+      type="password"
+      autocomplete="off"
+      placeholder="Enter access key">
+
+    <button
+      class="connect"
+      onclick="connect()">
+      CONNECT AI ENGINE →
+    </button>
+
+  </div>
+
+</section>
+
+
+<!-- ================= APP ================= -->
+
+<main
+  id="mainApp"
+  class="hidden">
 
   <section class="hero">
 
-    <div class="hero-label">
-      <span class="pulse"></span>
-      30 Sec Interval Analyzer
+    <div class="pill">
+      ⚡ LIVE 30 SEC ANALYZER
     </div>
 
     <h1>
       WinGo 30 Sec
       <span>AI Pattern</span>
-      Predictor
     </h1>
 
     <p>
-      Short-window sequence tracking, real-time 30-second
-      cycle monitoring and recent draw pattern analysis.
+      Real-time sequence analysis with
+      recent-window, transition and trend signals.
     </p>
 
-    <div class="mode-switch">
+    <div class="mode-tabs">
 
       <div class="mode active">
-        ⚡ WinGo 30 Sec (Active)
+        ⚡ WinGo 30 Sec
       </div>
 
       <div class="mode">
-        ◷ WinGo 1-Min
+        ◷ WinGo 1 Min
       </div>
 
     </div>
@@ -877,116 +754,25 @@ body{
   </section>
 
 
-  <!-- MAIN -->
+  <!-- ================= PERIOD ================= -->
 
-  <section class="main-card">
+  <section class="period-card">
 
     <div class="period-head">
 
-      <div class="period-icon">〽</div>
-
       <div>
-        <div class="period-title">DRAW PERIOD</div>
-        <div class="period-id" id="period">
-          #2026090410000201050
+
+        <div class="label">
+          DRAW PERIOD
         </div>
-      </div>
 
-    </div>
-
-
-    <div class="timer-row">
-
-      <div class="timer">
-
-        <span class="timer-icon">◷</span>
-
-        <span class="timer-value" id="timer">
-          00:14
-        </span>
-
-        <span class="timer-sep"></span>
-
-        <span class="timer-total">
-          30S
-        </span>
+        <div
+          id="period"
+          class="period">
+          —
+        </div>
 
       </div>
-
-      <button class="small-action" onclick="refreshUI()">
-        ↻
-      </button>
-
-      <button class="small-action" onclick="toggleSound()">
-        🔊
-      </button>
-
-    </div>
-
-
-    <div class="progress-head">
-      <span>30 SEC COUNTDOWN</span>
-      <span id="remaining">14S REMAINING</span>
-    </div>
-
-    <div class="progress">
-      <div class="progress-bar" id="progress"></div>
-    </div>
-
-
-    <!-- RESULT -->
-
-    <div class="result">
-
-      <div class="result-label">
-        〽 30 SEC ANALYSIS RESULT
-      </div>
-
-      <div class="result-value" id="result">
-        BIG
-      </div>
-
-      <div class="result-status" id="status">
-        AI pattern analysis completed
-      </div>
-
-      <div class="divider"></div>
-
-      <button class="analyze-btn" onclick="reanalyze()">
-        ⚡ Re-Analyse 30 Sec Signal
-      </button>
-
-    </div>
-
-
-    <!-- QUICK BUTTONS -->
-
-    <div class="quick-actions">
-
-      <button class="quick vip" onclick="vipClick()">
-        ⚡ VIP Key
-      </button>
-
-      <button class="quick" onclick="sharePage()">
-        ⤴ Share
-      </button>
-
-      <button class="quick" onclick="telegramClick()">
-        ➤ Telegram
-      </button>
-
-    </div>
-
-  </section>
-
-
-  <!-- AI ANALYSIS -->
-
-  <section class="analysis">
-
-    <div class="section-title">
-
-      <h2>AI Analysis Core</h2>
 
       <div class="live">
         <span class="live-dot"></span>
@@ -996,445 +782,1119 @@ body{
     </div>
 
 
-    <div class="signal">
+    <div class="timer-row">
 
-      <div class="signal-top">
-        <span class="signal-name">
-          Recent Sequence
+      <div class="timer">
+
+        <span>◷</span>
+
+        <span id="timer">
+          00:30
         </span>
 
-        <span class="signal-score">
-          82%
-        </span>
+        <small>
+          30 SEC
+        </small>
+
       </div>
 
-      <div class="signal-track">
-        <div class="signal-fill" style="width:82%"></div>
+      <button
+        class="icon-btn"
+        onclick="manualRefresh()">
+        ↻
+      </button>
+
+      <button
+        id="soundButton"
+        class="icon-btn"
+        onclick="toggleSound()">
+        🔊
+      </button>
+
+    </div>
+
+
+    <div class="progress-info">
+
+      <span>
+        LIVE COUNTDOWN
+      </span>
+
+      <span id="remaining">
+        30S
+      </span>
+
+    </div>
+
+    <div class="progress">
+      <div
+        id="progressBar"
+        class="progress-bar">
+      </div>
+    </div>
+
+
+    <!-- ================= AI ================= -->
+
+    <div class="ai-panel">
+
+      <div class="ai-grid"></div>
+
+      <div class="ai-content">
+
+        <div class="ai-badge">
+          ∿ DY AI ANALYSIS ENGINE
+        </div>
+
+        <div
+          id="signal"
+          class="signal wait scan">
+          ANALYZING
+        </div>
+
+        <div
+          id="analysisStatus"
+          class="analysis-status">
+          Synchronizing live sequence...
+        </div>
+
+        <div
+          id="confidence"
+          class="confidence">
+          WAITING FOR DATA
+        </div>
+
       </div>
 
     </div>
 
 
-    <div class="signal">
+    <!-- ================= ACTIONS ================= -->
 
-      <div class="signal-top">
-        <span class="signal-name">
-          Streak Pattern
-        </span>
+    <div class="actions">
 
-        <span class="signal-score">
-          74%
-        </span>
-      </div>
+      <button
+        class="action primary"
+        onclick="reanalyze()">
+        ⚡ RE-ANALYZE
+      </button>
 
-      <div class="signal-track">
-        <div class="signal-fill" style="width:74%"></div>
-      </div>
+      <button
+        class="action"
+        onclick="sharePage()">
+        ⤴ SHARE
+      </button>
 
-    </div>
-
-
-    <div class="signal">
-
-      <div class="signal-top">
-        <span class="signal-name">
-          Transition Matrix
-        </span>
-
-        <span class="signal-score">
-          68%
-        </span>
-      </div>
-
-      <div class="signal-track">
-        <div class="signal-fill" style="width:68%"></div>
-      </div>
-
-    </div>
-
-
-    <div class="signal">
-
-      <div class="signal-top">
-        <span class="signal-name">
-          Change-Point Check
-        </span>
-
-        <span class="signal-score">
-          71%
-        </span>
-      </div>
-
-      <div class="signal-track">
-        <div class="signal-fill" style="width:71%"></div>
-      </div>
+      <button
+        class="action"
+        onclick="logout()">
+        EXIT
+      </button>
 
     </div>
 
   </section>
 
 
-  <!-- HISTORY -->
+  <!-- ================= HISTORY ================= -->
 
   <section class="history-card">
 
     <div class="history-head">
 
-      <div class="history-title">
+      <h2>
+        Recent History
+      </h2>
 
-        <div class="history-icon">
-          ▥
-        </div>
-
-        <h2>
-          WinGo 30 Sec Recent History
-        </h2>
-
-      </div>
-
-      <div class="top10">
+      <div class="last30">
         LAST 30
       </div>
 
     </div>
 
 
-    <div class="rows" id="history"></div>
+    <div
+      id="history"
+      class="history">
+
+      <div
+        style="
+        padding:28px;
+        text-align:center;
+        color:#707b91;
+        font-size:11px;">
+        Loading history...
+      </div>
+
+    </div>
 
 
-    <div class="history-foot">
+    <div class="footer">
 
       <span>
-        🟡 Live IST Sync
+        ● LIVE SYNC
       </span>
 
-      <span id="verified">
-        Sequence Tracking Active
+      <span>
+        DY AI ENGINE
       </span>
 
     </div>
 
   </section>
 
-
-  <div class="notice">
-    <b>AI Analysis Notice:</b>
-    This interface displays statistical pattern analysis.
-    Past outcomes do not guarantee future outcomes.
-  </div>
-
-
-  <footer class="footer">
-    DY AI • WinGo 30S Analytics
-    <br>
-    Real-time interface • Pattern tracking
-  </footer>
-
 </main>
+
+</div>
+
+
+<div id="toast"></div>
 
 
 <script>
+"use strict";
 
-/* ==========================================
-   DEMO UI DATA
-   API / SERVER WILL BE CONNECTED NEXT
-========================================== */
+/* =========================================================
+   CONFIG
+========================================================= */
 
-const demoHistory = [
+const KEY_STORAGE =
+  "dy_wingo_access_key";
 
-  ["051049","14:14","SMALL",2,"red"],
-  ["051048","14:13","SMALL",2,"red"],
-  ["051047","14:13","BIG",6,"red"],
-  ["051046","14:12","SMALL",3,"green"],
-  ["051045","14:12","SMALL",1,"green"],
-  ["051044","14:11","SMALL",1,"green"],
-  ["051043","14:11","SMALL",0,"red"],
-  ["051042","14:10","SMALL",3,"green"],
-  ["051041","14:10","BIG",7,"green"],
-  ["051040","14:09","BIG",6,"red"],
-  ["051039","14:09","SMALL",4,"green"],
-  ["051038","14:08","BIG",8,"green"],
-  ["051037","14:08","BIG",9,"red"],
-  ["051036","14:07","SMALL",3,"green"],
-  ["051035","14:07","BIG",5,"green"],
-  ["051034","14:06","SMALL",2,"red"],
-  ["051033","14:06","SMALL",1,"green"],
-  ["051032","14:05","BIG",8,"green"],
-  ["051031","14:05","BIG",6,"red"],
-  ["051030","14:04","SMALL",4,"green"],
-  ["051029","14:04","BIG",7,"green"],
-  ["051028","14:03","SMALL",2,"red"],
-  ["051027","14:03","SMALL",0,"red"],
-  ["051026","14:02","BIG",9,"red"],
-  ["051025","14:02","BIG",6,"red"],
-  ["051024","14:01","SMALL",3,"green"],
-  ["051023","14:01","BIG",8,"green"],
-  ["051022","14:00","SMALL",1,"green"],
-  ["051021","14:00","BIG",7,"green"],
-  ["051020","13:59","SMALL",4,"green"]
-
-];
+const DEVICE_STORAGE =
+  "dy_wingo_device_id";
 
 
-function renderHistory(){
+let accessKey =
+  localStorage.getItem(
+    KEY_STORAGE
+  ) || "";
 
-  const box = document.getElementById("history");
 
-  box.innerHTML = "";
+let deviceId =
+  localStorage.getItem(
+    DEVICE_STORAGE
+  );
 
-  demoHistory.slice(0,30).forEach(item => {
 
-    const [id,time,type,num,color] = item;
+if(!deviceId){
 
-    const row = document.createElement("div");
+  deviceId =
+    (
+      window.crypto &&
+      crypto.randomUUID
+    )
+      ? crypto.randomUUID()
+      : (
+        Date.now().toString(36) +
+        Math.random()
+          .toString(36)
+          .slice(2)
+      );
 
-    row.className = "row";
-
-    row.innerHTML = `
-
-      <div>
-        <span class="row-id">#${id}</span>
-        <span class="row-time">${time}</span>
-      </div>
-
-      <div class="badge ${type === "BIG" ? "big" : "small"}">
-        ${type}
-      </div>
-
-      <div class="outcome">
-
-        <div class="num ${color}">
-          ${num}
-        </div>
-
-        <div class="dot ${color}"></div>
-
-      </div>
-
-    `;
-
-    box.appendChild(row);
-
-  });
-
+  localStorage.setItem(
+    DEVICE_STORAGE,
+    deviceId
+  );
 }
 
 
-renderHistory();
+/* =========================================================
+   DOM
+========================================================= */
+
+const $ =
+  id =>
+  document.getElementById(id);
 
 
-/* ==========================================
-   30 SECOND TIMER
-========================================== */
+/* =========================================================
+   TOAST
+========================================================= */
 
-let seconds = 14;
+function toast(message){
 
-function updateTimer(){
+  const el =
+    $("toast");
 
-  seconds--;
+  el.textContent =
+    message;
 
-  if(seconds < 0){
+  el.classList.add(
+    "show"
+  );
 
-    seconds = 30;
+  clearTimeout(
+    window.__toast
+  );
 
-    newPeriod();
+  window.__toast =
+    setTimeout(
+      () =>
+        el.classList.remove(
+          "show"
+        ),
+      2300
+    );
+}
 
+
+/* =========================================================
+   API
+========================================================= */
+
+async function api(
+  endpoint,
+  options={}
+){
+
+  const response =
+    await fetch(
+      endpoint,
+      {
+        ...options,
+
+        headers:{
+          "Accept":
+            "application/json",
+
+          "Content-Type":
+            "application/json",
+
+          "X-Access-Key":
+            accessKey,
+
+          "X-Device-Id":
+            deviceId,
+
+          ...(options.headers || {})
+        },
+
+        cache:"no-store"
+      }
+    );
+
+
+  let data = {};
+
+  try{
+    data =
+      await response.json();
+  }catch{}
+
+
+  if(!response.ok){
+
+    throw new Error(
+      data.error ||
+      `HTTP ${response.status}`
+    );
   }
 
-  const value =
-    "00:" +
-    String(seconds).padStart(2,"0");
 
-  document.getElementById("timer").textContent = value;
-
-  document.getElementById("remaining").textContent =
-    seconds + "S REMAINING";
-
-  const percent =
-    ((30 - seconds) / 30) * 100;
-
-  document.getElementById("progress").style.width =
-    percent + "%";
-
+  return data;
 }
 
 
-setInterval(updateTimer,1000);
+/* =========================================================
+   CONNECT
+========================================================= */
+
+async function connect(){
+
+  const value =
+    $("accessKey")
+      .value
+      .trim();
 
 
-/* ==========================================
-   NEW PERIOD
-========================================== */
+  if(!value){
 
-function newPeriod(){
+    toast(
+      "Access key enter karo"
+    );
 
-  const old =
-    document.getElementById("period").textContent
-    .replace("#","");
+    return;
+  }
 
-  let n;
+
+  accessKey =
+    value;
+
 
   try{
 
-    n = BigInt(old) + 1n;
+    /*
+      Current server expects X-Access-Key
+      and X-Device-Id.
+    */
 
-  }catch(e){
+    const result =
+      await api(
+        "/api/key/check",
+        {
+          method:"GET"
+        }
+      );
 
-    n = BigInt(Date.now());
 
+    if(result.ok === false){
+
+      throw new Error(
+        result.error ||
+        "Access denied"
+      );
+    }
+
+
+    localStorage.setItem(
+      KEY_STORAGE,
+      accessKey
+    );
+
+
+    $("loginScreen")
+      .classList.add(
+        "hidden"
+      );
+
+    $("mainApp")
+      .classList.remove(
+        "hidden"
+      );
+
+
+    toast(
+      "AI engine connected"
+    );
+
+
+    refresh();
+
+  }catch(error){
+
+    accessKey = "";
+
+    toast(
+      "Connection failed: " +
+      error.message
+    );
+  }
+}
+
+
+/* =========================================================
+   LOGOUT
+========================================================= */
+
+function logout(){
+
+  localStorage.removeItem(
+    KEY_STORAGE
+  );
+
+  accessKey = "";
+
+  $("mainApp")
+    .classList.add(
+      "hidden"
+    );
+
+  $("loginScreen")
+    .classList.remove(
+      "hidden"
+    );
+
+  $("accessKey").value = "";
+
+  toast(
+    "Disconnected"
+  );
+}
+
+
+/* =========================================================
+   TIMER
+========================================================= */
+
+let secondsLeft = 30;
+
+function tick(){
+
+  secondsLeft--;
+
+  if(secondsLeft <= 0){
+
+    secondsLeft = 30;
+
+    /*
+      New period ke liye fresh data.
+    */
+    refresh();
   }
 
-  document.getElementById("period").textContent =
-    "#" + n.toString();
 
-  analyze();
+  $("timer")
+    .textContent =
+      "00:" +
+      String(
+        secondsLeft
+      ).padStart(2,"0");
 
+
+  $("remaining")
+    .textContent =
+      secondsLeft +
+      "S";
+
+
+  const percent =
+    ((30 - secondsLeft) / 30) * 100;
+
+
+  $("progressBar")
+    .style.width =
+      Math.max(
+        0,
+        Math.min(
+          100,
+          percent
+        )
+      ) + "%";
 }
 
 
-/* ==========================================
-   ANALYSIS ANIMATION
-========================================== */
+setInterval(
+  tick,
+  1000
+);
 
-function analyze(){
 
-  const result =
-    document.getElementById("result");
+/* =========================================================
+   DISPLAY SIGNAL
+========================================================= */
 
-  const status =
-    document.getElementById("status");
+function showAnalyzing(){
 
-  result.textContent = "SCAN";
+  $("signal")
+    .textContent =
+    "ANALYZING";
 
-  status.textContent =
-    "AI is scanning recent sequence...";
+  $("signal")
+    .className =
+    "signal wait scan";
 
-  setTimeout(()=>{
+  $("analysisStatus")
+    .textContent =
+    "Scanning recent sequence...";
 
-    const choices = ["BIG","SMALL"];
-
-    const selected =
-      choices[Math.floor(Math.random()*2)];
-
-    result.textContent = selected;
-
-    status.textContent =
-      "AI pattern analysis completed";
-
-  },1200);
-
+  $("confidence")
+    .textContent =
+    "AI ENGINE ACTIVE";
 }
 
 
-function reanalyze(){
+function showPrediction(
+  prediction,
+  confidence,
+  reason
+){
 
-  analyze();
+  const p =
+    String(
+      prediction || ""
+    ).toUpperCase();
 
+
+  if(
+    p !== "BIG" &&
+    p !== "SMALL"
+  ){
+
+    showAnalyzing();
+    return;
+  }
+
+
+  $("signal")
+    .textContent =
+    p;
+
+  $("signal")
+    .className =
+    "signal " +
+    (
+      p === "BIG"
+        ? "big"
+        : "small"
+    );
+
+
+  $("analysisStatus")
+    .textContent =
+    reason ||
+    "Multi-window sequence analysis complete";
+
+
+  if(
+    confidence !== undefined &&
+    confidence !== null
+  ){
+
+    $("confidence")
+      .textContent =
+      "MODEL CONFIDENCE " +
+      confidence +
+      "%";
+
+  }else{
+
+    $("confidence")
+      .textContent =
+      "MODEL ANALYSIS COMPLETE";
+  }
 }
 
 
-/* ==========================================
+/* =========================================================
+   HISTORY RENDER
+========================================================= */
+
+function resultFromRow(row){
+
+  if(!row)
+    return null;
+
+
+  const raw =
+    String(
+      row.result ||
+      row.bigSmall ||
+      row.size ||
+      ""
+    ).toUpperCase();
+
+
+  if(
+    raw === "BIG" ||
+    raw === "SMALL"
+  ){
+    return raw;
+  }
+
+
+  const n =
+    Number(
+      row.number
+    );
+
+
+  if(
+    Number.isInteger(n) &&
+    n >= 0 &&
+    n <= 9
+  ){
+
+    return n >= 5
+      ? "BIG"
+      : "SMALL";
+  }
+
+
+  return null;
+}
+
+
+function renderHistory(
+  rows
+){
+
+  const box =
+    $("history");
+
+
+  if(
+    !Array.isArray(rows) ||
+    !rows.length
+  ){
+
+    box.innerHTML =
+      `
+      <div style="
+        padding:28px;
+        text-align:center;
+        color:#707b91;
+        font-size:11px;">
+        No history available
+      </div>
+      `;
+
+    return;
+  }
+
+
+  let html = "";
+
+
+  for(
+    const row of rows.slice(0,30)
+  ){
+
+    const issue =
+      row.issueNumber ??
+      row.issue ??
+      "—";
+
+
+    const result =
+      resultFromRow(row);
+
+
+    const number =
+      Number.isInteger(
+        Number(row.number)
+      )
+        ? Number(row.number)
+        : "—";
+
+
+    /*
+      Prediction settlement, agar server
+      record ke saath data available ho.
+    */
+
+    let outcome =
+      String(
+        row.actualResult ??
+        row.outcome ??
+        ""
+      ).toUpperCase();
+
+
+    const prediction =
+      String(
+        row.prediction ??
+        ""
+      ).toUpperCase();
+
+
+    /*
+      IMPORTANT:
+      Actual result absent hai to WIN/LOSS
+      nahi banega.
+    */
+
+    if(
+      !outcome &&
+      result &&
+      (
+        prediction === "BIG" ||
+        prediction === "SMALL"
+      )
+    ){
+
+      outcome =
+        result === prediction
+          ? "WIN"
+          : "LOSS";
+    }
+
+
+    let sideClass =
+      "pending";
+
+
+    if(result === "BIG")
+      sideClass = "big";
+
+    if(result === "SMALL")
+      sideClass = "small";
+
+
+    let outcomeHTML =
+      `<span class="outcome pending">PENDING</span>`;
+
+
+    if(outcome === "WIN"){
+
+      outcomeHTML =
+        `<span class="outcome win">WIN</span>`;
+
+    }else if(outcome === "LOSS"){
+
+      outcomeHTML =
+        `<span class="outcome loss">LOSS</span>`;
+    }
+
+
+    html +=
+      `
+      <div class="history-row">
+
+        <div class="issue">
+          #${escapeHTML(issue)}
+        </div>
+
+        <div
+          class="side ${sideClass}">
+          ${result || "PENDING"}
+        </div>
+
+        <div class="number">
+          ${escapeHTML(number)}
+        </div>
+
+        <div>
+          ${outcomeHTML}
+        </div>
+
+      </div>
+      `;
+  }
+
+
+  box.innerHTML =
+    html;
+}
+
+
+/* =========================================================
+   ESCAPE
+========================================================= */
+
+function escapeHTML(value){
+
+  return String(
+    value ?? ""
+  )
+  .replaceAll(
+    "&",
+    "&amp;"
+  )
+  .replaceAll(
+    "<",
+    "&lt;"
+  )
+  .replaceAll(
+    ">",
+    "&gt;"
+  )
+  .replaceAll(
+    '"',
+    "&quot;"
+  )
+  .replaceAll(
+    "'",
+    "&#039;"
+  );
+}
+
+
+/* =========================================================
    REFRESH
-========================================== */
+========================================================= */
 
-function refreshUI(){
+let lastTarget =
+  "";
 
-  const btn =
-    document.querySelector(".small-action");
+async function refresh(){
 
-  btn.style.transform = "rotate(360deg)";
+  if(!accessKey)
+    return;
 
-  setTimeout(()=>{
 
-    btn.style.transform = "";
+  try{
 
-  },500);
+    const data =
+      await api(
+        "/api/state"
+      );
 
-  document.getElementById("status").textContent =
-    "Refreshing live analysis...";
 
-  setTimeout(()=>{
+    if(!data.ok){
 
-    document.getElementById("status").textContent =
-      "AI pattern analysis completed";
+      throw new Error(
+        data.error ||
+        "State unavailable"
+      );
+    }
 
-  },700);
 
+    const target =
+      data.targetIssue ||
+      "—";
+
+
+    $("period")
+      .textContent =
+      "#" + target;
+
+
+    /*
+      Server target change detect.
+    */
+
+    if(
+      target !== lastTarget
+    ){
+
+      lastTarget =
+        target;
+
+      secondsLeft = 30;
+
+      showAnalyzing();
+    }
+
+
+    const prediction =
+      data.prediction;
+
+
+    if(
+      prediction &&
+      prediction.prediction
+    ){
+
+      showPrediction(
+        prediction.prediction,
+        prediction.confidence,
+        prediction.reason
+      );
+
+    }else{
+
+      showAnalyzing();
+    }
+
+
+    renderHistory(
+      data.history || []
+    );
+
+
+  }catch(error){
+
+    $("signal")
+      .textContent =
+      "OFFLINE";
+
+    $("signal")
+      .className =
+      "signal wait";
+
+
+    $("analysisStatus")
+      .textContent =
+      error.message;
+
+
+    $("confidence")
+      .textContent =
+      "WAITING FOR SERVER";
+
+
+    if(
+      /access|key|device|unauthorized/i
+        .test(
+          error.message
+        )
+    ){
+
+      toast(
+        "Access key check failed"
+      );
+    }
+  }
 }
 
 
-/* ==========================================
-   SOUND
-========================================== */
+/* =========================================================
+   MANUAL REFRESH
+========================================================= */
 
-let soundOn = true;
+async function manualRefresh(){
 
-function toggleSound(){
+  await refresh();
 
-  soundOn = !soundOn;
-
-  const buttons =
-    document.querySelectorAll(".small-action");
-
-  buttons[1].textContent =
-    soundOn ? "🔊" : "🔇";
-
-}
-
-
-/* ==========================================
-   BUTTONS
-========================================== */
-
-function vipClick(){
-
-  alert(
-    "VIP access module will be connected from Admin Panel."
+  toast(
+    "Live data refreshed"
   );
-
 }
 
 
-function telegramClick(){
+/* =========================================================
+   RE-ANALYZE
+========================================================= */
 
-  alert(
-    "Telegram channel link will be added later."
+async function reanalyze(){
+
+  showAnalyzing();
+
+  await refresh();
+
+  toast(
+    "Sequence analyzed"
   );
-
 }
 
+
+/* =========================================================
+   SHARE
+========================================================= */
 
 async function sharePage(){
 
   try{
 
-    await navigator.share({
-      title:"DY AI WinGo 30S",
-      text:"DY AI WinGo 30S Analytics",
-      url:location.href
-    });
+    if(
+      navigator.share
+    ){
 
-  }catch(e){
+      await navigator.share({
+        title:
+          "DY AI WinGo Analyzer",
+        text:
+          "DY AI WinGo 30 Sec Analyzer",
+        url:
+          location.href
+      });
 
-    /* share cancelled */
+    }else{
 
-  }
+      await navigator.clipboard.writeText(
+        location.href
+      );
 
+      toast(
+        "Link copied"
+      );
+    }
+
+  }catch{}
 }
 
 
-function menuClick(){
+/* =========================================================
+   SOUND
+========================================================= */
 
-  alert(
-    "Menu module will be connected in the next build."
+let sound =
+  true;
+
+
+function toggleSound(){
+
+  sound =
+    !sound;
+
+
+  $("soundButton")
+    .textContent =
+    sound
+      ? "🔊"
+      : "🔇";
+
+
+  toast(
+    sound
+      ? "Sound ON"
+      : "Sound OFF"
   );
-
 }
 
 
-/* START */
+/* =========================================================
+   AUTO LOGIN
+========================================================= */
 
-analyze();
+if(accessKey){
+
+  $("accessKey")
+    .value =
+    accessKey;
+
+
+  api(
+    "/api/key/check",
+    {
+      method:"GET"
+    }
+  )
+  .then(
+    result => {
+
+      if(!result.ok){
+
+        throw new Error(
+          result.error ||
+          "Access denied"
+        );
+      }
+
+
+      $("loginScreen")
+        .classList.add(
+          "hidden"
+        );
+
+      $("mainApp")
+        .classList.remove(
+          "hidden"
+        );
+
+
+      refresh();
+
+    }
+  )
+  .catch(
+    () => {
+
+      localStorage.removeItem(
+        KEY_STORAGE
+      );
+
+      accessKey = "";
+
+    }
+  );
+}
+
+
+/* =========================================================
+   LIVE POLLING
+========================================================= */
+
+setInterval(
+  () => {
+
+    if(accessKey){
+      refresh();
+    }
+
+  },
+  3000
+);
+
+
+/* =========================================================
+   ENTER KEY
+========================================================= */
+
+$("accessKey")
+  .addEventListener(
+    "keydown",
+    event => {
+
+      if(
+        event.key === "Enter"
+      ){
+        connect();
+      }
+
+    }
+  );
 
 </script>
 
