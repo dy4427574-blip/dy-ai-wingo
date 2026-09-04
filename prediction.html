@@ -7,175 +7,241 @@
 
 <style>
 *{box-sizing:border-box}
+
 body{
   margin:0;
-  font-family:Arial,sans-serif;
   background:#070b16;
   color:#fff;
+  font-family:Arial,sans-serif;
 }
+
 .wrap{
   width:100%;
-  max-width:480px;
+  max-width:500px;
   margin:auto;
   padding:12px;
 }
-.header{
-  background:linear-gradient(135deg,#111b35,#0b1022);
+
+.card{
+  background:#0e1528;
   border:1px solid #27345b;
   border-radius:18px;
-  padding:16px;
-  text-align:center;
-  box-shadow:0 8px 30px #0008;
+  padding:15px;
+  margin-top:12px;
+  box-shadow:0 8px 25px rgba(0,0,0,.25);
 }
+
+.header{
+  text-align:center;
+  padding:17px;
+  background:linear-gradient(135deg,#111b35,#0b1022);
+}
+
 .logo{
   font-size:25px;
   font-weight:900;
   letter-spacing:1px;
 }
+
 .sub{
   margin-top:5px;
-  color:#9ca9ca;
+  color:#8996b8;
   font-size:12px;
 }
+
 .game{
-  margin-top:12px;
-  height:310px;
-  border-radius:18px;
+  position:relative;
+  width:100%;
+  height:330px;
   overflow:hidden;
+  border-radius:18px;
   background:#111827;
   border:1px solid #27345b;
-  position:relative;
 }
+
 .game iframe{
   width:100%;
   height:100%;
   border:0;
 }
-.open{
+
+.openGame{
   position:absolute;
+  z-index:5;
   right:10px;
   top:10px;
-  z-index:3;
-  background:#182442;
+  padding:9px 12px;
+  border-radius:10px;
+  background:#172443;
   color:#fff;
   border:1px solid #405486;
-  padding:8px 11px;
-  border-radius:10px;
   text-decoration:none;
-  font-size:12px;
-}
-.card{
-  margin-top:12px;
-  background:#0e1528;
-  border:1px solid #26345b;
-  border-radius:18px;
-  padding:15px;
-}
-.label{
-  color:#8996b8;
   font-size:11px;
+  font-weight:800;
+}
+
+.label{
+  color:#7f8cad;
+  font-size:10px;
   text-transform:uppercase;
   letter-spacing:1px;
 }
+
 .issue{
-  margin-top:6px;
+  margin-top:5px;
   font-size:18px;
-  font-weight:800;
+  font-weight:900;
   word-break:break-all;
 }
+
 .timer{
-  margin-top:10px;
   text-align:center;
-  font-size:32px;
+  font-size:34px;
   font-weight:900;
+  margin-top:10px;
 }
+
 .analysis{
   text-align:center;
-  padding:22px 10px;
+  padding:20px 5px;
 }
+
 .spinner{
-  width:35px;
-  height:35px;
+  width:36px;
+  height:36px;
   margin:auto;
-  border:4px solid #26345b;
+  border:4px solid #27345b;
   border-top-color:#fff;
   border-radius:50%;
   animation:spin .8s linear infinite;
 }
-@keyframes spin{to{transform:rotate(360deg)}}
-.analysis-text{
-  margin-top:12px;
-  color:#aeb9d4;
-  font-size:13px;
+
+@keyframes spin{
+  to{transform:rotate(360deg)}
 }
-.pred{
+
+.analysisText{
+  margin-top:12px;
+  color:#9da9c4;
+  font-size:12px;
+}
+
+.predictionBox{
   display:none;
   text-align:center;
+  padding:8px 0 3px;
 }
-.pred-value{
-  margin-top:8px;
-  font-size:42px;
+
+.prediction{
+  margin-top:7px;
+  font-size:45px;
+  line-height:1;
   font-weight:1000;
   letter-spacing:2px;
 }
-.conf{
-  margin-top:6px;
-  font-size:13px;
-  color:#aeb9d4;
+
+.big{
+  color:#ffb35c;
 }
+
+.small{
+  color:#6fa8ff;
+}
+
+.confidence{
+  margin-top:10px;
+  color:#9ca9c5;
+  font-size:13px;
+}
+
+.confidence b{
+  color:#fff;
+}
+
 .reason{
   margin-top:10px;
-  padding:9px;
-  border-radius:10px;
   background:#080d1b;
-  color:#8996b8;
+  border:1px solid #1d2947;
+  border-radius:10px;
+  padding:9px;
+  color:#8592b1;
   font-size:11px;
 }
+
+.regime{
+  margin-top:8px;
+  color:#647291;
+  font-size:10px;
+}
+
 .status{
-  margin-top:10px;
   text-align:center;
-  font-size:11px;
-  color:#7482a5;
+  margin-top:10px;
+  color:#63708e;
+  font-size:10px;
 }
+
 table{
   width:100%;
   border-collapse:collapse;
   margin-top:10px;
+  font-size:10px;
+}
+
+th{
+  color:#6e7b9b;
+  padding:9px 3px;
+  border-bottom:1px solid #26345a;
+}
+
+td{
+  padding:9px 3px;
+  text-align:center;
+  border-bottom:1px solid #18233e;
+}
+
+.win{
+  color:#55e39b;
+  font-weight:900;
+}
+
+.loss{
+  color:#ff657c;
+  font-weight:900;
+}
+
+.pending{
+  color:#7f8cad;
+  font-weight:900;
+}
+
+.stats{
+  display:flex;
+  justify-content:space-between;
+  margin-top:7px;
+  color:#8490ad;
   font-size:11px;
 }
-th{
-  color:#7180a4;
-  font-weight:700;
-  padding:9px 4px;
-  border-bottom:1px solid #26345b;
-}
-td{
-  padding:9px 4px;
-  text-align:center;
-  border-bottom:1px solid #18233f;
-}
-.win{color:#55e39b;font-weight:800}
-.loss{color:#ff657c;font-weight:800}
-.pending{color:#8996b8;font-weight:700}
-.big{color:#ffb45d;font-weight:900}
-.small{color:#71a7ff;font-weight:900}
-.footer{
-  text-align:center;
-  color:#56627f;
-  font-size:10px;
-  padding:16px 0;
-}
+
 .music{
   position:fixed;
-  bottom:15px;
   right:15px;
-  width:45px;
-  height:45px;
+  bottom:15px;
+  width:46px;
+  height:46px;
   border-radius:50%;
   border:1px solid #405486;
   background:#111b35;
-  color:white;
+  color:#fff;
   font-size:18px;
+  z-index:20;
+}
+
+.footer{
+  text-align:center;
+  padding:16px 0;
+  color:#4f5c78;
+  font-size:9px;
 }
 </style>
 </head>
@@ -184,286 +250,703 @@ td{
 
 <div class="wrap">
 
-  <div class="header">
+  <div class="card header">
     <div class="logo">DY AI WINGO 30S</div>
-    <div class="sub">Live AI Analysis • Smooth Updates</div>
+    <div class="sub">
+      Live AI Analysis • 30 Second Game
+    </div>
   </div>
 
-  <div class="game">
-    <a
-      class="open"
-      href="https://www.shreewin38.com/#/register?invitationCode=88523152383"
-      target="_blank"
-    >OPEN GAME</a>
 
-    <iframe
-      src="https://www.shreewin38.com/#/register?invitationCode=88523152383"
-      allow="fullscreen"
-    ></iframe>
+  <div class="card" style="padding:0;overflow:hidden">
+
+    <div class="game">
+
+      <a
+        class="openGame"
+        href="https://www.shreewin38.com/#/register?invitationCode=88523152383"
+        target="_blank"
+        rel="noopener"
+      >
+        OPEN GAME
+      </a>
+
+      <iframe
+        src="https://www.shreewin38.com/#/register?invitationCode=88523152383"
+        allow="fullscreen"
+        loading="eager"
+      ></iframe>
+
+    </div>
+
   </div>
+
 
   <div class="card">
 
-    <div class="label">Target Period</div>
-    <div class="issue" id="targetIssue">Loading...</div>
+    <div class="label">
+      Target Period
+    </div>
 
-    <div class="timer" id="timer">30</div>
+    <div
+      class="issue"
+      id="targetIssue"
+    >
+      Loading...
+    </div>
 
-    <div class="analysis" id="analysisBox">
+    <div
+      class="timer"
+      id="timer"
+    >
+      30
+    </div>
+
+
+    <div
+      class="analysis"
+      id="analysisBox"
+    >
+
       <div class="spinner"></div>
-      <div class="analysis-text" id="analysisText">
+
+      <div
+        class="analysisText"
+        id="analysisText"
+      >
         Waiting for live data...
       </div>
+
     </div>
 
-    <div class="pred" id="predictionBox">
 
-      <div class="label">AI RESULT</div>
+    <div
+      class="predictionBox"
+      id="predictionBox"
+    >
 
-      <div class="pred-value" id="prediction">
+      <div class="label">
+        AI PREDICTION
+      </div>
+
+      <div
+        class="prediction"
+        id="prediction"
+      >
         —
       </div>
 
-      <div class="conf">
-        Confidence: <b id="confidence">0%</b>
+      <div class="confidence">
+        Confidence:
+        <b id="confidence">0%</b>
       </div>
 
-      <div class="reason" id="reason">
+      <div
+        class="reason"
+        id="reason"
+      >
         —
       </div>
 
-      <div class="status" id="modelStatus">
-        AI synchronized
+      <div
+        class="regime"
+        id="regime"
+      >
+        —
+      </div>
+
+      <div
+        class="status"
+        id="status"
+      >
+        Waiting for synchronization
       </div>
 
     </div>
 
   </div>
 
+
   <div class="card">
 
-    <div style="display:flex;justify-content:space-between;align-items:center">
+    <div
+      style="
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+      "
+    >
+
       <div>
-        <div class="label">Prediction History</div>
-        <div style="font-size:18px;font-weight:900;margin-top:4px">
+        <div class="label">
+          Prediction History
+        </div>
+
+        <div
+          style="
+            font-size:19px;
+            font-weight:900;
+            margin-top:4px;
+          "
+        >
           LAST 30
         </div>
       </div>
 
-      <div id="recordStats" style="font-size:11px;color:#8290b2">
-        —
+      <div
+        id="stats"
+        style="
+          font-size:11px;
+          color:#8390ad;
+        "
+      >
+        0W • 0L
       </div>
+
     </div>
 
+
     <table>
+
       <thead>
+
         <tr>
           <th>PERIOD</th>
           <th>PRED</th>
           <th>RESULT</th>
           <th>W/L</th>
         </tr>
+
       </thead>
 
       <tbody id="historyBody">
+
         <tr>
-          <td colspan="4">Loading...</td>
+          <td colspan="4">
+            Loading...
+          </td>
         </tr>
+
       </tbody>
+
     </table>
 
   </div>
 
+
   <div class="footer">
-    DY AI • Live Wingo 30S
+    DY AI • Live Data
   </div>
 
 </div>
 
-<button class="music" id="musicBtn">♫</button>
 
-<audio id="music" loop>
-  <source src="/music.mp3" type="audio/mpeg">
+<button
+  class="music"
+  id="musicBtn"
+>
+  ♫
+</button>
+
+
+<audio
+  id="music"
+  loop
+  preload="none"
+>
+  <source
+    src="/music.mp3"
+    type="audio/mpeg"
+  >
 </audio>
+
 
 <script>
 
-const GAME_URL =
-  "https://www.shreewin38.com/#/register?invitationCode=88523152383";
+const music =
+  document.getElementById("music");
+
+const musicBtn =
+  document.getElementById("musicBtn");
+
+let musicPlaying = false;
 
 let lastTarget = "";
-let lastPrediction = "";
-let analysisTimer = null;
+
+let analysisRunning = false;
+
 let providerUpdated = 0;
-let timerValue = 30;
+
+let localTimer = 30;
 
 
-/* -----------------------------
-   BASIC HELPERS
------------------------------ */
+/* =========================================
+   ESCAPE HTML
+========================================= */
 
-function esc(v){
-  return String(v ?? "")
+function escapeHtml(value){
+
+  return String(value ?? "")
     .replaceAll("&","&amp;")
     .replaceAll("<","&lt;")
     .replaceAll(">","&gt;")
     .replaceAll('"',"&quot;")
     .replaceAll("'","&#039;");
-}
 
-function getClass(value){
-
-  if(!value) return "";
-
-  const x = String(value).toUpperCase();
-
-  if(x === "BIG") return "big";
-  if(x === "SMALL") return "small";
-  if(x === "WIN") return "win";
-  if(x === "LOSS") return "loss";
-  if(x === "PENDING") return "pending";
-
-  return "";
 }
 
 
-/* -----------------------------
+/* =========================================
+   RESULT CLASS
+========================================= */
+
+function resultClass(value){
+
+  const x =
+    String(value || "")
+      .toUpperCase();
+
+  if(x === "BIG"){
+    return "big";
+  }
+
+  if(x === "SMALL"){
+    return "small";
+  }
+
+  if(x === "WIN"){
+    return "win";
+  }
+
+  if(x === "LOSS"){
+    return "loss";
+  }
+
+  return "pending";
+}
+
+
+/* =========================================
    TIMER
------------------------------ */
+========================================= */
 
 function updateTimer(){
 
-  const now = Date.now();
-
   if(providerUpdated){
 
-    const diff =
-      Math.floor((now - providerUpdated) / 1000);
+    const elapsed =
+      Math.floor(
+        (Date.now() - providerUpdated) / 1000
+      );
 
-    let sec = 30 - (diff % 30);
+    let remaining =
+      30 - (elapsed % 30);
 
-    if(sec <= 0 || sec > 30){
-      sec = 30;
+    if(
+      remaining < 1 ||
+      remaining > 30
+    ){
+      remaining = 30;
     }
 
-    timerValue = sec;
+    localTimer = remaining;
 
   }else{
 
-    timerValue--;
+    localTimer--;
 
-    if(timerValue <= 0){
-      timerValue = 30;
+    if(localTimer <= 0){
+      localTimer = 30;
     }
 
   }
 
-  document.getElementById("timer").textContent =
-    String(timerValue).padStart(2,"0");
+  document.getElementById("timer")
+    .textContent =
+      String(localTimer)
+        .padStart(2,"0");
+
 }
 
-setInterval(updateTimer,1000);
+setInterval(
+  updateTimer,
+  1000
+);
 
 
-/* -----------------------------
-   3 SECOND ANALYSIS
------------------------------ */
+/* =========================================
+   ANALYSIS ANIMATION
+========================================= */
 
 function startAnalysis(){
 
-  clearTimeout(analysisTimer);
+  if(analysisRunning){
+    return;
+  }
+
+  analysisRunning = true;
 
   const box =
-    document.getElementById("analysisBox");
+    document.getElementById(
+      "analysisBox"
+    );
 
-  const pred =
-    document.getElementById("predictionBox");
+  const predictionBox =
+    document.getElementById(
+      "predictionBox"
+    );
 
   const text =
-    document.getElementById("analysisText");
+    document.getElementById(
+      "analysisText"
+    );
 
-  box.style.display = "block";
-  pred.style.display = "none";
+  box.style.display =
+    "block";
 
-  let count = 3;
+  predictionBox.style.display =
+    "none";
+
+  let seconds = 3;
 
   text.textContent =
-    "Analyzing recent trend... 3";
+    "Analyzing recent data... 3";
 
-  const interval = setInterval(()=>{
+  const timer =
+    setInterval(() => {
 
-    count--;
+      seconds--;
 
-    if(count === 2){
+      if(seconds === 2){
 
-      text.textContent =
-        "Checking sequence & transitions... 2";
+        text.textContent =
+          "Checking trend & transitions... 2";
 
-    }else if(count === 1){
+      }
 
-      text.textContent =
-        "Finalizing AI signal... 1";
+      if(seconds === 1){
 
-    }
+        text.textContent =
+          "Finalizing AI analysis... 1";
 
-    if(count <= 0){
+      }
 
-      clearInterval(interval);
+      if(seconds <= 0){
 
-      box.style.display = "none";
-      pred.style.display = "block";
+        clearInterval(timer);
 
-    }
+        box.style.display =
+          "none";
 
-  },1000);
+        predictionBox.style.display =
+          "block";
+
+        analysisRunning =
+          false;
+      }
+
+    },1000);
+
 }
 
 
-/* -----------------------------
-   STATE
------------------------------ */
+/* =========================================
+   RENDER PREDICTION
+========================================= */
+
+function renderPrediction(data){
+
+  const value =
+    String(
+      data.prediction || "—"
+    ).toUpperCase();
+
+  const element =
+    document.getElementById(
+      "prediction"
+    );
+
+  element.textContent =
+    value;
+
+  element.className =
+    "prediction " +
+    resultClass(value);
+
+
+  const confidence =
+    Number(
+      data.confidence || 0
+    );
+
+  document.getElementById(
+    "confidence"
+  ).textContent =
+    Math.max(
+      0,
+      Math.min(100,confidence)
+    ) + "%";
+
+
+  document.getElementById(
+    "reason"
+  ).textContent =
+    data.reason ||
+    "Multi-signal analysis";
+
+
+  document.getElementById(
+    "regime"
+  ).textContent =
+    data.regime
+      ? "REGIME: " + data.regime
+      : "";
+
+
+  document.getElementById(
+    "status"
+  ).textContent =
+    data.error
+      ? "Data connection issue"
+      : "AI synchronized";
+
+}
+
+
+/* =========================================
+   HISTORY
+========================================= */
+
+function renderHistory(rows){
+
+  const body =
+    document.getElementById(
+      "historyBody"
+    );
+
+  if(
+    !Array.isArray(rows) ||
+    rows.length === 0
+  ){
+
+    body.innerHTML = `
+      <tr>
+        <td colspan="4">
+          No history available
+        </td>
+      </tr>
+    `;
+
+    document.getElementById(
+      "stats"
+    ).textContent =
+      "0W • 0L";
+
+    return;
+  }
+
+
+  let wins = 0;
+  let losses = 0;
+
+
+  body.innerHTML =
+    rows
+      .slice(0,30)
+      .map(row => {
+
+        const period =
+          row.target_issue ??
+          row.issue ??
+          row.issueNumber ??
+          "—";
+
+
+        const prediction =
+          String(
+            row.prediction ??
+            row.pred ??
+            ""
+          ).toUpperCase();
+
+
+        const actual =
+          String(
+            row.actual_result ??
+            row.result ??
+            ""
+          ).toUpperCase();
+
+
+        let status =
+          String(
+            row.status ??
+            ""
+          ).toUpperCase();
+
+
+        /*
+          Missing actual result means
+          PENDING — never WIN/LOSS.
+        */
+
+        if(
+          !actual ||
+          actual === "NULL" ||
+          actual === "UNDEFINED" ||
+          actual === "—"
+        ){
+
+          status =
+            "PENDING";
+
+        }else{
+
+          if(
+            status !== "WIN" &&
+            status !== "LOSS"
+          ){
+
+            status =
+              prediction === actual
+                ? "WIN"
+                : "LOSS";
+
+          }
+
+        }
+
+
+        if(status === "WIN"){
+          wins++;
+        }
+
+        if(status === "LOSS"){
+          losses++;
+        }
+
+
+        return `
+          <tr>
+
+            <td>
+              ${escapeHtml(period)}
+            </td>
+
+            <td
+              class="${resultClass(prediction)}"
+            >
+              ${escapeHtml(
+                prediction || "—"
+              )}
+            </td>
+
+            <td
+              class="${resultClass(actual)}"
+            >
+              ${escapeHtml(
+                actual || "—"
+              )}
+            </td>
+
+            <td
+              class="${resultClass(status)}"
+            >
+              ${escapeHtml(
+                status || "PENDING"
+              )}
+            </td>
+
+          </tr>
+        `;
+
+      })
+      .join("");
+
+
+  document.getElementById(
+    "stats"
+  ).textContent =
+    `${wins}W • ${losses}L`;
+
+}
+
+
+/* =========================================
+   LOAD STATE
+========================================= */
 
 async function loadState(){
 
   try{
 
-    const r =
-      await fetch("/api/state?ts="+Date.now(),{
-        cache:"no-store"
-      });
+    const response =
+      await fetch(
+        "/api/state?ts=" +
+        Date.now(),
+        {
+          cache:"no-store"
+        }
+      );
 
-    const data = await r.json();
+
+    if(!response.ok){
+
+      throw new Error(
+        "HTTP " +
+        response.status
+      );
+    }
+
+
+    const data =
+      await response.json();
+
 
     if(!data.ok){
       return;
     }
 
+
     const target =
       data.targetIssue ||
       data.currentIssue ||
-      "—";
+      "";
 
-    document.getElementById("targetIssue")
-      .textContent = target;
+
+    document.getElementById(
+      "targetIssue"
+    ).textContent =
+      target || "Waiting...";
+
 
     if(data.providerLastUpdated){
 
       providerUpdated =
-        Number(data.providerLastUpdated);
+        Number(
+          data.providerLastUpdated
+        );
 
     }
 
+
     /*
-      New target = new analysis cycle.
+      New target = new 3-second
+      analysis animation.
     */
 
-    if(target !== lastTarget){
+    if(
+      target &&
+      target !== lastTarget
+    ){
 
-      lastTarget = target;
+      lastTarget =
+        target;
 
       startAnalysis();
 
-      setTimeout(()=>{
+
+      setTimeout(() => {
 
         renderPrediction(data);
 
@@ -473,13 +956,13 @@ async function loadState(){
 
       /*
         Same target:
-        keep updating confidence/reason,
-        but don't restart analysis.
+        update current information
+        without restarting animation.
       */
 
       if(
-        document.getElementById("predictionBox")
-          .style.display === "block"
+        !analysisRunning &&
+        data.prediction
       ){
 
         renderPrediction(data);
@@ -488,227 +971,84 @@ async function loadState(){
 
     }
 
-    renderHistory(data.history || []);
 
-  }catch(e){
+    renderHistory(
+      data.history || []
+    );
 
-    console.log("STATE ERROR:",e);
+
+  }catch(error){
+
+    console.log(
+      "STATE ERROR:",
+      error
+    );
+
+    document.getElementById(
+      "status"
+    ).textContent =
+      "Connecting to server...";
 
   }
 
 }
 
 
-/* -----------------------------
-   PREDICTION
------------------------------ */
+/* =========================================
+   MUSIC
+========================================= */
 
-function renderPrediction(data){
+musicBtn.addEventListener(
+  "click",
+  async () => {
 
-  const prediction =
-    String(data.prediction || "—")
-      .toUpperCase();
+    try{
 
-  document.getElementById("prediction")
-    .textContent = prediction;
+      if(!musicPlaying){
 
-  document.getElementById("prediction")
-    .className =
-      "pred-value " + getClass(prediction);
+        await music.play();
 
-  document.getElementById("confidence")
-    .textContent =
-      Math.max(
-        0,
-        Math.min(
-          100,
-          Number(data.confidence || 0)
-        )
-      ) + "%";
+        musicPlaying =
+          true;
 
-  document.getElementById("reason")
-    .textContent =
-      data.reason ||
-      "AI analysis synchronized.";
-
-  document.getElementById("modelStatus")
-    .textContent =
-      data.regime
-        ? "Regime: " + data.regime
-        : "AI synchronized";
-
-  lastPrediction = prediction;
-
-}
-
-
-/* -----------------------------
-   HISTORY
------------------------------ */
-
-function renderHistory(rows){
-
-  const body =
-    document.getElementById("historyBody");
-
-  if(!Array.isArray(rows) || rows.length === 0){
-
-    body.innerHTML =
-      `<tr>
-        <td colspan="4">No history yet</td>
-      </tr>`;
-
-    document.getElementById("recordStats")
-      .textContent = "0 records";
-
-    return;
-  }
-
-  const list =
-    rows.slice(0,30);
-
-  let wins = 0;
-  let losses = 0;
-
-  body.innerHTML =
-    list.map(row=>{
-
-      const period =
-        row.target_issue ??
-        row.issueNumber ??
-        row.period ??
-        "—";
-
-      const pred =
-        String(
-          row.prediction ??
-          row.pred ??
-          "—"
-        ).toUpperCase();
-
-      const actual =
-        String(
-          row.actual_result ??
-          row.result ??
-          ""
-        ).toUpperCase();
-
-      let status =
-        String(
-          row.status ??
-          ""
-        ).toUpperCase();
-
-      /*
-        IMPORTANT:
-        If actual result is missing,
-        it MUST remain PENDING.
-      */
-
-      if(!actual ||
-         actual === "—" ||
-         actual === "NULL" ||
-         actual === "PENDING"){
-
-        status = "PENDING";
+        musicBtn.textContent =
+          "🔊";
 
       }else{
 
-        if(
-          status !== "WIN" &&
-          status !== "LOSS"
-        ){
+        music.pause();
 
-          if(pred === actual){
-            status = "WIN";
-          }else{
-            status = "LOSS";
-          }
+        musicPlaying =
+          false;
 
-        }
+        musicBtn.textContent =
+          "♫";
 
       }
 
-      if(status === "WIN") wins++;
-      if(status === "LOSS") losses++;
+    }catch(error){
 
-      return `
-        <tr>
-
-          <td>${esc(period)}</td>
-
-          <td class="${getClass(pred)}">
-            ${esc(pred || "—")}
-          </td>
-
-          <td class="${getClass(actual)}">
-            ${esc(actual || "—")}
-          </td>
-
-          <td class="${getClass(status)}">
-            ${esc(status || "PENDING")}
-          </td>
-
-        </tr>
-      `;
-
-    }).join("");
-
-  document.getElementById("recordStats")
-    .textContent =
-      `${wins}W • ${losses}L`;
-
-}
-
-
-/* -----------------------------
-   MUSIC
------------------------------ */
-
-const music =
-  document.getElementById("music");
-
-const musicBtn =
-  document.getElementById("musicBtn");
-
-let playing = false;
-
-musicBtn.onclick = async ()=>{
-
-  try{
-
-    if(!playing){
-
-      await music.play();
-
-      playing = true;
-      musicBtn.textContent = "🔊";
-
-    }else{
-
-      music.pause();
-
-      playing = false;
-      musicBtn.textContent = "♫";
+      console.log(
+        "Music error:",
+        error
+      );
 
     }
 
-  }catch(e){
-
-    console.log(e);
-
   }
+);
 
-};
 
-
-/* -----------------------------
+/* =========================================
    START
------------------------------ */
+========================================= */
 
 loadState();
 
-setInterval(loadState,1000);
+setInterval(
+  loadState,
+  1000
+);
 
 </script>
 
