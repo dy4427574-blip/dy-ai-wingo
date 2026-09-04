@@ -2,209 +2,137 @@
 
 const http = require("http");
 const https = require("https");
-const fs = require("fs");
-const path = require("path");
 const crypto = require("crypto");
 const { Pool } = require("pg");
-
-/* =========================================================
-   CONFIG
-========================================================= */
+const fs = require("fs");
+const path = require("path");
+const { URL } = require("url");
 
 const PORT = Number(process.env.PORT || 10000);
-
 const ADMIN_KEY = String(process.env.ADMIN_KEY || "").trim();
-
-const WINGOBOT_TOKEN = String(
-  process.env.WINGOBOT_TOKEN || ""
-).trim();
-
-const DATABASE_URL = String(
-  process.env.DATABASE_URL || ""
-).trim();
-
-const GAME_URL =
-  "https://www.shreewin38.com/#/register?invitationCode=88523152383";
-
-const WINGOBOT_URL =
-  "https://api.wingobot.com/v2/30-sec-game-history";
+const WINGOBOT_TOKEN = String(process.env.WINGOBOT_TOKEN || "").trim();
+const DATABASE_URL = String(process.env.DATABASE_URL || "").trim();
 
 const ROOT = __dirname;
 
-/* =========================================================
-   BASIC VALIDATION
-========================================================= */
+if (!DATABASE_URL) {
+  console.error("DATABASE_URL missing");
+}
 
-console.log("======================================");
-console.log("DY AI WINGO SERVER");
-console.log("Node:", process.version);
-console.log("Port:", PORT);
-console.log("DATABASE_URL:", DATABASE_URL ? "FOUND" : "MISSING");
-console.log("WINGOBOT_TOKEN:", WINGOBOT_TOKEN ? "FOUND" : "MISSING");
-console.log("ADMIN_KEY:", ADMIN_KEY ? "FOUND" : "MISSING");
-console.log("======================================");
+if (!WINGOBOT_TOKEN) {
+  console.error("WINGOBOT_TOKEN missing");
+}
+
+const pool = new Pool({
+  connectionString: DATABASE_URL || undefined,
+  ssl: DATABASE_URL
+    ? { rejectUnauthorized: false }
+    : false,
+  max: 5,
+});
+
+const API_URL =
+  "https://api.wingobot.com/v2/30-sec-game-history";
+
+let providerState = {
+  currentIssue: null,
+  history: [],
+  stats: {},
+  lastFetch: 0,
+  error: null,
+};
+
+let refreshBusy = false;
+
 
 /* =========================================================
    DATABASE
 ========================================================= */
 
-let pool = null;
+async function initDB() {
+  if (!DATABASE_URL) return;
 
-if (DATABASE_URL) {
-  pool = new Pool({
-    connectionString: DATABASE_URL,
-    ssl: {
-      rejectUnauthorized: false
-    },
-    max: 5,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000
-  });
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS access_keys (
+      id SERIAL PRIMARY KEY,
+      access_key TEXT UNIQUE NOT NULL,
+      device_id TEXT,
+      created_at BIGINT NOT NULL,
+      last_seen BIGINT DEFAULT 0
+    )
+  `);
 
-  pool.on("error", (err) => {
-    console.error("[DB POOL ERROR]", err.message);
-  });
-} else {
-  console.warn(
-    "[DB] DATABASE_URL missing. Server will continue in limited mode."
-  );
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS prediction_records (
+      id SERIAL PRIMARY KEY,
+      target_issue TEXT NOT NULL,
+      prediction TEXT NOT NULL,
+      confidence INTEGER DEFAULT 0,
+      model_version TEXT,
+      actual_number INTEGER,
+      actual_result TEXT,
+      created_at BIGINT NOT NULL,
+      settled_at BIGINT
+    )
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_prediction_target
+    ON prediction_records(target_issue)
+  `);
+
+  console.log("Database ready");
 }
 
-/* =========================================================
-   MEMORY CACHE
-========================================================= */
-
-let liveState = {
-  ok: false,
-  provider: "WingoBot",
-  gameUrl: GAME_URL,
-  currentIssue: null,
-  latestSettledIssue: null,
-  targetIssue: null,
-  history: [],
-  fetched: 0,
-  lastUpdated: 0,
-  serverTime: Date.now(),
-  error: null
-};
-
-let lastProviderFetch = 0;
-let lastProviderError = null;
 
 /* =========================================================
-   DATABASE INITIALIZATION
-========================================================= */
-
-async function initDatabase() {
-  if (!pool) {
-    console.warn("[DB] Skipping database initialization.");
-    return false;
-  }
-
-  try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS access_keys (
-        id SERIAL PRIMARY KEY,
-        access_key TEXT UNIQUE NOT NULL,
-        device_id TEXT,
-        created_at BIGINT NOT NULL,
-        last_seen BIGINT DEFAULT 0
-      )
-    `);
-
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS prediction_records (
-        id SERIAL PRIMARY KEY,
-        target_issue TEXT NOT NULL,
-        prediction TEXT NOT NULL,
-        confidence INTEGER DEFAULT 0,
-        model_version TEXT,
-        actual_number INTEGER,
-        actual_result TEXT,
-        created_at BIGINT NOT NULL,
-        settled_at BIGINT
-      )
-    `);
-
-    await pool.query(`
-      CREATE INDEX IF NOT EXISTS idx_prediction_target_issue
-      ON prediction_records(target_issue)
-    `);
-
-    await pool.query(`
-      CREATE INDEX IF NOT EXISTS idx_prediction_created_at
-      ON prediction_records(created_at DESC)
-    `);
-
-    console.log("[DB] Tables ready.");
-    return true;
-  } catch (err) {
-    console.error("[DB INIT ERROR]", err.message);
-    return false;
-  }
-}
-
-/* =========================================================
-   HELPERS
+   BASIC HELPERS
 ========================================================= */
 
 function now() {
   return Date.now();
 }
 
-function safeJson(res, statusCode, data) {
+function json(res, status, data) {
   const body = JSON.stringify(data);
 
-  res.writeHead(statusCode, {
+  res.writeHead(status, {
     "Content-Type": "application/json; charset=utf-8",
     "Cache-Control": "no-store",
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "Content-Type, X-Admin-Key, X-Access-Key",
-    "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
-    "Content-Length": Buffer.byteLength(body)
+    "Access-Control-Allow-Headers":
+      "Content-Type, X-Access-Key, X-Device-Id, Authorization",
+    "Access-Control-Allow-Methods":
+      "GET, POST, DELETE, OPTIONS",
   });
 
   res.end(body);
 }
 
-function sendText(res, statusCode, text, contentType = "text/plain") {
-  res.writeHead(statusCode, {
-    "Content-Type": `${contentType}; charset=utf-8`,
-    "Cache-Control": "no-store"
+function text(res, status, data, type = "text/plain") {
+  res.writeHead(status, {
+    "Content-Type": `${type}; charset=utf-8`,
+    "Cache-Control": "no-store",
   });
 
-  res.end(text);
+  res.end(data);
 }
 
-function notFound(res) {
-  safeJson(res, 404, {
-    ok: false,
-    error: "Not found"
-  });
-}
-
-function methodNotAllowed(res) {
-  safeJson(res, 405, {
-    ok: false,
-    error: "Method not allowed"
-  });
-}
-
-function parseJsonBody(req) {
+function parseBody(req) {
   return new Promise((resolve, reject) => {
     let body = "";
 
-    req.on("data", (chunk) => {
-      body += chunk.toString();
+    req.on("data", chunk => {
+      body += chunk;
 
-      if (body.length > 1024 * 1024) {
-        reject(new Error("Request body too large"));
+      if (body.length > 2 * 1024 * 1024) {
+        reject(new Error("Request too large"));
         req.destroy();
       }
     });
 
     req.on("end", () => {
-      if (!body.trim()) {
+      if (!body) {
         resolve({});
         return;
       }
@@ -220,91 +148,166 @@ function parseJsonBody(req) {
   });
 }
 
-function getHeader(req, name) {
-  const value = req.headers[name.toLowerCase()];
-  return typeof value === "string" ? value.trim() : "";
+function randomKey() {
+  return crypto.randomBytes(18).toString("hex");
 }
 
-function requireAdmin(req, res) {
-  if (!ADMIN_KEY) {
-    safeJson(res, 503, {
-      ok: false,
-      error: "ADMIN_KEY is not configured on server"
-    });
+function incrementIssue(issue) {
+  const s = String(issue || "");
 
-    return false;
-  }
+  if (!s) return null;
 
-  const provided =
-    getHeader(req, "x-admin-key") ||
-    getHeader(req, "authorization").replace(/^Bearer\s+/i, "");
+  const match = s.match(/^(.*?)(\d+)$/);
 
-  if (!provided || provided !== ADMIN_KEY) {
-    safeJson(res, 401, {
-      ok: false,
-      error: "Invalid admin key"
-    });
+  if (!match) return null;
 
-    return false;
-  }
+  const prefix = match[1];
+  const digits = match[2];
 
-  return true;
+  const next = String(
+    BigInt(digits) + 1n
+  ).padStart(digits.length, "0");
+
+  return prefix + next;
 }
+
 
 /* =========================================================
-   DEVICE ID
+   RESULT NORMALIZATION
 ========================================================= */
 
-function validDeviceId(value) {
-  if (!value) return false;
+function getNumber(row) {
+  const n = Number(row?.number);
 
-  return /^[a-zA-Z0-9._:-]{8,200}$/.test(value);
+  if (
+    Number.isInteger(n) &&
+    n >= 0 &&
+    n <= 9
+  ) {
+    return n;
+  }
+
+  return null;
 }
 
+function getResult(row) {
+  const n = getNumber(row);
+
+  if (n !== null) {
+    return n >= 5 ? "BIG" : "SMALL";
+  }
+
+  const possible = [
+    row?.result,
+    row?.bigSmall,
+    row?.size,
+    row?.prediction,
+  ];
+
+  for (const value of possible) {
+    const s = String(value || "")
+      .trim()
+      .toUpperCase();
+
+    if (s === "BIG" || s === "SMALL") {
+      return s;
+    }
+  }
+
+  return null;
+}
+
+function normalizeRow(row) {
+  return {
+    issueNumber: String(
+      row?.issueNumber ??
+      row?.issue ??
+      row?.period ??
+      ""
+    ),
+
+    number: getNumber(row),
+
+    result: getResult(row),
+
+    colour:
+      row?.colour ??
+      row?.color ??
+      null,
+
+    premium:
+      row?.premium ??
+      null,
+
+    sum:
+      row?.sum ??
+      null,
+  };
+}
+
+
 /* =========================================================
-   WINGOBOT FETCH
+   WINGOBOT REQUEST
 ========================================================= */
 
-function httpsGetJson(url, headers = {}) {
+function fetchWingoBot() {
   return new Promise((resolve, reject) => {
-    const request = https.get(
-      url,
+    if (!WINGOBOT_TOKEN) {
+      reject(new Error("WINGOBOT_TOKEN missing"));
+      return;
+    }
+
+    const url = new URL(API_URL);
+
+    const req = https.request(
       {
+        hostname: url.hostname,
+        path: url.pathname + url.search,
+        method: "GET",
+
         headers: {
-          Accept: "application/json",
-          "User-Agent": "DY-AI-Wingo/1.0",
-          ...headers
+          Authorization:
+            "Bearer " + WINGOBOT_TOKEN,
+
+          Accept:
+            "application/json",
+
+          "User-Agent":
+            "DY-AI-Wingo/2.0",
         },
-        timeout: 15000
+
+        timeout: 10000,
       },
-      (response) => {
+
+      res => {
         let body = "";
 
-        response.setEncoding("utf8");
-
-        response.on("data", (chunk) => {
+        res.on("data", chunk => {
           body += chunk;
         });
 
-        response.on("end", () => {
-          const status = response.statusCode || 0;
-
-          if (status < 200 || status >= 300) {
+        res.on("end", () => {
+          if (
+            res.statusCode < 200 ||
+            res.statusCode >= 300
+          ) {
             reject(
               new Error(
-                `WingoBot HTTP ${status}: ${body.slice(0, 300)}`
+                "WingoBot HTTP " +
+                res.statusCode
               )
             );
+
             return;
           }
 
           try {
-            const json = JSON.parse(body);
-            resolve(json);
+            const data = JSON.parse(body);
+            resolve(data);
           } catch {
             reject(
               new Error(
-                `WingoBot returned invalid JSON: ${body.slice(0, 300)}`
+                "Invalid WingoBot response"
               )
             );
           }
@@ -312,1428 +315,1753 @@ function httpsGetJson(url, headers = {}) {
       }
     );
 
-    request.on("timeout", () => {
-      request.destroy(new Error("WingoBot request timeout"));
+    req.on("timeout", () => {
+      req.destroy(
+        new Error("WingoBot request timeout")
+      );
     });
 
-    request.on("error", reject);
+    req.on("error", reject);
+
+    req.end();
   });
 }
 
-/* =========================================================
-   NORMALIZATION
-========================================================= */
-
-function normalizeResult(value) {
-  if (value === null || value === undefined) {
-    return null;
-  }
-
-  const text = String(value).trim().toUpperCase();
-
-  if (text === "BIG") return "BIG";
-  if (text === "SMALL") return "SMALL";
-
-  return null;
-}
-
-function normalizeHistory(raw) {
-  if (!Array.isArray(raw)) {
-    return [];
-  }
-
-  const output = [];
-
-  for (const row of raw) {
-    if (!row) continue;
-
-    const issue =
-      row.issueNumber ??
-      row.issue ??
-      row.period ??
-      row.periodNumber;
-
-    if (issue === undefined || issue === null) {
-      continue;
-    }
-
-    const issueNumber = String(issue).trim();
-
-    if (!issueNumber) continue;
-
-    let number = null;
-
-    if (
-      row.number !== undefined &&
-      row.number !== null &&
-      String(row.number).trim() !== ""
-    ) {
-      const parsed = Number(row.number);
-
-      if (Number.isInteger(parsed) && parsed >= 0 && parsed <= 9) {
-        number = parsed;
-      }
-    }
-
-    let result = normalizeResult(row.result);
-
-    if (!result) {
-      result = normalizeResult(row.bigSmall);
-    }
-
-    if (!result) {
-      result = normalizeResult(row.size);
-    }
-
-    if (!result && number !== null) {
-      result = number >= 5 ? "BIG" : "SMALL";
-    }
-
-    output.push({
-      issueNumber,
-      number,
-      result,
-      colour: row.colour ?? null,
-      premium: row.premium ?? null,
-      sum: row.sum ?? null
-    });
-  }
-
-  return output;
-}
-
-/* =========================================================
-   ISSUE HELPERS
-========================================================= */
-
-function incrementIssue(issue) {
-  if (!issue) return null;
-
-  const text = String(issue).trim();
-
-  if (!/^\d+$/.test(text)) {
-    return null;
-  }
-
-  try {
-    const n = BigInt(text) + 1n;
-    return n.toString().padStart(text.length, "0");
-  } catch {
-    return null;
-  }
-}
-
-function resolveTargetIssue(currentIssue, history) {
-  const latest = history.length
-    ? String(history[0].issueNumber)
-    : null;
-
-  if (!latest) {
-    return currentIssue ? String(currentIssue) : null;
-  }
-
-  if (!currentIssue) {
-    return incrementIssue(latest);
-  }
-
-  const current = String(currentIssue);
-
-  try {
-    const c = BigInt(current);
-    const l = BigInt(latest);
-
-    if (c > l) {
-      return current;
-    }
-
-    return incrementIssue(latest);
-  } catch {
-    return current !== latest ? current : incrementIssue(latest);
-  }
-}
 
 /* =========================================================
    PROVIDER REFRESH
 ========================================================= */
 
 async function refreshProvider() {
-  if (!WINGOBOT_TOKEN) {
-    liveState = {
-      ...liveState,
-      ok: false,
-      error: "WINGOBOT_TOKEN is not configured",
-      serverTime: now()
-    };
+  if (refreshBusy) return;
 
-    return false;
-  }
+  refreshBusy = true;
 
   try {
-    const data = await httpsGetJson(WINGOBOT_URL, {
-      Authorization: `Bearer ${WINGOBOT_TOKEN}`
-    });
+    const data = await fetchWingoBot();
 
-    const currentIssue =
-      data?.current?.issueNumber ??
-      data?.current?.issue ??
-      null;
+    const rawHistory = Array.isArray(data?.history)
+      ? data.history
+      : [];
 
-    const history = normalizeHistory(
-      data?.history ||
-      data?.data ||
-      data?.results ||
-      []
-    );
+    const history = rawHistory
+      .map(normalizeRow)
+      .filter(row => row.issueNumber);
 
-    const stats = data?.stats || {};
-
-    const fetched = Number(
-      stats.fetched ??
-      history.length
-    ) || history.length;
-
-    const providerUpdated =
-      Number(
-        stats.last_updated ??
-        data?.last_updated ??
-        data?.lastUpdated ??
-        0
-      ) || 0;
-
-    const latestSettledIssue =
-      history.length
-        ? history[0].issueNumber
-        : null;
-
-    const targetIssue = resolveTargetIssue(
-      currentIssue,
-      history
-    );
-
-    liveState = {
-      ok: true,
-      provider: "WingoBot",
-      gameUrl: GAME_URL,
+    providerState = {
       currentIssue:
-        currentIssue !== null
-          ? String(currentIssue)
+        data?.current?.issueNumber
+          ? String(data.current.issueNumber)
           : null,
-      latestSettledIssue,
-      targetIssue,
-      history: history.slice(0, 100),
-      fetched,
-      lastUpdated: providerUpdated,
-      serverTime: now(),
-      error: null
+
+      history,
+
+      stats:
+        data?.stats &&
+        typeof data.stats === "object"
+          ? data.stats
+          : {},
+
+      lastFetch: now(),
+
+      error: null,
     };
 
-    lastProviderFetch = now();
-    lastProviderError = null;
+    await settlePredictions();
 
-    return true;
+    console.log(
+      "WingoBot refresh:",
+      history.length,
+      "rows",
+      "current:",
+      providerState.currentIssue
+    );
   } catch (err) {
-    lastProviderError = err.message;
+    providerState.error =
+      err?.message || "Provider error";
 
-    liveState = {
-      ...liveState,
-      ok: false,
-      serverTime: now(),
-      error: err.message
+    console.error(
+      "Provider refresh error:",
+      providerState.error
+    );
+  } finally {
+    refreshBusy = false;
+  }
+}
+
+
+/* =========================================================
+   TARGET PERIOD
+========================================================= */
+
+function getLatestSettledIssue(history) {
+  for (const row of history) {
+    if (
+      row.issueNumber &&
+      row.result
+    ) {
+      return row.issueNumber;
+    }
+  }
+
+  return null;
+}
+
+function resolveTargetIssue() {
+  const history =
+    providerState.history || [];
+
+  const latestSettled =
+    getLatestSettledIssue(history);
+
+  const current =
+    providerState.currentIssue;
+
+  /*
+    Provider current issue is treated as active.
+
+    If current is ahead of latest settled,
+    current becomes target.
+
+    Otherwise target = next issue after
+    latest settled.
+  */
+
+  if (
+    current &&
+    latestSettled &&
+    String(current) > String(latestSettled)
+  ) {
+    return String(current);
+  }
+
+  if (latestSettled) {
+    return incrementIssue(
+      latestSettled
+    );
+  }
+
+  return current || null;
+}
+
+
+/* =========================================================
+   ANALYSIS ENGINE
+========================================================= */
+
+function validResults(history) {
+  return history
+    .filter(x =>
+      x &&
+      (x.result === "BIG" ||
+       x.result === "SMALL")
+    );
+}
+
+function recentWindow(rows, size) {
+  return rows.slice(
+    0,
+    Math.min(size, rows.length)
+  );
+}
+
+function sideScore(rows, side) {
+  if (!rows.length) return 0;
+
+  let score = 0;
+
+  rows.forEach((row, index) => {
+    if (row.result !== side) return;
+
+    const weight =
+      1 +
+      ((rows.length - index) /
+        rows.length) * 2;
+
+    score += weight;
+  });
+
+  return score;
+}
+
+function getStreak(rows) {
+  if (!rows.length) {
+    return {
+      side: null,
+      length: 0,
     };
-
-    console.error("[WINGOBOT ERROR]", err.message);
-
-    return false;
   }
+
+  const side = rows[0].result;
+
+  let length = 1;
+
+  while (
+    length < rows.length &&
+    length < 12 &&
+    rows[length].result === side
+  ) {
+    length++;
+  }
+
+  return {
+    side,
+    length,
+  };
 }
 
-/* =========================================================
-   ACCESS KEY API
-========================================================= */
-
-async function checkAccessKey(req, res) {
-  if (!pool) {
-    safeJson(res, 503, {
-      ok: false,
-      error: "Database is not configured"
-    });
-
-    return;
+function alternatingScore(rows) {
+  if (rows.length < 4) {
+    return {
+      score: 0,
+      side: null,
+    };
   }
 
-  try {
-    const body = await parseJsonBody(req);
+  let matches = 0;
 
-    const accessKey = String(
-      body.accessKey || body.key || ""
-    ).trim();
-
-    const deviceId = String(
-      body.deviceId || ""
-    ).trim();
-
-    if (!accessKey) {
-      safeJson(res, 400, {
-        ok: false,
-        error: "Access key required"
-      });
-
-      return;
+  for (let i = 1; i < rows.length; i++) {
+    if (
+      rows[i].result !==
+      rows[i - 1].result
+    ) {
+      matches++;
     }
-
-    if (!validDeviceId(deviceId)) {
-      safeJson(res, 400, {
-        ok: false,
-        error: "Valid device ID required"
-      });
-
-      return;
-    }
-
-    const result = await pool.query(
-      `
-      SELECT *
-      FROM access_keys
-      WHERE access_key = $1
-      LIMIT 1
-      `,
-      [accessKey]
-    );
-
-    if (!result.rows.length) {
-      safeJson(res, 401, {
-        ok: false,
-        error: "Invalid access key"
-      });
-
-      return;
-    }
-
-    const row = result.rows[0];
-
-    if (row.device_id && row.device_id !== deviceId) {
-      safeJson(res, 403, {
-        ok: false,
-        error: "This key is already linked to another device"
-      });
-
-      return;
-    }
-
-    await pool.query(
-      `
-      UPDATE access_keys
-      SET device_id = $1,
-          last_seen = $2
-      WHERE id = $3
-      `,
-      [
-        deviceId,
-        now(),
-        row.id
-      ]
-    );
-
-    safeJson(res, 200, {
-      ok: true,
-      access: true,
-      key: accessKey
-    });
-  } catch (err) {
-    console.error("[ACCESS CHECK ERROR]", err);
-
-    safeJson(res, 500, {
-      ok: false,
-      error: err.message
-    });
   }
+
+  const ratio =
+    matches / (rows.length - 1);
+
+  if (ratio < 0.70) {
+    return {
+      score: 0,
+      side: null,
+    };
+  }
+
+  return {
+    score: ratio,
+    side:
+      rows[0].result === "BIG"
+        ? "SMALL"
+        : "BIG",
+  };
 }
 
-/* =========================================================
-   ACCESS AUTH FOR STATE
-========================================================= */
-
-async function verifyAccessKey(req) {
-  if (!pool) return false;
-
-  const key =
-    getHeader(req, "x-access-key");
-
-  const deviceId =
-    getHeader(req, "x-device-id");
-
-  if (!key || !validDeviceId(deviceId)) {
-    return false;
+function split22Score(rows) {
+  if (rows.length < 6) {
+    return {
+      score: 0,
+      side: null,
+    };
   }
 
-  try {
-    const result = await pool.query(
-      `
-      SELECT id
-      FROM access_keys
-      WHERE access_key = $1
-        AND (device_id = $2 OR device_id IS NULL)
-      LIMIT 1
-      `,
-      [key, deviceId]
-    );
+  const a = rows[0].result;
+  const b = rows[1].result;
 
-    if (!result.rows.length) {
-      return false;
+  if (a !== b) {
+    return {
+      score: 0,
+      side: null,
+    };
+  }
+
+  let pairs = 0;
+
+  for (
+    let i = 0;
+    i + 1 < rows.length;
+    i += 2
+  ) {
+    if (
+      rows[i].result ===
+        rows[i + 1].result &&
+      rows[i].result ===
+        (i % 4 === 0 ? a : b)
+    ) {
+      pairs++;
     }
-
-    await pool.query(
-      `
-      UPDATE access_keys
-      SET device_id = $1,
-          last_seen = $2
-      WHERE id = $3
-      `,
-      [
-        deviceId,
-        now(),
-        result.rows[0].id
-      ]
-    );
-
-    return true;
-  } catch (err) {
-    console.error("[ACCESS VERIFY ERROR]", err.message);
-    return false;
   }
+
+  if (pairs < 2) {
+    return {
+      score: 0,
+      side: null,
+    };
+  }
+
+  return {
+    score: pairs / Math.ceil(rows.length / 2),
+    side:
+      a === "BIG"
+        ? "SMALL"
+        : "BIG",
+  };
 }
 
-/* =========================================================
-   ADMIN - KEYS
-========================================================= */
-
-async function adminKeys(req, res) {
-  if (!requireAdmin(req, res)) return;
-
-  if (!pool) {
-    safeJson(res, 503, {
-      ok: false,
-      error: "Database is not configured"
-    });
-
-    return;
+function transitionScore(rows) {
+  if (rows.length < 5) {
+    return {
+      big: 0,
+      small: 0,
+    };
   }
 
-  try {
-    if (req.method === "GET") {
-      const result = await pool.query(`
-        SELECT
-          id,
-          access_key,
-          device_id,
-          created_at,
-          last_seen
-        FROM access_keys
-        ORDER BY id DESC
-      `);
+  let bigAfterSmall = 0;
+  let smallAfterBig = 0;
 
-      safeJson(res, 200, {
-        ok: true,
-        keys: result.rows
-      });
+  for (let i = 1; i < rows.length; i++) {
+    const previous =
+      rows[i - 1].result;
 
-      return;
+    const current =
+      rows[i].result;
+
+    if (
+      previous === "SMALL" &&
+      current === "BIG"
+    ) {
+      bigAfterSmall++;
     }
 
-    if (req.method === "POST") {
-      const body = await parseJsonBody(req);
-
-      let accessKey = String(
-        body.accessKey ||
-        body.key ||
-        ""
-      ).trim();
-
-      if (!accessKey) {
-        accessKey =
-          "DY-" +
-          crypto.randomBytes(6)
-            .toString("hex")
-            .toUpperCase();
-      }
-
-      if (accessKey.length < 4) {
-        safeJson(res, 400, {
-          ok: false,
-          error: "Key too short"
-        });
-
-        return;
-      }
-
-      const result = await pool.query(
-        `
-        INSERT INTO access_keys
-          (access_key, created_at)
-        VALUES
-          ($1, $2)
-        RETURNING *
-        `,
-        [
-          accessKey,
-          now()
-        ]
-      );
-
-      safeJson(res, 201, {
-        ok: true,
-        key: result.rows[0]
-      });
-
-      return;
+    if (
+      previous === "BIG" &&
+      current === "SMALL"
+    ) {
+      smallAfterBig++;
     }
-
-    if (req.method === "DELETE") {
-      const body = await parseJsonBody(req);
-
-      const id = Number(body.id);
-
-      if (!Number.isInteger(id)) {
-        safeJson(res, 400, {
-          ok: false,
-          error: "Valid key ID required"
-        });
-
-        return;
-      }
-
-      await pool.query(
-        `
-        DELETE FROM access_keys
-        WHERE id = $1
-        `,
-        [id]
-      );
-
-      safeJson(res, 200, {
-        ok: true
-      });
-
-      return;
-    }
-
-    methodNotAllowed(res);
-  } catch (err) {
-    console.error("[ADMIN KEYS ERROR]", err.message);
-
-    safeJson(res, 500, {
-      ok: false,
-      error: err.message
-    });
   }
+
+  return {
+    big: bigAfterSmall,
+    small: smallAfterBig,
+  };
 }
 
-/* =========================================================
-   ADMIN RESET DEVICE
-========================================================= */
+function analyzeHistory(history) {
+  const rows =
+    validResults(history);
 
-async function resetDevice(req, res) {
-  if (!requireAdmin(req, res)) return;
-
-  if (!pool) {
-    safeJson(res, 503, {
-      ok: false,
-      error: "Database is not configured"
-    });
-
-    return;
+  if (rows.length < 5) {
+    return {
+      prediction: "WAIT",
+      confidence: 0,
+      regime: "INSUFFICIENT DATA",
+      streak: getStreak(rows),
+      bigPercent: 50,
+      smallPercent: 50,
+      modelVersion: "DY-AI-2.0",
+    };
   }
 
-  try {
-    const body = await parseJsonBody(req);
+  const w5 =
+    recentWindow(rows, 5);
 
-    const id = Number(body.id);
+  const w10 =
+    recentWindow(rows, 10);
 
-    if (!Number.isInteger(id)) {
-      safeJson(res, 400, {
-        ok: false,
-        error: "Valid key ID required"
-      });
+  const w20 =
+    recentWindow(rows, 20);
 
-      return;
+  const w30 =
+    recentWindow(rows, 30);
+
+  let big = 0;
+  let small = 0;
+
+  /*
+    Recent windows carry greater weight.
+  */
+
+  big += sideScore(w5, "BIG") * 4;
+  small += sideScore(w5, "SMALL") * 4;
+
+  big += sideScore(w10, "BIG") * 2.5;
+  small += sideScore(w10, "SMALL") * 2.5;
+
+  big += sideScore(w20, "BIG") * 1.5;
+  small += sideScore(w20, "SMALL") * 1.5;
+
+  big += sideScore(w30, "BIG") * 1;
+  small += sideScore(w30, "SMALL") * 1;
+
+
+  /* Transition analysis */
+
+  const transition =
+    transitionScore(w10);
+
+  big += transition.big * 1.25;
+  small += transition.small * 1.25;
+
+
+  /* Alternating pattern */
+
+  const alternating =
+    alternatingScore(w10);
+
+  if (alternating.score > 0) {
+    if (alternating.side === "BIG") {
+      big +=
+        alternating.score * 4;
+    } else {
+      small +=
+        alternating.score * 4;
     }
+  }
 
-    const result = await pool.query(
-      `
-      UPDATE access_keys
-      SET device_id = NULL,
-          last_seen = 0
-      WHERE id = $1
-      RETURNING id, access_key, device_id, last_seen
-      `,
-      [id]
+
+  /* 2-2 pattern */
+
+  const split =
+    split22Score(w10);
+
+  if (split.score > 0) {
+    if (split.side === "BIG") {
+      big += split.score * 2;
+    } else {
+      small += split.score * 2;
+    }
+  }
+
+
+  /* Current streak */
+
+  const streak =
+    getStreak(rows);
+
+  /*
+    Do not blindly follow a long streak.
+    The streak becomes a regime signal,
+    not a guaranteed reversal.
+  */
+
+  if (streak.length >= 5) {
+    if (streak.side === "BIG") {
+      big *= 0.78;
+    } else {
+      small *= 0.78;
+    }
+  } else if (streak.length >= 3) {
+    if (streak.side === "BIG") {
+      big *= 0.92;
+    } else {
+      small *= 0.92;
+    }
+  }
+
+
+  const total =
+    big + small;
+
+  if (total <= 0) {
+    return {
+      prediction: "WAIT",
+      confidence: 0,
+      regime: "NO SIGNAL",
+      streak,
+      bigPercent: 50,
+      smallPercent: 50,
+      modelVersion: "DY-AI-2.0",
+    };
+  }
+
+  const bigPercent =
+    Math.round(
+      (big / total) * 100
     );
 
-    if (!result.rows.length) {
-      safeJson(res, 404, {
-        ok: false,
-        error: "Key not found"
-      });
+  const smallPercent =
+    100 - bigPercent;
 
-      return;
-    }
+  const gap =
+    Math.abs(
+      bigPercent -
+      smallPercent
+    );
 
-    safeJson(res, 200, {
-      ok: true,
-      key: result.rows[0]
-    });
-  } catch (err) {
-    console.error("[RESET DEVICE ERROR]", err.message);
+  let prediction;
 
-    safeJson(res, 500, {
-      ok: false,
-      error: err.message
-    });
+  if (gap < 8) {
+    prediction = "BALANCED";
+  } else if (
+    bigPercent > smallPercent
+  ) {
+    prediction = "BIG";
+  } else {
+    prediction = "SMALL";
   }
-}
 
-/* =========================================================
-   ADMIN STATUS
-========================================================= */
+  /*
+    Confidence is an analytical strength score,
+    not a guarantee of the next outcome.
+  */
 
-async function adminStatus(req, res) {
-  if (!requireAdmin(req, res)) return;
+  let confidence =
+    50 + gap * 0.85;
 
-  safeJson(res, 200, {
-    ok: true,
-    server: {
-      node: process.version,
-      uptime: process.uptime(),
-      port: PORT
+  if (streak.length >= 5) {
+    confidence -= 5;
+  }
+
+  if (alternating.score >= 0.8) {
+    confidence += 3;
+  }
+
+  if (split.score >= 0.5) {
+    confidence += 2;
+  }
+
+  confidence = Math.max(
+    50,
+    Math.min(
+      95,
+      Math.round(confidence)
+    )
+  );
+
+
+  let regime =
+    "MIXED";
+
+  if (streak.length >= 5) {
+    regime = "LONG STREAK";
+  } else if (
+    alternating.score >= 0.75
+  ) {
+    regime = "ALTERNATING";
+  } else if (
+    split.score >= 0.5
+  ) {
+    regime = "2-2 SPLIT";
+  } else if (
+    gap >= 15
+  ) {
+    regime = "DIRECTIONAL";
+  } else {
+    regime = "BALANCED";
+  }
+
+
+  return {
+    prediction,
+    confidence,
+    regime,
+    streak,
+    bigPercent,
+    smallPercent,
+
+    signals: {
+      transition,
+      alternating:
+        Number(
+          alternating.score.toFixed(3)
+        ),
+      split22:
+        Number(
+          split.score.toFixed(3)
+        ),
     },
-    database: {
-      configured: !!pool
-    },
-    wingobot: {
-      configured: !!WINGOBOT_TOKEN,
-      lastFetch: lastProviderFetch,
-      lastError: lastProviderError
-    },
-    state: {
-      currentIssue: liveState.currentIssue,
-      latestSettledIssue:
-        liveState.latestSettledIssue,
-      targetIssue: liveState.targetIssue,
-      historyCount:
-        liveState.history.length,
-      fetched:
-        liveState.fetched,
-      lastUpdated:
-        liveState.lastUpdated
-    }
-  });
+
+    modelVersion:
+      "DY-AI-2.0"
+  };
 }
 
-/* =========================================================
-   ADMIN PING
-========================================================= */
-
-async function adminPing(req, res) {
-  if (!requireAdmin(req, res)) return;
-
-  safeJson(res, 200, {
-    ok: true,
-    message: "Server is running",
-    time: now()
-  });
-}
 
 /* =========================================================
-   WINGO TEST
+   DATABASE PREDICTIONS
 ========================================================= */
 
-async function adminWingoTest(req, res) {
-  if (!requireAdmin(req, res)) return;
-
-  if (!WINGOBOT_TOKEN) {
-    safeJson(res, 503, {
-      ok: false,
-      error: "WINGOBOT_TOKEN is missing"
-    });
-
-    return;
+async function getPrediction(issue) {
+  if (!DATABASE_URL || !issue) {
+    return null;
   }
 
-  try {
-    const data = await httpsGetJson(
-      WINGOBOT_URL,
-      {
-        Authorization:
-          `Bearer ${WINGOBOT_TOKEN}`
-      }
-    );
-
-    const history = normalizeHistory(
-      data?.history ||
-      data?.data ||
-      data?.results ||
-      []
-    );
-
-    safeJson(res, 200, {
-      ok: true,
-      current:
-        data?.current || null,
-      fetched:
-        data?.stats?.fetched ??
-        history.length,
-      last_updated:
-        data?.stats?.last_updated ??
-        0,
-      historyCount:
-        history.length,
-      sample:
-        history.slice(0, 5)
-    });
-  } catch (err) {
-    safeJson(res, 502, {
-      ok: false,
-      error: err.message
-    });
-  }
-}
-
-/* =========================================================
-   MODEL TEST
-   ========================================================= */
-
-async function modelTest(req, res) {
-  if (!requireAdmin(req, res)) return;
-
-  safeJson(res, 200, {
-    ok: true,
-    mode: "tracker",
-    message:
-      "History tracking and exact-period settlement are active.",
-    historyCount:
-      liveState.history.length,
-    latestSettledIssue:
-      liveState.latestSettledIssue,
-    targetIssue:
-      liveState.targetIssue
-  });
-}
-
-/* =========================================================
-   PREDICTION RECORD HELPERS
-========================================================= */
-
-async function getPredictionForIssue(issue) {
-  if (!pool || !issue) return null;
-
-  try {
-    const result = await pool.query(
-      `
+  const result = await pool.query(
+    `
       SELECT *
       FROM prediction_records
       WHERE target_issue = $1
       ORDER BY id DESC
       LIMIT 1
-      `,
-      [String(issue)]
-    );
+    `,
+    [String(issue)]
+  );
 
-    return result.rows[0] || null;
-  } catch (err) {
-    console.error(
-      "[GET PREDICTION ERROR]",
-      err.message
-    );
+  return result.rows[0] || null;
+}
 
+async function createPrediction(
+  issue,
+  analysis
+) {
+  if (!DATABASE_URL) return null;
+
+  const existing =
+    await getPrediction(issue);
+
+  if (existing) {
+    return existing;
+  }
+
+  if (
+    !analysis ||
+    !["BIG", "SMALL"].includes(
+      analysis.prediction
+    )
+  ) {
     return null;
   }
+
+  const result =
+    await pool.query(
+      `
+        INSERT INTO prediction_records
+        (
+          target_issue,
+          prediction,
+          confidence,
+          model_version,
+          created_at
+        )
+        VALUES ($1,$2,$3,$4,$5)
+        RETURNING *
+      `,
+      [
+        String(issue),
+        analysis.prediction,
+        analysis.confidence,
+        analysis.modelVersion,
+        now(),
+      ]
+    );
+
+  return result.rows[0];
 }
+
 
 /* =========================================================
    SETTLEMENT
 ========================================================= */
 
-async function settleRecords() {
-  if (!pool || !liveState.history.length) {
-    return;
+async function settlePredictions() {
+  if (!DATABASE_URL) return;
+
+  const history =
+    providerState.history || [];
+
+  const settledMap =
+    new Map();
+
+  for (const row of history) {
+    if (
+      row.issueNumber &&
+      row.result
+    ) {
+      settledMap.set(
+        String(row.issueNumber),
+        row
+      );
+    }
   }
 
-  try {
-    for (const row of liveState.history) {
-      if (!row.issueNumber || !row.result) {
-        continue;
-      }
-
-      const result = await pool.query(
-        `
+  const pending =
+    await pool.query(
+      `
         SELECT *
         FROM prediction_records
-        WHERE target_issue = $1
-          AND actual_result IS NULL
-        ORDER BY id DESC
-        `,
-        [String(row.issueNumber)]
+        WHERE actual_result IS NULL
+        ORDER BY id ASC
+        LIMIT 100
+      `
+    );
+
+  for (const prediction of pending.rows) {
+    const actual =
+      settledMap.get(
+        String(prediction.target_issue)
       );
 
-      for (const prediction of result.rows) {
-        const predicted =
-          normalizeResult(prediction.prediction);
+    /*
+      Exact issue match only.
+    */
 
-        const actual =
-          normalizeResult(row.result);
+    if (!actual) continue;
 
-        if (!predicted || !actual) {
-          continue;
-        }
+    const actualResult =
+      actual.result;
 
-        const win =
-          predicted === actual;
+    const isWin =
+      prediction.prediction ===
+      actualResult;
 
-        await pool.query(
-          `
-          UPDATE prediction_records
-          SET actual_number = $1,
-              actual_result = $2,
-              settled_at = $3
-          WHERE id = $4
-          `,
-          [
-            row.number,
-            actual,
-            now(),
-            prediction.id
-          ]
-        );
+    await pool.query(
+      `
+        UPDATE prediction_records
+        SET
+          actual_number = $1,
+          actual_result = $2,
+          settled_at = $3
+        WHERE id = $4
+      `,
+      [
+        actual.number,
+        actualResult,
+        now(),
+        prediction.id,
+      ]
+    );
 
-        console.log(
-          `[SETTLE] ${prediction.target_issue} ${predicted} -> ${actual} ${win ? "WIN" : "LOSS"}`
-        );
-      }
-    }
-  } catch (err) {
-    console.error(
-      "[SETTLEMENT ERROR]",
-      err.message
+    console.log(
+      "Settled:",
+      prediction.target_issue,
+      prediction.prediction,
+      actualResult,
+      isWin ? "WIN" : "LOSS"
     );
   }
 }
 
+
 /* =========================================================
-   HISTORY API
+   ACCESS KEY
 ========================================================= */
 
-async function historyApi(req, res) {
-  if (!pool) {
-    safeJson(res, 503, {
-      ok: false,
-      error: "Database is not configured"
-    });
-
-    return;
-  }
-
-  try {
-    const result = await pool.query(`
-      SELECT
-        id,
-        target_issue,
-        prediction,
-        confidence,
-        model_version,
-        actual_number,
-        actual_result,
-        created_at,
-        settled_at
-      FROM prediction_records
-      ORDER BY id DESC
-      LIMIT 30
-    `);
-
-    const rows = result.rows.map((row) => {
-      let status = "PENDING";
-
-      if (
-        row.actual_result &&
-        row.prediction
-      ) {
-        status =
-          String(row.prediction).toUpperCase() ===
-          String(row.actual_result).toUpperCase()
-            ? "WIN"
-            : "LOSS";
-      }
-
-      return {
-        ...row,
-        status
-      };
-    });
-
-    safeJson(res, 200, {
+async function checkAccess(
+  req
+) {
+  if (!DATABASE_URL) {
+    return {
       ok: true,
-      count: rows.length,
-      history: rows
-    });
-  } catch (err) {
-    safeJson(res, 500, {
+      key: null,
+    };
+  }
+
+  const key =
+    String(
+      req.headers["x-access-key"] ||
+      ""
+    ).trim();
+
+  const device =
+    String(
+      req.headers["x-device-id"] ||
+      ""
+    ).trim();
+
+  if (!key || !device) {
+    return {
       ok: false,
-      error: err.message
-    });
+      reason:
+        "ACCESS_KEY_OR_DEVICE_MISSING",
+    };
   }
-}
 
-/* =========================================================
-   STATE API
-========================================================= */
+  const result =
+    await pool.query(
+      `
+        SELECT *
+        FROM access_keys
+        WHERE access_key = $1
+        LIMIT 1
+      `,
+      [key]
+    );
 
-async function stateApi(req, res) {
-  const authorized =
-    await verifyAccessKey(req);
-
-  if (!authorized) {
-    safeJson(res, 401, {
+  if (!result.rows.length) {
+    return {
       ok: false,
-      error: "Access key required"
-    });
-
-    return;
+      reason: "INVALID_ACCESS_KEY",
+    };
   }
 
-  let latestRecord = null;
+  const row =
+    result.rows[0];
 
-  if (liveState.targetIssue) {
-    latestRecord =
-      await getPredictionForIssue(
-        liveState.targetIssue
-      );
+  if (
+    row.device_id &&
+    row.device_id !== device
+  ) {
+    return {
+      ok: false,
+      reason:
+        "KEY_ALREADY_BOUND_TO_ANOTHER_DEVICE",
+    };
   }
 
-  safeJson(res, 200, {
+  if (!row.device_id) {
+    await pool.query(
+      `
+        UPDATE access_keys
+        SET
+          device_id = $1,
+          last_seen = $2
+        WHERE id = $3
+      `,
+      [
+        device,
+        now(),
+        row.id,
+      ]
+    );
+  } else {
+    await pool.query(
+      `
+        UPDATE access_keys
+        SET last_seen = $1
+        WHERE id = $2
+      `,
+      [
+        now(),
+        row.id,
+      ]
+    );
+  }
+
+  return {
     ok: true,
-    gameUrl: GAME_URL,
-
-    currentIssue:
-      liveState.currentIssue,
-
-    latestSettledIssue:
-      liveState.latestSettledIssue,
-
-    targetIssue:
-      liveState.targetIssue,
-
-    history:
-      liveState.history.slice(0, 30),
-
-    fetched:
-      liveState.fetched,
-
-    lastUpdated:
-      liveState.lastUpdated,
-
-    serverTime:
-      now(),
-
-    providerOk:
-      liveState.ok,
-
-    providerError:
-      liveState.error,
-
-    record:
-      latestRecord
-        ? {
-            targetIssue:
-              latestRecord.target_issue,
-            prediction:
-              latestRecord.prediction,
-            confidence:
-              latestRecord.confidence,
-            modelVersion:
-              latestRecord.model_version,
-            actualNumber:
-              latestRecord.actual_number,
-            actualResult:
-              latestRecord.actual_result,
-            createdAt:
-              latestRecord.created_at,
-            settledAt:
-              latestRecord.settled_at
-          }
-        : null
-  });
+    key: row.access_key,
+  };
 }
 
-/* =========================================================
-   HEALTH
-========================================================= */
-
-async function healthApi(req, res) {
-  let databaseOk = false;
-
-  if (pool) {
-    try {
-      await pool.query("SELECT 1");
-      databaseOk = true;
-    } catch {
-      databaseOk = false;
-    }
-  }
-
-  const healthy =
-    databaseOk &&
-    !!WINGOBOT_TOKEN &&
-    liveState.ok;
-
-  safeJson(res, healthy ? 200 : 503, {
-    ok: healthy,
-    server: true,
-    database: databaseOk,
-    wingobotConfigured:
-      !!WINGOBOT_TOKEN,
-    providerOk:
-      liveState.ok,
-    currentIssue:
-      liveState.currentIssue,
-    targetIssue:
-      liveState.targetIssue,
-    time:
-      now()
-  });
-}
 
 /* =========================================================
-   STATIC FILE SERVER
+   STATIC FILES
 ========================================================= */
 
 const MIME = {
-  ".html": "text/html; charset=utf-8",
-  ".css": "text/css; charset=utf-8",
-  ".js": "application/javascript; charset=utf-8",
-  ".json": "application/json; charset=utf-8",
-  ".png": "image/png",
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-  ".webp": "image/webp",
-  ".svg": "image/svg+xml",
-  ".ico": "image/x-icon",
-  ".mp3": "audio/mpeg"
+  ".html":
+    "text/html; charset=utf-8",
+
+  ".js":
+    "application/javascript; charset=utf-8",
+
+  ".css":
+    "text/css; charset=utf-8",
+
+  ".json":
+    "application/json; charset=utf-8",
+
+  ".mp3":
+    "audio/mpeg",
+
+  ".png":
+    "image/png",
+
+  ".jpg":
+    "image/jpeg",
+
+  ".jpeg":
+    "image/jpeg",
+
+  ".svg":
+    "image/svg+xml",
+
+  ".ico":
+    "image/x-icon",
 };
 
-function safeFilePath(urlPath) {
-  let decoded;
+function safeStaticPath(
+  pathname
+) {
+  const clean =
+    decodeURIComponent(pathname)
+      .replace(/^\/+/, "");
 
-  try {
-    decoded = decodeURIComponent(urlPath);
-  } catch {
-    return null;
-  }
-
-  decoded = decoded.split("?")[0];
-
-  if (decoded === "/" || decoded === "") {
-    decoded = "/prediction.html";
-  }
-
-  const full = path.resolve(
-    ROOT,
-    "." + decoded
-  );
+  const resolved =
+    path.resolve(
+      ROOT,
+      clean || "prediction.html"
+    );
 
   if (
-    full !== ROOT &&
-    !full.startsWith(ROOT + path.sep)
+    !resolved.startsWith(
+      path.resolve(ROOT)
+    )
   ) {
     return null;
   }
 
-  return full;
+  return resolved;
 }
 
-function serveStatic(req, res) {
-  const filePath =
-    safeFilePath(req.url);
+function serveStatic(
+  req,
+  res,
+  pathname
+) {
+  let filePath =
+    safeStaticPath(pathname);
 
   if (!filePath) {
-    notFound(res);
+    text(res, 403, "Forbidden");
     return;
   }
 
-  fs.stat(filePath, (err, stat) => {
-    if (err || !stat.isFile()) {
-      notFound(res);
-      return;
+  if (!fs.existsSync(filePath)) {
+    if (pathname === "/") {
+      filePath =
+        path.join(
+          ROOT,
+          "prediction.html"
+        );
     }
+  }
 
-    const ext =
-      path.extname(filePath).toLowerCase();
+  if (
+    !fs.existsSync(filePath) ||
+    !fs.statSync(filePath).isFile()
+  ) {
+    text(res, 404, "Not Found");
+    return;
+  }
 
-    const contentType =
-      MIME[ext] ||
-      "application/octet-stream";
+  const ext =
+    path.extname(filePath)
+      .toLowerCase();
 
-    /* MP3 range support */
-    if (ext === ".mp3") {
-      serveAudio(filePath, req, res);
-      return;
-    }
+  const type =
+    MIME[ext] ||
+    "application/octet-stream";
 
-    res.writeHead(200, {
-      "Content-Type": contentType,
-      "Cache-Control":
-        ext === ".html"
-          ? "no-store"
-          : "public, max-age=300"
-    });
+  const stat =
+    fs.statSync(filePath);
 
-    fs.createReadStream(filePath)
-      .pipe(res);
-  });
-}
+  /*
+    MP3 range support.
+  */
 
-/* =========================================================
-   AUDIO RANGE SUPPORT
-========================================================= */
-
-function serveAudio(filePath, req, res) {
-  fs.stat(filePath, (err, stat) => {
-    if (err) {
-      notFound(res);
-      return;
-    }
-
-    const total = stat.size;
-    const range = req.headers.range;
+  if (ext === ".mp3") {
+    const range =
+      req.headers.range;
 
     if (!range) {
       res.writeHead(200, {
-        "Content-Type": "audio/mpeg",
-        "Content-Length": total,
+        "Content-Type": type,
+        "Content-Length": stat.size,
         "Accept-Ranges": "bytes",
-        "Cache-Control": "public, max-age=300"
       });
 
-      fs.createReadStream(filePath)
-        .pipe(res);
+      fs.createReadStream(
+        filePath
+      ).pipe(res);
 
       return;
     }
 
     const match =
-      /bytes=(\d*)-(\d*)/.exec(range);
+      range.match(
+        /bytes=(\d*)-(\d*)/
+      );
 
     if (!match) {
-      res.writeHead(416, {
-        "Content-Range":
-          `bytes */${total}`
-      });
-
+      res.writeHead(416);
       res.end();
       return;
     }
 
-    let start =
-      match[1] === ""
-        ? 0
-        : Number(match[1]);
+    const start =
+      match[1]
+        ? Number(match[1])
+        : 0;
 
-    let end =
-      match[2] === ""
-        ? total - 1
-        : Number(match[2]);
+    const end =
+      match[2]
+        ? Number(match[2])
+        : stat.size - 1;
 
     if (
-      !Number.isInteger(start) ||
-      !Number.isInteger(end) ||
       start < 0 ||
-      end >= total ||
+      end >= stat.size ||
       start > end
     ) {
-      res.writeHead(416, {
-        "Content-Range":
-          `bytes */${total}`
-      });
-
+      res.writeHead(416);
       res.end();
       return;
     }
 
-    const chunkSize =
-      end - start + 1;
-
     res.writeHead(206, {
-      "Content-Type": "audio/mpeg",
-      "Content-Length": chunkSize,
+      "Content-Type": type,
+      "Content-Length":
+        end - start + 1,
       "Content-Range":
-        `bytes ${start}-${end}/${total}`,
+        `bytes ${start}-${end}/${stat.size}`,
       "Accept-Ranges": "bytes",
-      "Cache-Control": "public, max-age=300"
     });
 
-    fs.createReadStream(filePath, {
-      start,
-      end
-    }).pipe(res);
+    fs.createReadStream(
+      filePath,
+      {
+        start,
+        end,
+      }
+    ).pipe(res);
+
+    return;
+  }
+
+  res.writeHead(200, {
+    "Content-Type": type,
+    "Content-Length": stat.size,
+    "Cache-Control": "no-cache",
   });
+
+  fs.createReadStream(
+    filePath
+  ).pipe(res);
 }
 
+
 /* =========================================================
-   ROUTER
+   API HANDLER
 ========================================================= */
 
-const server = http.createServer(
-  async (req, res) => {
+async function handleAPI(
+  req,
+  res,
+  url
+) {
+  if (req.method === "OPTIONS") {
+    res.writeHead(204, {
+      "Access-Control-Allow-Origin":
+        "*",
+
+      "Access-Control-Allow-Headers":
+        "Content-Type, X-Access-Key, X-Device-Id, Authorization",
+
+      "Access-Control-Allow-Methods":
+        "GET, POST, DELETE, OPTIONS",
+    });
+
+    res.end();
+    return true;
+  }
+
+
+  /* Health */
+
+  if (
+    req.method === "GET" &&
+    url.pathname === "/health"
+  ) {
+    json(res, 200, {
+      ok: true,
+      service: "DY AI Wingo",
+      version: "2.0",
+      provider:
+        providerState.error
+          ? "ERROR"
+          : "ONLINE",
+      history:
+        providerState.history.length,
+      time: now(),
+    });
+
+    return true;
+  }
+
+
+  /* Public key check */
+
+  if (
+    req.method === "POST" &&
+    url.pathname === "/api/key/check"
+  ) {
     try {
-      if (req.method === "OPTIONS") {
-        res.writeHead(204, {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Headers":
-            "Content-Type, X-Admin-Key, X-Access-Key, X-Device-Id",
-          "Access-Control-Allow-Methods":
-            "GET, POST, DELETE, OPTIONS"
-        });
+      const body =
+        await parseBody(req);
 
-        res.end();
-        return;
-      }
+      const fakeReq = {
+        headers: {
+          "x-access-key":
+            body.accessKey || "",
+          "x-device-id":
+            body.deviceId || "",
+        },
+      };
 
-      const url = new URL(
-        req.url,
-        `http://${req.headers.host || "localhost"}`
+      const result =
+        await checkAccess(
+          fakeReq
+        );
+
+      json(
+        res,
+        result.ok ? 200 : 403,
+        result
       );
-
-      const pathname = url.pathname;
-
-      /* Health */
-      if (pathname === "/health") {
-        await healthApi(req, res);
-        return;
-      }
-
-      /* Access */
-      if (
-        pathname === "/api/key/check" &&
-        req.method === "POST"
-      ) {
-        await checkAccessKey(req, res);
-        return;
-      }
-
-      /* State */
-      if (pathname === "/api/state") {
-        if (req.method !== "GET") {
-          methodNotAllowed(res);
-          return;
-        }
-
-        await stateApi(req, res);
-        return;
-      }
-
-      /* History */
-      if (pathname === "/api/history") {
-        if (req.method !== "GET") {
-          methodNotAllowed(res);
-          return;
-        }
-
-        await historyApi(req, res);
-        return;
-      }
-
-      /* Admin keys */
-      if (pathname === "/api/admin/keys") {
-        await adminKeys(req, res);
-        return;
-      }
-
-      /* Admin reset */
-      if (
-        pathname === "/api/admin/reset-device" &&
-        req.method === "POST"
-      ) {
-        await resetDevice(req, res);
-        return;
-      }
-
-      /* Admin status */
-      if (pathname === "/api/admin/status") {
-        if (req.method !== "GET") {
-          methodNotAllowed(res);
-          return;
-        }
-
-        await adminStatus(req, res);
-        return;
-      }
-
-      /* Admin ping */
-      if (pathname === "/api/admin/ping") {
-        if (req.method !== "GET") {
-          methodNotAllowed(res);
-          return;
-        }
-
-        await adminPing(req, res);
-        return;
-      }
-
-      /* Admin Wingo test */
-      if (pathname === "/api/admin/wingo-test") {
-        if (req.method !== "GET") {
-          methodNotAllowed(res);
-          return;
-        }
-
-        await adminWingoTest(req, res);
-        return;
-      }
-
-      /* Admin model test */
-      if (pathname === "/api/admin/model-test") {
-        if (req.method !== "GET") {
-          methodNotAllowed(res);
-          return;
-        }
-
-        await modelTest(req, res);
-        return;
-      }
-
-      /* Static */
-      serveStatic(req, res);
     } catch (err) {
-      console.error(
-        "[SERVER REQUEST ERROR]",
-        err
+      json(res, 400, {
+        ok: false,
+        error: err.message,
+      });
+    }
+
+    return true;
+  }
+
+
+  /* State */
+
+  if (
+    req.method === "GET" &&
+    url.pathname === "/api/state"
+  ) {
+    const access =
+      await checkAccess(req);
+
+    if (!access.ok) {
+      json(res, 403, access);
+      return true;
+    }
+
+    const history =
+      providerState.history || [];
+
+    const target =
+      resolveTargetIssue();
+
+    const analysis =
+      analyzeHistory(history);
+
+    let prediction =
+      await getPrediction(target);
+
+    /*
+      One prediction per target issue.
+    */
+
+    if (
+      !prediction &&
+      analysis.prediction !==
+        "WAIT" &&
+      analysis.prediction !==
+        "BALANCED"
+    ) {
+      prediction =
+        await createPrediction(
+          target,
+          analysis
+        );
+    }
+
+    json(res, 200, {
+      ok: true,
+
+      provider: {
+        currentIssue:
+          providerState.currentIssue,
+
+        lastFetch:
+          providerState.lastFetch,
+
+        error:
+          providerState.error,
+
+        stats:
+          providerState.stats,
+      },
+
+      targetIssue: target,
+
+      analysis,
+
+      prediction,
+
+      history:
+        history.slice(0, 30),
+    });
+
+    return true;
+  }
+
+
+  /* History */
+
+  if (
+    req.method === "GET" &&
+    url.pathname === "/api/history"
+  ) {
+    const access =
+      await checkAccess(req);
+
+    if (!access.ok) {
+      json(res, 403, access);
+      return true;
+    }
+
+    const limit =
+      Math.min(
+        100,
+        Math.max(
+          1,
+          Number(
+            url.searchParams.get(
+              "limit"
+            ) || 30
+          )
+        )
       );
 
-      if (!res.headersSent) {
-        safeJson(res, 500, {
+    if (!DATABASE_URL) {
+      json(res, 200, {
+        ok: true,
+        records: [],
+      });
+
+      return true;
+    }
+
+    const result =
+      await pool.query(
+        `
+          SELECT *
+          FROM prediction_records
+          ORDER BY id DESC
+          LIMIT $1
+        `,
+        [limit]
+      );
+
+    json(res, 200, {
+      ok: true,
+      records: result.rows,
+    });
+
+    return true;
+  }
+
+
+  /* Admin auth */
+
+  function adminAllowed() {
+    const key =
+      String(
+        req.headers.authorization ||
+        ""
+      ).replace(
+        /^Bearer\s+/i,
+        ""
+      );
+
+    return (
+      ADMIN_KEY &&
+      key === ADMIN_KEY
+    );
+  }
+
+
+  /* Admin status */
+
+  if (
+    req.method === "GET" &&
+    url.pathname ===
+      "/api/admin/status"
+  ) {
+    if (!adminAllowed()) {
+      json(res, 401, {
+        ok: false,
+        error: "Unauthorized",
+      });
+
+      return true;
+    }
+
+    json(res, 200, {
+      ok: true,
+
+      provider: {
+        currentIssue:
+          providerState.currentIssue,
+
+        history:
+          providerState.history.length,
+
+        lastFetch:
+          providerState.lastFetch,
+
+        error:
+          providerState.error,
+      },
+
+      database:
+        Boolean(DATABASE_URL),
+
+      token:
+        Boolean(WINGOBOT_TOKEN),
+    });
+
+    return true;
+  }
+
+
+  /* Admin ping */
+
+  if (
+    req.method === "GET" &&
+    url.pathname ===
+      "/api/admin/ping"
+  ) {
+    if (!adminAllowed()) {
+      json(res, 401, {
+        ok: false,
+      });
+
+      return true;
+    }
+
+    json(res, 200, {
+      ok: true,
+      message:
+        "DY AI admin online",
+      time: now(),
+    });
+
+    return true;
+  }
+
+
+  /* Admin provider test */
+
+  if (
+    req.method === "GET" &&
+    url.pathname ===
+      "/api/admin/wingo-test"
+  ) {
+    if (!adminAllowed()) {
+      json(res, 401, {
+        ok: false,
+        error: "Unauthorized",
+      });
+
+      return true;
+    }
+
+    try {
+      const data =
+        await fetchWingoBot();
+
+      json(res, 200, {
+        ok: true,
+
+        current:
+          data?.current || null,
+
+        historyCount:
+          Array.isArray(
+            data?.history
+          )
+            ? data.history.length
+            : 0,
+
+        stats:
+          data?.stats || {},
+      });
+    } catch (err) {
+      json(res, 502, {
+        ok: false,
+        error: err.message,
+      });
+    }
+
+    return true;
+  }
+
+
+  /* Admin model test */
+
+  if (
+    req.method === "GET" &&
+    url.pathname ===
+      "/api/admin/model-test"
+  ) {
+    if (!adminAllowed()) {
+      json(res, 401, {
+        ok: false,
+        error: "Unauthorized",
+      });
+
+      return true;
+    }
+
+    const analysis =
+      analyzeHistory(
+        providerState.history
+      );
+
+    json(res, 200, {
+      ok: true,
+      analysis,
+      sample:
+        providerState.history
+          .slice(0, 30),
+    });
+
+    return true;
+  }
+
+
+  /* Admin create keys */
+
+  if (
+    req.method === "POST" &&
+    url.pathname ===
+      "/api/admin/keys"
+  ) {
+    if (!adminAllowed()) {
+      json(res, 401, {
+        ok: false,
+        error: "Unauthorized",
+      });
+
+      return true;
+    }
+
+    const body =
+      await parseBody(req);
+
+    const count =
+      Math.min(
+        100,
+        Math.max(
+          1,
+          Number(
+            body.count || 1
+          )
+        )
+      );
+
+    const keys = [];
+
+    for (
+      let i = 0;
+      i < count;
+      i++
+    ) {
+      const key =
+        body.prefix
+          ? String(body.prefix) +
+            "-" +
+            randomKey()
+          : randomKey();
+
+      if (DATABASE_URL) {
+        await pool.query(
+          `
+            INSERT INTO access_keys
+            (
+              access_key,
+              created_at
+            )
+            VALUES ($1,$2)
+            ON CONFLICT
+            (access_key)
+            DO NOTHING
+          `,
+          [key, now()]
+        );
+      }
+
+      keys.push(key);
+    }
+
+    json(res, 200, {
+      ok: true,
+      keys,
+    });
+
+    return true;
+  }
+
+
+  /* Admin list keys */
+
+  if (
+    req.method === "GET" &&
+    url.pathname ===
+      "/api/admin/keys"
+  ) {
+    if (!adminAllowed()) {
+      json(res, 401, {
+        ok: false,
+        error: "Unauthorized",
+      });
+
+      return true;
+    }
+
+    if (!DATABASE_URL) {
+      json(res, 200, {
+        ok: true,
+        keys: [],
+      });
+
+      return true;
+    }
+
+    const result =
+      await pool.query(
+        `
+          SELECT
+            id,
+            access_key,
+            device_id,
+            created_at,
+            last_seen
+          FROM access_keys
+          ORDER BY id DESC
+        `
+      );
+
+    json(res, 200, {
+      ok: true,
+      keys: result.rows,
+    });
+
+    return true;
+  }
+
+
+  /* Admin delete key */
+
+  if (
+    req.method === "DELETE" &&
+    url.pathname ===
+      "/api/admin/keys"
+  ) {
+    if (!adminAllowed()) {
+      json(res, 401, {
+        ok: false,
+        error: "Unauthorized",
+      });
+
+      return true;
+    }
+
+    const body =
+      await parseBody(req);
+
+    const key =
+      String(
+        body.accessKey || ""
+      ).trim();
+
+    if (!key) {
+      json(res, 400, {
+        ok: false,
+        error:
+          "accessKey required",
+      });
+
+      return true;
+    }
+
+    if (DATABASE_URL) {
+      await pool.query(
+        `
+          DELETE FROM access_keys
+          WHERE access_key = $1
+        `,
+        [key]
+      );
+    }
+
+    json(res, 200, {
+      ok: true,
+    });
+
+    return true;
+  }
+
+
+  /* Admin reset device */
+
+  if (
+    req.method === "POST" &&
+    url.pathname ===
+      "/api/admin/reset-device"
+  ) {
+    if (!adminAllowed()) {
+      json(res, 401, {
+        ok: false,
+        error: "Unauthorized",
+      });
+
+      return true;
+    }
+
+    const body =
+      await parseBody(req);
+
+    const key =
+      String(
+        body.accessKey || ""
+      ).trim();
+
+    if (!key) {
+      json(res, 400, {
+        ok: false,
+        error:
+          "accessKey required",
+      });
+
+      return true;
+    }
+
+    if (DATABASE_URL) {
+      await pool.query(
+        `
+          UPDATE access_keys
+          SET device_id = NULL
+          WHERE access_key = $1
+        `,
+        [key]
+      );
+    }
+
+    json(res, 200, {
+      ok: true,
+      message:
+        "Device binding reset",
+    });
+
+    return true;
+  }
+
+
+  return false;
+}
+
+
+/* =========================================================
+   SERVER
+========================================================= */
+
+const server =
+  http.createServer(
+    async (req, res) => {
+      try {
+        const url =
+          new URL(
+            req.url,
+            `http://${req.headers.host}`
+          );
+
+        const handled =
+          await handleAPI(
+            req,
+            res,
+            url
+          );
+
+        if (handled) return;
+
+        if (
+          req.method === "GET" ||
+          req.method === "HEAD"
+        ) {
+          serveStatic(
+            req,
+            res,
+            url.pathname
+          );
+
+          return;
+        }
+
+        json(res, 405, {
           ok: false,
-          error: "Internal server error"
+          error:
+            "Method not allowed",
         });
-      } else {
-        res.end();
+      } catch (err) {
+        console.error(
+          "Server error:",
+          err
+        );
+
+        if (!res.headersSent) {
+          json(res, 500, {
+            ok: false,
+            error:
+              "Internal server error",
+          });
+        }
       }
     }
-  }
-);
+  );
+
 
 /* =========================================================
    STARTUP
 ========================================================= */
 
 async function start() {
-  console.log("[START] Initializing database...");
-
-  await initDatabase();
-
-  console.log("[START] Starting HTTP server...");
-
-  server.listen(PORT, "0.0.0.0", () => {
-    console.log(
-      `[SERVER] Listening on 0.0.0.0:${PORT}`
-    );
-  });
-
-  /*
-   * Provider failure must NOT kill the Node process.
-   */
   try {
-    await refreshProvider();
+    await initDB();
   } catch (err) {
     console.error(
-      "[INITIAL REFRESH ERROR]",
+      "Database initialization failed:",
       err.message
     );
   }
 
-  /*
-   * Refresh every 3 seconds.
-   */
-  setInterval(async () => {
-    try {
-      await refreshProvider();
-      await settleRecords();
-    } catch (err) {
-      console.error(
-        "[REFRESH LOOP ERROR]",
-        err.message
+  server.listen(
+    PORT,
+    "0.0.0.0",
+    () => {
+      console.log(
+        `DY AI Wingo running on port ${PORT}`
       );
     }
-  }, 3000);
+  );
+
+  /*
+    First provider refresh.
+  */
+
+  await refreshProvider();
+
+  /*
+    Keep provider history reasonably fresh.
+  */
+
+  setInterval(
+    refreshProvider,
+    3000
+  );
 }
 
-/* =========================================================
-   PROCESS SAFETY
-========================================================= */
+start();
 
-process.on("uncaughtException", (err) => {
-  console.error(
-    "[UNCAUGHT EXCEPTION]",
-    err
-  );
-
-  /*
-   * Do not immediately process.exit().
-   * Keep Render service alive where possible.
-   */
-});
-
-process.on("unhandledRejection", (reason) => {
-  console.error(
-    "[UNHANDLED REJECTION]",
-    reason
-  );
-});
-
-process.on("SIGTERM", async () => {
-  console.log("[SIGTERM] Shutting down...");
-
-  try {
-    if (pool) {
-      await pool.end();
-    }
-  } catch {}
-
-  server.close(() => {
-    process.exit(0);
-  });
-
-  setTimeout(() => {
-    process.exit(0);
-  }, 5000);
-});
-
-process.on("SIGINT", async () => {
-  console.log("[SIGINT] Shutting down...");
-
-  try {
-    if (pool) {
-      await pool.end();
-    }
-  } catch {}
-
-  server.close(() => {
-    process.exit(0);
-  });
-});
 
 /* =========================================================
-   RUN
+   SAFE SHUTDOWN
 ========================================================= */
 
-start().catch((err) => {
-  /*
-   * Log the actual reason instead of a silent status-1 exit.
-   */
-  console.error(
-    "[FATAL START ERROR]",
-    err
-  );
+process.on(
+  "SIGTERM",
+  async () => {
+    try {
+      await pool.end();
+    } catch {}
 
-  /*
-   * HTTP server is intentionally not force-exited here.
-   * Render will still expose the logs/health state.
-   */
-});
+    server.close(() => {
+      process.exit(0);
+    });
+  }
+);
+
+process.on(
+  "SIGINT",
+  async () => {
+    try {
+      await pool.end();
+    } catch {}
+
+    server.close(() => {
+      process.exit(0);
+    });
+  }
+);
