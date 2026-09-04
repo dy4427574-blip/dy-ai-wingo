@@ -1,2204 +1,1605 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-
-<title>DY AI ADMIN V6</title>
-
-<style>
-*{
-  box-sizing:border-box;
-  margin:0;
-  padding:0;
-}
-
-body{
-  min-height:100vh;
-  font-family:Arial,Helvetica,sans-serif;
-  background:
-    radial-gradient(circle at 10% 0%,rgba(37,99,235,.14),transparent 30%),
-    radial-gradient(circle at 100% 100%,rgba(124,58,237,.12),transparent 35%),
-    #070b14;
-  color:#fff;
-}
-
-button,input{
-  font:inherit;
-}
-
-button{
-  cursor:pointer;
-}
-
-.hidden{
-  display:none!important;
-}
-
-
-/* =====================================================
-   LOGIN
-===================================================== */
-
-#loginScreen{
-  min-height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:20px;
-}
-
-.login-card{
-  width:100%;
-  max-width:390px;
-  padding:28px 22px;
-  border-radius:24px;
-  background:#0d1320;
-  border:1px solid #202d44;
-  box-shadow:0 25px 80px rgba(0,0,0,.55);
-}
-
-.logo{
-  width:72px;
-  height:72px;
-  margin:0 auto 16px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border-radius:21px;
-  background:linear-gradient(135deg,#2563eb,#7c3aed);
-  font-size:24px;
-  font-weight:900;
-}
-
-.login-card h1{
-  text-align:center;
-  font-size:24px;
-}
-
-.login-card p{
-  margin:7px 0 22px;
-  color:#65738a;
-  text-align:center;
-  font-size:10px;
-}
-
-.input{
-  width:100%;
-  height:49px;
-  padding:0 14px;
-  outline:none;
-  border:1px solid #263149;
-  border-radius:13px;
-  background:#080e19;
-  color:#fff;
-}
-
-.input:focus{
-  border-color:#3b82f6;
-}
-
-.btn{
-  width:100%;
-  height:45px;
-  border:0;
-  border-radius:12px;
-  background:linear-gradient(135deg,#2563eb,#7c3aed);
-  color:#fff;
-  font-size:10px;
-  font-weight:900;
-}
-
-.login-btn{
-  margin-top:10px;
-}
-
-.error{
-  margin-top:12px;
-  color:#fb7185;
-  text-align:center;
-  font-size:10px;
-}
-
-
-/* =====================================================
-   APP
-===================================================== */
-
-#app{
-  display:none;
-}
-
-.topbar{
-  position:sticky;
-  top:0;
-  z-index:50;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:12px 14px;
-  background:rgba(5,9,16,.94);
-  border-bottom:1px solid rgba(255,255,255,.07);
-  backdrop-filter:blur(18px);
-}
-
-.brand{
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-
-.brand-logo{
-  width:43px;
-  height:43px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border-radius:13px;
-  background:linear-gradient(135deg,#2563eb,#7c3aed);
-  font-size:13px;
-  font-weight:900;
-}
-
-.brand h2{
-  font-size:15px;
-}
-
-.brand small{
-  display:block;
-  margin-top:3px;
-  color:#65738a;
-  font-size:8px;
-}
-
-.top-actions{
-  display:flex;
-  gap:8px;
-}
-
-.icon-btn{
-  width:45px;
-  height:45px;
-  border:1px solid #263149;
-  border-radius:13px;
-  background:#0c1422;
-  color:#dbeafe;
-  font-size:18px;
-}
-
-.container{
-  width:100%;
-  max-width:1050px;
-  margin:auto;
-  padding:9px;
-}
-
-
-/* =====================================================
-   CARDS
-===================================================== */
-
-.card{
-  margin-bottom:9px;
-  padding:15px;
-  border:1px solid #1d2a40;
-  border-radius:18px;
-  background:#0a101b;
-}
-
-.card-head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  margin-bottom:13px;
-}
-
-.card-head h3{
-  font-size:12px;
-}
-
-.card-head span{
-  color:#68768b;
-  font-size:8px;
-  font-weight:900;
-}
-
-
-/* =====================================================
-   STATUS
-===================================================== */
-
-.status-grid{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:8px;
-}
-
-.status-item{
-  padding:12px;
-  border:1px solid #18263b;
-  border-radius:13px;
-  background:#080e18;
-}
-
-.status-item small{
-  display:block;
-  margin-bottom:6px;
-  color:#59687d;
-  font-size:8px;
-}
-
-.status-item strong{
-  color:#dbeafe;
-  font-size:11px;
-}
-
-.online{
-  color:#4ade80!important;
-}
-
-.offline{
-  color:#fb7185!important;
-}
-
-
-/* =====================================================
-   CURRENT AI
-===================================================== */
-
-.ai-box{
-  padding:17px;
-  text-align:center;
-  border:1px solid #1c2a41;
-  border-radius:16px;
-  background:
-    radial-gradient(circle at 50% 0%,rgba(37,99,235,.12),transparent 50%),
-    #080e18;
-}
-
-.ai-period{
-  color:#65738a;
-  font-family:monospace;
-  font-size:9px;
-}
-
-.ai-side{
-  margin-top:8px;
-  font-size:32px;
-  font-weight:1000;
-}
-
-.ai-side.big{
-  color:#60a5fa;
-}
-
-.ai-side.small{
-  color:#c084fc;
-}
-
-.ai-meta{
-  display:flex;
-  justify-content:center;
-  flex-wrap:wrap;
-  gap:7px;
-  margin-top:10px;
-}
-
-.pill{
-  padding:6px 9px;
-  border-radius:20px;
-  background:#111b2d;
-  color:#93c5fd;
-  font-size:8px;
-  font-weight:900;
-}
-
-
-/* =====================================================
-   TEST
-===================================================== */
-
-.test-buttons{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:8px;
-}
-
-.test-result{
-  margin-top:10px;
-  padding:12px;
-  border:1px solid #18263b;
-  border-radius:13px;
-  background:#080e18;
-  color:#8fa0b6;
-  font-family:monospace;
-  font-size:9px;
-  line-height:1.7;
-  white-space:pre-wrap;
-  word-break:break-word;
-}
-
-
-/* =====================================================
-   KEYS
-===================================================== */
-
-.key-create{
-  display:grid;
-  grid-template-columns:1fr 120px;
-  gap:8px;
-  margin-bottom:12px;
-}
-
-.key-row{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  padding:11px 0;
-  border-bottom:1px solid #142033;
-}
-
-.key-info{
-  min-width:0;
-}
-
-.key-name{
-  overflow:hidden;
-  color:#dbeafe;
-  font-family:monospace;
-  font-size:10px;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-
-.key-device{
-  margin-top:4px;
-  color:#58677c;
-  font-size:8px;
-}
-
-.key-actions{
-  display:flex;
-  gap:5px;
-  flex-shrink:0;
-}
-
-.small-btn{
-  padding:7px 9px;
-  border:1px solid #293951;
-  border-radius:8px;
-  background:#101827;
-  color:#dbeafe;
-  font-size:8px;
-  font-weight:900;
-}
-
-.delete{
-  color:#fb7185;
-}
-
-.reset{
-  color:#fbbf24;
-}
-
-
-/* =====================================================
-   BACKTEST
-===================================================== */
-
-.backtest-grid{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:8px;
-}
-
-.metric{
-  padding:12px;
-  border:1px solid #18263b;
-  border-radius:13px;
-  background:#080e18;
-}
-
-.metric small{
-  display:block;
-  margin-bottom:5px;
-  color:#59687d;
-  font-size:8px;
-}
-
-.metric strong{
-  font-size:14px;
-}
-
-
-/* =====================================================
-   LOG
-===================================================== */
-
-.log{
-  max-height:240px;
-  overflow:auto;
-  padding:12px;
-  border:1px solid #18263b;
-  border-radius:13px;
-  background:#050912;
-  color:#73839a;
-  font-family:monospace;
-  font-size:8px;
-  line-height:1.7;
-  white-space:pre-wrap;
-}
-
-
-/* =====================================================
-   FOOTER
-===================================================== */
-
-.footer{
-  padding:18px 8px 28px;
-  text-align:center;
-  color:#3f4d62;
-  font-size:8px;
-  line-height:1.7;
-}
-
-
-/* =====================================================
-   TOAST
-===================================================== */
-
-.toast{
-  position:fixed;
-  left:50%;
-  bottom:18px;
-  z-index:100;
-  max-width:90%;
-  padding:10px 14px;
-  border:1px solid #2a3851;
-  border-radius:11px;
-  background:#101827;
-  color:#dbeafe;
-  font-size:10px;
-  transform:translate(-50%,120px);
-  opacity:0;
-  transition:.25s;
-}
-
-.toast.show{
-  transform:translate(-50%,0);
-  opacity:1;
-}
-
-
-/* =====================================================
-   MOBILE
-===================================================== */
-
-@media(max-width:600px){
-
-  .status-grid{
-    grid-template-columns:1fr 1fr;
-  }
-
-  .key-create{
-    grid-template-columns:1fr;
-  }
-
-  .key-row{
-    align-items:flex-start;
-  }
-
-  .key-actions{
-    flex-direction:column;
-  }
-
-}
-</style>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1"
+  >
+
+  <title>DY AI Admin</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      background: #070b14;
+      color: #fff;
+      font-family:
+        Inter,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+    }
+
+    body {
+      padding: 12px;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .wrap {
+      width: 100%;
+      max-width: 850px;
+      margin: auto;
+    }
+
+    .login {
+      min-height: calc(100vh - 24px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card {
+      background: #101827;
+      border: 1px solid #202c40;
+      border-radius: 18px;
+      padding: 18px;
+      margin-bottom: 12px;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 420px;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      font-size: 23px;
+      text-align: center;
+      margin-bottom: 7px;
+    }
+
+    h2 {
+      font-size: 15px;
+      margin-bottom: 13px;
+    }
+
+    .muted {
+      color: #7e8a9e;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .logo {
+      width: 64px;
+      height: 64px;
+      border-radius: 19px;
+      margin: 0 auto 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(145deg, #1688ff, #643dff);
+      font-size: 23px;
+      font-weight: 950;
+    }
+
+    input {
+      width: 100%;
+      height: 50px;
+      background: #080d17;
+      color: #fff;
+      border: 1px solid #29364d;
+      border-radius: 12px;
+      outline: none;
+      padding: 0 13px;
+      margin-bottom: 10px;
+    }
+
+    input:focus {
+      border-color: #328dff;
+    }
+
+    .btn {
+      min-height: 44px;
+      border: 0;
+      border-radius: 11px;
+      padding: 0 15px;
+      background: #1688ff;
+      color: #fff;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .btn.secondary {
+      background: #172338;
+      border: 1px solid #2a3952;
+    }
+
+    .btn.danger {
+      background: #b82f42;
+    }
+
+    .btn.success {
+      background: #168c58;
+    }
+
+    .btn.full {
+      width: 100%;
+    }
+
+    .btn:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+    }
+
+    .login-error {
+      color: #ff687a;
+      text-align: center;
+      min-height: 20px;
+      margin-top: 8px;
+      font-size: 12px;
+    }
+
+    /* HEADER */
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-icon {
+      width: 45px;
+      height: 45px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(145deg, #1688ff, #643dff);
+      font-weight: 950;
+    }
+
+    .brand-title {
+      font-weight: 900;
+      font-size: 17px;
+    }
+
+    .brand-sub {
+      color: #78859a;
+      font-size: 10px;
+      margin-top: 2px;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 7px;
+    }
+
+    /* STATUS */
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 9px;
+    }
+
+    .stat {
+      min-width: 0;
+      background: #0c1320;
+      border: 1px solid #202d42;
+      border-radius: 13px;
+      padding: 12px;
+    }
+
+    .stat-label {
+      color: #6f7c91;
+      font-size: 9px;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+
+    .stat-value {
+      font-size: 12px;
+      font-weight: 900;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .ok {
+      color: #48dd89;
+    }
+
+    .bad {
+      color: #ff6376;
+    }
+
+    /* BUTTON ROW */
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .button-row .btn {
+      flex: 1 1 150px;
+    }
+
+    /* MODEL */
+
+    .model-box {
+      background: #0a101b;
+      border: 1px solid #202c40;
+      border-radius: 13px;
+      padding: 13px;
+    }
+
+    .model-name {
+      font-size: 20px;
+      font-weight: 950;
+      margin-bottom: 4px;
+    }
+
+    .model-mode {
+      color: #7d8ba1;
+      font-size: 11px;
+    }
+
+    /* KEYS */
+
+    .key-create {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 13px;
+    }
+
+    .key-create input {
+      margin: 0;
+      flex: 1;
+    }
+
+    .key-create .btn {
+      flex: 0 0 auto;
+    }
+
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      min-width: 650px;
+      border-collapse: collapse;
+    }
+
+    th {
+      color: #69768b;
+      font-size: 9px;
+      text-align: left;
+      text-transform: uppercase;
+      padding: 9px;
+      white-space: nowrap;
+    }
+
+    td {
+      border-top: 1px solid #1c2738;
+      padding: 10px 9px;
+      font-size: 10px;
+      white-space: nowrap;
+    }
+
+    .key {
+      color: #62adff;
+      font-weight: 800;
+    }
+
+    .device {
+      color: #7c899e;
+      max-width: 160px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .actions {
+      display: flex;
+      gap: 5px;
+    }
+
+    .mini {
+      min-height: 32px;
+      padding: 0 9px;
+      border-radius: 8px;
+      font-size: 9px;
+    }
+
+    /* LOG */
+
+    .log {
+      background: #050911;
+      border: 1px solid #182235;
+      border-radius: 12px;
+      padding: 11px;
+      min-height: 100px;
+      max-height: 300px;
+      overflow: auto;
+      font-family: monospace;
+      font-size: 10px;
+      color: #8da0bb;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* RESPONSIVE */
+
+    @media (max-width: 650px) {
+
+      body {
+        padding: 8px;
+      }
+
+      .grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .card {
+        padding: 13px;
+        border-radius: 15px;
+      }
+
+      .topbar {
+        align-items: flex-start;
+      }
+
+      .top-actions .btn {
+        min-height: 38px;
+        padding: 0 10px;
+      }
+    }
+
+    @media (max-width: 390px) {
+
+      .brand-title {
+        font-size: 14px;
+      }
+
+      .brand-sub {
+        font-size: 8px;
+      }
+
+      .brand-icon {
+        width: 40px;
+        height: 40px;
+      }
+
+      .key-create {
+        flex-direction: column;
+      }
+
+      .key-create .btn {
+        width: 100%;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
+<div id="loginScreen" class="login">
+  <div class="card login-card">
 
-<!-- =====================================================
-     LOGIN
-===================================================== -->
+    <div class="logo">DY</div>
 
-<section id="loginScreen">
+    <h1>DY AI ADMIN</h1>
 
-  <div class="login-card">
-
-    <div class="logo">
-      DY
-    </div>
-
-    <h1>
-      DY AI ADMIN
-    </h1>
-
-    <p>
-      V6 Control Panel
+    <p class="muted" style="text-align:center;">
+      Secure administrator access
     </p>
 
     <input
       id="adminKey"
-      class="input"
       type="password"
-      placeholder="Enter Admin Key"
+      placeholder="Admin key"
       autocomplete="off"
     >
 
     <button
       id="loginBtn"
-      class="btn login-btn">
-      LOGIN ADMIN
+      class="btn full"
+      type="button"
+    >
+      LOGIN
     </button>
 
-    <div
-      id="loginError"
-      class="error hidden">
-    </div>
+    <div id="loginError" class="login-error"></div>
 
   </div>
+</div>
 
-</section>
 
+<main id="dashboard" class="wrap hidden">
 
-<!-- =====================================================
-     APP
-===================================================== -->
+  <!-- TOP -->
 
-<main id="app">
-
-  <header class="topbar">
+  <div class="topbar">
 
     <div class="brand">
 
-      <div class="brand-logo">
+      <div class="brand-icon">
         DY
       </div>
 
       <div>
-
-        <h2>
+        <div class="brand-title">
           DY AI ADMIN
-        </h2>
+        </div>
 
-        <small>
-          ADAPTIVE MODEL V6
-        </small>
-
+        <div class="brand-sub">
+          RESULT TRACKER CONTROL PANEL
+        </div>
       </div>
 
     </div>
-
 
     <div class="top-actions">
 
       <button
         id="refreshBtn"
-        class="icon-btn">
-        ↻
+        class="btn secondary"
+        type="button"
+      >
+        ↻ Refresh
       </button>
 
       <button
         id="logoutBtn"
-        class="icon-btn">
-        ⎋
+        class="btn danger"
+        type="button"
+      >
+        Logout
       </button>
-
-    </div>
-
-  </header>
-
-
-  <div class="container">
-
-
-    <!-- =================================================
-         STATUS
-    ================================================== -->
-
-    <section class="card">
-
-      <div class="card-head">
-
-        <h3>
-          SYSTEM STATUS
-        </h3>
-
-        <span id="statusTime">
-          —
-        </span>
-
-      </div>
-
-
-      <div class="status-grid">
-
-        <div class="status-item">
-
-          <small>
-            SERVER
-          </small>
-
-          <strong
-            id="serverStatus">
-            —
-          </strong>
-
-        </div>
-
-
-        <div class="status-item">
-
-          <small>
-            DATABASE
-          </small>
-
-          <strong
-            id="dbStatus">
-            —
-          </strong>
-
-        </div>
-
-
-        <div class="status-item">
-
-          <small>
-            WINGOBOT
-          </small>
-
-          <strong
-            id="wingoStatus">
-            —
-          </strong>
-
-        </div>
-
-
-        <div class="status-item">
-
-          <small>
-            MODEL
-          </small>
-
-          <strong
-            id="modelStatus">
-            —
-          </strong>
-
-        </div>
-
-
-        <div class="status-item">
-
-          <small>
-            OUTPUT
-          </small>
-
-          <strong>
-            BIG / SMALL
-          </strong>
-
-        </div>
-
-
-        <div class="status-item">
-
-          <small>
-            NUMBER MODEL
-          </small>
-
-          <strong>
-            DISABLED
-          </strong>
-
-        </div>
-
-      </div>
-
-    </section>
-
-
-    <!-- =================================================
-         CURRENT AI
-    ================================================== -->
-
-    <section class="card">
-
-      <div class="card-head">
-
-        <h3>
-          CURRENT AI
-        </h3>
-
-        <span>
-          LIVE
-        </span>
-
-      </div>
-
-
-      <div class="ai-box">
-
-        <div
-          id="aiPeriod"
-          class="ai-period">
-          Target: —
-        </div>
-
-
-        <div
-          id="aiSide"
-          class="ai-side">
-          —
-        </div>
-
-
-        <div class="ai-meta">
-
-          <span
-            id="aiConfidence"
-            class="pill">
-            CONFIDENCE —
-          </span>
-
-          <span
-            id="aiRegime"
-            class="pill">
-            MIXED
-          </span>
-
-          <span
-            id="aiStrategy"
-            class="pill">
-            ADAPTIVE
-          </span>
-
-        </div>
-
-      </div>
-
-    </section>
-
-
-    <!-- =================================================
-         MODEL TEST
-    ================================================== -->
-
-    <section class="card">
-
-      <div class="card-head">
-
-        <h3>
-          V6 MODEL TEST
-        </h3>
-
-        <span>
-          WALK-FORWARD
-        </span>
-
-      </div>
-
-
-      <div class="test-buttons">
-
-        <button
-          id="modelTestBtn"
-          class="btn">
-          RUN MODEL TEST
-        </button>
-
-        <button
-          id="wingoTestBtn"
-          class="btn">
-          TEST WINGOBOT
-        </button>
-
-      </div>
-
-
-      <div
-        id="testResult"
-        class="test-result">
-        No test run yet.
-      </div>
-
-    </section>
-
-
-    <!-- =================================================
-         BACKTEST
-    ================================================== -->
-
-    <section class="card">
-
-      <div class="card-head">
-
-        <h3>
-          BACKTEST
-        </h3>
-
-        <span>
-          V6
-        </span>
-
-      </div>
-
-
-      <div class="backtest-grid">
-
-        <div class="metric">
-
-          <small>
-            STRATEGY
-          </small>
-
-          <strong
-            id="btStrategy">
-            —
-          </strong>
-
-        </div>
-
-
-        <div class="metric">
-
-          <small>
-            ACCURACY
-          </small>
-
-          <strong
-            id="btAccuracy">
-            —
-          </strong>
-
-        </div>
-
-
-        <div class="metric">
-
-          <small>
-            WINS
-          </small>
-
-          <strong
-            id="btWins">
-            —
-          </strong>
-
-        </div>
-
-
-        <div class="metric">
-
-          <small>
-            LOSSES
-          </small>
-
-          <strong
-            id="btLosses">
-            —
-          </strong>
-
-        </div>
-
-
-        <div class="metric">
-
-          <small>
-            SAMPLES
-          </small>
-
-          <strong
-            id="btSamples">
-            —
-          </strong>
-
-        </div>
-
-
-        <div class="metric">
-
-          <small>
-            HISTORY USED
-          </small>
-
-          <strong
-            id="historyUsed">
-            —
-          </strong>
-
-        </div>
-
-      </div>
-
-    </section>
-
-
-    <!-- =================================================
-         ACCESS KEYS
-    ================================================== -->
-
-    <section class="card">
-
-      <div class="card-head">
-
-        <h3>
-          ACCESS KEYS
-        </h3>
-
-        <span>
-          MANAGE
-        </span>
-
-      </div>
-
-
-      <div class="key-create">
-
-        <input
-          id="newKey"
-          class="input"
-          type="text"
-          placeholder="Custom key (optional)"
-          autocomplete="off"
-        >
-
-        <button
-          id="createKeyBtn"
-          class="btn">
-          CREATE KEY
-        </button>
-
-      </div>
-
-
-      <div id="keysList">
-
-        Loading keys...
-
-      </div>
-
-    </section>
-
-
-    <!-- =================================================
-         LOG
-    ================================================== -->
-
-    <section class="card">
-
-      <div class="card-head">
-
-        <h3>
-          ADMIN LOG
-        </h3>
-
-        <span>
-          LIVE
-        </span>
-
-      </div>
-
-
-      <div
-        id="log"
-        class="log">
-        Admin panel started.
-      </div>
-
-    </section>
-
-
-    <div class="footer">
-
-      DY AI Wingo V6 Admin<br>
-
-      Adaptive BIG / SMALL model<br>
-
-      Prediction is an estimate, not a guaranteed outcome.
 
     </div>
 
   </div>
 
+
+  <!-- STATUS -->
+
+  <section class="card">
+
+    <h2>System Status</h2>
+
+    <div class="grid">
+
+      <div class="stat">
+        <div class="stat-label">
+          Server
+        </div>
+
+        <div
+          id="serverStatus"
+          class="stat-value"
+        >
+          —
+        </div>
+      </div>
+
+
+      <div class="stat">
+        <div class="stat-label">
+          Database
+        </div>
+
+        <div
+          id="dbStatus"
+          class="stat-value"
+        >
+          —
+        </div>
+      </div>
+
+
+      <div class="stat">
+        <div class="stat-label">
+          WingoBot
+        </div>
+
+        <div
+          id="wingoStatus"
+          class="stat-value"
+        >
+          —
+        </div>
+      </div>
+
+
+      <div class="stat">
+        <div class="stat-label">
+          Model
+        </div>
+
+        <div
+          id="modelStatus"
+          class="stat-value"
+        >
+          —
+        </div>
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- PROVIDER -->
+
+  <section class="card">
+
+    <h2>Provider</h2>
+
+    <div class="grid">
+
+      <div class="stat">
+        <div class="stat-label">
+          Current Issue
+        </div>
+
+        <div
+          id="currentIssue"
+          class="stat-value"
+        >
+          —
+        </div>
+      </div>
+
+
+      <div class="stat">
+        <div class="stat-label">
+          Target Issue
+        </div>
+
+        <div
+          id="targetIssue"
+          class="stat-value"
+        >
+          —
+        </div>
+      </div>
+
+
+      <div class="stat">
+        <div class="stat-label">
+          Results
+        </div>
+
+        <div
+          id="historyCount"
+          class="stat-value"
+        >
+          —
+        </div>
+      </div>
+
+
+      <div class="stat">
+        <div class="stat-label">
+          Last Sync
+        </div>
+
+        <div
+          id="lastSync"
+          class="stat-value"
+        >
+          —
+        </div>
+      </div>
+
+    </div>
+
+    <div
+      class="button-row"
+      style="margin-top:12px;"
+    >
+
+      <button
+        id="wingoTestBtn"
+        class="btn"
+        type="button"
+      >
+        WingoBot Test
+      </button>
+
+      <button
+        id="refreshProviderBtn"
+        class="btn secondary"
+        type="button"
+      >
+        Refresh Provider
+      </button>
+
+    </div>
+
+  </section>
+
+
+  <!-- MODEL -->
+
+  <section class="card">
+
+    <h2>Model</h2>
+
+    <div class="model-box">
+
+      <div
+        id="modelName"
+        class="model-name"
+      >
+        DY-TRACKER-V7
+      </div>
+
+      <div
+        id="modelMode"
+        class="model-mode"
+      >
+        RESULT TRACKING
+      </div>
+
+    </div>
+
+    <div
+      class="button-row"
+      style="margin-top:12px;"
+    >
+
+      <button
+        id="modelTestBtn"
+        class="btn"
+        type="button"
+      >
+        MODEL TEST
+      </button>
+
+    </div>
+
+  </section>
+
+
+  <!-- ACCESS KEYS -->
+
+  <section class="card">
+
+    <h2>Access Keys</h2>
+
+    <div class="key-create">
+
+      <input
+        id="customKey"
+        type="text"
+        placeholder="Optional custom key"
+        autocomplete="off"
+      >
+
+      <button
+        id="createKeyBtn"
+        class="btn success"
+        type="button"
+      >
+        CREATE KEY
+      </button>
+
+    </div>
+
+
+    <div class="table-wrap">
+
+      <table>
+
+        <thead>
+
+          <tr>
+            <th>ID</th>
+            <th>Access Key</th>
+            <th>Device</th>
+            <th>Created</th>
+            <th>Last Seen</th>
+            <th>Actions</th>
+          </tr>
+
+        </thead>
+
+        <tbody id="keysBody">
+
+          <tr>
+            <td colspan="6">
+              Loading...
+            </td>
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </section>
+
+
+  <!-- LOG -->
+
+  <section class="card">
+
+    <h2>System Log</h2>
+
+    <div id="log" class="log">
+      Ready.
+    </div>
+
+  </section>
+
+
+  <p
+    class="muted"
+    style="text-align:center;padding:4px 12px 20px;"
+  >
+    DY AI Admin • Result tracking control panel
+  </p>
+
 </main>
 
 
-<div
-  id="toast"
-  class="toast">
-</div>
-
-
 <script>
-
-/* =========================================================
-   CONFIG
-========================================================= */
-
-const MODEL_VERSION =
-  "DY-AI-BS-V6";
-
-let ADMIN_KEY =
-  "";
-
-let autoRefresh =
-  null;
+"use strict";
 
 
-/* =========================================================
-   HELPERS
-========================================================= */
-
-function $(id){
-  return document.getElementById(id);
-}
+let ADMIN_KEY_VALUE = "";
 
 
-function esc(value){
+/* ELEMENTS */
 
-  return String(value ?? "")
-    .replace(/&/g,"&amp;")
-    .replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;")
-    .replace(/'/g,"&#039;");
+const loginScreen =
+  document.getElementById("loginScreen");
 
-}
+const dashboard =
+  document.getElementById("dashboard");
 
+const adminKey =
+  document.getElementById("adminKey");
 
-function toast(message){
+const loginBtn =
+  document.getElementById("loginBtn");
 
-  const el =
-    $("toast");
+const loginError =
+  document.getElementById("loginError");
 
-  el.textContent =
-    message;
-
-  el.classList.add(
-    "show"
-  );
-
-  clearTimeout(
-    window.__toastTimer
-  );
-
-  window.__toastTimer =
-    setTimeout(
-      ()=>{
-        el.classList.remove(
-          "show"
-        );
-      },
-      2200
-    );
-
-}
+const logBox =
+  document.getElementById("log");
 
 
-function log(message){
+/* LOG */
 
-  const el =
-    $("log");
+function log(message, data) {
 
   const time =
-    new Date()
-      .toLocaleTimeString();
+    new Date().toLocaleTimeString();
 
-  el.textContent =
-    `[${time}] ${message}\n` +
-    el.textContent;
+  let line =
+    `[${time}] ${message}`;
 
+  if (data !== undefined) {
+
+    try {
+      line +=
+        "\n" +
+        JSON.stringify(
+          data,
+          null,
+          2
+        );
+    } catch {}
+  }
+
+  logBox.textContent =
+    line +
+    "\n\n" +
+    logBox.textContent;
 }
 
 
-/* =========================================================
-   ADMIN API
-========================================================= */
+/* API */
 
-async function adminApi(
+async function api(
   url,
-  options={}
-){
+  options = {}
+) {
+
+  options.headers = {
+    ...(options.headers || {}),
+    "x-admin-key":
+      ADMIN_KEY_VALUE,
+    "Content-Type":
+      "application/json"
+  };
 
   const response =
     await fetch(
       url,
-      {
-        ...options,
-
-        headers:{
-          ...(options.headers || {}),
-          "x-admin-key":
-            ADMIN_KEY
-        },
-
-        cache:
-          "no-store"
-      }
+      options
     );
 
+  let data;
 
-  let data = {};
-
-  try{
-
+  try {
     data =
       await response.json();
+  } catch {
+    data = {
+      ok: false,
+      error: "Invalid server response"
+    };
+  }
 
-  }catch{}
-
-
-  if(!response.ok){
+  if (!response.ok || data.ok === false) {
 
     throw new Error(
       data.error ||
-      data.message ||
       `HTTP ${response.status}`
     );
-
   }
 
-
   return data;
-
 }
 
 
-/* =========================================================
-   LOGIN
-========================================================= */
+/* LOGIN */
 
-async function adminLogin(){
+loginBtn.addEventListener(
+  "click",
+  login
+);
 
-  const key =
-    $("adminKey")
-      .value
-      .trim();
+adminKey.addEventListener(
+  "keydown",
+  event => {
 
-
-  if(!key){
-
-    showLoginError(
-      "Admin key enter karo."
-    );
-
-    return;
-
-  }
-
-
-  $("loginBtn")
-    .disabled =
-    true;
-
-  $("loginBtn")
-    .textContent =
-    "CHECKING...";
-
-
-  try{
-
-    const response =
-      await fetch(
-        "/api/admin/ping",
-        {
-
-          headers:{
-            "x-admin-key":
-              key
-          },
-
-          cache:
-            "no-store"
-
-        }
-      );
-
-
-    const data =
-      await response.json();
-
-
-    if(!response.ok){
-
-      throw new Error(
-        data.error ||
-        "Invalid admin key."
-      );
-
+    if (event.key === "Enter") {
+      login();
     }
 
-
-    ADMIN_KEY =
-      key;
-
-
-    $("loginScreen")
-      .style
-      .display =
-      "none";
+  }
+);
 
 
-    $("app")
-      .style
-      .display =
-      "block";
+async function login() {
 
+  const key =
+    adminKey.value.trim();
 
-    log(
-      "Admin authentication successful."
+  if (!key) {
+
+    loginError.textContent =
+      "Admin key डालो.";
+
+    return;
+  }
+
+  loginBtn.disabled = true;
+  loginBtn.textContent = "CHECKING...";
+  loginError.textContent = "";
+
+  try {
+
+    const old =
+      ADMIN_KEY_VALUE;
+
+    ADMIN_KEY_VALUE = key;
+
+    await api(
+      "/api/admin/ping"
     );
 
+    dashboard.classList.remove(
+      "hidden"
+    );
+
+    loginScreen.classList.add(
+      "hidden"
+    );
+
+    log("Admin login successful.");
 
     await refreshAll();
 
+  } catch (err) {
 
-    clearInterval(
-      autoRefresh
-    );
+    ADMIN_KEY_VALUE = "";
 
+    loginError.textContent =
+      err.message ||
+      "Login failed.";
 
-    autoRefresh =
-      setInterval(
-        refreshAll,
-        10000
-      );
+  } finally {
 
-
-  }catch(error){
-
-    showLoginError(
-      error.message
-    );
-
-
-  }finally{
-
-    $("loginBtn")
-      .disabled =
-      false;
-
-    $("loginBtn")
-      .textContent =
-      "LOGIN ADMIN";
-
+    loginBtn.disabled = false;
+    loginBtn.textContent = "LOGIN";
   }
-
 }
 
 
-function showLoginError(
-  message
-){
+/* LOGOUT */
 
-  const el =
-    $("loginError");
-
-  el.textContent =
-    message;
-
-  el.classList.remove(
-    "hidden"
-  );
-
-}
-
-
-$("loginBtn")
+document
+  .getElementById("logoutBtn")
   .addEventListener(
     "click",
-    adminLogin
-  );
+    () => {
 
+      ADMIN_KEY_VALUE = "";
 
-$("adminKey")
-  .addEventListener(
-    "keydown",
-    e=>{
+      dashboard.classList.add(
+        "hidden"
+      );
 
-      if(
-        e.key ===
-        "Enter"
-      ){
+      loginScreen.classList.remove(
+        "hidden"
+      );
 
-        adminLogin();
+      adminKey.value = "";
 
-      }
-
+      log("Logged out.");
     }
   );
 
 
-/* =========================================================
-   STATUS
-========================================================= */
+/* STATUS */
 
-async function loadStatus(){
+async function loadStatus() {
 
   const data =
-    await adminApi(
+    await api(
       "/api/admin/status"
     );
 
-
   setStatus(
     "serverStatus",
-    data.server ||
-    "UNKNOWN"
+    data.server
   );
-
 
   setStatus(
     "dbStatus",
-    data.database ||
-    data.db ||
-    "UNKNOWN"
+    data.database
   );
-
 
   setStatus(
     "wingoStatus",
-    data.wingobot ||
-    data.wingo ||
-    "UNKNOWN"
+    data.wingobot
   );
 
-
-  $("modelStatus")
+  document
+    .getElementById("modelStatus")
     .textContent =
-    data.model_version ||
-    data.model ||
-    MODEL_VERSION;
+      data.model || "—";
 
-
-  $("statusTime")
+  document
+    .getElementById("modelName")
     .textContent =
-    new Date()
-      .toLocaleTimeString();
+      data.model || "—";
 
-
-  log(
-    `Status: server=${data.server}, db=${data.database}, wingo=${data.wingobot}`
-  );
-
+  document
+    .getElementById("modelMode")
+    .textContent =
+      data.mode || "—";
 }
 
 
 function setStatus(
   id,
   value
-){
+) {
 
-  const el =
-    $(id);
+  const element =
+    document.getElementById(id);
 
-  el.textContent =
-    value;
+  element.textContent =
+    value
+      ? "ONLINE"
+      : "OFFLINE";
 
-
-  const good =
-    /online|connected|ok/i
-      .test(
-        String(value)
-      );
-
-
-  el.className =
-    good
-      ? "online"
-      : "offline";
-
+  element.className =
+    "stat-value " +
+    (
+      value
+        ? "ok"
+        : "bad"
+    );
 }
 
 
-/* =========================================================
-   CURRENT AI
-========================================================= */
+/* STATE */
 
-async function loadCurrentAI(){
+async function loadState() {
 
   const data =
-    await adminApi(
+    await api(
       "/api/state"
     );
 
-
-  const p =
-    data.prediction ||
-    {};
-
-
-  const side =
-    String(
-      p.prediction ||
-      ""
-    ).toUpperCase();
-
-
-  $("aiPeriod")
+  document
+    .getElementById("currentIssue")
     .textContent =
-    "Target: " +
-    (
-      data.targetIssue ||
-      data.target_issue ||
-      "—"
+      data.currentIssue || "—";
+
+  document
+    .getElementById("targetIssue")
+    .textContent =
+      data.targetIssue || "—";
+
+  document
+    .getElementById("historyCount")
+    .textContent =
+      data.fetched ??
+      data.history?.length ??
+      0;
+
+  const sync =
+    Number(
+      data.providerLastUpdated || 0
     );
 
-
-  const ai =
-    $("aiSide");
-
-
-  ai.textContent =
-    side ||
-    "—";
-
-
-  ai.className =
-    "ai-side " +
-    (
-      side === "BIG"
-        ? "big"
-        : side === "SMALL"
-          ? "small"
-          : ""
-    );
-
-
-  $("aiConfidence")
+  document
+    .getElementById("lastSync")
     .textContent =
-    "CONFIDENCE " +
-    (
-      p.confidence == null
-        ? "—"
-        : `${p.confidence}%`
-    );
-
-
-  $("aiRegime")
-    .textContent =
-    p.regime ||
-    "MIXED";
-
-}
-
-
-/* =========================================================
-   MODEL TEST
-========================================================= */
-
-async function runModelTest(){
-
-  $("modelTestBtn")
-    .disabled =
-    true;
-
-  $("modelTestBtn")
-    .textContent =
-    "TESTING...";
-
-
-  try{
-
-    const data =
-      await adminApi(
-        "/api/admin/model-test"
-      );
-
-
-    const bt =
-      data.backtest ||
-      {};
-
-
-    $("testResult")
-      .textContent =
-      JSON.stringify(
-        data,
-        null,
-        2
-      );
-
-
-    $("btStrategy")
-      .textContent =
-      data.adaptive_strategy ||
-      "—";
-
-
-    $("btAccuracy")
-      .textContent =
-      bt.predictions
-        ? `${(
-            Number(
-              bt.accuracy
-            ) * 100
-          ).toFixed(1)}%`
+      sync
+        ? new Date(sync)
+            .toLocaleTimeString()
         : "—";
-
-
-    $("btWins")
-      .textContent =
-      bt.wins ??
-      "—";
-
-
-    $("btLosses")
-      .textContent =
-      bt.losses ??
-      "—";
-
-
-    $("btSamples")
-      .textContent =
-      bt.predictions ??
-      "—";
-
-
-    $("historyUsed")
-      .textContent =
-      data.history_used ??
-      "—";
-
-
-    log(
-      `Model test: ${data.prediction} | strategy=${data.adaptive_strategy} | accuracy=${bt.accuracy ?? "—"}`
-    );
-
-
-    toast(
-      "Model test complete."
-    );
-
-
-  }catch(error){
-
-    $("testResult")
-      .textContent =
-      "ERROR: " +
-      error.message;
-
-
-    log(
-      "Model test failed: " +
-      error.message
-    );
-
-
-    toast(
-      error.message
-    );
-
-  }finally{
-
-    $("modelTestBtn")
-      .disabled =
-      false;
-
-    $("modelTestBtn")
-      .textContent =
-      "RUN MODEL TEST";
-
-  }
-
 }
 
 
-$("modelTestBtn")
-  .addEventListener(
-    "click",
-    runModelTest
-  );
+/* KEYS */
 
-
-/* =========================================================
-   WINGOBOT TEST
-========================================================= */
-
-async function runWingoTest(){
-
-  $("wingoTestBtn")
-    .disabled =
-    true;
-
-  $("wingoTestBtn")
-    .textContent =
-    "TESTING...";
-
-
-  try{
-
-    const data =
-      await adminApi(
-        "/api/admin/wingo-test"
-      );
-
-
-    $("testResult")
-      .textContent =
-      JSON.stringify(
-        data,
-        null,
-        2
-      );
-
-
-    log(
-      `WingoBot test: ${data.ok ? "OK" : "FAILED"} | history=${data.historyCount ?? 0}`
-    );
-
-
-    toast(
-      data.ok
-        ? "WingoBot connected."
-        : "WingoBot error."
-    );
-
-
-  }catch(error){
-
-    $("testResult")
-      .textContent =
-      "ERROR: " +
-      error.message;
-
-
-    log(
-      "WingoBot test failed: " +
-      error.message
-    );
-
-
-    toast(
-      error.message
-    );
-
-  }finally{
-
-    $("wingoTestBtn")
-      .disabled =
-      false;
-
-    $("wingoTestBtn")
-      .textContent =
-      "TEST WINGOBOT";
-
-  }
-
-}
-
-
-$("wingoTestBtn")
-  .addEventListener(
-    "click",
-    runWingoTest
-  );
-
-
-/* =========================================================
-   KEYS
-========================================================= */
-
-async function loadKeys(){
+async function loadKeys() {
 
   const data =
-    await adminApi(
+    await api(
       "/api/admin/keys"
     );
 
+  const body =
+    document.getElementById(
+      "keysBody"
+    );
 
-  const keys =
-    Array.isArray(data.keys)
-      ? data.keys
-      : [];
+  if (!data.keys?.length) {
 
-
-  const box =
-    $("keysList");
-
-
-  if(!keys.length){
-
-    box.innerHTML = `
-      <div style="color:#65738a;font-size:9px;padding:10px 0;">
-        No access keys found.
-      </div>
+    body.innerHTML = `
+      <tr>
+        <td colspan="6">
+          No access keys.
+        </td>
+      </tr>
     `;
 
     return;
-
   }
 
+  body.innerHTML =
+    data.keys
+      .map(key => {
 
-  box.innerHTML =
-    keys
-      .map(
-        key=>{
+        const created =
+          key.created_at
+            ? new Date(
+                Number(
+                  key.created_at
+                )
+              ).toLocaleString()
+            : "—";
 
-          const created =
-            key.created_at
-              ? new Date(
-                  Number(
-                    key.created_at
-                  )
-                ).toLocaleString()
-              : "—";
+        const lastSeen =
+          key.last_seen
+            ? new Date(
+                Number(
+                  key.last_seen
+                )
+              ).toLocaleString()
+            : "Never";
 
+        return `
+          <tr>
 
-          const device =
-            key.device_id
-              ? key.device_id
-              : "Not bound";
+            <td>
+              ${escapeHtml(
+                key.id
+              )}
+            </td>
 
+            <td class="key">
+              ${escapeHtml(
+                key.access_key
+              )}
+            </td>
 
-          return `
+            <td class="device">
+              ${
+                key.device_id
+                  ? escapeHtml(
+                      key.device_id
+                    )
+                  : "Unbound"
+              }
+            </td>
 
-            <div class="key-row">
+            <td>
+              ${escapeHtml(
+                created
+              )}
+            </td>
 
-              <div class="key-info">
+            <td>
+              ${escapeHtml(
+                lastSeen
+              )}
+            </td>
 
-                <div class="key-name">
-                  ${esc(
-                    key.access_key
-                  )}
-                </div>
+            <td>
 
-                <div class="key-device">
-                  Device: ${esc(device)}
-                  <br>
-                  Created: ${esc(created)}
-                </div>
-
-              </div>
-
-
-              <div class="key-actions">
+              <div class="actions">
 
                 <button
-                  class="small-btn reset"
-                  data-reset="${esc(
-                    key.access_key
-                  )}">
+                  class="btn secondary mini"
+                  onclick="resetDevice(${Number(key.id)})"
+                >
                   RESET
                 </button>
 
                 <button
-                  class="small-btn delete"
-                  data-delete="${esc(
-                    key.access_key
-                  )}">
+                  class="btn danger mini"
+                  onclick="deleteKey(${Number(key.id)})"
+                >
                   DELETE
                 </button>
 
               </div>
 
-            </div>
+            </td>
 
-          `;
-
-        }
-      )
+          </tr>
+        `;
+      })
       .join("");
-
-
-  box
-    .querySelectorAll(
-      "[data-reset]"
-    )
-    .forEach(
-      button=>{
-
-        button.addEventListener(
-          "click",
-          ()=>{
-            resetDevice(
-              button.dataset.reset
-            );
-          }
-        );
-
-      }
-    );
-
-
-  box
-    .querySelectorAll(
-      "[data-delete]"
-    )
-    .forEach(
-      button=>{
-
-        button.addEventListener(
-          "click",
-          ()=>{
-            deleteKey(
-              button.dataset.delete
-            );
-          }
-        );
-
-      }
-    );
-
 }
 
 
-/* =========================================================
-   CREATE KEY
-========================================================= */
+/* CREATE KEY */
 
-async function createKey(){
-
-  const custom =
-    $("newKey")
-      .value
-      .trim();
-
-
-  const body =
-    custom
-      ? {
-          access_key:
-            custom
-        }
-      : {};
-
-
-  $("createKeyBtn")
-    .disabled =
-    true;
-
-
-  try{
-
-    const data =
-      await adminApi(
-        "/api/admin/keys",
-        {
-
-          method:"POST",
-
-          headers:{
-            "Content-Type":
-              "application/json"
-          },
-
-          body:
-            JSON.stringify(body)
-
-        }
-      );
-
-
-    $("newKey")
-      .value =
-      "";
-
-
-    await loadKeys();
-
-
-    const created =
-      data.key &&
-      (
-        data.key.access_key ||
-        data.key
-      );
-
-
-    log(
-      "Created access key: " +
-      created
-    );
-
-
-    toast(
-      "Key created."
-    );
-
-
-  }catch(error){
-
-    log(
-      "Create key failed: " +
-      error.message
-    );
-
-
-    toast(
-      error.message
-    );
-
-  }finally{
-
-    $("createKeyBtn")
-      .disabled =
-      false;
-
-  }
-
-}
-
-
-$("createKeyBtn")
+document
+  .getElementById("createKeyBtn")
   .addEventListener(
     "click",
     createKey
   );
 
 
-/* =========================================================
-   RESET DEVICE
-========================================================= */
+async function createKey() {
 
-async function resetDevice(
-  key
-){
-
-  const yes =
-    confirm(
-      "Is key ka device binding reset karna hai?"
+  const button =
+    document.getElementById(
+      "createKeyBtn"
     );
 
+  button.disabled = true;
+  button.textContent = "CREATING...";
 
-  if(!yes){
+  try {
+
+    const data =
+      await api(
+        "/api/admin/keys",
+        {
+          method: "POST",
+          body: JSON.stringify({})
+        }
+      );
+
+    log(
+      "Access key created.",
+      data
+    );
+
+    alert(
+      "New key:\n\n" +
+      data.access_key
+    );
+
+    await loadKeys();
+
+  } catch (err) {
+
+    log(
+      "Create key failed: " +
+      err.message
+    );
+
+    alert(
+      err.message
+    );
+
+  } finally {
+
+    button.disabled = false;
+    button.textContent =
+      "CREATE KEY";
+  }
+}
+
+
+/* DELETE */
+
+async function deleteKey(id) {
+
+  if (
+    !confirm(
+      "Delete this access key?"
+    )
+  ) {
     return;
   }
 
+  try {
 
-  try{
+    await api(
+      "/api/admin/keys?id=" +
+      encodeURIComponent(id),
+      {
+        method: "DELETE"
+      }
+    );
 
-    await adminApi(
+    log(
+      "Access key deleted: " +
+      id
+    );
+
+    await loadKeys();
+
+  } catch (err) {
+
+    alert(
+      err.message
+    );
+  }
+}
+
+
+/* RESET DEVICE */
+
+async function resetDevice(id) {
+
+  if (
+    !confirm(
+      "Reset device binding for this key?"
+    )
+  ) {
+    return;
+  }
+
+  try {
+
+    await api(
       "/api/admin/reset-device",
       {
-
-        method:"POST",
-
-        headers:{
-          "Content-Type":
-            "application/json"
-        },
-
-        body:
-          JSON.stringify({
-            access_key:key
-          })
-
+        method: "POST",
+        body: JSON.stringify({
+          id
+        })
       }
     );
 
+    log(
+      "Device binding reset: " +
+      id
+    );
 
     await loadKeys();
 
+  } catch (err) {
 
-    log(
-      "Device reset: " +
-      key
+    alert(
+      err.message
     );
-
-
-    toast(
-      "Device reset."
-    );
-
-
-  }catch(error){
-
-    log(
-      "Reset failed: " +
-      error.message
-    );
-
-
-    toast(
-      error.message
-    );
-
   }
-
 }
 
 
-/* =========================================================
-   DELETE
-========================================================= */
+/* WINGOBOT TEST */
 
-async function deleteKey(
-  key
-){
+document
+  .getElementById("wingoTestBtn")
+  .addEventListener(
+    "click",
+    async () => {
 
-  const yes =
-    confirm(
-      "Is access key ko permanently delete karna hai?"
-    );
+      const button =
+        document.getElementById(
+          "wingoTestBtn"
+        );
 
+      button.disabled = true;
+      button.textContent =
+        "TESTING...";
 
-  if(!yes){
-    return;
-  }
+      try {
 
+        const data =
+          await api(
+            "/api/admin/wingo-test"
+          );
 
-  try{
+        log(
+          "WingoBot test successful.",
+          data
+        );
 
-    await adminApi(
-      "/api/admin/keys",
-      {
+        alert(
+          "WingoBot OK\nHistory: " +
+          (
+            data.historyCount ??
+            "—"
+          )
+        );
 
-        method:"DELETE",
+      } catch (err) {
 
-        headers:{
-          "Content-Type":
-            "application/json"
-        },
+        log(
+          "WingoBot test failed: " +
+          err.message
+        );
 
-        body:
-          JSON.stringify({
-            access_key:key
-          })
+        alert(
+          err.message
+        );
 
+      } finally {
+
+        button.disabled = false;
+        button.textContent =
+          "WingoBot Test";
       }
-    );
+    }
+  );
 
 
-    await loadKeys();
+/* MODEL TEST */
 
+document
+  .getElementById("modelTestBtn")
+  .addEventListener(
+    "click",
+    async () => {
+
+      const button =
+        document.getElementById(
+          "modelTestBtn"
+        );
+
+      button.disabled = true;
+      button.textContent =
+        "TESTING...";
+
+      try {
+
+        const data =
+          await api(
+            "/api/admin/model-test"
+          );
+
+        log(
+          "Model test complete.",
+          data
+        );
+
+        alert(
+          data.message ||
+          "Model test complete."
+        );
+
+      } catch (err) {
+
+        log(
+          "Model test failed: " +
+          err.message
+        );
+
+        alert(
+          err.message
+        );
+
+      } finally {
+
+        button.disabled = false;
+        button.textContent =
+          "MODEL TEST";
+      }
+    }
+  );
+
+
+/* PROVIDER REFRESH */
+
+document
+  .getElementById(
+    "refreshProviderBtn"
+  )
+  .addEventListener(
+    "click",
+    async () => {
+
+      const button =
+        document.getElementById(
+          "refreshProviderBtn"
+        );
+
+      button.disabled = true;
+      button.textContent =
+        "REFRESHING...";
+
+      try {
+
+        await api(
+          "/api/admin/refresh"
+        );
+
+        log(
+          "Provider refreshed."
+        );
+
+        await loadState();
+
+      } catch (err) {
+
+        log(
+          "Provider refresh failed: " +
+          err.message
+        );
+
+        alert(
+          err.message
+        );
+
+      } finally {
+
+        button.disabled = false;
+        button.textContent =
+          "Refresh Provider";
+      }
+    }
+  );
+
+
+/* REFRESH ALL */
+
+document
+  .getElementById("refreshBtn")
+  .addEventListener(
+    "click",
+    refreshAll
+  );
+
+
+async function refreshAll() {
+
+  try {
+
+    await Promise.all([
+      loadStatus(),
+      loadState(),
+      loadKeys()
+    ]);
 
     log(
-      "Deleted access key: " +
-      key
+      "Dashboard refreshed."
     );
 
-
-    toast(
-      "Key deleted."
-    );
-
-
-  }catch(error){
-
-    log(
-      "Delete failed: " +
-      error.message
-    );
-
-
-    toast(
-      error.message
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   REFRESH
-========================================================= */
-
-async function refreshAll(){
-
-  if(!ADMIN_KEY){
-    return;
-  }
-
-
-  try{
-
-    await loadStatus();
-
-    await loadCurrentAI();
-
-    await loadKeys();
-
-  }catch(error){
+  } catch (err) {
 
     log(
       "Refresh failed: " +
-      error.message
+      err.message
     );
-
   }
-
 }
 
 
-$("refreshBtn")
-  .addEventListener(
-    "click",
-    async ()=>{
+/* ESCAPE */
 
-      await refreshAll();
+function escapeHtml(value) {
 
-      toast(
-        "Admin refreshed."
-      );
-
-    }
-  );
-
-
-/* =========================================================
-   LOGOUT
-========================================================= */
-
-$("logoutBtn")
-  .addEventListener(
-    "click",
-    ()=>{
-
-      ADMIN_KEY =
-        "";
-
-
-      clearInterval(
-        autoRefresh
-      );
-
-
-      $("app")
-        .style
-        .display =
-        "none";
-
-
-      $("loginScreen")
-        .style
-        .display =
-        "flex";
-
-
-      $("adminKey")
-        .value =
-        "";
-
-
-      log(
-        "Admin logged out."
-      );
-
-    }
-  );
-
-
-/* =========================================================
-   INITIAL
-========================================================= */
-
-window.addEventListener(
-  "beforeunload",
-  ()=>{
-    clearInterval(
-      autoRefresh
+  return String(value)
+    .replaceAll(
+      "&",
+      "&amp;"
+    )
+    .replaceAll(
+      "<",
+      "&lt;"
+    )
+    .replaceAll(
+      ">",
+      "&gt;"
+    )
+    .replaceAll(
+      '"',
+      "&quot;"
+    )
+    .replaceAll(
+      "'",
+      "&#039;"
     );
-  }
+}
+
+
+/* AUTO REFRESH */
+
+setInterval(
+  async () => {
+
+    if (
+      dashboard.classList.contains(
+        "hidden"
+      )
+    ) {
+      return;
+    }
+
+    try {
+
+      await Promise.all([
+        loadStatus(),
+        loadState()
+      ]);
+
+    } catch {}
+
+  },
+  5000
 );
 
 </script>
 
 </body>
-  </html>
+</html>
