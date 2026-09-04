@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>DY AI Admin Panel</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+
+<title>DY AI • Admin Control</title>
 
 <style>
 *{
@@ -14,563 +15,695 @@
 html,body{
   margin:0;
   min-height:100%;
-  background:#050914;
-  color:#eef4ff;
   font-family:Inter,Arial,sans-serif;
+  background:#070b18;
+  color:#f5f7ff;
 }
 
 body{
-  padding:12px;
+  padding:18px;
 }
 
 .app{
-  width:min(680px,100%);
+  width:min(720px,100%);
   margin:auto;
 }
 
+/* HEADER */
+
 .header{
   display:flex;
-  justify-content:space-between;
   align-items:center;
-  padding:12px 3px 18px;
+  justify-content:space-between;
+  padding:14px 4px 20px;
 }
 
 .brand{
   display:flex;
   align-items:center;
-  gap:11px;
+  gap:12px;
 }
 
 .logo{
-  width:45px;
-  height:45px;
-  border-radius:14px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:linear-gradient(135deg,#5b5cff,#00c6ff);
-  box-shadow:0 0 25px rgba(73,102,255,.35);
-  font-size:21px;
+  width:48px;
+  height:48px;
+  border-radius:16px;
+  display:grid;
+  place-items:center;
+  font-size:25px;
   font-weight:900;
+  background:linear-gradient(135deg,#5b4cff,#00c8ff);
+  box-shadow:0 0 30px rgba(91,76,255,.35);
 }
 
-h1{
+.brand h1{
   margin:0;
   font-size:20px;
 }
 
-.brand small{
-  display:block;
-  color:#71819a;
-  font-size:9px;
-  letter-spacing:1.5px;
-  margin-top:3px;
+.brand p{
+  margin:3px 0 0;
+  color:#8792ad;
+  font-size:11px;
+}
+
+/* CARDS */
+
+.card{
+  background:
+    linear-gradient(
+      145deg,
+      rgba(23,30,55,.96),
+      rgba(10,15,31,.98)
+    );
+
+  border:1px solid #222b48;
+  border-radius:24px;
+  padding:20px;
+  margin-bottom:16px;
+
+  box-shadow:
+    0 15px 45px rgba(0,0,0,.25),
+    inset 0 1px 0 rgba(255,255,255,.03);
+}
+
+.card-title{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:16px;
+}
+
+.card-title h2{
+  margin:0;
+  font-size:17px;
+}
+
+.card-title span{
+  color:#74809b;
+  font-size:11px;
+}
+
+/* LOGIN */
+
+.login{
+  margin-top:35px;
+}
+
+.login-icon{
+  width:68px;
+  height:68px;
+  margin:0 auto 15px;
+  border-radius:22px;
+  display:grid;
+  place-items:center;
+  font-size:30px;
+  background:linear-gradient(135deg,#5b4cff,#b13cff);
+  box-shadow:0 0 45px rgba(91,76,255,.35);
+}
+
+.login h2{
+  text-align:center;
+  margin:5px 0;
+  font-size:23px;
+}
+
+.login p{
+  text-align:center;
+  color:#7e89a5;
+  font-size:12px;
+  margin-bottom:22px;
+}
+
+/* INPUT */
+
+input{
+  width:100%;
+  padding:15px 16px;
+  border-radius:14px;
+  border:1px solid #293452;
+  background:#080d1d;
+  color:#fff;
+  outline:none;
+  font-size:14px;
+  margin-bottom:12px;
+}
+
+input:focus{
+  border-color:#6659ff;
+  box-shadow:0 0 0 3px rgba(102,89,255,.12);
+}
+
+/* BUTTON */
+
+button{
+  border:0;
+  cursor:pointer;
+  color:#fff;
+  font-weight:800;
+  font-size:13px;
+  border-radius:13px;
+  padding:13px 16px;
+}
+
+.primary{
+  width:100%;
+  background:linear-gradient(90deg,#5747ff,#9d45ff);
+  box-shadow:0 10px 25px rgba(91,71,255,.25);
+}
+
+.secondary{
+  background:#17203a;
+  border:1px solid #2a3555;
+}
+
+.danger{
+  background:#351722;
+  border:1px solid #64283a;
+  color:#ff8fa9;
+}
+
+.small-btn{
+  padding:9px 11px;
+  font-size:11px;
+}
+
+/* STATUS */
+
+.status-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+}
+
+.status-box{
+  padding:15px;
+  border-radius:17px;
+  background:#0a1021;
+  border:1px solid #202a46;
+}
+
+.status-label{
+  color:#77829e;
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:.7px;
+}
+
+.status-value{
+  margin-top:7px;
+  font-size:16px;
+  font-weight:900;
 }
 
 .online{
-  padding:7px 10px;
-  border-radius:20px;
-  border:1px solid #1e3048;
-  color:#69e6a1;
-  font-size:9px;
-  font-weight:900;
+  color:#36e59b;
 }
 
-.card{
-  background:linear-gradient(
-    145deg,
-    #101c30,
-    #080f1d
-  );
-  border:1px solid #1d3049;
-  border-radius:20px;
-  padding:17px;
-  margin-bottom:13px;
+.offline{
+  color:#ff6681;
 }
 
-.title{
-  font-size:15px;
-  font-weight:900;
-  margin-bottom:4px;
+.info{
+  color:#6eaaff;
 }
 
-.sub{
-  color:#74849d;
-  font-size:10px;
-  line-height:1.5;
-}
+/* CREATE KEY */
 
-.grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-  margin-top:14px;
-}
-
-.stat{
-  padding:13px;
-  border-radius:14px;
-  background:#08111f;
-  border:1px solid #1b2b43;
-}
-
-.stat span{
-  display:block;
-  color:#687a94;
-  font-size:9px;
-  letter-spacing:1px;
-}
-
-.stat strong{
-  display:block;
-  margin-top:5px;
-  font-size:17px;
-  word-break:break-word;
-}
-
-input,
-select{
-  width:100%;
-  margin-top:10px;
-  padding:13px;
-  border-radius:11px;
-  border:1px solid #263b57;
-  background:#07101c;
-  color:#fff;
-  outline:none;
-  font-size:13px;
-}
-
-button{
-  width:100%;
-  padding:12px;
-  margin-top:9px;
-  border:0;
-  border-radius:11px;
-  background:linear-gradient(
-    135deg,
-    #565cff,
-    #008edb
-  );
-  color:#fff;
-  font-size:12px;
-  font-weight:900;
-  cursor:pointer;
-}
-
-button.secondary{
-  background:#122138;
-  border:1px solid #263c59;
-}
-
-button.danger{
-  background:#3a1620;
-  border:1px solid #67303c;
-}
-
-button.green{
-  background:#12412e;
-  border:1px solid #1f7450;
-}
-
-.keyList{
-  margin-top:12px;
+.key-create{
   display:flex;
-  flex-direction:column;
-  gap:8px;
+  gap:9px;
+}
+
+.key-create input{
+  margin:0;
+}
+
+.key-create button{
+  white-space:nowrap;
+}
+
+/* TABLE */
+
+.table-wrap{
+  overflow-x:auto;
+  border-radius:17px;
+  border:1px solid #202a46;
+}
+
+table{
+  width:100%;
+  min-width:600px;
+  border-collapse:collapse;
+}
+
+thead{
+  background:#111a31;
+}
+
+th{
+  padding:13px 10px;
+  color:#7785a4;
+  font-size:10px;
+  text-align:left;
+  text-transform:uppercase;
+  letter-spacing:.7px;
+}
+
+td{
+  padding:13px 10px;
+  border-top:1px solid #1c2640;
+  font-size:12px;
 }
 
 .key{
-  padding:11px;
-  border-radius:12px;
-  background:#08111f;
-  border:1px solid #1b2c44;
-}
-
-.keyTop{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:8px;
-}
-
-.keyCode{
-  font-family:monospace;
-  font-size:11px;
+  color:#bcaeff;
+  font-weight:800;
   word-break:break-all;
 }
 
-.keyMeta{
-  margin-top:6px;
-  color:#657691;
-  font-size:9px;
-  line-height:1.6;
+.device{
+  color:#71809e;
+  max-width:150px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
 }
 
-.key button{
-  width:auto;
-  margin:0;
-  padding:7px 9px;
-  font-size:9px;
+.empty{
+  text-align:center;
+  color:#71809e;
+  padding:25px;
 }
 
-.testBox{
-  margin-top:12px;
-  background:#07101c;
-  border:1px solid #1a2b42;
-  border-radius:13px;
-  padding:12px;
+/* LIVE */
+
+.live-dot{
+  display:inline-block;
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#36e59b;
+  box-shadow:0 0 12px #36e59b;
+  margin-right:6px;
+}
+
+.issue{
+  padding:14px;
+  border-radius:15px;
+  background:#090f20;
+  border:1px solid #202a46;
   font-family:monospace;
-  font-size:10px;
-  line-height:1.6;
-  color:#a8b6c9;
-  max-height:240px;
-  overflow:auto;
-  white-space:pre-wrap;
+  font-size:12px;
+  word-break:break-all;
 }
 
-.message{
-  min-height:17px;
-  margin-top:8px;
-  color:#8393ab;
-  font-size:10px;
+.analysis{
+  margin-top:10px;
+  padding:14px;
+  border-radius:15px;
+  background:linear-gradient(
+    135deg,
+    rgba(86,69,255,.12),
+    rgba(0,200,255,.06)
+  );
+  border:1px solid #29335a;
 }
 
-.login{
-  position:fixed;
-  inset:0;
-  z-index:99;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  padding:20px;
-  background:#050914;
+.analysis-main{
+  font-size:22px;
+  font-weight:900;
+  margin-bottom:5px;
 }
 
-.loginBox{
-  width:min(400px,100%);
-  padding:22px;
-  border-radius:22px;
-  background:#0c1728;
-  border:1px solid #213553;
-}
-
-.loginBox h2{
-  margin:0;
-  font-size:21px;
-}
-
-.loginBox p{
-  color:#71829b;
+.analysis-meta{
+  color:#8490aa;
   font-size:11px;
-  line-height:1.6;
 }
 
-.loginBox input{
-  margin-top:5px;
+/* FOOTER */
+
+.footer{
+  text-align:center;
+  color:#56617c;
+  font-size:10px;
+  padding:8px 0 20px;
+}
+
+/* TOAST */
+
+#toast{
+  position:fixed;
+  left:50%;
+  bottom:22px;
+  transform:translateX(-50%) translateY(20px);
+  background:#151d34;
+  border:1px solid #303b5d;
+  padding:12px 18px;
+  border-radius:13px;
+  font-size:12px;
+  opacity:0;
+  pointer-events:none;
+  transition:.25s;
+  z-index:99;
+  max-width:90%;
+  text-align:center;
+}
+
+#toast.show{
+  opacity:1;
+  transform:translateX(-50%) translateY(0);
 }
 
 .hidden{
   display:none!important;
 }
 
-.footer{
-  text-align:center;
-  color:#506078;
-  font-size:9px;
-  padding:3px 10px 18px;
-}
+@media(max-width:520px){
 
-@media(max-width:430px){
   body{
-    padding:8px;
-  }
-
-  .grid{
-    gap:8px;
+    padding:10px;
   }
 
   .card{
-    padding:14px;
+    padding:16px;
+    border-radius:21px;
   }
+
+  .status-grid{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .key-create{
+    flex-direction:column;
+  }
+
+  .key-create button{
+    width:100%;
+  }
+
 }
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
+<div class="app">
 
-<div id="login" class="login">
+  <!-- HEADER -->
 
-  <div class="loginBox">
+  <header class="header">
 
-    <h2>DY AI ADMIN</h2>
+    <div class="brand">
+
+      <div class="logo">AI</div>
+
+      <div>
+        <h1>DY AI CONTROL</h1>
+        <p>Premium Admin Command Center</p>
+      </div>
+
+    </div>
+
+    <button
+      class="secondary small-btn"
+      onclick="refreshAll()">
+      ↻ Refresh
+    </button>
+
+  </header>
+
+
+  <!-- LOGIN -->
+
+  <section
+    id="loginCard"
+    class="card login">
+
+    <div class="login-icon">
+      🔐
+    </div>
+
+    <h2>Admin Access</h2>
 
     <p>
-      Secure administrator access.
-      Enter the configured ADMIN_KEY.
+      Enter your administrator key to continue
     </p>
 
     <input
       id="adminKey"
       type="password"
-      placeholder="Admin key"
-      autocomplete="off"
-    >
+      placeholder="Enter admin key"
+      autocomplete="off">
 
-    <button onclick="adminLogin()">
-      OPEN ADMIN PANEL
+    <button
+      class="primary"
+      onclick="login()">
+      ENTER CONTROL PANEL
     </button>
 
-    <div
-      id="loginMsg"
-      class="message"
-    ></div>
+  </section>
 
-  </div>
+
+  <!-- PANEL -->
+
+  <main
+    id="panel"
+    class="hidden">
+
+    <!-- PROVIDER STATUS -->
+
+    <section class="card">
+
+      <div class="card-title">
+
+        <h2>⚡ System Status</h2>
+
+        <span>
+          LIVE MONITOR
+        </span>
+
+      </div>
+
+      <div class="status-grid">
+
+        <div class="status-box">
+
+          <div class="status-label">
+            Provider
+          </div>
+
+          <div
+            id="providerStatus"
+            class="status-value info">
+            Checking...
+          </div>
+
+        </div>
+
+
+        <div class="status-box">
+
+          <div class="status-label">
+            History
+          </div>
+
+          <div
+            id="historyCount"
+            class="status-value">
+            —
+          </div>
+
+        </div>
+
+
+        <div class="status-box">
+
+          <div class="status-label">
+            Current Issue
+          </div>
+
+          <div
+            id="currentIssue"
+            class="status-value"
+            style="font-size:12px">
+            —
+          </div>
+
+        </div>
+
+
+        <div class="status-box">
+
+          <div class="status-label">
+            Target Issue
+          </div>
+
+          <div
+            id="targetIssue"
+            class="status-value"
+            style="font-size:12px">
+            —
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- ANALYSIS -->
+
+    <section class="card">
+
+      <div class="card-title">
+
+        <h2>🧠 AI Analysis Monitor</h2>
+
+        <span>
+          STATISTICAL
+        </span>
+
+      </div>
+
+      <div class="issue">
+        Target:
+        <strong id="analysisIssue">
+          —
+        </strong>
+      </div>
+
+      <div class="analysis">
+
+        <div
+          id="analysisMain"
+          class="analysis-main">
+          WAITING
+        </div>
+
+        <div
+          id="analysisMeta"
+          class="analysis-meta">
+          Waiting for live provider data...
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- ACCESS KEYS -->
+
+    <section class="card">
+
+      <div class="card-title">
+
+        <h2>🔑 Access Keys</h2>
+
+        <span>
+          USER CONTROL
+        </span>
+
+      </div>
+
+      <div class="key-create">
+
+        <input
+          id="newKey"
+          type="text"
+          placeholder="Custom key (optional)">
+
+        <button
+          class="primary"
+          style="width:auto"
+          onclick="createKey()">
+          + CREATE
+        </button>
+
+      </div>
+
+      <div
+        id="keysTable"
+        style="margin-top:14px">
+        Loading keys...
+      </div>
+
+    </section>
+
+
+    <!-- QUICK ACTIONS -->
+
+    <section class="card">
+
+      <div class="card-title">
+
+        <h2>🛠 Quick Actions</h2>
+
+        <span>
+          ADMIN
+        </span>
+
+      </div>
+
+      <div
+        style="
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:10px;">
+
+        <button
+          class="secondary"
+          onclick="refreshAll()">
+          🔄 Sync Data
+        </button>
+
+        <button
+          class="secondary"
+          onclick="providerPing()">
+          📡 Provider Ping
+        </button>
+
+        <button
+          class="secondary"
+          onclick="location.reload()">
+          ♻ Reload Panel
+        </button>
+
+        <button
+          class="danger"
+          onclick="logout()">
+          🚪 Logout
+        </button>
+
+      </div>
+
+    </section>
+
+
+    <div class="footer">
+      DY AI • Admin Control Center
+    </div>
+
+  </main>
 
 </div>
 
 
-<!-- APP -->
-
-<div
-  id="app"
-  class="app hidden"
->
-
-<header class="header">
-
-  <div class="brand">
-
-    <div class="logo">
-      AI
-    </div>
-
-    <div>
-      <h1>DY AI Control</h1>
-      <small>WINGO 30S ADMIN</small>
-    </div>
-
-  </div>
-
-  <div
-    id="online"
-    class="online"
-  >
-    OFFLINE
-  </div>
-
-</header>
-
-
-<!-- SYSTEM -->
-
-<section class="card">
-
-  <div class="title">
-    System Status
-  </div>
-
-  <div class="sub">
-    Provider, database and live-history status.
-  </div>
-
-  <div class="grid">
-
-    <div class="stat">
-      <span>PROVIDER</span>
-      <strong id="provider">
-        --
-      </strong>
-    </div>
-
-    <div class="stat">
-      <span>DATABASE</span>
-      <strong id="database">
-        --
-      </strong>
-    </div>
-
-    <div class="stat">
-      <span>API TOKEN</span>
-      <strong id="token">
-        --
-      </strong>
-    </div>
-
-    <div class="stat">
-      <span>HISTORY ROWS</span>
-      <strong id="historyCount">
-        --
-      </strong>
-    </div>
-
-  </div>
-
-  <div class="testBox">
-    CURRENT PERIOD:
-    <span id="currentIssue">--</span>
-
-    <br>
-
-    LAST FETCH:
-    <span id="lastFetch">--</span>
-
-    <br>
-
-    SERVER:
-    <span id="serverState">--</span>
-  </div>
-
-  <button
-    class="secondary"
-    onclick="loadStatus()"
-  >
-    REFRESH STATUS
-  </button>
-
-</section>
-
-
-<!-- KEY MANAGEMENT -->
-
-<section class="card">
-
-  <div class="title">
-    Access Key Manager
-  </div>
-
-  <div class="sub">
-    Create access keys and manage device binding.
-  </div>
-
-  <input
-    id="keyPrefix"
-    placeholder="Optional prefix, e.g. DY"
-  >
-
-  <select id="keyCount">
-
-    <option value="1">
-      Generate 1 Key
-    </option>
-
-    <option value="5">
-      Generate 5 Keys
-    </option>
-
-    <option value="10">
-      Generate 10 Keys
-    </option>
-
-    <option value="25">
-      Generate 25 Keys
-    </option>
-
-    <option value="50">
-      Generate 50 Keys
-    </option>
-
-  </select>
-
-  <button
-    class="green"
-    onclick="generateKeys()"
-  >
-    GENERATE ACCESS KEYS
-  </button>
-
-  <div
-    id="keyMessage"
-    class="message"
-  ></div>
-
-  <div
-    id="keyList"
-    class="keyList"
-  >
-    Loading...
-  </div>
-
-</section>
-
-
-<!-- MODEL -->
-
-<section class="card">
-
-  <div class="title">
-    AI Model Diagnostics
-  </div>
-
-  <div class="sub">
-    Inspect the current historical analysis engine.
-  </div>
-
-  <button
-    onclick="testModel()"
-  >
-    RUN MODEL ANALYSIS
-  </button>
-
-  <div
-    id="modelOutput"
-    class="testBox"
-  >
-    No diagnostic run yet.
-  </div>
-
-</section>
-
-
-<!-- PROVIDER -->
-
-<section class="card">
-
-  <div class="title">
-    Provider Diagnostics
-  </div>
-
-  <div class="sub">
-    Test the WingoBot connection independently.
-  </div>
-
-  <button
-    onclick="testProvider()"
-  >
-    TEST WINGOBOT API
-  </button>
-
-  <div
-    id="providerOutput"
-    class="testBox"
-  >
-    No provider test run yet.
-  </div>
-
-</section>
-
-
-<!-- FOOTER -->
-
-<div class="footer">
-  DY AI Admin Panel · Keep ADMIN_KEY private.
-</div>
-
-</div>
+<div id="toast"></div>
 
 
 <script>
 "use strict";
 
-
 /* =========================================================
-   STATE
+   CONFIG
 ========================================================= */
 
-let adminKey =
+const API_BASE =
+  window.location.origin;
+
+let ADMIN =
   sessionStorage.getItem(
     "dy_admin_key"
   ) || "";
@@ -581,51 +714,90 @@ let adminKey =
 ========================================================= */
 
 const $ =
-  id =>
-    document.getElementById(id);
+  id => document.getElementById(id);
 
 
-function authHeaders(){
+function toast(message){
 
-  return {
-    "Authorization":
-      "Bearer " + adminKey,
+  const el =
+    $("toast");
 
-    "Content-Type":
-      "application/json"
-  };
+  el.textContent =
+    message;
+
+  el.classList.add("show");
+
+  clearTimeout(
+    window.__toastTimer
+  );
+
+  window.__toastTimer =
+    setTimeout(() => {
+      el.classList.remove("show");
+    }, 2200);
 }
 
 
-function prettyTime(value){
+async function api(
+  endpoint,
+  options = {}
+){
 
-  const n =
-    Number(value || 0);
+  const headers = {
+    "Accept":
+      "application/json",
 
-  if(!n){
-    return "--";
+    ...(options.headers || {}),
+
+    "X-Admin-Key":
+      ADMIN
+  };
+
+
+  if (
+    options.body &&
+    typeof options.body !== "string"
+  ){
+
+    headers["Content-Type"] =
+      "application/json";
+
+    options.body =
+      JSON.stringify(
+        options.body
+      );
   }
 
-  const ms =
-    n < 10000000000
-      ? n * 1000
-      : n;
 
-  return new Date(ms)
-    .toLocaleString();
-}
+  const response =
+    await fetch(
+      API_BASE + endpoint,
+      {
+        ...options,
+        headers,
+        cache:"no-store"
+      }
+    );
 
 
-function escapeHTML(value){
+  let data = {};
 
-  return String(
-    value ?? ""
-  )
-  .replaceAll("&","&amp;")
-  .replaceAll("<","&lt;")
-  .replaceAll(">","&gt;")
-  .replaceAll('"',"&quot;")
-  .replaceAll("'","&#039;");
+  try {
+    data =
+      await response.json();
+  } catch {}
+
+
+  if (!response.ok){
+
+    throw new Error(
+      data.error ||
+      `HTTP ${response.status}`
+    );
+  }
+
+
+  return data;
 }
 
 
@@ -633,595 +805,67 @@ function escapeHTML(value){
    LOGIN
 ========================================================= */
 
-async function adminLogin(){
+async function login(){
 
-  const key =
+  const value =
     $("adminKey")
       .value
       .trim();
 
-  if(!key){
 
-    $("loginMsg")
-      .textContent =
-      "Admin key enter karo.";
+  if (!value){
+
+    toast(
+      "Admin key enter karo"
+    );
 
     return;
   }
 
-  $("loginMsg")
-    .textContent =
-    "Checking...";
 
-  adminKey = key;
+  ADMIN = value;
 
-  try{
 
-    const response =
-      await fetch(
-        "/api/admin/status",
-        {
-          headers:{
-            Authorization:
-              "Bearer " + adminKey
-          },
-          cache:"no-store"
-        }
-      );
+  try {
 
-    const data =
-      await response.json();
+    await api(
+      "/api/admin/status"
+    );
 
-    if(
-      !response.ok ||
-      !data.ok
-    ){
-      throw new Error(
-        data.error ||
-        "Unauthorized"
-      );
-    }
 
     sessionStorage.setItem(
       "dy_admin_key",
-      adminKey
+      ADMIN
     );
 
-    $("login")
+
+    $("loginCard")
       .classList.add(
         "hidden"
       );
 
-    $("app")
+    $("panel")
       .classList.remove(
         "hidden"
       );
 
-    await loadStatus();
-    await loadKeys();
 
-  }catch(err){
-
-    adminKey = "";
-
-    $("loginMsg")
-      .textContent =
-      err.message ||
-      "Login failed";
-  }
-}
-
-
-/* =========================================================
-   STATUS
-========================================================= */
-
-async function loadStatus(){
-
-  try{
-
-    const response =
-      await fetch(
-        "/api/admin/status",
-        {
-          headers:{
-            Authorization:
-              "Bearer " + adminKey
-          },
-          cache:"no-store"
-        }
-      );
-
-    const data =
-      await response.json();
-
-    if(
-      response.status === 401
-    ){
-      logout();
-      return;
-    }
-
-    if(!response.ok){
-      throw new Error(
-        data.error ||
-        "Status failed"
-      );
-    }
-
-    const p =
-      data.provider || {};
-
-    $("provider")
-      .textContent =
-      p.error
-        ? "ERROR"
-        : "ONLINE";
-
-    $("database")
-      .textContent =
-      data.database
-        ? "CONNECTED"
-        : "OFF";
-
-    $("token")
-      .textContent =
-      data.token
-        ? "CONFIGURED"
-        : "MISSING";
-
-    $("historyCount")
-      .textContent =
-      p.history ??
-      "--";
-
-    $("currentIssue")
-      .textContent =
-      p.currentIssue ||
-      "--";
-
-    $("lastFetch")
-      .textContent =
-      prettyTime(
-        p.lastFetch
-      );
-
-    $("serverState")
-      .textContent =
-      p.error ||
-      "Healthy";
-
-    $("online")
-      .textContent =
-      p.error
-        ? "ERROR"
-        : "ONLINE";
-
-    $("online").style.color =
-      p.error
-        ? "#ff6378"
-        : "#69e6a1";
-
-  }catch(err){
-
-    $("online")
-      .textContent =
-      "ERROR";
-
-    $("serverState")
-      .textContent =
-      err.message;
-  }
-}
-
-
-/* =========================================================
-   GENERATE KEYS
-========================================================= */
-
-async function generateKeys(){
-
-  const count =
-    Number(
-      $("keyCount").value
+    toast(
+      "Admin access granted"
     );
 
-  const prefix =
-    $("keyPrefix")
-      .value
-      .trim();
 
-  $("keyMessage")
-    .textContent =
-    "Generating...";
+    refreshAll();
 
-  try{
+  } catch(err){
 
-    const response =
-      await fetch(
-        "/api/admin/keys",
-        {
-          method:"POST",
-          headers:authHeaders(),
+    ADMIN = "";
 
-          body:JSON.stringify({
-            count,
-            prefix
-          })
-        }
-      );
-
-    const data =
-      await response.json();
-
-    if(!response.ok){
-      throw new Error(
-        data.error ||
-        "Generation failed"
-      );
-    }
-
-    $("keyMessage")
-      .textContent =
-      data.keys.length +
-      " key(s) generated.";
-
-    await loadKeys();
-
-  }catch(err){
-
-    $("keyMessage")
-      .textContent =
-      err.message;
-  }
-}
-
-
-/* =========================================================
-   LOAD KEYS
-========================================================= */
-
-async function loadKeys(){
-
-  const container =
-    $("keyList");
-
-  try{
-
-    const response =
-      await fetch(
-        "/api/admin/keys",
-        {
-          headers:{
-            Authorization:
-              "Bearer " + adminKey
-          },
-          cache:"no-store"
-        }
-      );
-
-    const data =
-      await response.json();
-
-    if(
-      response.status === 401
-    ){
-      logout();
-      return;
-    }
-
-    if(!response.ok){
-      throw new Error(
-        data.error ||
-        "Could not load keys"
-      );
-    }
-
-    const keys =
-      Array.isArray(data.keys)
-        ? data.keys
-        : [];
-
-    if(!keys.length){
-
-      container.innerHTML =
-        `<div class="sub">
-          No access keys found.
-        </div>`;
-
-      return;
-    }
-
-    container.innerHTML =
-      keys.map(key => {
-
-        const bound =
-          key.device_id
-            ? "BOUND"
-            : "UNBOUND";
-
-        return `
-          <div class="key">
-
-            <div class="keyTop">
-
-              <div class="keyCode">
-                ${escapeHTML(
-                  key.access_key
-                )}
-              </div>
-
-              <div>
-                <button
-                  class="secondary"
-                  onclick="resetDevice('${escapeHTML(
-                    key.access_key
-                  )}')"
-                >
-                  RESET
-                </button>
-
-                <button
-                  class="danger"
-                  onclick="deleteKey('${escapeHTML(
-                    key.access_key
-                  )}')"
-                >
-                  DELETE
-                </button>
-              </div>
-
-            </div>
-
-            <div class="keyMeta">
-
-              STATUS:
-              ${bound}
-
-              <br>
-
-              DEVICE:
-              ${key.device_id
-                ? escapeHTML(
-                    key.device_id
-                  )
-                : "Not bound"}
-
-              <br>
-
-              CREATED:
-              ${prettyTime(
-                key.created_at
-              )}
-
-              <br>
-
-              LAST SEEN:
-              ${key.last_seen
-                ? prettyTime(
-                    key.last_seen
-                  )
-                : "Never"}
-
-            </div>
-
-          </div>
-        `;
-
-      }).join("");
-
-  }catch(err){
-
-    container.innerHTML =
-      `<div class="message">
-        ${escapeHTML(
-          err.message
-        )}
-      </div>`;
-  }
-}
-
-
-/* =========================================================
-   DELETE KEY
-========================================================= */
-
-async function deleteKey(key){
-
-  if(
-    !confirm(
-      "Delete this access key?"
-    )
-  ){
-    return;
-  }
-
-  try{
-
-    const response =
-      await fetch(
-        "/api/admin/keys",
-        {
-          method:"DELETE",
-          headers:authHeaders(),
-
-          body:JSON.stringify({
-            accessKey:key
-          })
-        }
-      );
-
-    const data =
-      await response.json();
-
-    if(!response.ok){
-      throw new Error(
-        data.error ||
-        "Delete failed"
-      );
-    }
-
-    await loadKeys();
-
-  }catch(err){
-
-    alert(
-      err.message ||
-      "Delete failed"
+    toast(
+      "Access denied: " +
+      err.message
     );
-  }
-}
 
-
-/* =========================================================
-   RESET DEVICE
-========================================================= */
-
-async function resetDevice(key){
-
-  if(
-    !confirm(
-      "Reset device binding for this key?"
-    )
-  ){
-    return;
-  }
-
-  try{
-
-    const response =
-      await fetch(
-        "/api/admin/reset-device",
-        {
-          method:"POST",
-          headers:authHeaders(),
-
-          body:JSON.stringify({
-            accessKey:key
-          })
-        }
-      );
-
-    const data =
-      await response.json();
-
-    if(!response.ok){
-      throw new Error(
-        data.error ||
-        "Reset failed"
-      );
-    }
-
-    await loadKeys();
-
-  }catch(err){
-
-    alert(
-      err.message ||
-      "Reset failed"
-    );
-  }
-}
-
-
-/* =========================================================
-   MODEL TEST
-========================================================= */
-
-async function testModel(){
-
-  $("modelOutput")
-    .textContent =
-    "Running model analysis...";
-
-  try{
-
-    const response =
-      await fetch(
-        "/api/admin/model-test",
-        {
-          headers:{
-            Authorization:
-              "Bearer " + adminKey
-          },
-          cache:"no-store"
-        }
-      );
-
-    const data =
-      await response.json();
-
-    if(!response.ok){
-      throw new Error(
-        data.error ||
-        "Model test failed"
-      );
-    }
-
-    $("modelOutput")
-      .textContent =
-      JSON.stringify(
-        data,
-        null,
-        2
-      );
-
-  }catch(err){
-
-    $("modelOutput")
-      .textContent =
-      err.message;
-  }
-}
-
-
-/* =========================================================
-   PROVIDER TEST
-========================================================= */
-
-async function testProvider(){
-
-  $("providerOutput")
-    .textContent =
-    "Testing WingoBot API...";
-
-  try{
-
-    const response =
-      await fetch(
-        "/api/admin/wingo-test",
-        {
-          headers:{
-            Authorization:
-              "Bearer " + adminKey
-          },
-          cache:"no-store"
-        }
-      );
-
-    const data =
-      await response.json();
-
-    if(!response.ok){
-      throw new Error(
-        data.error ||
-        "Provider test failed"
-      );
-    }
-
-    $("providerOutput")
-      .textContent =
-      JSON.stringify(
-        data,
-        null,
-        2
-      );
-
-  }catch(err){
-
-    $("providerOutput")
-      .textContent =
-      err.message;
   }
 }
 
@@ -1236,17 +880,477 @@ function logout(){
     "dy_admin_key"
   );
 
-  adminKey = "";
+  ADMIN = "";
 
-  $("app")
+  $("panel")
     .classList.add(
       "hidden"
     );
 
-  $("login")
+  $("loginCard")
     .classList.remove(
       "hidden"
     );
+
+  $("adminKey").value = "";
+
+  toast(
+    "Logged out"
+  );
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+async function loadStatus(){
+
+  const data =
+    await api(
+      "/api/admin/status"
+    );
+
+
+  $("providerStatus")
+    .textContent =
+      data.provider
+        ? "ONLINE"
+        : "OFFLINE";
+
+
+  $("providerStatus")
+    .className =
+      "status-value " +
+      (
+        data.provider
+          ? "online"
+          : "offline"
+      );
+
+
+  $("historyCount")
+    .textContent =
+      data.historyCount ?? "0";
+
+
+  $("currentIssue")
+    .textContent =
+      data.currentIssue || "—";
+
+
+  $("targetIssue")
+    .textContent =
+      data.targetIssue || "—";
+}
+
+
+/* =========================================================
+   LIVE STATE
+========================================================= */
+
+async function loadState(){
+
+  /*
+    State endpoint uses access-key auth,
+    so admin panel itself does not have a user key.
+    We use admin status for protected admin information
+    and provider status here.
+  */
+
+  try {
+
+    const data =
+      await api(
+        "/api/admin/status"
+      );
+
+
+    $("analysisIssue")
+      .textContent =
+      data.targetIssue || "—";
+
+
+    if (data.provider){
+
+      $("analysisMain")
+        .textContent =
+        "PROVIDER ONLINE";
+
+
+      $("analysisMeta")
+        .textContent =
+        "Live history synchronization active";
+
+    } else {
+
+      $("analysisMain")
+        .textContent =
+        "OFFLINE";
+
+
+      $("analysisMeta")
+        .textContent =
+        data.error ||
+        "Provider unavailable";
+    }
+
+  } catch(err){
+
+    $("analysisMain")
+      .textContent =
+      "ERROR";
+
+    $("analysisMeta")
+      .textContent =
+      err.message;
+  }
+}
+
+
+/* =========================================================
+   ACCESS KEYS
+========================================================= */
+
+async function loadKeys(){
+
+  const box =
+    $("keysTable");
+
+
+  try {
+
+    const data =
+      await api(
+        "/api/admin/keys"
+      );
+
+
+    const keys =
+      Array.isArray(data.keys)
+        ? data.keys
+        : [];
+
+
+    if (!keys.length){
+
+      box.innerHTML =
+        `
+        <div class="empty">
+          No access keys created yet.
+        </div>
+        `;
+
+      return;
+    }
+
+
+    let html = `
+      <div class="table-wrap">
+      <table>
+
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>ACCESS KEY</th>
+          <th>DEVICE</th>
+          <th>LAST SEEN</th>
+          <th>ACTION</th>
+        </tr>
+      </thead>
+
+      <tbody>
+    `;
+
+
+    for (const row of keys){
+
+      const created =
+        row.last_seen
+          ? new Date(
+              Number(row.last_seen)
+            ).toLocaleString()
+          : "Never";
+
+
+      const device =
+        row.device_id
+          ? escapeHTML(
+              row.device_id
+            )
+          : "Not bound";
+
+
+      html += `
+        <tr>
+
+          <td>
+            #${row.id}
+          </td>
+
+          <td class="key">
+            ${escapeHTML(
+              row.access_key
+            )}
+          </td>
+
+          <td class="device">
+            ${device}
+          </td>
+
+          <td>
+            ${escapeHTML(created)}
+          </td>
+
+          <td>
+
+            <button
+              class="secondary small-btn"
+              onclick="resetDevice(${row.id})">
+              RESET
+            </button>
+
+            <button
+              class="danger small-btn"
+              onclick="deleteKey(${row.id})">
+              DELETE
+            </button>
+
+          </td>
+
+        </tr>
+      `;
+    }
+
+
+    html += `
+      </tbody>
+      </table>
+      </div>
+    `;
+
+
+    box.innerHTML =
+      html;
+
+
+  } catch(err){
+
+    box.innerHTML =
+      `
+      <div class="empty">
+        ${escapeHTML(
+          err.message
+        )}
+      </div>
+      `;
+  }
+}
+
+
+/* =========================================================
+   CREATE KEY
+========================================================= */
+
+async function createKey(){
+
+  const input =
+    $("newKey");
+
+
+  const accessKey =
+    input.value.trim();
+
+
+  try {
+
+    const data =
+      await api(
+        "/api/admin/keys",
+        {
+          method:"POST",
+
+          body:{
+            accessKey
+          }
+        }
+      );
+
+
+    input.value = "";
+
+
+    toast(
+      "Key created: " +
+      data.key.access_key
+    );
+
+
+    await loadKeys();
+
+  } catch(err){
+
+    toast(
+      "Create failed: " +
+      err.message
+    );
+  }
+}
+
+
+/* =========================================================
+   DELETE KEY
+========================================================= */
+
+async function deleteKey(id){
+
+  if (
+    !confirm(
+      "Delete this access key?"
+    )
+  ){
+    return;
+  }
+
+
+  try {
+
+    await api(
+      "/api/admin/keys",
+      {
+        method:"DELETE",
+
+        body:{
+          id
+        }
+      }
+    );
+
+
+    toast(
+      "Access key deleted"
+    );
+
+
+    await loadKeys();
+
+  } catch(err){
+
+    toast(
+      "Delete failed: " +
+      err.message
+    );
+  }
+}
+
+
+/* =========================================================
+   RESET DEVICE
+========================================================= */
+
+async function resetDevice(id){
+
+  if (
+    !confirm(
+      "Is key ka device binding reset karein?"
+    )
+  ){
+    return;
+  }
+
+
+  try {
+
+    await api(
+      "/api/admin/reset-device",
+      {
+        method:"POST",
+
+        body:{
+          id
+        }
+      }
+    );
+
+
+    toast(
+      "Device binding reset"
+    );
+
+
+    await loadKeys();
+
+  } catch(err){
+
+    toast(
+      "Reset failed: " +
+      err.message
+    );
+  }
+}
+
+
+/* =========================================================
+   PROVIDER PING
+========================================================= */
+
+async function providerPing(){
+
+  try {
+
+    const data =
+      await api(
+        "/api/admin/ping"
+      );
+
+
+    toast(
+      "Server online • " +
+      new Date(
+        data.pong
+      ).toLocaleTimeString()
+    );
+
+  } catch(err){
+
+    toast(
+      "Ping failed"
+    );
+  }
+}
+
+
+/* =========================================================
+   REFRESH
+========================================================= */
+
+async function refreshAll(){
+
+  if (!ADMIN){
+    return;
+  }
+
+
+  await Promise.allSettled([
+    loadStatus(),
+    loadState(),
+    loadKeys()
+  ]);
+}
+
+
+/* =========================================================
+   ESCAPE HTML
+========================================================= */
+
+function escapeHTML(value){
+
+  return String(value)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
 }
 
 
@@ -1254,41 +1358,75 @@ function logout(){
    AUTO LOGIN
 ========================================================= */
 
-if(adminKey){
+if (ADMIN){
 
-  $("login")
-    .classList.add(
-      "hidden"
+  api(
+    "/api/admin/status"
+  )
+  .then(() => {
+
+    $("loginCard")
+      .classList.add(
+        "hidden"
+      );
+
+    $("panel")
+      .classList.remove(
+        "hidden"
+      );
+
+    refreshAll();
+
+  })
+  .catch(() => {
+
+    sessionStorage.removeItem(
+      "dy_admin_key"
     );
 
-  $("app")
-    .classList.remove(
-      "hidden"
-    );
+    ADMIN = "";
 
-  loadStatus();
-  loadKeys();
+  });
 }
 
 
 /* =========================================================
-   AUTO REFRESH
+   LIVE ADMIN REFRESH
 ========================================================= */
 
-setInterval(
-  () => {
+setInterval(() => {
 
-    if(
-      !$("app")
-        .classList
-        .contains("hidden")
-    ){
-      loadStatus();
+  if (ADMIN){
+
+    loadStatus()
+      .catch(() => {});
+
+    loadState()
+      .catch(() => {});
+
+    loadKeys()
+      .catch(() => {});
+
+  }
+
+}, 5000);
+
+
+/* ENTER KEY LOGIN */
+
+$("adminKey")
+  .addEventListener(
+    "keydown",
+    e => {
+
+      if (
+        e.key === "Enter"
+      ){
+        login();
+      }
+
     }
-
-  },
-  5000
-);
+  );
 
 </script>
 
