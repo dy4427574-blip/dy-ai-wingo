@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 
-<title>DY AI WINGO</title>
+<title>DY AI WINGO V6</title>
 
 <style>
 *{
@@ -20,8 +20,8 @@ html,body{
 body{
   font-family:Arial,Helvetica,sans-serif;
   background:
-    radial-gradient(circle at 20% 0%,rgba(37,99,235,.16),transparent 28%),
-    radial-gradient(circle at 100% 80%,rgba(124,58,237,.12),transparent 30%),
+    radial-gradient(circle at 20% 0%,rgba(37,99,235,.14),transparent 30%),
+    radial-gradient(circle at 100% 100%,rgba(124,58,237,.12),transparent 35%),
     #070b14;
   color:#fff;
 }
@@ -39,9 +39,7 @@ button{
 }
 
 
-/* =========================================================
-   LOGIN
-========================================================= */
+/* ================= LOGIN ================= */
 
 #loginScreen{
   min-height:100vh;
@@ -56,9 +54,9 @@ button{
   max-width:390px;
   padding:28px 22px;
   border-radius:24px;
-  background:rgba(13,19,32,.95);
-  border:1px solid rgba(255,255,255,.08);
-  box-shadow:0 25px 80px rgba(0,0,0,.5);
+  background:#0d1320;
+  border:1px solid #202d44;
+  box-shadow:0 25px 80px rgba(0,0,0,.55);
 }
 
 .logo{
@@ -70,8 +68,8 @@ button{
   align-items:center;
   justify-content:center;
   background:linear-gradient(135deg,#2563eb,#7c3aed);
-  font-weight:900;
   font-size:24px;
+  font-weight:900;
 }
 
 .login-card h1{
@@ -80,20 +78,20 @@ button{
 }
 
 .login-card p{
+  margin:7px 0 22px;
   text-align:center;
   color:#65738a;
-  font-size:11px;
-  margin:7px 0 22px;
+  font-size:10px;
 }
 
 .input{
   width:100%;
-  height:48px;
+  height:49px;
   padding:0 14px;
-  border-radius:13px;
-  border:1px solid #263149;
   outline:none;
-  background:#090f1b;
+  border:1px solid #263149;
+  border-radius:13px;
+  background:#080e19;
   color:#fff;
 }
 
@@ -103,27 +101,29 @@ button{
 
 .login-btn{
   width:100%;
-  height:48px;
+  height:49px;
   margin-top:10px;
   border:0;
   border-radius:13px;
   background:linear-gradient(135deg,#2563eb,#7c3aed);
   color:#fff;
-  font-size:11px;
+  font-size:10px;
   font-weight:900;
 }
 
+.login-btn:disabled{
+  opacity:.6;
+}
+
 .login-error{
-  text-align:center;
-  color:#fb7185;
-  font-size:11px;
   margin-top:12px;
+  color:#fb7185;
+  text-align:center;
+  font-size:10px;
 }
 
 
-/* =========================================================
-   APP
-========================================================= */
+/* ================= APP ================= */
 
 #app{
   display:none;
@@ -138,7 +138,7 @@ button{
   align-items:center;
   justify-content:space-between;
   padding:12px 14px;
-  background:rgba(5,9,16,.91);
+  background:rgba(5,9,16,.94);
   border-bottom:1px solid rgba(255,255,255,.07);
   backdrop-filter:blur(18px);
 }
@@ -150,15 +150,15 @@ button{
 }
 
 .brand-logo{
-  width:42px;
-  height:42px;
+  width:43px;
+  height:43px;
   border-radius:13px;
   display:flex;
   align-items:center;
   justify-content:center;
   background:linear-gradient(135deg,#2563eb,#7c3aed);
-  font-weight:900;
   font-size:13px;
+  font-weight:900;
 }
 
 .brand h2{
@@ -167,9 +167,9 @@ button{
 
 .brand small{
   display:block;
-  margin-top:2px;
-  color:#66758a;
-  font-size:9px;
+  margin-top:3px;
+  color:#65738a;
+  font-size:8px;
   font-weight:800;
 }
 
@@ -192,18 +192,16 @@ button{
   width:100%;
   max-width:1050px;
   margin:auto;
-  padding:10px;
+  padding:9px;
 }
 
 
-/* =========================================================
-   GAME
-========================================================= */
+/* ================= GAME ================= */
 
 .game-card{
   overflow:hidden;
-  margin-bottom:10px;
-  border:1px solid #1c2940;
+  margin-bottom:9px;
+  border:1px solid #1d2a40;
   border-radius:19px;
   background:#090f19;
 }
@@ -217,7 +215,7 @@ button{
 }
 
 .game-head strong{
-  font-size:11px;
+  font-size:10px;
 }
 
 .live{
@@ -240,7 +238,7 @@ button{
 .game-frame-wrap{
   position:relative;
   width:100%;
-  height:330px;
+  height:390px;
   background:#05080e;
 }
 
@@ -259,20 +257,18 @@ button{
   padding:9px 14px;
   border:1px solid #30405d;
   border-radius:10px;
-  background:rgba(7,12,20,.91);
+  background:rgba(7,12,20,.92);
   color:#dbeafe;
   font-size:9px;
   font-weight:900;
 }
 
 
-/* =========================================================
-   TARGET
-========================================================= */
+/* ================= TARGET ================= */
 
 .target-card{
   padding:14px;
-  margin-bottom:10px;
+  margin-bottom:9px;
   border:1px solid #1c2940;
   border-radius:18px;
   background:#0a101c;
@@ -282,7 +278,7 @@ button{
   color:#627086;
   font-size:8px;
   font-weight:900;
-  letter-spacing:.7px;
+  letter-spacing:.8px;
 }
 
 .target-row{
@@ -296,7 +292,6 @@ button{
   font-family:monospace;
   font-size:15px;
   font-weight:900;
-  letter-spacing:.3px;
 }
 
 .timer{
@@ -309,19 +304,16 @@ button{
 }
 
 
-/* =========================================================
-   AI
-========================================================= */
+/* ================= AI ================= */
 
 .ai-card{
-  position:relative;
   padding:19px 14px;
-  margin-bottom:10px;
+  margin-bottom:9px;
   text-align:center;
   border:1px solid #1d2b43;
   border-radius:20px;
   background:
-    radial-gradient(circle at 50% 0%,rgba(37,99,235,.13),transparent 42%),
+    radial-gradient(circle at 50% 0%,rgba(37,99,235,.14),transparent 45%),
     #0a101c;
 }
 
@@ -335,18 +327,18 @@ button{
 .analysis{
   min-height:190px;
   display:flex;
+  flex-direction:column;
   align-items:center;
   justify-content:center;
-  flex-direction:column;
 }
 
 .analysis-circle{
   width:116px;
   height:116px;
-  border-radius:50%;
   display:flex;
   align-items:center;
   justify-content:center;
+  border-radius:50%;
   background:
     radial-gradient(circle,#101a2c 52%,transparent 53%),
     linear-gradient(135deg,#2563eb,#7c3aed);
@@ -354,8 +346,8 @@ button{
 }
 
 .analysis-circle span{
-  font-size:10px;
   color:#93c5fd;
+  font-size:27px;
   font-weight:900;
 }
 
@@ -368,9 +360,9 @@ button{
 .prediction{
   min-height:190px;
   display:flex;
+  flex-direction:column;
   align-items:center;
   justify-content:center;
-  flex-direction:column;
 }
 
 .prediction-side{
@@ -391,7 +383,7 @@ button{
 
 .confidence{
   margin-top:9px;
-  color:#8795a9;
+  color:#7d8ca2;
   font-size:10px;
 }
 
@@ -411,7 +403,7 @@ button{
 }
 
 .reason{
-  max-width:480px;
+  max-width:500px;
   margin:10px auto 0;
   color:#64738a;
   font-size:9px;
@@ -419,15 +411,13 @@ button{
 }
 
 
-/* =========================================================
-   STATS
-========================================================= */
+/* ================= STATS ================= */
 
 .stats{
   display:grid;
   grid-template-columns:repeat(3,1fr);
   gap:8px;
-  margin-bottom:10px;
+  margin-bottom:9px;
 }
 
 .stat{
@@ -440,9 +430,9 @@ button{
 
 .stat small{
   display:block;
+  margin-bottom:6px;
   color:#5e6d82;
   font-size:8px;
-  margin-bottom:6px;
 }
 
 .stat strong{
@@ -450,9 +440,7 @@ button{
 }
 
 
-/* =========================================================
-   HISTORY
-========================================================= */
+/* ================= HISTORY ================= */
 
 .history-card{
   overflow:hidden;
@@ -480,6 +468,7 @@ button{
 }
 
 .table-wrap{
+  width:100%;
   overflow-x:auto;
 }
 
@@ -557,9 +546,7 @@ td{
 }
 
 
-/* =========================================================
-   FOOTER
-========================================================= */
+/* ================= FOOTER ================= */
 
 .footer{
   padding:20px 8px 28px;
@@ -570,9 +557,7 @@ td{
 }
 
 
-/* =========================================================
-   TOAST
-========================================================= */
+/* ================= TOAST ================= */
 
 .toast{
   position:fixed;
@@ -598,9 +583,7 @@ td{
 }
 
 
-/* =========================================================
-   MOBILE
-========================================================= */
+/* ================= MOBILE ================= */
 
 @media(max-width:600px){
 
@@ -632,9 +615,9 @@ td{
 <body>
 
 
-<!-- =======================================================
+<!-- =====================================================
      LOGIN
-======================================================= -->
+====================================================== -->
 
 <section id="loginScreen">
 
@@ -663,8 +646,7 @@ td{
 
     <button
       id="loginBtn"
-      class="login-btn"
-      onclick="login()">
+      class="login-btn">
       ACCESS PANEL
     </button>
 
@@ -678,14 +660,14 @@ td{
 </section>
 
 
-<!-- =======================================================
+<!-- =====================================================
      APP
-======================================================= -->
+====================================================== -->
 
 <main id="app">
 
 
-  <!-- TOP BAR -->
+  <!-- TOP -->
 
   <header class="topbar">
 
@@ -715,14 +697,13 @@ td{
       <button
         id="musicBtn"
         class="icon-btn"
-        onclick="toggleMusic()"
         title="Music">
         🔊
       </button>
 
       <button
+        id="refreshBtn"
         class="icon-btn"
-        onclick="manualRefresh()"
         title="Refresh">
         ↻
       </button>
@@ -735,9 +716,7 @@ td{
   <div class="container">
 
 
-    <!-- =================================================
-         GAME
-    ================================================== -->
+    <!-- GAME -->
 
     <section class="game-card">
 
@@ -758,9 +737,7 @@ td{
       </div>
 
 
-      <div
-        id="gameFrameWrap"
-        class="game-frame-wrap">
+      <div class="game-frame-wrap">
 
         <iframe
           id="gameFrame"
@@ -770,8 +747,8 @@ td{
         </iframe>
 
         <button
-          class="open-game"
-          onclick="openGame()">
+          id="openGameBtn"
+          class="open-game">
           OPEN GAME ↗
         </button>
 
@@ -780,9 +757,7 @@ td{
     </section>
 
 
-    <!-- =================================================
-         TARGET
-    ================================================== -->
+    <!-- TARGET -->
 
     <section class="target-card">
 
@@ -801,7 +776,7 @@ td{
         <div
           id="timer"
           class="timer">
-          00
+          --
         </div>
 
       </div>
@@ -809,14 +784,12 @@ td{
     </section>
 
 
-    <!-- =================================================
-         AI
-    ================================================== -->
+    <!-- AI -->
 
     <section class="ai-card">
 
       <div class="ai-label">
-        DY AI • V5 ANALYSIS
+        DY AI • V6 ANALYSIS
       </div>
 
 
@@ -828,7 +801,8 @@ td{
 
         <div class="analysis-circle">
 
-          <span id="analysisCount">
+          <span
+            id="analysisCount">
             3
           </span>
 
@@ -837,7 +811,7 @@ td{
         <div
           id="analysisText"
           class="analysis-text">
-          Analyzing recent pattern...
+          Reading recent rounds...
         </div>
 
       </div>
@@ -881,9 +855,7 @@ td{
     </section>
 
 
-    <!-- =================================================
-         STATS
-    ================================================== -->
+    <!-- STATS -->
 
     <section class="stats">
 
@@ -893,8 +865,7 @@ td{
           WIN
         </small>
 
-        <strong
-          id="wins">
+        <strong id="wins">
           0
         </strong>
 
@@ -907,8 +878,7 @@ td{
           LOSS
         </small>
 
-        <strong
-          id="losses">
+        <strong id="losses">
           0
         </strong>
 
@@ -921,8 +891,7 @@ td{
           WIN RATE
         </small>
 
-        <strong
-          id="winRate">
+        <strong id="winRate">
           0%
         </strong>
 
@@ -931,9 +900,7 @@ td{
     </section>
 
 
-    <!-- =================================================
-         LAST 30
-    ================================================== -->
+    <!-- HISTORY -->
 
     <section class="history-card">
 
@@ -979,8 +946,7 @@ td{
           </thead>
 
 
-          <tbody
-            id="historyBody">
+          <tbody id="historyBody">
 
             <tr>
 
@@ -1003,7 +969,9 @@ td{
 
     <div class="footer">
 
-      DY AI Wingo V5<br>
+      DY AI Wingo V6<br>
+
+      Adaptive analysis • BIG / SMALL only<br>
 
       AI estimate only • No guaranteed outcome
 
@@ -1033,47 +1001,37 @@ td{
 <script>
 
 /* =========================================================
-   GLOBAL
+   CONFIG
 ========================================================= */
 
 const GAME_URL =
   "https://www.shreewin38.com/#/register?invitationCode=88523152383";
 
 const MODEL_VERSION =
-  "DY-AI-BS-V5";
+  "DY-AI-BS-V6";
 
-let ACCESS_KEY =
-  "";
 
-let DEVICE_ID =
-  "";
+/* =========================================================
+   STATE
+========================================================= */
 
-let pollTimer =
-  null;
+let ACCESS_KEY = "";
 
-let countdownTimer =
-  null;
+let DEVICE_ID = "";
 
-let analysisTimer =
-  null;
+let currentTarget = "";
 
-let currentTarget =
-  "";
+let currentPrediction = null;
 
-let currentPrediction =
-  null;
+let latestState = null;
 
-let latestState =
-  null;
+let pollTimer = null;
 
-let lastProviderUpdated =
-  0;
+let countdownTimer = null;
 
-let analysisRunning =
-  false;
+let analysisTimer = null;
 
-let musicPlaying =
-  false;
+let analysisRunning = false;
 
 
 /* =========================================================
@@ -1097,7 +1055,7 @@ function esc(value){
 }
 
 
-function toast(message){
+function showToast(message){
 
   const el =
     $("toast");
@@ -1197,7 +1155,8 @@ async function api(
       url,
       {
         ...options,
-        headers
+        headers,
+        cache:"no-store"
       }
     );
 
@@ -1344,12 +1303,7 @@ async function login(){
       "block";
 
 
-    $("loginError")
-      .classList
-      .add("hidden");
-
-
-    toast(
+    showToast(
       "Access granted."
     );
 
@@ -1396,16 +1350,26 @@ function showLoginError(
 }
 
 
+$("loginBtn")
+  .addEventListener(
+    "click",
+    login
+  );
+
+
 $("accessKey")
   .addEventListener(
     "keydown",
     e=>{
+
       if(
-        e.key ===
-        "Enter"
+        e.key === "Enter"
       ){
+
         login();
+
       }
+
     }
   );
 
@@ -1517,27 +1481,25 @@ window.addEventListener(
 
 
 /* =========================================================
-   APP START
+   START
 ========================================================= */
 
 function startApp(){
-
-  DEVICE_ID =
-    DEVICE_ID ||
-    getDeviceId();
-
-
-  loadState();
-
 
   clearInterval(
     pollTimer
   );
 
+  clearInterval(
+    countdownTimer
+  );
+
+
+  loadState();
+
 
   /*
-    Smooth 1-second UI update.
-    Server state is fetched every second.
+    Smooth state polling.
   */
 
   pollTimer =
@@ -1547,13 +1509,20 @@ function startApp(){
     );
 
 
-  startCountdown();
+  countdownTimer =
+    setInterval(
+      updateCountdown,
+      250
+    );
+
+
+  updateCountdown();
 
 }
 
 
 /* =========================================================
-   LOAD STATE
+   STATE
 ========================================================= */
 
 async function loadState(){
@@ -1583,15 +1552,10 @@ async function loadState(){
   }catch(error){
 
     console.warn(
-      "State:",
+      "State error:",
       error.message
     );
 
-
-    /*
-      If access becomes invalid,
-      return user to login.
-    */
 
     if(
       /access|device|key/i
@@ -1615,7 +1579,7 @@ async function loadState(){
 
 
 /* =========================================================
-   UPDATE UI
+   UI
 ========================================================= */
 
 function updateUI(
@@ -1634,17 +1598,9 @@ function updateUI(
     "—";
 
 
-  const providerUpdated =
-    Number(
-      data.providerLastUpdated ||
-      data.provider_last_updated ||
-      0
-    );
-
-
   /*
-    A new analysis starts only when
-    target period changes.
+    New analysis ONLY when
+    target issue changes.
   */
 
   if(
@@ -1655,23 +1611,17 @@ function updateUI(
     currentTarget =
       target;
 
-    lastProviderUpdated =
-      providerUpdated;
+
+    currentPrediction =
+      data.prediction ||
+      null;
+
 
     startAnalysis(
-      data.prediction ||
-      null
+      currentPrediction
     );
 
-  }
-
-
-  /*
-    Update prediction details even
-    if target did not change.
-  */
-
-  if(
+  }else if(
     data.prediction
   ){
 
@@ -1688,7 +1638,6 @@ function updateUI(
 
   renderHistory(
     data.predictions ||
-    data.predictionHistory ||
     []
   );
 
@@ -1696,22 +1645,16 @@ function updateUI(
 
 
 /* =========================================================
-   ANALYSIS
+   3 SECOND ANALYSIS
 ========================================================= */
 
 function startAnalysis(
   prediction
 ){
 
-  if(
-    analysisRunning
-  ){
-
-    clearInterval(
-      analysisTimer
-    );
-
-  }
+  clearInterval(
+    analysisTimer
+  );
 
 
   analysisRunning =
@@ -1720,12 +1663,16 @@ function startAnalysis(
 
   $("analysisBox")
     .classList
-    .remove("hidden");
+    .remove(
+      "hidden"
+    );
 
 
   $("predictionBox")
     .classList
-    .add("hidden");
+    .add(
+      "hidden"
+    );
 
 
   let count =
@@ -1755,7 +1702,7 @@ function startAnalysis(
 
           $("analysisText")
             .textContent =
-            "Checking trend breaks...";
+            "Checking transitions...";
 
         }
 
@@ -1766,7 +1713,18 @@ function startAnalysis(
 
           $("analysisText")
             .textContent =
-            "Calibrating BIG / SMALL...";
+            "Testing reversal signals...";
+
+        }
+
+
+        if(
+          count === 0
+        ){
+
+          $("analysisText")
+            .textContent =
+            "Calibrating V6...";
 
         }
 
@@ -1793,8 +1751,8 @@ function startAnalysis(
 
 
           showPrediction(
-            prediction ||
-            currentPrediction
+            currentPrediction ||
+            prediction
           );
 
         }
@@ -1807,7 +1765,7 @@ function startAnalysis(
 
 
 /* =========================================================
-   SHOW PREDICTION
+   PREDICTION
 ========================================================= */
 
 function showPrediction(
@@ -1818,7 +1776,7 @@ function showPrediction(
 
     $("analysisText")
       .textContent =
-      "Waiting for V5 model...";
+      "Waiting for V6 model...";
 
     return;
 
@@ -1834,7 +1792,7 @@ function showPrediction(
 
 
   /*
-    Only BIG / SMALL are allowed.
+    Only BIG / SMALL.
   */
 
   if(
@@ -1844,7 +1802,7 @@ function showPrediction(
 
     $("analysisText")
       .textContent =
-      "Waiting for valid BIG / SMALL signal...";
+      "Waiting for valid signal...";
 
     return;
 
@@ -1853,23 +1811,27 @@ function showPrediction(
 
   $("analysisBox")
     .classList
-    .add("hidden");
+    .add(
+      "hidden"
+    );
 
 
   $("predictionBox")
     .classList
-    .remove("hidden");
+    .remove(
+      "hidden"
+    );
 
 
-  const el =
+  const sideEl =
     $("predictionSide");
 
 
-  el.textContent =
+  sideEl.textContent =
     side;
 
 
-  el.className =
+  sideEl.className =
     "prediction-side " +
     (
       side === "BIG"
@@ -1898,7 +1860,7 @@ function showPrediction(
   $("reason")
     .textContent =
     prediction.reason ||
-    "V5 live analysis.";
+    "V6 adaptive analysis.";
 
 }
 
@@ -1936,20 +1898,24 @@ function updateStats(
     wins + losses;
 
 
-  const rate =
-    stats.winRate != null
-      ? Number(
-          stats.winRate
-        )
-      : (
-          total
-            ? Math.round(
-                wins /
-                total *
-                100
-              )
-            : 0
-        );
+  let rate =
+    stats.winRate;
+
+
+  if(
+    rate == null
+  ){
+
+    rate =
+      total
+        ? Math.round(
+            wins /
+            total *
+            100
+          )
+        : 0;
+
+  }
 
 
   $("wins")
@@ -1964,13 +1930,13 @@ function updateStats(
 
   $("winRate")
     .textContent =
-    `${rate}%`;
+    `${Number(rate)}%`;
 
 }
 
 
 /* =========================================================
-   HISTORY
+   LAST 30
 ========================================================= */
 
 function renderHistory(
@@ -2010,49 +1976,41 @@ function renderHistory(
             row.target_issue ||
             row.targetIssue ||
             row.period ||
-            row.issueNumber ||
             "—";
 
 
           const prediction =
             String(
               row.prediction ||
-              row.side ||
-              "—"
+              ""
             ).toUpperCase();
 
 
           const actual =
             String(
               row.actual_result ||
-              row.actualResult ||
-              row.result ||
-              "—"
-            ).toUpperCase();
-
-
-          let status =
-            String(
-              row.status ||
               ""
             ).toUpperCase();
 
 
           /*
-            SAFETY:
-            no actual BIG/SMALL =
-            always PENDING.
+            CRITICAL:
+
+            Actual result missing =
+            PENDING.
+
+            Never trust an old/stale WIN/LOSS
+            value from the frontend.
           */
 
+          let status =
+            "PENDING";
+
+
           if(
-            actual !== "BIG" &&
-            actual !== "SMALL"
+            actual === "BIG" ||
+            actual === "SMALL"
           ){
-
-            status =
-              "PENDING";
-
-          }else{
 
             status =
               prediction === actual
@@ -2067,16 +2025,14 @@ function renderHistory(
 
 
           if(
-            status ===
-            "WIN"
+            status === "WIN"
           ){
 
             badge =
               "win";
 
           }else if(
-            status ===
-            "LOSS"
+            status === "LOSS"
           ){
 
             badge =
@@ -2085,20 +2041,17 @@ function renderHistory(
           }
 
 
-          let predClass =
-            prediction ===
-            "BIG"
+          let predictionClass =
+            prediction === "BIG"
               ? "big-text"
               : "small-text";
 
 
           let resultClass =
-            actual ===
-            "BIG"
+            actual === "BIG"
               ? "big"
               : (
-                  actual ===
-                  "SMALL"
+                  actual === "SMALL"
                     ? "small"
                     : ""
                 );
@@ -2111,17 +2064,17 @@ function renderHistory(
                 ${esc(period)}
               </td>
 
-              <td class="side ${predClass}">
-                ${esc(prediction)}
+              <td class="side ${predictionClass}">
+                ${esc(prediction || "—")}
               </td>
 
               <td class="result ${resultClass}">
-                ${esc(actual)}
+                ${esc(actual || "—")}
               </td>
 
               <td>
                 <span class="badge ${badge}">
-                  ${esc(status)}
+                  ${status}
                 </span>
               </td>
 
@@ -2139,42 +2092,24 @@ function renderHistory(
    COUNTDOWN
 ========================================================= */
 
-function startCountdown(){
-
-  clearInterval(
-    countdownTimer
-  );
-
-
-  countdownTimer =
-    setInterval(
-      updateCountdown,
-      1000
-    );
-
-
-  updateCountdown();
-
-}
-
-
 function updateCountdown(){
 
-  /*
-    Provider's last_updated is used
-    as synchronization reference.
+  if(!latestState){
 
-    This is an estimated UI timer,
-    not the game's authoritative timer.
-  */
+    $("timer")
+      .textContent =
+      "--";
+
+    return;
+
+  }
+
 
   const updated =
     Number(
-      latestState &&
-      (
-        latestState.providerLastUpdated ||
-        latestState.provider_last_updated
-      )
+      latestState.providerLastUpdated ||
+      latestState.provider_last_updated ||
+      0
     );
 
 
@@ -2190,16 +2125,20 @@ function updateCountdown(){
 
 
   const elapsed =
-    Math.floor(
-      (
-        Date.now() -
-        updated
-      ) / 1000
+    Math.max(
+      0,
+      Math.floor(
+        (
+          Date.now() -
+          updated
+        ) / 1000
+      )
     );
 
 
   /*
-    30-second cycle.
+    Provider timestamp based
+    30-second display cycle.
   */
 
   let remaining =
@@ -2213,8 +2152,7 @@ function updateCountdown(){
     remaining === 30
   ){
 
-    remaining =
-      0;
+    remaining = 0;
 
   }
 
@@ -2235,141 +2173,120 @@ function updateCountdown(){
    REFRESH
 ========================================================= */
 
-async function manualRefresh(){
+$("refreshBtn")
+  .addEventListener(
+    "click",
+    async ()=>{
 
-  toast(
-    "Refreshing..."
-  );
-
-
-  /*
-    Force a fresh state immediately.
-  */
-
-  try{
-
-    const data =
-      await api(
-        "/api/state"
+      showToast(
+        "Refreshing..."
       );
 
 
-    latestState =
-      data;
+      try{
+
+        const data =
+          await api(
+            "/api/state"
+          );
 
 
-    updateUI(
-      data
-    );
+        latestState =
+          data;
 
 
-    toast(
-      "Updated."
-    );
+        updateUI(
+          data
+        );
 
-  }catch(error){
 
-    toast(
-      error.message
-    );
+        showToast(
+          "Updated."
+        );
 
-  }
+      }catch(error){
 
-}
+        showToast(
+          error.message
+        );
+
+      }
+
+    }
+  );
 
 
 /* =========================================================
    OPEN GAME
 ========================================================= */
 
-function openGame(){
+$("openGameBtn")
+  .addEventListener(
+    "click",
+    ()=>{
 
-  window.open(
-    GAME_URL,
-    "_blank"
+      window.open(
+        GAME_URL,
+        "_blank"
+      );
+
+    }
   );
-
-}
 
 
 /* =========================================================
    MUSIC
 ========================================================= */
 
-async function toggleMusic(){
+$("musicBtn")
+  .addEventListener(
+    "click",
+    async ()=>{
 
-  const audio =
-    $("music");
-
-
-  try{
-
-    if(
-      audio.paused
-    ){
-
-      await audio.play();
-
-      musicPlaying =
-        true;
-
-      $("musicBtn")
-        .textContent =
-        "🔊";
+      const audio =
+        $("music");
 
 
-    }else{
+      try{
 
-      audio.pause();
+        if(
+          audio.paused
+        ){
 
-      musicPlaying =
-        false;
+          await audio.play();
 
-      $("musicBtn")
-        .textContent =
-        "🔇";
+          $("musicBtn")
+            .textContent =
+            "🔊";
+
+          showToast(
+            "Music ON"
+          );
+
+        }else{
+
+          audio.pause();
+
+          $("musicBtn")
+            .textContent =
+            "🔇";
+
+          showToast(
+            "Music OFF"
+          );
+
+        }
+
+      }catch{
+
+        showToast(
+          "Tap again to start music."
+        );
+
+      }
 
     }
-
-  }catch{
-
-    toast(
-      "Tap again to start music."
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   IFRAME FALLBACK
-========================================================= */
-
-let frameTimer =
-  null;
-
-
-window.addEventListener(
-  "load",
-  ()=>{
-
-    frameTimer =
-      setTimeout(
-        ()=>{
-
-          /*
-            The iframe may be blocked by
-            the external site's security policy.
-            Open Game button remains available.
-          */
-
-        },
-        7000
-      );
-
-  }
-);
+  );
 
 
 /* =========================================================
@@ -2394,7 +2311,7 @@ document.addEventListener(
 
 
 /* =========================================================
-   BEFORE UNLOAD
+   CLEANUP
 ========================================================= */
 
 window.addEventListener(
@@ -2419,4 +2336,4 @@ window.addEventListener(
 </script>
 
 </body>
-  </html>
+</html>
