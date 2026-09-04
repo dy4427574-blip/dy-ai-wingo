@@ -4,7 +4,6 @@ const http = require("http");
 const https = require("https");
 const fs = require("fs");
 const path = require("path");
-const crypto = require("crypto");
 const { Pool } = require("pg");
 
 /* =========================================================
@@ -13,21 +12,22 @@ const { Pool } = require("pg");
 
 const PORT = Number(process.env.PORT || 10000);
 
-const ADMIN_KEY =
-  String(process.env.ADMIN_KEY || "").trim();
+const ADMIN_KEY = String(process.env.ADMIN_KEY || "").trim();
 
-const WINGOBOT_TOKEN =
-  String(process.env.WINGOBOT_TOKEN || "").trim();
+const WINGOBOT_TOKEN = String(
+  process.env.WINGOBOT_TOKEN || ""
+).trim();
 
-const DATABASE_URL =
-  String(process.env.DATABASE_URL || "").trim();
+const DATABASE_URL = String(
+  process.env.DATABASE_URL || ""
+).trim();
 
-const PUBLIC_DIR = __dirname;
+const HOST = "0.0.0.0";
 
 const WINGOBOT_API =
   "https://api.wingobot.com/v2/30-sec-game-history";
 
-const REFRESH_MS = 3000;
+const PUBLIC_DIR = __dirname;
 
 
 /* =========================================================
@@ -41,27 +41,20 @@ if (DATABASE_URL) {
     connectionString: DATABASE_URL,
     ssl: {
       rejectUnauthorized: false
-    }
+    },
+    max: 5,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000
   });
 }
 
-async function dbQuery(text, params = []) {
-  if (!pool) {
-    throw new Error("DATABASE_URL missing");
-  }
-
-  return pool.query(text, params);
-}
-
-
 async function initDatabase() {
-
   if (!pool) {
     console.log("DATABASE_URL not configured");
     return;
   }
 
-  await dbQuery(`
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS access_keys (
       id SERIAL PRIMARY KEY,
       access_key TEXT UNIQUE NOT NULL,
@@ -71,7 +64,7 @@ async function initDatabase() {
     )
   `);
 
-  await dbQuery(`
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS prediction_records (
       id SERIAL PRIMARY KEY,
       target_issue TEXT NOT NULL,
@@ -85,274 +78,420 @@ async function initDatabase() {
     )
   `);
 
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_prediction_target
+    ON prediction_records(target_issue)
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_prediction_created
+    ON prediction_records(created_at DESC)
+  `);
+
   console.log("Database ready");
 }
 
 
 /* =========================================================
-   MEMORY CACHE
+   MEMORY STATE
 ========================================================= */
 
-let liveState = {
+let providerState = {
   ok: false,
-  updatedAt: 0,
   currentIssue: null,
-  latestSettledIssue: null,
   history: [],
-  analysis: null,
-  error: null
+  fetched: 0,
+  lastUpdated: 0,
+  error: null,
+  fetchedAt: 0
+};
+
+let modelCache = {
+  targetIssue: null,
+  prediction: null,
+  confidence: 0,
+  reason: "",
+  modelVersion: "DY-AI-V2",
+  generatedAt: 0
 };
 
 
 /* =========================================================
-   HTTP JSON HELPER
+   HELPERS
 ========================================================= */
 
-function requestJSON(url, options = {}) {
+function now() {
+  return Date.now();
+}
 
-  return new Promise((resolve, reject) => {
+function json(res, status, data) {
+  const body = JSON.stringify(data);
 
-    const parsed = new URL(url);
-
-    const req = https.request({
-      hostname: parsed.hostname,
-      path: parsed.pathname + parsed.search,
-      method: options.method || "GET",
-      headers: options.headers || {},
-      timeout: 10000
-    }, res => {
-
-      let body = "";
-
-      res.on("data", chunk => {
-        body += chunk;
-      });
-
-      res.on("end", () => {
-
-        if (res.statusCode < 200 || res.statusCode >= 300) {
-
-          reject(
-            new Error(
-              `Provider HTTP ${res.statusCode}`
-            )
-          );
-
-          return;
-        }
-
-        try {
-          resolve(JSON.parse(body));
-        } catch (err) {
-          reject(
-            new Error("Invalid provider JSON")
-          );
-        }
-
-      });
-
-    });
-
-    req.on("timeout", () => {
-      req.destroy(
-        new Error("Provider request timeout")
-      );
-    });
-
-    req.on("error", reject);
-
-    req.end();
-
+  res.writeHead(status, {
+    "Content-Type": "application/json; charset=utf-8",
+    "Cache-Control": "no-store",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers":
+      "Content-Type, X-Access-Key, X-Device-Id, Authorization",
+    "Access-Control-Allow-Methods":
+      "GET, POST, DELETE, OPTIONS"
   });
 
+  res.end(body);
+}
+
+function text(res, status, body, type = "text/plain") {
+  res.writeHead(status, {
+    "Content-Type": `${type}; charset=utf-8`,
+    "Cache-Control": "no-store"
+  });
+
+  res.end(body);
+}
+
+function safeNumber(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function issueString(value) {
+  if (value === undefined || value === null) return null;
+  return String(value).trim() || null;
+}
+
+function incrementIssue(issue) {
+  const s = issueString(issue);
+
+  if (!s) return null;
+
+  if (/^\d+$/.test(s)) {
+    try {
+      return (BigInt(s) + 1n).toString();
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
 }
 
 
 /* =========================================================
-   NORMALIZATION
+   RESULT NORMALIZATION
 ========================================================= */
 
 function normalizeResult(row) {
+  if (!row) return null;
 
-  if (!row || typeof row !== "object") {
-    return null;
-  }
-
-  const issue =
-    row.issueNumber ??
-    row.issue ??
-    row.period ??
-    row.periodNumber;
-
-  const numberRaw =
+  const number = safeNumber(
     row.number ??
     row.resultNumber ??
-    row.value;
+    row.digit
+  );
 
-  const number =
-    Number.isInteger(Number(numberRaw))
-      ? Number(numberRaw)
+  if (
+    number !== null &&
+    Number.isInteger(number) &&
+    number >= 0 &&
+    number <= 9
+  ) {
+    return number >= 5 ? "BIG" : "SMALL";
+  }
+
+  const raw = String(
+    row.result ??
+    row.bigSmall ??
+    row.size ??
+    ""
+  )
+    .trim()
+    .toUpperCase();
+
+  if (raw === "BIG") return "BIG";
+  if (raw === "SMALL") return "SMALL";
+
+  return null;
+}
+
+function normalizeHistory(input) {
+  if (!Array.isArray(input)) return [];
+
+  return input
+    .map((row) => {
+      const issue = issueString(
+        row.issueNumber ??
+        row.issue ??
+        row.period ??
+        row.periodNumber
+      );
+
+      const number = safeNumber(
+        row.number ??
+        row.resultNumber ??
+        row.digit
+      );
+
+      const result = normalizeResult(row);
+
+      return {
+        issueNumber: issue,
+        number:
+          number !== null &&
+          Number.isInteger(number) &&
+          number >= 0 &&
+          number <= 9
+            ? number
+            : null,
+        result,
+        colour:
+          row.colour ??
+          row.color ??
+          null,
+        premium:
+          row.premium ??
+          null,
+        sum:
+          row.sum ??
+          null
+      };
+    })
+    .filter((x) => x.issueNumber);
+}
+
+
+/* =========================================================
+   WINGOBOT FETCH
+========================================================= */
+
+function fetchJson(url, headers = {}) {
+  return new Promise((resolve, reject) => {
+    const request = https.get(
+      url,
+      {
+        headers: {
+          Accept: "application/json",
+          "User-Agent": "DY-AI-Wingo/2.0",
+          ...headers
+        },
+        timeout: 15000
+      },
+      (response) => {
+        let body = "";
+
+        response.setEncoding("utf8");
+
+        response.on("data", (chunk) => {
+          body += chunk;
+        });
+
+        response.on("end", () => {
+          const status = response.statusCode || 0;
+
+          if (status < 200 || status >= 300) {
+            reject(
+              new Error(
+                `WingoBot HTTP ${status}: ${body.slice(0, 300)}`
+              )
+            );
+            return;
+          }
+
+          try {
+            resolve(JSON.parse(body));
+          } catch {
+            reject(
+              new Error("WingoBot returned invalid JSON")
+            );
+          }
+        });
+      }
+    );
+
+    request.on("timeout", () => {
+      request.destroy(
+        new Error("WingoBot request timeout")
+      );
+    });
+
+    request.on("error", reject);
+  });
+}
+
+async function refreshProvider() {
+  if (!WINGOBOT_TOKEN) {
+    providerState.ok = false;
+    providerState.error =
+      "WINGOBOT_TOKEN environment variable missing";
+    return;
+  }
+
+  try {
+    const data = await fetchJson(
+      WINGOBOT_API,
+      {
+        Authorization:
+          `Bearer ${WINGOBOT_TOKEN}`
+      }
+    );
+
+    const history = normalizeHistory(data.history);
+
+    const currentIssue = issueString(
+      data?.current?.issueNumber ??
+      data?.current?.issue ??
+      null
+    );
+
+    let lastUpdated =
+      safeNumber(
+        data?.stats?.last_updated ??
+        data?.last_updated
+      ) || 0;
+
+    /*
+      Provider timestamps kabhi seconds aur kabhi milliseconds
+      format me aa sakte hain.
+    */
+    if (
+      lastUpdated > 0 &&
+      lastUpdated < 100000000000
+    ) {
+      lastUpdated *= 1000;
+    }
+
+    providerState = {
+      ok: true,
+      currentIssue,
+      history,
+      fetched:
+        safeNumber(data?.stats?.fetched) ||
+        history.length,
+      lastUpdated,
+      error: null,
+      fetchedAt: now()
+    };
+
+    await settlePredictions(history);
+
+    /*
+      Target change hone par model dobara calculate hoga.
+    */
+    const target = resolveTargetIssue();
+
+    if (
+      target &&
+      modelCache.targetIssue !== target
+    ) {
+      generatePrediction();
+    }
+  } catch (error) {
+    providerState.ok = false;
+    providerState.error =
+      error?.message || "Provider error";
+
+    console.error(
+      "Provider refresh error:",
+      providerState.error
+    );
+  }
+}
+
+
+/* =========================================================
+   TARGET ISSUE
+========================================================= */
+
+function resolveTargetIssue() {
+  const history = providerState.history || [];
+
+  const latestSettled =
+    history.length > 0
+      ? history[0]?.issueNumber
       : null;
 
-  let result = null;
+  const current =
+    providerState.currentIssue;
 
-  if (
-    typeof row.bigSmall === "string"
-  ) {
-    result = row.bigSmall.trim().toUpperCase();
+  if (current && latestSettled) {
+    /*
+      Agar provider ka current issue latest settled se
+      aage hai, wahi active target hai.
+    */
+    if (compareNumericIssues(current, latestSettled) > 0) {
+      return current;
+    }
+
+    /*
+      Agar current already latest settled ya old hai,
+      next issue target hoga.
+    */
+    return incrementIssue(latestSettled);
   }
 
-  if (
-    typeof row.result === "string" &&
-    !result
-  ) {
-    const s = row.result.trim().toUpperCase();
+  if (current) {
+    return current;
+  }
 
-    if (s === "BIG" || s === "SMALL") {
-      result = s;
+  if (latestSettled) {
+    return incrementIssue(latestSettled);
+  }
+
+  return null;
+}
+
+function compareNumericIssues(a, b) {
+  const x = issueString(a);
+  const y = issueString(b);
+
+  if (!x || !y) return 0;
+
+  if (/^\d+$/.test(x) && /^\d+$/.test(y)) {
+    try {
+      const bx = BigInt(x);
+      const by = BigInt(y);
+
+      if (bx > by) return 1;
+      if (bx < by) return -1;
+      return 0;
+    } catch {
+      return x.localeCompare(y);
     }
   }
 
-  if (!result && number !== null) {
-    if (number >= 0 && number <= 9) {
-      result =
-        number >= 5
-          ? "BIG"
-          : "SMALL";
-    }
-  }
-
-  if (
-    result !== "BIG" &&
-    result !== "SMALL"
-  ) {
-    result = null;
-  }
-
-  return {
-    issue: issue == null
-      ? null
-      : String(issue),
-
-    number,
-
-    result,
-
-    colour:
-      row.colour ??
-      row.color ??
-      null,
-
-    premium:
-      row.premium ??
-      null,
-
-    sum:
-      row.sum ??
-      null
-  };
+  return x.localeCompare(y);
 }
 
 
-function normalizeHistory(data) {
+/* =========================================================
+   ANALYSIS ENGINE
+========================================================= */
 
-  const source =
-    Array.isArray(data?.history)
-      ? data.history
-      : [];
-
-  return source
+function getResults(rows, limit = 30) {
+  return rows
     .map(normalizeResult)
-    .filter(Boolean);
+    .filter(Boolean)
+    .slice(0, limit);
 }
 
+function getStreak(rows) {
+  const r = getResults(rows, 30);
 
-/* =========================================================
-   ISSUE HELPERS
-========================================================= */
-
-function incrementIssue(issue) {
-
-  if (!issue) return null;
-
-  try {
-    return (
-      BigInt(String(issue)) + 1n
-    ).toString();
-  } catch {
-    return null;
-  }
-}
-
-
-function resolveTargetIssue(
-  currentIssue,
-  history
-) {
-
-  const latest =
-    history[0]?.issue;
-
-  if (!latest) {
-    return currentIssue || null;
-  }
-
-  if (!currentIssue) {
-    return incrementIssue(latest);
-  }
-
-  try {
-
-    const current =
-      BigInt(String(currentIssue));
-
-    const settled =
-      BigInt(String(latest));
-
-    if (current > settled) {
-      return current.toString();
-    }
-
-    return (settled + 1n).toString();
-
-  } catch {
-
-    return currentIssue;
-  }
-}
-
-
-/* =========================================================
-   STATISTICAL ANALYSIS
-========================================================= */
-
-function validSides(history) {
-
-  return history
-    .map(x => x.result)
-    .filter(
-      x => x === "BIG" || x === "SMALL"
-    );
-}
-
-
-function countStreak(values) {
-
-  if (!values.length) {
+  if (!r.length) {
     return {
       side: null,
       length: 0
     };
   }
 
-  const side = values[0];
-
+  const side = r[0];
   let length = 1;
 
-  while (
-    length < values.length &&
-    values[length] === side
+  for (
+    let i = 1;
+    i < r.length;
+    i++
   ) {
+    if (r[i] !== side) break;
     length++;
   }
 
@@ -362,441 +501,493 @@ function countStreak(values) {
   };
 }
 
+function ratioSignal(rows, windowSize) {
+  const r = getResults(rows, windowSize);
 
-function windowStats(values, size) {
-
-  const arr =
-    values.slice(0, size);
-
-  if (!arr.length) {
+  if (!r.length) {
     return {
-      big: 0,
-      small: 0,
-      total: 0
+      big: 0.5,
+      small: 0.5,
+      n: 0
     };
   }
 
   const big =
-    arr.filter(x => x === "BIG").length;
-
-  const small =
-    arr.filter(x => x === "SMALL").length;
+    r.filter((x) => x === "BIG").length /
+    r.length;
 
   return {
     big,
-    small,
-    total: arr.length
+    small: 1 - big,
+    n: r.length
   };
 }
 
+function transitionSignal(rows) {
+  const r = getResults(rows, 50);
 
-function transitionStats(values) {
-
-  const matrix = {
-    BIG: {
-      BIG: 0,
-      SMALL: 0
-    },
-    SMALL: {
-      BIG: 0,
-      SMALL: 0
-    }
-  };
-
-  for (
-    let i = 0;
-    i < values.length - 1;
-    i++
-  ) {
-
-    const current = values[i];
-    const previous = values[i + 1];
-
-    if (
-      matrix[previous] &&
-      matrix[previous][current] !== undefined
-    ) {
-      matrix[previous][current]++;
-    }
+  if (r.length < 3) {
+    return {
+      big: 0.5,
+      small: 0.5
+    };
   }
 
-  return matrix;
+  let BB = 0;
+  let BS = 0;
+  let SB = 0;
+  let SS = 0;
+
+  for (let i = 0; i < r.length - 1; i++) {
+    const a = r[i];
+    const b = r[i + 1];
+
+    if (a === "BIG" && b === "BIG") BB++;
+    if (a === "BIG" && b === "SMALL") BS++;
+    if (a === "SMALL" && b === "BIG") SB++;
+    if (a === "SMALL" && b === "SMALL") SS++;
+  }
+
+  const last = r[0];
+
+  if (last === "BIG") {
+    const total = BB + BS;
+
+    if (!total) {
+      return {
+        big: 0.5,
+        small: 0.5
+      };
+    }
+
+    return {
+      big: BB / total,
+      small: BS / total
+    };
+  }
+
+  const total = SB + SS;
+
+  if (!total) {
+    return {
+      big: 0.5,
+      small: 0.5
+    };
+  }
+
+  return {
+    big: SB / total,
+    small: SS / total
+  };
 }
 
+function alternationSignal(rows) {
+  const r = getResults(rows, 12);
 
-function alternationScore(values) {
-
-  if (values.length < 4) {
-    return 0;
+  if (r.length < 4) {
+    return {
+      strength: 0,
+      next: null
+    };
   }
 
   let flips = 0;
 
-  for (
-    let i = 0;
-    i < values.length - 1;
-    i++
-  ) {
-
-    if (values[i] !== values[i + 1]) {
+  for (let i = 0; i < r.length - 1; i++) {
+    if (r[i] !== r[i + 1]) {
       flips++;
     }
   }
 
-  return flips / (values.length - 1);
-}
+  const rate =
+    flips / (r.length - 1);
 
-
-function meanNumber(history, size) {
-
-  const nums =
-    history
-      .slice(0, size)
-      .map(x => x.number)
-      .filter(
-        n =>
-          Number.isInteger(n) &&
-          n >= 0 &&
-          n <= 9
-      );
-
-  if (!nums.length) {
-    return null;
-  }
-
-  return (
-    nums.reduce(
-      (a, b) => a + b,
-      0
-    ) / nums.length
-  );
-}
-
-
-/*
-  Important:
-  This function is intentionally an ANALYSIS score,
-  not a guaranteed future-result predictor.
-*/
-
-function analyzeHistory(history) {
-
-  const values =
-    validSides(history);
-
-  if (values.length < 5) {
-
+  if (rate >= 0.70) {
     return {
-      status: "WAITING",
-      message: "Need more settled history",
-      windows: {},
-      streak: countStreak(values),
-      transitions: null,
-      alternation: 0,
-      mean: meanNumber(history, 10)
+      strength: rate,
+      next:
+        r[0] === "BIG"
+          ? "SMALL"
+          : "BIG"
     };
   }
 
-  const w5 =
-    windowStats(values, 5);
+  return {
+    strength: 0,
+    next: null
+  };
+}
 
-  const w10 =
-    windowStats(values, 10);
+function trendSignal(rows) {
+  const r = getResults(rows, 12);
 
-  const w20 =
-    windowStats(values, 20);
-
-  const streak =
-    countStreak(values);
-
-  const transitions =
-    transitionStats(values);
-
-  const alternation =
-    alternationScore(values);
-
-  const mean =
-    meanNumber(history, 10);
-
-  let bigScore = 0;
-  let smallScore = 0;
-
-  /*
-    Recent window gets more weight.
-  */
-
-  bigScore +=
-    (w5.big / Math.max(w5.total, 1))
-    * 5;
-
-  smallScore +=
-    (w5.small / Math.max(w5.total, 1))
-    * 5;
-
-
-  bigScore +=
-    (w10.big / Math.max(w10.total, 1))
-    * 2.5;
-
-  smallScore +=
-    (w10.small / Math.max(w10.total, 1))
-    * 2.5;
-
-
-  bigScore +=
-    (w20.big / Math.max(w20.total, 1))
-    * 1.5;
-
-  smallScore +=
-    (w20.small / Math.max(w20.total, 1))
-    * 1.5;
-
-
-  /*
-    Mean is secondary only.
-  */
-
-  if (mean !== null) {
-
-    if (mean > 4.5) {
-      bigScore += 0.7;
-    }
-
-    if (mean < 4.5) {
-      smallScore += 0.7;
-    }
+  if (r.length < 5) {
+    return {
+      side: null,
+      strength: 0
+    };
   }
 
+  let score = 0;
 
   /*
-    Streak is reported but not blindly reversed.
+    Recent rounds ko zyada weight.
   */
+  for (let i = 0; i < r.length; i++) {
+    const weight =
+      Math.max(1, r.length - i);
 
-  let streakNote = "NORMAL";
-
-  if (streak.length >= 3) {
-    streakNote =
-      `${streak.side} streak ${streak.length}`;
+    score +=
+      r[i] === "BIG"
+        ? weight
+        : -weight;
   }
 
-
-  /*
-    Transition information.
-  */
-
-  const lastSide = values[0];
-
-  if (lastSide === "BIG") {
-
-    if (
-      transitions.BIG.SMALL >
-      transitions.BIG.BIG
-    ) {
-      smallScore += 0.8;
-    }
-
-    if (
-      transitions.BIG.BIG >
-      transitions.BIG.SMALL
-    ) {
-      bigScore += 0.8;
-    }
-
-  } else {
-
-    if (
-      transitions.SMALL.BIG >
-      transitions.SMALL.SMALL
-    ) {
-      bigScore += 0.8;
-    }
-
-    if (
-      transitions.SMALL.SMALL >
-      transitions.SMALL.BIG
-    ) {
-      smallScore += 0.8;
-    }
-  }
-
-
-  /*
-    If sequence is strongly alternating,
-    mark it as unstable instead of forcing a side.
-  */
-
-  let status = "BALANCED";
-
-  const difference =
-    Math.abs(
-      bigScore - smallScore
+  const max =
+    r.reduce(
+      (sum, _, i) =>
+        sum + Math.max(1, r.length - i),
+      0
     );
 
-  if (alternation >= 0.75) {
-    status = "ALTERNATING / UNSTABLE";
-  } else if (difference >= 1.4) {
-    status =
-      bigScore > smallScore
-        ? "BIG BIAS"
-        : "SMALL BIAS";
+  const normalized =
+    max ? score / max : 0;
+
+  if (Math.abs(normalized) < 0.08) {
+    return {
+      side: null,
+      strength: 0
+    };
   }
 
+  return {
+    side:
+      normalized > 0
+        ? "BIG"
+        : "SMALL",
+    strength:
+      Math.min(
+        1,
+        Math.abs(normalized)
+      )
+  };
+}
 
-  const total =
-    bigScore + smallScore;
+function meanNumberSignal(rows) {
+  const nums = rows
+    .slice(0, 12)
+    .map((x) => safeNumber(x.number))
+    .filter(
+      (n) =>
+        Number.isInteger(n) &&
+        n >= 0 &&
+        n <= 9
+    );
 
-  const bigPct =
-    total > 0
-      ? Math.round(
-          bigScore / total * 100
-        )
-      : 50;
+  if (!nums.length) {
+    return {
+      big: 0.5,
+      small: 0.5,
+      mean: null
+    };
+  }
 
-  const smallPct =
-    100 - bigPct;
+  const mean =
+    nums.reduce(
+      (a, b) => a + b,
+      0
+    ) / nums.length;
 
+  if (mean > 4.5) {
+    return {
+      big: 0.58,
+      small: 0.42,
+      mean
+    };
+  }
+
+  if (mean < 4.5) {
+    return {
+      big: 0.42,
+      small: 0.58,
+      mean
+    };
+  }
 
   return {
-
-    status,
-
-    bigPct,
-
-    smallPct,
-
-    windows: {
-      w5,
-      w10,
-      w20
-    },
-
-    streak: {
-      side: streak.side,
-      length: streak.length,
-      note: streakNote
-    },
-
-    transitions,
-
-    alternation,
-
-    mean,
-
-    difference:
-
-      Number(
-        difference.toFixed(2)
-      ),
-
-    updatedAt: Date.now()
+    big: 0.5,
+    small: 0.5,
+    mean
   };
 }
 
 
 /* =========================================================
-   PROVIDER REFRESH
+   MODEL
 ========================================================= */
 
-async function refreshProvider() {
+function calculateModel(rows) {
+  const r = getResults(rows, 50);
 
-  if (!WINGOBOT_TOKEN) {
+  if (r.length < 5) {
+    return {
+      prediction: null,
+      confidence: 0,
+      reason: "Need more settled history",
+      modelVersion: "DY-AI-V2"
+    };
+  }
 
-    liveState = {
-      ...liveState,
-      ok: false,
-      error: "WINGOBOT_TOKEN missing"
+  const w5 = ratioSignal(rows, 5);
+  const w10 = ratioSignal(rows, 10);
+  const w20 = ratioSignal(rows, 20);
+  const w30 = ratioSignal(rows, 30);
+
+  const transition =
+    transitionSignal(rows);
+
+  const alternation =
+    alternationSignal(rows);
+
+  const trend =
+    trendSignal(rows);
+
+  const mean =
+    meanNumberSignal(rows);
+
+  const streak =
+    getStreak(rows);
+
+  /*
+    Ensemble weights.
+  */
+  let big =
+    w5.big * 0.25 +
+    w10.big * 0.20 +
+    w20.big * 0.15 +
+    w30.big * 0.10 +
+    transition.big * 0.15 +
+    mean.big * 0.10 +
+    0.05;
+
+  let small =
+    w5.small * 0.25 +
+    w10.small * 0.20 +
+    w20.small * 0.15 +
+    w30.small * 0.10 +
+    transition.small * 0.15 +
+    mean.small * 0.10 +
+    0.05;
+
+  /*
+    Trend confirmation.
+  */
+  if (trend.side === "BIG") {
+    big += 0.07 * trend.strength;
+  }
+
+  if (trend.side === "SMALL") {
+    small += 0.07 * trend.strength;
+  }
+
+  /*
+    Alternating pattern ko limited weight.
+  */
+  if (
+    alternation.next === "BIG"
+  ) {
+    big +=
+      0.05 *
+      Math.min(
+        1,
+        alternation.strength
+      );
+  }
+
+  if (
+    alternation.next === "SMALL"
+  ) {
+    small +=
+      0.05 *
+      Math.min(
+        1,
+        alternation.strength
+      );
+  }
+
+  /*
+    Long streak ko blindly reverse nahi karna.
+    Sirf confidence ko dampen karna.
+  */
+  if (streak.length >= 4) {
+    if (streak.side === "BIG") {
+      big *= 0.92;
+    }
+
+    if (streak.side === "SMALL") {
+      small *= 0.92;
+    }
+  }
+
+  /*
+    Normalize.
+  */
+  const total =
+    big + small || 1;
+
+  big /= total;
+  small /= total;
+
+  const prediction =
+    big >= small
+      ? "BIG"
+      : "SMALL";
+
+  const edge =
+    Math.abs(big - small);
+
+  let confidence =
+    Math.round(
+      50 + edge * 100
+    );
+
+  confidence =
+    Math.max(
+      50,
+      Math.min(
+        89,
+        confidence
+      )
+    );
+
+  const reasonParts = [];
+
+  if (trend.side) {
+    reasonParts.push(
+      `trend ${trend.side}`
+    );
+  }
+
+  if (streak.length >= 3) {
+    reasonParts.push(
+      `${streak.side} streak ${streak.length}`
+    );
+  }
+
+  if (alternation.next) {
+    reasonParts.push(
+      "alternation checked"
+    );
+  }
+
+  if (mean.mean !== null) {
+    reasonParts.push(
+      `mean ${mean.mean.toFixed(2)}`
+    );
+  }
+
+  if (!reasonParts.length) {
+    reasonParts.push(
+      "multi-window sequence analysis"
+    );
+  }
+
+  return {
+    prediction,
+    confidence,
+    reason:
+      reasonParts.join(" · "),
+    modelVersion: "DY-AI-V2"
+  };
+}
+
+
+/* =========================================================
+   GENERATE / SAVE PREDICTION
+========================================================= */
+
+function generatePrediction() {
+  const target =
+    resolveTargetIssue();
+
+  if (!target) return null;
+
+  if (
+    modelCache.targetIssue === target &&
+    modelCache.prediction
+  ) {
+    return modelCache;
+  }
+
+  const model =
+    calculateModel(
+      providerState.history
+    );
+
+  if (!model.prediction) {
+    modelCache = {
+      targetIssue: target,
+      prediction: null,
+      confidence: 0,
+      reason: model.reason,
+      modelVersion: model.modelVersion,
+      generatedAt: now()
     };
 
+    return modelCache;
+  }
+
+  modelCache = {
+    targetIssue: target,
+    prediction: model.prediction,
+    confidence: model.confidence,
+    reason: model.reason,
+    modelVersion: model.modelVersion,
+    generatedAt: now()
+  };
+
+  savePrediction(
+    modelCache
+  ).catch((error) => {
+    console.error(
+      "Prediction save error:",
+      error.message
+    );
+  });
+
+  return modelCache;
+}
+
+async function savePrediction(prediction) {
+  if (!pool) return;
+
+  if (
+    !prediction?.targetIssue ||
+    !prediction?.prediction
+  ) {
     return;
   }
 
-
-  try {
-
-    const data =
-      await requestJSON(
-        WINGOBOT_API,
-        {
-          headers: {
-            "Authorization":
-              "Bearer " +
-              WINGOBOT_TOKEN,
-
-            "Accept":
-              "application/json",
-
-            "User-Agent":
-              "DY-AI-Wingo/1.0"
-          }
-        }
-      );
-
-
-    const history =
-      normalizeHistory(data);
-
-
-    const currentIssue =
-      data?.current?.issueNumber
-        ? String(
-            data.current.issueNumber
-          )
-        : null;
-
-
-    const latestSettledIssue =
-      history[0]?.issue || null;
-
-
-    const targetIssue =
-      resolveTargetIssue(
-        currentIssue,
-        history
-      );
-
-
-    const analysis =
-      analyzeHistory(history);
-
-
-    liveState = {
-
-      ok: true,
-
-      updatedAt: Date.now(),
-
-      currentIssue,
-
-      targetIssue,
-
-      latestSettledIssue,
-
-      history: history.slice(0, 30),
-
-      analysis,
-
-      providerStats:
-        data?.stats || null,
-
-      error: null
-    };
-
-
-    await settleRecords(history);
-
-  } catch (err) {
-
-    console.error(
-      "Provider refresh:",
-      err.message
-    );
-
-    liveState = {
-      ...liveState,
-      ok: false,
-      error: err.message
-    };
-  }
+  await pool.query(
+    `
+    INSERT INTO prediction_records
+    (
+      target_issue,
+      prediction,
+      confidence,
+      model_version,
+      created_at
+    )
+    VALUES ($1,$2,$3,$4,$5)
+    `,
+    [
+      prediction.targetIssue,
+      prediction.prediction,
+      prediction.confidence,
+      prediction.modelVersion,
+      now()
+    ]
+  );
 }
 
 
@@ -804,32 +995,45 @@ async function refreshProvider() {
    SETTLEMENT
 ========================================================= */
 
-async function settleRecords(history) {
+async function settlePredictions(history) {
+  if (!pool) return;
 
-  if (!pool || !history.length) {
-    return;
-  }
+  if (!Array.isArray(history)) return;
 
-  for (const row of history.slice(0, 30)) {
+  for (const row of history) {
+    const issue =
+      row?.issueNumber;
 
-    if (!row.issue || !row.result) {
+    const actual =
+      normalizeResult(row);
+
+    if (!issue || !actual) {
+      /*
+        Pending / invalid rows ko WIN/LOSS nahi banayenge.
+      */
       continue;
     }
 
-    await dbQuery(`
+    const actualNumber =
+      safeNumber(row.number);
+
+    await pool.query(
+      `
       UPDATE prediction_records
       SET
         actual_number = $1,
         actual_result = $2,
         settled_at = $3
       WHERE target_issue = $4
-        AND settled_at IS NULL
-    `, [
-      row.number,
-      row.result,
-      Date.now(),
-      row.issue
-    ]);
+        AND actual_result IS NULL
+      `,
+      [
+        actualNumber,
+        actual,
+        now(),
+        issue
+      ]
+    );
   }
 }
 
@@ -838,133 +1042,122 @@ async function settleRecords(history) {
    ACCESS KEY
 ========================================================= */
 
-function getHeader(req, name) {
-
-  const key =
-    Object.keys(req.headers)
-      .find(
-        k => k.toLowerCase() === name.toLowerCase()
-      );
-
-  return key
-    ? req.headers[key]
-    : "";
-}
-
-
-async function verifyAccess(req) {
-
+async function validateAccessKey(
+  accessKey,
+  deviceId
+) {
   if (!pool) {
     return {
       ok: true,
-      demo: true
+      mode: "database-not-configured"
     };
   }
 
-  const accessKey =
-    String(
-      getHeader(req, "x-access-key") || ""
-    ).trim();
-
-  const deviceId =
-    String(
-      getHeader(req, "x-device-id") || ""
-    ).trim();
-
-
-  if (!accessKey || !deviceId) {
-
+  if (!accessKey) {
     return {
       ok: false,
-      status: 401,
-      message: "Access key and device ID required"
+      error: "Access key required"
     };
   }
 
-
   const result =
-    await dbQuery(`
+    await pool.query(
+      `
       SELECT *
       FROM access_keys
       WHERE access_key = $1
       LIMIT 1
-    `, [accessKey]);
-
+      `,
+      [accessKey]
+    );
 
   if (!result.rows.length) {
-
     return {
       ok: false,
-      status: 403,
-      message: "Invalid access key"
+      error: "Invalid access key"
     };
   }
-
 
   const row =
     result.rows[0];
 
-
-  if (
-    row.device_id &&
-    row.device_id !== deviceId
-  ) {
-
-    return {
-      ok: false,
-      status: 403,
-      message: "Key already bound to another device"
-    };
-  }
-
-
+  /*
+    First device automatically bind.
+  */
   if (!row.device_id) {
-
-    await dbQuery(`
+    await pool.query(
+      `
       UPDATE access_keys
       SET
         device_id = $1,
         last_seen = $2
       WHERE id = $3
-    `, [
-      deviceId,
-      Date.now(),
-      row.id
-    ]);
+      `,
+      [
+        deviceId || null,
+        now(),
+        row.id
+      ]
+    );
 
-  } else {
-
-    await dbQuery(`
-      UPDATE access_keys
-      SET last_seen = $1
-      WHERE id = $2
-    `, [
-      Date.now(),
-      row.id
-    ]);
+    return {
+      ok: true,
+      bound: true
+    };
   }
 
+  /*
+    Existing key + no device ID supplied.
+  */
+  if (!deviceId) {
+    return {
+      ok: false,
+      error: "Device ID required"
+    };
+  }
+
+  /*
+    One key = one browser/device.
+  */
+  if (
+    String(row.device_id) !==
+    String(deviceId)
+  ) {
+    return {
+      ok: false,
+      error:
+        "This key is already linked to another device"
+    };
+  }
+
+  await pool.query(
+    `
+    UPDATE access_keys
+    SET last_seen = $1
+    WHERE id = $2
+    `,
+    [now(), row.id]
+  );
 
   return {
-    ok: true,
-    keyId: row.id
+    ok: true
   };
 }
 
 
 /* =========================================================
-   ADMIN
+   ADMIN AUTH
 ========================================================= */
 
-function verifyAdmin(req) {
-
+function adminAuthorized(req) {
   if (!ADMIN_KEY) {
     return false;
   }
 
   const supplied =
     String(
-      getHeader(req, "x-admin-key") || ""
+      req.headers["x-admin-key"] ||
+      ""
     ).trim();
 
   return (
@@ -974,274 +1167,783 @@ function verifyAdmin(req) {
 }
 
 
-function randomKey() {
+/* =========================================================
+   BODY PARSER
+========================================================= */
 
-  return (
-    "DY-" +
-    crypto
-      .randomBytes(10)
-      .toString("hex")
-      .toUpperCase()
+function readBody(req) {
+  return new Promise(
+    (resolve, reject) => {
+      let body = "";
+
+      req.on("data", (chunk) => {
+        body += chunk;
+
+        if (body.length > 1024 * 1024) {
+          req.destroy();
+
+          reject(
+            new Error(
+              "Request body too large"
+            )
+          );
+        }
+      });
+
+      req.on("end", () => {
+        if (!body) {
+          resolve({});
+          return;
+        }
+
+        try {
+          resolve(
+            JSON.parse(body)
+          );
+        } catch {
+          reject(
+            new Error(
+              "Invalid JSON body"
+            )
+          );
+        }
+      });
+
+      req.on("error", reject);
+    }
   );
 }
 
 
 /* =========================================================
-   BODY
+   ADMIN API
 ========================================================= */
 
-function readBody(req) {
-
-  return new Promise((resolve, reject) => {
-
-    let body = "";
-
-    req.on("data", chunk => {
-
-      body += chunk;
-
-      if (body.length > 1024 * 1024) {
-        req.destroy();
-        reject(
-          new Error("Request too large")
-        );
-      }
-
+async function adminKeys(req, res, url) {
+  if (!adminAuthorized(req)) {
+    json(res, 401, {
+      ok: false,
+      error: "Unauthorized"
     });
-
-    req.on("end", () => {
-
-      if (!body) {
-        resolve({});
-        return;
-      }
-
-      try {
-        resolve(JSON.parse(body));
-      } catch {
-        reject(
-          new Error("Invalid JSON")
-        );
-      }
-
-    });
-
-    req.on("error", reject);
-
-  });
-}
-
-
-/* =========================================================
-   JSON RESPONSE
-========================================================= */
-
-function sendJSON(
-  res,
-  status,
-  data
-) {
-
-  const output =
-    JSON.stringify(data);
-
-  res.writeHead(status, {
-    "Content-Type":
-      "application/json; charset=utf-8",
-
-    "Cache-Control":
-      "no-store",
-
-    "Access-Control-Allow-Origin":
-      "*",
-
-    "Access-Control-Allow-Headers":
-      "Content-Type, X-Access-Key, X-Device-Id, X-Admin-Key",
-
-    "Access-Control-Allow-Methods":
-      "GET,POST,DELETE,OPTIONS"
-  });
-
-  res.end(output);
-}
-
-
-/* =========================================================
-   STATIC FILES
-========================================================= */
-
-const MIME = {
-
-  ".html":
-    "text/html; charset=utf-8",
-
-  ".css":
-    "text/css; charset=utf-8",
-
-  ".js":
-    "application/javascript; charset=utf-8",
-
-  ".json":
-    "application/json; charset=utf-8",
-
-  ".png":
-    "image/png",
-
-  ".jpg":
-    "image/jpeg",
-
-  ".jpeg":
-    "image/jpeg",
-
-  ".svg":
-    "image/svg+xml",
-
-  ".mp3":
-    "audio/mpeg",
-
-  ".ico":
-    "image/x-icon"
-};
-
-
-function safeFilePath(urlPath) {
-
-  let decoded;
-
-  try {
-    decoded =
-      decodeURIComponent(urlPath);
-  } catch {
-    return null;
-  }
-
-  decoded =
-    decoded.split("?")[0];
-
-  if (
-    decoded === "/" ||
-    decoded === ""
-  ) {
-    decoded = "/prediction.html";
-  }
-
-  const full =
-    path.normalize(
-      path.join(
-        PUBLIC_DIR,
-        decoded
-      )
-    );
-
-
-  if (
-    !full.startsWith(
-      path.normalize(PUBLIC_DIR + path.sep)
-    )
-  ) {
-    return null;
-  }
-
-  return full;
-}
-
-
-function serveStatic(req, res) {
-
-  const filePath =
-    safeFilePath(req.url);
-
-  if (!filePath) {
-    res.writeHead(403);
-    res.end("Forbidden");
     return;
   }
 
+  if (!pool) {
+    json(res, 500, {
+      ok: false,
+      error:
+        "DATABASE_URL not configured"
+    });
+    return;
+  }
 
-  fs.stat(filePath, (err, stat) => {
+  if (
+    req.method === "GET"
+  ) {
+    const result =
+      await pool.query(
+        `
+        SELECT
+          id,
+          access_key,
+          device_id,
+          created_at,
+          last_seen
+        FROM access_keys
+        ORDER BY id DESC
+        `
+      );
 
-    if (err || !stat.isFile()) {
+    json(res, 200, {
+      ok: true,
+      keys: result.rows
+    });
 
-      res.writeHead(404, {
-        "Content-Type":
-          "text/plain; charset=utf-8"
+    return;
+  }
+
+  if (
+    req.method === "POST"
+  ) {
+    const body =
+      await readBody(req);
+
+    let key =
+      String(
+        body.key ||
+        body.access_key ||
+        ""
+      ).trim();
+
+    if (!key) {
+      key =
+        "DY-" +
+        Math.random()
+          .toString(36)
+          .slice(2, 12)
+          .toUpperCase();
+    }
+
+    try {
+      const result =
+        await pool.query(
+          `
+          INSERT INTO access_keys
+          (
+            access_key,
+            created_at
+          )
+          VALUES ($1,$2)
+          RETURNING *
+          `,
+          [key, now()]
+        );
+
+      json(res, 200, {
+        ok: true,
+        key: result.rows[0]
       });
+    } catch (error) {
+      if (
+        error.code === "23505"
+      ) {
+        json(res, 409, {
+          ok: false,
+          error: "Key already exists"
+        });
+        return;
+      }
 
-      res.end("Not Found");
+      throw error;
+    }
 
+    return;
+  }
+
+  if (
+    req.method === "DELETE"
+  ) {
+    const id =
+      url.searchParams.get("id");
+
+    const key =
+      url.searchParams.get("key");
+
+    if (!id && !key) {
+      json(res, 400, {
+        ok: false,
+        error:
+          "id or key required"
+      });
       return;
     }
 
+    if (id) {
+      await pool.query(
+        `
+        DELETE FROM access_keys
+        WHERE id = $1
+        `,
+        [id]
+      );
+    } else {
+      await pool.query(
+        `
+        DELETE FROM access_keys
+        WHERE access_key = $1
+        `,
+        [key]
+      );
+    }
 
-    const ext =
-      path.extname(filePath)
-        .toLowerCase();
+    json(res, 200, {
+      ok: true
+    });
 
-    const type =
-      MIME[ext] ||
-      "application/octet-stream";
+    return;
+  }
+
+  json(res, 405, {
+    ok: false,
+    error: "Method not allowed"
+  });
+}
 
 
-    /*
-      MP3 range support
-    */
+/* =========================================================
+   RESET DEVICE
+========================================================= */
 
-    if (
-      ext === ".mp3" &&
-      req.headers.range
-    ) {
+async function resetDevice(req, res) {
+  if (!adminAuthorized(req)) {
+    json(res, 401, {
+      ok: false,
+      error: "Unauthorized"
+    });
+    return;
+  }
 
-      const range =
-        req.headers.range;
+  if (!pool) {
+    json(res, 500, {
+      ok: false,
+      error:
+        "DATABASE_URL not configured"
+    });
+    return;
+  }
 
-      const match =
-        /bytes=(\d*)-(\d*)/.exec(
-          range
+  const body =
+    await readBody(req);
+
+  const id =
+    body.id;
+
+  const key =
+    String(
+      body.key ||
+      body.access_key ||
+      ""
+    ).trim();
+
+  if (!id && !key) {
+    json(res, 400, {
+      ok: false,
+      error:
+        "id or key required"
+    });
+    return;
+  }
+
+  if (id) {
+    await pool.query(
+      `
+      UPDATE access_keys
+      SET
+        device_id = NULL,
+        last_seen = 0
+      WHERE id = $1
+      `,
+      [id]
+    );
+  } else {
+    await pool.query(
+      `
+      UPDATE access_keys
+      SET
+        device_id = NULL,
+        last_seen = 0
+      WHERE access_key = $1
+      `,
+      [key]
+    );
+  }
+
+  json(res, 200, {
+    ok: true,
+    message:
+      "Device binding reset"
+  });
+}
+
+
+/* =========================================================
+   ADMIN STATUS
+========================================================= */
+
+async function adminStatus(req, res) {
+  if (!adminAuthorized(req)) {
+    json(res, 401, {
+      ok: false,
+      error: "Unauthorized"
+    });
+    return;
+  }
+
+  let db = false;
+
+  if (pool) {
+    try {
+      await pool.query(
+        "SELECT 1"
+      );
+      db = true;
+    } catch {
+      db = false;
+    }
+  }
+
+  json(res, 200, {
+    ok: true,
+    server: true,
+    database: db,
+    wingobot:
+      Boolean(WINGOBOT_TOKEN),
+    provider:
+      providerState.ok,
+    currentIssue:
+      providerState.currentIssue,
+    historyCount:
+      providerState.history.length,
+    targetIssue:
+      resolveTargetIssue(),
+    model:
+      modelCache
+  });
+}
+
+
+/* =========================================================
+   ACCESS CHECK API
+========================================================= */
+
+async function keyCheck(req, res) {
+  const accessKey =
+    String(
+      req.headers["x-access-key"] ||
+      ""
+    ).trim();
+
+  const deviceId =
+    String(
+      req.headers["x-device-id"] ||
+      ""
+    ).trim();
+
+  try {
+    const result =
+      await validateAccessKey(
+        accessKey,
+        deviceId
+      );
+
+    json(res, 200, result);
+  } catch (error) {
+    json(res, 500, {
+      ok: false,
+      error:
+        error.message
+    });
+  }
+}
+
+
+/* =========================================================
+   MAIN STATE API
+========================================================= */
+
+async function stateApi(req, res) {
+  const accessKey =
+    String(
+      req.headers["x-access-key"] ||
+      ""
+    ).trim();
+
+  const deviceId =
+    String(
+      req.headers["x-device-id"] ||
+      ""
+    ).trim();
+
+  try {
+    const auth =
+      await validateAccessKey(
+        accessKey,
+        deviceId
+      );
+
+    if (!auth.ok) {
+      json(res, 403, auth);
+      return;
+    }
+
+    const target =
+      resolveTargetIssue();
+
+    const prediction =
+      target
+        ? (
+            modelCache.targetIssue === target
+              ? modelCache
+              : generatePrediction()
+          )
+        : null;
+
+    json(res, 200, {
+      ok: true,
+
+      provider: {
+        connected:
+          providerState.ok,
+
+        currentIssue:
+          providerState.currentIssue,
+
+        fetched:
+          providerState.fetched,
+
+        lastUpdated:
+          providerState.lastUpdated,
+
+        fetchedAt:
+          providerState.fetchedAt,
+
+        error:
+          providerState.error
+      },
+
+      targetIssue:
+        target,
+
+      prediction:
+        prediction
+          ? {
+              targetIssue:
+                prediction.targetIssue,
+
+              prediction:
+                prediction.prediction,
+
+              confidence:
+                prediction.confidence,
+
+              reason:
+                prediction.reason,
+
+              modelVersion:
+                prediction.modelVersion,
+
+              generatedAt:
+                prediction.generatedAt
+            }
+          : null,
+
+      history:
+        providerState.history
+          .slice(0, 30)
+          .map((row) => ({
+            issueNumber:
+              row.issueNumber,
+
+            number:
+              row.number,
+
+            result:
+              row.result,
+
+            colour:
+              row.colour,
+
+            premium:
+              row.premium,
+
+            sum:
+              row.sum
+          }))
+    });
+  } catch (error) {
+    json(res, 500, {
+      ok: false,
+      error:
+        error.message
+    });
+  }
+}
+
+
+/* =========================================================
+   HISTORY API
+========================================================= */
+
+async function historyApi(req, res) {
+  if (!pool) {
+    json(res, 200, {
+      ok: true,
+      history: []
+    });
+    return;
+  }
+
+  try {
+    const result =
+      await pool.query(
+        `
+        SELECT
+          id,
+          target_issue,
+          prediction,
+          confidence,
+          model_version,
+          actual_number,
+          actual_result,
+          created_at,
+          settled_at
+        FROM prediction_records
+        ORDER BY created_at DESC
+        LIMIT 30
+        `
+      );
+
+    json(res, 200, {
+      ok: true,
+      history:
+        result.rows
+    });
+  } catch (error) {
+    json(res, 500, {
+      ok: false,
+      error:
+        error.message
+    });
+  }
+}
+
+
+/* =========================================================
+   ADMIN PING
+========================================================= */
+
+async function adminPing(req, res) {
+  if (!adminAuthorized(req)) {
+    json(res, 401, {
+      ok: false,
+      error: "Unauthorized"
+    });
+    return;
+  }
+
+  json(res, 200, {
+    ok: true,
+    message: "PONG",
+    time: now()
+  });
+}
+
+
+/* =========================================================
+   ADMIN WINGO TEST
+========================================================= */
+
+async function adminWingoTest(req, res) {
+  if (!adminAuthorized(req)) {
+    json(res, 401, {
+      ok: false,
+      error: "Unauthorized"
+    });
+    return;
+  }
+
+  try {
+    await refreshProvider();
+
+    json(res, 200, {
+      ok: providerState.ok,
+      currentIssue:
+        providerState.currentIssue,
+      historyCount:
+        providerState.history.length,
+      error:
+        providerState.error
+    });
+  } catch (error) {
+    json(res, 500, {
+      ok: false,
+      error:
+        error.message
+    });
+  }
+}
+
+
+/* =========================================================
+   ADMIN MODEL TEST
+========================================================= */
+
+async function adminModelTest(req, res) {
+  if (!adminAuthorized(req)) {
+    json(res, 401, {
+      ok: false,
+      error: "Unauthorized"
+    });
+    return;
+  }
+
+  const result =
+    calculateModel(
+      providerState.history
+    );
+
+  json(res, 200, {
+    ok: true,
+    targetIssue:
+      resolveTargetIssue(),
+    model:
+      result
+  });
+}
+
+
+/* =========================================================
+   STATIC FILE SERVER
+========================================================= */
+
+function contentType(file) {
+  const ext =
+    path.extname(file)
+      .toLowerCase();
+
+  const types = {
+    ".html":
+      "text/html",
+    ".css":
+      "text/css",
+    ".js":
+      "application/javascript",
+    ".json":
+      "application/json",
+    ".png":
+      "image/png",
+    ".jpg":
+      "image/jpeg",
+    ".jpeg":
+      "image/jpeg",
+    ".svg":
+      "image/svg+xml",
+    ".ico":
+      "image/x-icon",
+    ".mp3":
+      "audio/mpeg",
+    ".wav":
+      "audio/wav",
+    ".webp":
+      "image/webp"
+  };
+
+  return (
+    types[ext] ||
+    "application/octet-stream"
+  );
+}
+
+function serveStatic(req, res, pathname) {
+  let requested =
+    pathname === "/"
+      ? "/prediction.html"
+      : pathname;
+
+  /*
+    Basic path traversal protection.
+  */
+  requested =
+    decodeURIComponent(requested);
+
+  const filePath =
+    path.normalize(
+      path.join(
+        PUBLIC_DIR,
+        requested
+      )
+    );
+
+  if (
+    !filePath.startsWith(
+      PUBLIC_DIR
+    )
+  ) {
+    text(
+      res,
+      403,
+      "Forbidden"
+    );
+    return;
+  }
+
+  fs.stat(
+    filePath,
+    (error, stat) => {
+      if (error || !stat.isFile()) {
+        text(
+          res,
+          404,
+          "Not Found"
         );
+        return;
+      }
 
-      if (match) {
+      const type =
+        contentType(filePath);
 
-        const start =
+      /*
+        MP3 range support.
+      */
+      if (
+        type === "audio/mpeg" &&
+        req.headers.range
+      ) {
+        const range =
+          req.headers.range;
+
+        const match =
+          /bytes=(\d*)-(\d*)/.exec(
+            range
+          );
+
+        if (!match) {
+          text(
+            res,
+            416,
+            "Invalid range"
+          );
+          return;
+        }
+
+        const fileSize =
+          stat.size;
+
+        let start =
           match[1]
             ? Number(match[1])
             : 0;
 
-        const end =
+        let end =
           match[2]
             ? Number(match[2])
-            : stat.size - 1;
-
+            : fileSize - 1;
 
         if (
-          start >= stat.size ||
-          end >= stat.size ||
-          start > end
+          start < 0 ||
+          start >= fileSize ||
+          end < start
         ) {
+          res.writeHead(416, {
+            "Content-Range":
+              `bytes */${fileSize}`
+          });
 
-          res.writeHead(416);
           res.end();
           return;
         }
 
+        end =
+          Math.min(
+            end,
+            fileSize - 1
+          );
+
+        const chunkSize =
+          end - start + 1;
 
         res.writeHead(206, {
-
           "Content-Type":
             type,
-
           "Content-Length":
-            end - start + 1,
-
+            chunkSize,
           "Content-Range":
-            `bytes ${start}-${end}/${stat.size}`,
-
+            `bytes ${start}-${end}/${fileSize}`,
           "Accept-Ranges":
             "bytes",
-
           "Cache-Control":
             "public, max-age=3600"
         });
-
 
         fs.createReadStream(
           filePath,
@@ -1253,660 +1955,235 @@ function serveStatic(req, res) {
 
         return;
       }
+
+      res.writeHead(200, {
+        "Content-Type":
+          `${type}; charset=utf-8`,
+        "Cache-Control":
+          type === "text/html"
+            ? "no-store"
+            : "public, max-age=3600",
+        "Accept-Ranges":
+          type === "audio/mpeg"
+            ? "bytes"
+            : undefined
+      });
+
+      fs.createReadStream(
+        filePath
+      ).pipe(res);
     }
-
-
-    res.writeHead(200, {
-
-      "Content-Type":
-        type,
-
-      "Content-Length":
-        stat.size,
-
-      "Cache-Control":
-        ext === ".html"
-          ? "no-cache"
-          : "public, max-age=3600",
-
-      "Accept-Ranges":
-        ext === ".mp3"
-          ? "bytes"
-          : undefined
-
-    });
-
-
-    fs.createReadStream(
-      filePath
-    ).pipe(res);
-
-  });
+  );
 }
 
 
 /* =========================================================
-   ROUTER
+   HTTP SERVER
 ========================================================= */
 
 const server =
   http.createServer(
     async (req, res) => {
-
       try {
-
-        if (req.method === "OPTIONS") {
-
+        if (
+          req.method === "OPTIONS"
+        ) {
           res.writeHead(204, {
-            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Origin":
+              "*",
             "Access-Control-Allow-Headers":
-              "Content-Type, X-Access-Key, X-Device-Id, X-Admin-Key",
+              "Content-Type, X-Access-Key, X-Device-Id, X-Admin-Key, Authorization",
             "Access-Control-Allow-Methods":
-              "GET,POST,DELETE,OPTIONS"
+              "GET, POST, DELETE, OPTIONS"
           });
 
           res.end();
-
           return;
         }
-
 
         const url =
           new URL(
             req.url,
-            `http://${req.headers.host}`
+            `http://${req.headers.host || "localhost"}`
           );
 
+        const pathname =
+          url.pathname;
 
-        /* HEALTH */
-
+        /*
+          HEALTH
+        */
         if (
-          url.pathname === "/health"
+          pathname === "/health"
         ) {
-
-          sendJSON(
-            res,
-            200,
-            {
-              ok: true,
-              service: "DY AI WinGo",
-              time: Date.now()
-            }
-          );
+          json(res, 200, {
+            ok: true,
+            service:
+              "DY AI Wingo",
+            uptime:
+              process.uptime(),
+            time:
+              now()
+          });
 
           return;
         }
 
-
-        /* STATE */
-
+        /*
+          KEY CHECK
+        */
         if (
-          url.pathname === "/api/state"
+          pathname ===
+          "/api/key/check" &&
+          req.method === "GET"
         ) {
-
-          const access =
-            await verifyAccess(req);
-
-          if (!access.ok) {
-
-            sendJSON(
-              res,
-              access.status,
-              {
-                ok: false,
-                error: access.message
-              }
-            );
-
-            return;
-          }
-
-
-          sendJSON(
-            res,
-            200,
-            {
-              ok: liveState.ok,
-              updatedAt:
-                liveState.updatedAt,
-
-              currentIssue:
-                liveState.currentIssue,
-
-              targetIssue:
-                liveState.targetIssue,
-
-              latestSettledIssue:
-                liveState.latestSettledIssue,
-
-              history:
-                liveState.history,
-
-              analysis:
-                liveState.analysis,
-
-              providerStats:
-                liveState.providerStats,
-
-              error:
-                liveState.error
-            }
+          await keyCheck(
+            req,
+            res
           );
-
           return;
         }
 
-
-        /* KEY CHECK */
-
+        /*
+          STATE
+        */
         if (
-          url.pathname === "/api/key/check" &&
+          pathname ===
+          "/api/state" &&
+          req.method === "GET"
+        ) {
+          await stateApi(
+            req,
+            res
+          );
+          return;
+        }
+
+        /*
+          HISTORY
+        */
+        if (
+          pathname ===
+          "/api/history" &&
+          req.method === "GET"
+        ) {
+          await historyApi(
+            req,
+            res
+          );
+          return;
+        }
+
+        /*
+          ADMIN KEYS
+        */
+        if (
+          pathname ===
+          "/api/admin/keys"
+        ) {
+          await adminKeys(
+            req,
+            res,
+            url
+          );
+          return;
+        }
+
+        /*
+          ADMIN RESET DEVICE
+        */
+        if (
+          pathname ===
+          "/api/admin/reset-device" &&
           req.method === "POST"
         ) {
-
-          const body =
-            await readBody(req);
-
-          const accessKey =
-            String(
-              body.accessKey || ""
-            ).trim();
-
-          const deviceId =
-            String(
-              body.deviceId || ""
-            ).trim();
-
-
-          if (!accessKey || !deviceId) {
-
-            sendJSON(
-              res,
-              400,
-              {
-                ok: false,
-                error:
-                  "accessKey and deviceId required"
-              }
-            );
-
-            return;
-          }
-
-
-          if (!pool) {
-
-            sendJSON(
-              res,
-              200,
-              {
-                ok: true,
-                demo: true
-              }
-            );
-
-            return;
-          }
-
-
-          const result =
-            await dbQuery(`
-              SELECT *
-              FROM access_keys
-              WHERE access_key = $1
-              LIMIT 1
-            `, [accessKey]);
-
-
-          if (!result.rows.length) {
-
-            sendJSON(
-              res,
-              403,
-              {
-                ok: false,
-                error:
-                  "Invalid access key"
-              }
-            );
-
-            return;
-          }
-
-
-          const row =
-            result.rows[0];
-
-
-          if (
-            row.device_id &&
-            row.device_id !== deviceId
-          ) {
-
-            sendJSON(
-              res,
-              403,
-              {
-                ok: false,
-                error:
-                  "This key is already bound to another device"
-              }
-            );
-
-            return;
-          }
-
-
-          if (!row.device_id) {
-
-            await dbQuery(`
-              UPDATE access_keys
-              SET
-                device_id = $1,
-                last_seen = $2
-              WHERE id = $3
-            `, [
-              deviceId,
-              Date.now(),
-              row.id
-            ]);
-
-          } else {
-
-            await dbQuery(`
-              UPDATE access_keys
-              SET last_seen = $1
-              WHERE id = $2
-            `, [
-              Date.now(),
-              row.id
-            ]);
-
-          }
-
-
-          sendJSON(
-            res,
-            200,
-            {
-              ok: true
-            }
+          await resetDevice(
+            req,
+            res
           );
-
           return;
         }
 
-
-        /* HISTORY */
-
+        /*
+          ADMIN STATUS
+        */
         if (
-          url.pathname === "/api/history"
+          pathname ===
+          "/api/admin/status" &&
+          req.method === "GET"
         ) {
-
-          const access =
-            await verifyAccess(req);
-
-          if (!access.ok) {
-
-            sendJSON(
-              res,
-              access.status,
-              {
-                ok: false,
-                error: access.message
-              }
-            );
-
-            return;
-          }
-
-
-          sendJSON(
-            res,
-            200,
-            {
-              ok: true,
-              history:
-                liveState.history
-            }
+          await adminStatus(
+            req,
+            res
           );
-
           return;
         }
 
-
-        /* ADMIN STATUS */
-
+        /*
+          ADMIN PING
+        */
         if (
-          url.pathname === "/api/admin/status"
+          pathname ===
+          "/api/admin/ping" &&
+          req.method === "GET"
         ) {
-
-          if (!verifyAdmin(req)) {
-
-            sendJSON(
-              res,
-              403,
-              {
-                ok: false,
-                error: "Admin denied"
-              }
-            );
-
-            return;
-          }
-
-
-          sendJSON(
-            res,
-            200,
-            {
-              ok: true,
-              provider:
-                liveState.ok,
-
-              updatedAt:
-                liveState.updatedAt,
-
-              currentIssue:
-                liveState.currentIssue,
-
-              targetIssue:
-                liveState.targetIssue,
-
-              historyCount:
-                liveState.history.length,
-
-              error:
-                liveState.error
-            }
+          await adminPing(
+            req,
+            res
           );
-
           return;
         }
 
-
-        /* ADMIN KEYS */
-
+        /*
+          ADMIN WINGO TEST
+        */
         if (
-          url.pathname === "/api/admin/keys"
+          pathname ===
+          "/api/admin/wingo-test" &&
+          req.method === "GET"
         ) {
-
-          if (!verifyAdmin(req)) {
-
-            sendJSON(
-              res,
-              403,
-              {
-                ok: false,
-                error: "Admin denied"
-              }
-            );
-
-            return;
-          }
-
-
-          if (!pool) {
-
-            sendJSON(
-              res,
-              500,
-              {
-                ok: false,
-                error:
-                  "DATABASE_URL missing"
-              }
-            );
-
-            return;
-          }
-
-
-          if (
-            req.method === "GET"
-          ) {
-
-            const result =
-              await dbQuery(`
-                SELECT
-                  id,
-                  access_key,
-                  device_id,
-                  created_at,
-                  last_seen
-                FROM access_keys
-                ORDER BY id DESC
-              `);
-
-
-            sendJSON(
-              res,
-              200,
-              {
-                ok: true,
-                keys:
-                  result.rows
-              }
-            );
-
-            return;
-          }
-
-
-          if (
-            req.method === "POST"
-          ) {
-
-            const body =
-              await readBody(req);
-
-            const requested =
-              String(
-                body.accessKey || ""
-              ).trim();
-
-            const accessKey =
-              requested ||
-              randomKey();
-
-
-            const result =
-              await dbQuery(`
-                INSERT INTO access_keys
-                (
-                  access_key,
-                  created_at
-                )
-                VALUES
-                ($1,$2)
-                RETURNING *
-              `, [
-                accessKey,
-                Date.now()
-              ]);
-
-
-            sendJSON(
-              res,
-              201,
-              {
-                ok: true,
-                key:
-                  result.rows[0]
-              }
-            );
-
-            return;
-          }
-
-
-          if (
-            req.method === "DELETE"
-          ) {
-
-            const body =
-              await readBody(req);
-
-            const id =
-              Number(body.id);
-
-
-            if (!Number.isInteger(id)) {
-
-              sendJSON(
-                res,
-                400,
-                {
-                  ok: false,
-                  error:
-                    "Valid key id required"
-                }
-              );
-
-              return;
-            }
-
-
-            await dbQuery(`
-              DELETE FROM access_keys
-              WHERE id = $1
-            `, [id]);
-
-
-            sendJSON(
-              res,
-              200,
-              {
-                ok: true
-              }
-            );
-
-            return;
-          }
-        }
-
-
-        /* ADMIN RESET DEVICE */
-
-        if (
-          url.pathname ===
-            "/api/admin/reset-device" &&
-          req.method === "POST"
-        ) {
-
-          if (!verifyAdmin(req)) {
-
-            sendJSON(
-              res,
-              403,
-              {
-                ok: false,
-                error: "Admin denied"
-              }
-            );
-
-            return;
-          }
-
-
-          const body =
-            await readBody(req);
-
-          const id =
-            Number(body.id);
-
-
-          await dbQuery(`
-            UPDATE access_keys
-            SET device_id = NULL,
-                last_seen = 0
-            WHERE id = $1
-          `, [id]);
-
-
-          sendJSON(
-            res,
-            200,
-            {
-              ok: true
-            }
+          await adminWingoTest(
+            req,
+            res
           );
-
           return;
         }
 
-
-        /* ADMIN PING */
-
+        /*
+          ADMIN MODEL TEST
+        */
         if (
-          url.pathname ===
-            "/api/admin/ping"
+          pathname ===
+          "/api/admin/model-test" &&
+          req.method === "GET"
         ) {
-
-          if (!verifyAdmin(req)) {
-
-            sendJSON(
-              res,
-              403,
-              {
-                ok: false
-              }
-            );
-
-            return;
-          }
-
-
-          sendJSON(
-            res,
-            200,
-            {
-              ok: true,
-              pong: Date.now()
-            }
+          await adminModelTest(
+            req,
+            res
           );
-
           return;
         }
 
-
-        /* STATIC */
-
-        if (
-          req.method === "GET" ||
-          req.method === "HEAD"
-        ) {
-
-          serveStatic(req, res);
-          return;
-        }
-
-
-        sendJSON(
+        /*
+          STATIC
+        */
+        serveStatic(
+          req,
           res,
-          404,
-          {
-            ok: false,
-            error: "Route not found"
-          }
+          pathname
+        );
+      } catch (error) {
+        console.error(
+          "Server request error:",
+          error
         );
 
-      } catch (err) {
-
-        console.error(err);
-
-        sendJSON(
-          res,
-          500,
-          {
-            ok: false,
-            error:
-              "Internal server error"
-          }
-        );
-
+        json(res, 500, {
+          ok: false,
+          error:
+            "Internal server error"
+        });
       }
-
     }
   );
 
@@ -1916,46 +2193,98 @@ const server =
 ========================================================= */
 
 async function start() {
-
   try {
     await initDatabase();
-  } catch (err) {
-    console.error(
-      "Database init failed:",
-      err.message
+
+    server.listen(
+      PORT,
+      HOST,
+      () => {
+        console.log(
+          `DY AI server running on port ${PORT}`
+        );
+
+        console.log(
+          `WingoBot token: ${
+            WINGOBOT_TOKEN
+              ? "configured"
+              : "missing"
+          }`
+        );
+
+        console.log(
+          `Database: ${
+            pool
+              ? "configured"
+              : "missing"
+          }`
+        );
+      }
     );
-  }
 
+    /*
+      Initial provider fetch.
+    */
+    await refreshProvider();
 
-  server.listen(
-    PORT,
-    () => {
+    /*
+      Refresh every 3 seconds.
+    */
+    setInterval(
+      () => {
+        refreshProvider().catch(
+          (error) => {
+            console.error(
+              "Refresh loop:",
+              error.message
+            );
+          }
+        );
+      },
+      3000
+    );
+  } catch (error) {
+    console.error(
+      "Startup error:",
+      error
+    );
 
-      console.log(
-        `DY AI server running on port ${PORT}`
+    /*
+      Server ko unnecessary crash se bachane ke liye
+      process ko turant exit nahi karte.
+    */
+    if (!server.listening) {
+      server.listen(
+        PORT,
+        HOST,
+        () => {
+          console.log(
+            `DY AI server running on port ${PORT}`
+          );
+        }
       );
-
     }
-  );
-
-
-  /*
-    First refresh
-  */
-
-  await refreshProvider();
-
-
-  /*
-    Continue live refresh
-  */
-
-  setInterval(
-    refreshProvider,
-    REFRESH_MS
-  );
-
+  }
 }
 
+process.on(
+  "unhandledRejection",
+  (error) => {
+    console.error(
+      "Unhandled rejection:",
+      error
+    );
+  }
+);
+
+process.on(
+  "uncaughtException",
+  (error) => {
+    console.error(
+      "Uncaught exception:",
+      error
+    );
+  }
+);
 
 start();
