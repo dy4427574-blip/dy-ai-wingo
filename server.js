@@ -7,10 +7,11 @@ const crypto = require("crypto");
 const { Pool } = require("pg");
 
 /* =========================================================
-   DY AI WINGO 30S — V4 SERVER
+   DY AI WINGO 30S — V5
    ========================================================= */
 
-const PORT = Number(process.env.PORT || 10000);
+const PORT =
+  Number(process.env.PORT || 10000);
 
 const ADMIN_KEY =
   process.env.ADMIN_KEY || "dy4427574";
@@ -25,7 +26,7 @@ const GAME_URL =
   "https://www.shreewin38.com/#/register?invitationCode=88523152383";
 
 const MODEL_VERSION =
-  "DY-AI-BS-V4";
+  "DY-AI-BS-V5";
 
 const ROOT =
   __dirname;
@@ -33,7 +34,7 @@ const ROOT =
 
 /* =========================================================
    DATABASE
-   ========================================================= */
+========================================================= */
 
 let pool = null;
 
@@ -49,16 +50,20 @@ if (process.env.DATABASE_URL) {
         : { rejectUnauthorized: false },
 
     max: 5,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000
+
+    idleTimeoutMillis:
+      30000,
+
+    connectionTimeoutMillis:
+      10000
   });
 
 }
 
 
 /* =========================================================
-   MEMORY CACHE
-   ========================================================= */
+   PROVIDER CACHE
+========================================================= */
 
 let providerCache = {
   history: [],
@@ -71,15 +76,10 @@ let providerCache = {
 
 let lastProviderFetch = 0;
 
-let stateCache = {
-  updatedAt: 0,
-  data: null
-};
-
 
 /* =========================================================
-   UTILS
-   ========================================================= */
+   BASIC HELPERS
+========================================================= */
 
 function now() {
   return Date.now();
@@ -112,14 +112,16 @@ function json(res, status, data) {
 }
 
 
-function text(res, status, body, type = "text/plain") {
+function text(
+  res,
+  status,
+  body,
+  type = "text/plain"
+) {
 
   res.writeHead(status, {
-    "Content-Type":
-      type,
-
-    "Cache-Control":
-      "no-store"
+    "Content-Type": type,
+    "Cache-Control": "no-store"
   });
 
   res.end(body);
@@ -128,7 +130,7 @@ function text(res, status, body, type = "text/plain") {
 
 function parseBody(req) {
 
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
 
     let raw = "";
 
@@ -166,7 +168,7 @@ function parseBody(req) {
 }
 
 
-function getHeader(req, name) {
+function header(req, name) {
 
   const value =
     req.headers[name.toLowerCase()];
@@ -206,7 +208,9 @@ function safeEqual(a, b) {
     );
 
   } catch {
+
     return false;
+
   }
 
 }
@@ -214,24 +218,18 @@ function safeEqual(a, b) {
 
 function adminAuthorized(req) {
 
-  const key =
-    getHeader(
-      req,
-      "x-admin-key"
-    );
-
   return safeEqual(
-    key,
+    header(req, "x-admin-key"),
     ADMIN_KEY
   );
 
 }
 
 
-function accessKeyFromRequest(req, body = {}) {
+function accessKey(req, body = {}) {
 
-  return (
-    getHeader(req, "x-access-key") ||
+  return String(
+    header(req, "x-access-key") ||
     body.access_key ||
     body.key ||
     ""
@@ -240,10 +238,10 @@ function accessKeyFromRequest(req, body = {}) {
 }
 
 
-function deviceFromRequest(req, body = {}) {
+function deviceId(req, body = {}) {
 
-  return (
-    getHeader(req, "x-device-id") ||
+  return String(
+    header(req, "x-device-id") ||
     body.device_id ||
     ""
   ).trim();
@@ -251,28 +249,52 @@ function deviceFromRequest(req, body = {}) {
 }
 
 
+/* =========================================================
+   ISSUE HELPERS
+========================================================= */
+
+function compareIssue(a, b) {
+
+  const aa =
+    String(a);
+
+  const bb =
+    String(b);
+
+  if (
+    /^\d+$/.test(aa) &&
+    /^\d+$/.test(bb)
+  ) {
+
+    const A =
+      BigInt(aa);
+
+    const B =
+      BigInt(bb);
+
+    if (A > B) return 1;
+    if (A < B) return -1;
+
+    return 0;
+  }
+
+  return aa.localeCompare(bb);
+}
+
+
 function incrementIssue(issue) {
 
-  if (!issue) {
+  const value =
+    String(issue || "").trim();
+
+  if (!/^\d+$/.test(value)) {
     return "";
   }
-
-  const s =
-    String(issue).trim();
-
-  if (!/^\d+$/.test(s)) {
-    return "";
-  }
-
-  /*
-    BigInt is used so long issue numbers
-    are not damaged by JavaScript Number.
-  */
 
   try {
 
     return (
-      BigInt(s) + 1n
+      BigInt(value) + 1n
     ).toString();
 
   } catch {
@@ -286,13 +308,14 @@ function incrementIssue(issue) {
 
 /* =========================================================
    DATABASE INIT
-   ========================================================= */
+========================================================= */
 
 async function initDatabase() {
 
   if (!pool) {
     return;
   }
+
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS access_keys (
@@ -321,26 +344,11 @@ async function initDatabase() {
 
 
   const columns = [
-    [
-      "confidence",
-      "INTEGER DEFAULT 0"
-    ],
-    [
-      "model_version",
-      "TEXT"
-    ],
-    [
-      "actual_number",
-      "INTEGER"
-    ],
-    [
-      "actual_result",
-      "TEXT"
-    ],
-    [
-      "settled_at",
-      "BIGINT"
-    ]
+    ["confidence", "INTEGER DEFAULT 0"],
+    ["model_version", "TEXT"],
+    ["actual_number", "INTEGER"],
+    ["actual_result", "TEXT"],
+    ["settled_at", "BIGINT"]
   ];
 
 
@@ -368,21 +376,164 @@ async function initDatabase() {
   await pool.query(`
     CREATE UNIQUE INDEX IF NOT EXISTS
     prediction_records_model_issue_idx
-    ON prediction_records(model_version, target_issue)
+    ON prediction_records(model_version,target_issue)
   `);
 
 }
 
 
 /* =========================================================
-   WINGOBOT FETCH
-   ========================================================= */
+   NORMALIZE PROVIDER ROW
+========================================================= */
 
-async function fetchWingoHistory(force = false) {
+function normalizeSide(value) {
+
+  if (
+    value === undefined ||
+    value === null
+  ) {
+    return "";
+  }
+
+  const s =
+    String(value)
+      .trim()
+      .toUpperCase();
+
+  if (
+    s === "BIG" ||
+    s === "B"
+  ) {
+    return "BIG";
+  }
+
+  if (
+    s === "SMALL" ||
+    s === "S"
+  ) {
+    return "SMALL";
+  }
+
+  return "";
+}
+
+
+function normalizeHistoryRow(row) {
+
+  if (!row) {
+    return null;
+  }
+
+  const issue =
+    row.issueNumber ??
+    row.issue_number ??
+    row.period ??
+    row.issue;
+
+  if (
+    issue === undefined ||
+    issue === null
+  ) {
+    return null;
+  }
+
+  const issueNumber =
+    String(issue).trim();
+
+  if (!issueNumber) {
+    return null;
+  }
+
+
+  let number = null;
+
+  if (
+    row.number !== undefined &&
+    row.number !== null &&
+    row.number !== ""
+  ) {
+
+    const n =
+      Number(row.number);
+
+    if (
+      Number.isInteger(n) &&
+      n >= 0 &&
+      n <= 9
+    ) {
+      number = n;
+    }
+
+  }
+
+
+  let result =
+    normalizeSide(
+      row.result ||
+      row.bigSmall ||
+      row.big_small ||
+      row.size ||
+      row.colour ||
+      row.color
+    );
+
+
+  /*
+    Number is used ONLY to normalize
+    provider's actual BIG/SMALL result.
+    It is NOT used as a prediction target.
+  */
+
+  if (
+    !result &&
+    number !== null
+  ) {
+
+    result =
+      number >= 5
+        ? "BIG"
+        : "SMALL";
+
+  }
+
+
+  return {
+
+    issueNumber,
+
+    number,
+
+    result,
+
+    colour:
+      row.colour ||
+      row.color ||
+      "",
+
+    premium:
+      row.premium ??
+      null,
+
+    sum:
+      row.sum ??
+      null
+
+  };
+
+}
+
+
+/* =========================================================
+   WINGOBOT
+========================================================= */
+
+async function fetchWingoHistory(
+  force = false
+) {
 
   if (
     !force &&
-    providerCache.history.length > 0 &&
+    providerCache.history.length &&
     now() - lastProviderFetch < 2500
   ) {
 
@@ -440,14 +591,14 @@ async function fetchWingoHistory(force = false) {
       await response.json();
 
 
-    const rows =
+    const raw =
       Array.isArray(data.history)
         ? data.history
         : [];
 
 
     const history =
-      rows
+      raw
         .map(normalizeHistoryRow)
         .filter(Boolean)
         .sort(
@@ -520,219 +671,41 @@ async function fetchWingoHistory(force = false) {
 
 
 /* =========================================================
-   HISTORY NORMALIZER
-   ========================================================= */
+   TARGET
+========================================================= */
 
-function normalizeHistoryRow(row) {
-
-  if (!row) {
-    return null;
-  }
-
-
-  const issue =
-    row.issueNumber ??
-    row.issue_number ??
-    row.period ??
-    row.issue;
-
+function resolveTarget(
+  history,
+  currentIssue
+) {
 
   if (
-    issue === undefined ||
-    issue === null
-  ) {
-    return null;
-  }
-
-
-  const issueNumber =
-    String(issue).trim();
-
-
-  if (!issueNumber) {
-    return null;
-  }
-
-
-  let number = null;
-
-  if (
-    row.number !== undefined &&
-    row.number !== null &&
-    row.number !== ""
+    !Array.isArray(history) ||
+    !history.length
   ) {
 
-    const n =
-      Number(row.number);
-
-    if (
-      Number.isInteger(n) &&
-      n >= 0 &&
-      n <= 9
-    ) {
-      number = n;
-    }
+    return currentIssue
+      ? String(currentIssue)
+      : "";
 
   }
 
 
-  let result =
-    normalizeSide(
-      row.result ||
-      row.bigSmall ||
-      row.big_small ||
-      row.size ||
-      row.colour ||
-      row.color
-    );
-
-
-  /*
-    If provider gives only number,
-    derive BIG/SMALL:
-    0-4 SMALL
-    5-9 BIG
-  */
-
-  if (
-    !result &&
-    number !== null
-  ) {
-
-    result =
-      number >= 5
-        ? "BIG"
-        : "SMALL";
-
-  }
-
-
-  return {
-
-    issueNumber,
-
-    number,
-
-    result,
-
-    colour:
-      row.colour ||
-      row.color ||
-      "",
-
-    premium:
-      row.premium ??
-      null,
-
-    sum:
-      row.sum ??
-      null
-
-  };
-
-}
-
-
-function normalizeSide(value) {
-
-  if (
-    value === undefined ||
-    value === null
-  ) {
-    return "";
-  }
-
-
-  const s =
-    String(value)
-      .trim()
-      .toUpperCase();
-
-
-  if (
-    s === "BIG" ||
-    s === "B"
-  ) {
-    return "BIG";
-  }
-
-
-  if (
-    s === "SMALL" ||
-    s === "S"
-  ) {
-    return "SMALL";
-  }
-
-
-  return "";
-
-}
-
-
-function compareIssue(a, b) {
-
-  const aa =
-    String(a);
-
-  const bb =
-    String(b);
-
-
-  if (
-    /^\d+$/.test(aa) &&
-    /^\d+$/.test(bb)
-  ) {
-
-    const A =
-      BigInt(aa);
-
-    const B =
-      BigInt(bb);
-
-    if (A > B) return 1;
-    if (A < B) return -1;
-
-    return 0;
-
-  }
-
-
-  return aa.localeCompare(bb);
-
-}
-
-
-/* =========================================================
-   TARGET RESOLVER
-   ========================================================= */
-
-function resolveTarget(history, currentIssue) {
-
-  if (!Array.isArray(history) ||
-      history.length === 0) {
-
-    if (currentIssue) {
-      return String(currentIssue);
-    }
-
-    return "";
-
-  }
-
-
-  const latestSettled =
+  const settled =
     history.find(
       row =>
         row &&
-        row.result
+        (
+          row.result === "BIG" ||
+          row.result === "SMALL"
+        )
     );
 
 
   const latestIssue =
-    latestSettled
+    settled
       ? String(
-          latestSettled.issueNumber
+          settled.issueNumber
         )
       : String(
           history[0].issueNumber
@@ -744,11 +717,6 @@ function resolveTarget(history, currentIssue) {
       ? String(currentIssue)
       : "";
 
-
-  /*
-    If provider's current issue is ahead
-    of latest settled, current is target.
-  */
 
   if (
     current &&
@@ -763,11 +731,6 @@ function resolveTarget(history, currentIssue) {
   }
 
 
-  /*
-    Otherwise next issue after latest
-    settled is target.
-  */
-
   return incrementIssue(
     latestIssue
   );
@@ -776,62 +739,98 @@ function resolveTarget(history, currentIssue) {
 
 
 /* =========================================================
-   V4 MODEL HELPERS
-   ========================================================= */
+   V5 DATA
+========================================================= */
 
-function sideArray(history) {
+function sides(history) {
 
   return history
     .map(row => row.result)
     .filter(
-      x =>
-        x === "BIG" ||
-        x === "SMALL"
+      side =>
+        side === "BIG" ||
+        side === "SMALL"
     );
 
 }
 
 
-function balanceScore(arr, count) {
+function toValue(side) {
 
-  const values =
-    arr.slice(0, count);
+  return side === "BIG"
+    ? 1
+    : -1;
 
-
-  if (!values.length) {
-    return 0;
-  }
+}
 
 
-  let big = 0;
-  let small = 0;
+function clamp(
+  value,
+  min,
+  max
+) {
 
-
-  values.forEach(
-    side => {
-
-      if (side === "BIG") {
-        big++;
-      } else {
-        small++;
-      }
-
-    }
-  );
-
-
-  return (
-    (big - small) /
-    values.length
+  return Math.max(
+    min,
+    Math.min(max, value)
   );
 
 }
 
 
-function weightedMomentum(arr, count) {
+/* =========================================================
+   BALANCED BASELINE
+========================================================= */
+
+function globalBalance(arr) {
+
+  if (!arr.length) {
+    return 0;
+  }
+
+
+  let big = 0;
+
+
+  for (const side of arr) {
+
+    if (side === "BIG") {
+      big++;
+    }
+
+  }
+
+
+  const p =
+    big / arr.length;
+
+
+  /*
+    + = BIG excess
+    - = SMALL excess
+  */
+
+  return (
+    p - 0.5
+  ) * 2;
+
+}
+
+
+/* =========================================================
+   RECENT WEIGHTED SIGNAL
+========================================================= */
+
+function recentSignal(
+  arr,
+  count
+) {
 
   const values =
-    arr.slice(0, count);
+    arr.slice(
+      0,
+      count
+    );
 
 
   if (!values.length) {
@@ -839,8 +838,8 @@ function weightedMomentum(arr, count) {
   }
 
 
-  let total = 0;
-  let weightTotal = 0;
+  let numerator = 0;
+  let denominator = 0;
 
 
   for (
@@ -852,33 +851,82 @@ function weightedMomentum(arr, count) {
     const weight =
       values.length - i;
 
-    const value =
-      values[i] === "BIG"
-        ? 1
-        : -1;
+
+    numerator +=
+      toValue(values[i]) *
+      weight;
 
 
-    total +=
-      value * weight;
-
-    weightTotal +=
+    denominator +=
       weight;
 
   }
 
 
   return (
-    total /
-    weightTotal
+    numerator /
+    denominator
   );
 
 }
 
 
-function transitionScore(arr, count) {
+/* =========================================================
+   WINDOW BALANCE
+========================================================= */
+
+function windowSignal(
+  arr,
+  count
+) {
 
   const values =
-    arr.slice(0, count + 1);
+    arr.slice(
+      0,
+      count
+    );
+
+
+  if (!values.length) {
+    return 0;
+  }
+
+
+  let score = 0;
+
+
+  for (
+    const side of values
+  ) {
+
+    score +=
+      toValue(side);
+
+  }
+
+
+  return (
+    score /
+    values.length
+  );
+
+}
+
+
+/* =========================================================
+   TRANSITIONS
+========================================================= */
+
+function transitionSignal(
+  arr,
+  count
+) {
+
+  const values =
+    arr.slice(
+      0,
+      count + 1
+    );
 
 
   if (values.length < 2) {
@@ -886,8 +934,8 @@ function transitionScore(arr, count) {
   }
 
 
-  let follow = 0;
-  let reverse = 0;
+  let same = 0;
+  let change = 0;
 
 
   for (
@@ -901,11 +949,11 @@ function transitionScore(arr, count) {
       values[i + 1]
     ) {
 
-      follow++;
+      same++;
 
     } else {
 
-      reverse++;
+      change++;
 
     }
 
@@ -913,7 +961,7 @@ function transitionScore(arr, count) {
 
 
   const total =
-    follow + reverse;
+    same + change;
 
 
   if (!total) {
@@ -921,18 +969,17 @@ function transitionScore(arr, count) {
   }
 
 
-  /*
-    Positive = continuation pressure
-    Negative = reversal pressure
-  */
-
   return (
-    (follow - reverse) /
+    (same - change) /
     total
   );
 
 }
 
+
+/* =========================================================
+   STREAK
+========================================================= */
 
 function streakInfo(arr) {
 
@@ -948,6 +995,7 @@ function streakInfo(arr) {
 
   const side =
     arr[0];
+
 
   let length = 0;
 
@@ -973,10 +1021,20 @@ function streakInfo(arr) {
 }
 
 
-function alternationScore(arr, count) {
+/* =========================================================
+   ALTERNATION
+========================================================= */
+
+function alternationRate(
+  arr,
+  count
+) {
 
   const values =
-    arr.slice(0, count);
+    arr.slice(
+      0,
+      count
+    );
 
 
   if (values.length < 2) {
@@ -984,7 +1042,7 @@ function alternationScore(arr, count) {
   }
 
 
-  let alternating = 0;
+  let changes = 0;
 
 
   for (
@@ -997,30 +1055,158 @@ function alternationScore(arr, count) {
       values[i] !==
       values[i + 1]
     ) {
-      alternating++;
+
+      changes++;
+
     }
 
   }
 
 
   return (
-    alternating /
+    changes /
     (values.length - 1)
   );
 
 }
 
 
-function patternScore(arr) {
+/* =========================================================
+   MARKOV / TRANSITION PROBABILITY
+========================================================= */
 
-  if (arr.length < 5) {
+function conditionalSignal(
+  arr,
+  count
+) {
+
+  const values =
+    arr.slice(
+      0,
+      Math.min(
+        arr.length,
+        count
+      )
+    );
+
+
+  if (values.length < 4) {
     return 0;
+  }
+
+
+  let bigAfterBig = 0;
+  let totalAfterBig = 0;
+
+  let bigAfterSmall = 0;
+  let totalAfterSmall = 0;
+
+
+  for (
+    let i = 1;
+    i < values.length;
+    i++
+  ) {
+
+    const previous =
+      values[i - 1];
+
+    const current =
+      values[i];
+
+
+    if (
+      previous === "BIG"
+    ) {
+
+      totalAfterBig++;
+
+      if (
+        current === "BIG"
+      ) {
+        bigAfterBig++;
+      }
+
+    } else {
+
+      totalAfterSmall++;
+
+      if (
+        current === "BIG"
+      ) {
+        bigAfterSmall++;
+      }
+
+    }
+
+  }
+
+
+  /*
+    Laplace smoothing prevents
+    extreme 0/1 probabilities.
+  */
+
+  const pAfterBig =
+    (
+      bigAfterBig + 1
+    ) /
+    (
+      totalAfterBig + 2
+    );
+
+
+  const pAfterSmall =
+    (
+      bigAfterSmall + 1
+    ) /
+    (
+      totalAfterSmall + 2
+    );
+
+
+  const last =
+    values[0];
+
+
+  const p =
+    last === "BIG"
+      ? pAfterBig
+      : pAfterSmall;
+
+
+  return (
+    p - 0.5
+  ) * 2;
+
+}
+
+
+/* =========================================================
+   PATTERN SIGNAL
+========================================================= */
+
+function patternSignal(
+  arr,
+  patternLength = 3
+) {
+
+  if (
+    arr.length <
+    patternLength + 4
+  ) {
+
+    return 0;
+
   }
 
 
   const key =
     arr
-      .slice(0, 4)
+      .slice(
+        0,
+        patternLength
+      )
       .map(
         x =>
           x === "BIG"
@@ -1036,14 +1222,17 @@ function patternScore(arr) {
 
 
   for (
-    let i = 4;
+    let i = patternLength;
     i < arr.length;
     i++
   ) {
 
     const previous =
       arr
-        .slice(i - 4, i)
+        .slice(
+          i - patternLength,
+          i
+        )
         .map(
           x =>
             x === "BIG"
@@ -1083,69 +1272,216 @@ function patternScore(arr) {
   }
 
 
+  /*
+    Shrink tiny samples so one match
+    cannot dominate the whole model.
+  */
+
+  const raw =
+    (
+      nextBig -
+      nextSmall
+    ) /
+    matches;
+
+
+  const reliability =
+    clamp(
+      matches / 8,
+      0,
+      1
+    );
+
+
   return (
-    (nextBig - nextSmall) /
-    matches
+    raw *
+    reliability
   );
 
 }
 
 
-function classifyRegime(
-  arr,
-  features
+/* =========================================================
+   STREAK BREAK
+========================================================= */
+
+function streakBreakSignal(
+  arr
 ) {
 
-  if (arr.length < 3) {
+  const streak =
+    streakInfo(arr);
+
+
+  if (
+    streak.length < 3
+  ) {
+    return 0;
+  }
+
+
+  const strength =
+    clamp(
+      (streak.length - 2) /
+      5,
+      0,
+      1
+    );
+
+
+  /*
+    Long BIG streak => controlled SMALL
+    pressure.
+    Long SMALL streak => controlled BIG
+    pressure.
+  */
+
+  return (
+    streak.side === "BIG"
+      ? -strength
+      : strength
+  );
+
+}
+
+
+/* =========================================================
+   REVERSAL CONFIRMATION
+========================================================= */
+
+function reversalSignal(
+  arr
+) {
+
+  if (
+    arr.length < 4
+  ) {
+    return 0;
+  }
+
+
+  const latest =
+    arr[0];
+
+  const second =
+    arr[1];
+
+  const third =
+    arr[2];
+
+  const fourth =
+    arr[3];
+
+
+  /*
+    Example:
+    BIG BIG SMALL SMALL
+    means recent direction may
+    be shifting toward SMALL.
+  */
+
+  if (
+    latest === second &&
+    third === fourth &&
+    latest !== third
+  ) {
+
+    return (
+      latest === "BIG"
+        ? -1
+        : 1
+    );
+
+  }
+
+
+  /*
+    One isolated opposite result is
+    not enough for a full reversal.
+  */
+
+  return 0;
+
+}
+
+
+/* =========================================================
+   REGIME
+========================================================= */
+
+function classifyRegime(
+  arr,
+  f
+) {
+
+  if (
+    arr.length < 3
+  ) {
+
     return "MIXED";
+
   }
 
 
   if (
-    features.alternation >= 0.72
+    f.alternation >= 0.72
   ) {
+
     return "ALTERNATING";
+
   }
 
 
   if (
-    features.streakLength >= 4
+    f.streakLength >= 4
   ) {
+
     return "STREAK_BREAK";
+
   }
 
 
   if (
     Math.abs(
-      features.recent -
-      features.medium
-    ) > 0.45
+      f.recent -
+      f.medium
+    ) >= 0.42
   ) {
+
     return "CONFLICT";
+
   }
 
 
   if (
     Math.abs(
-      features.transition
-    ) < 0.10
+      f.transition
+    ) < 0.08
   ) {
+
     return "TRANSITION";
+
   }
 
 
   if (
-    Math.abs(features.medium) >= 0.35 &&
-    Math.abs(features.recent) >= 0.30
+    Math.abs(f.recent) >= 0.40 &&
+    Math.abs(f.medium) >= 0.30
   ) {
+
     return "TREND";
+
   }
 
 
   if (
-    Math.abs(features.recent) >= 0.45
+    Math.abs(
+      f.recent
+    ) >= 0.35
   ) {
+
     return "SHORT_SHIFT";
+
   }
 
 
@@ -1155,13 +1491,15 @@ function classifyRegime(
 
 
 /* =========================================================
-   V4 PREDICTION
-   ========================================================= */
+   V5 MODEL
+========================================================= */
 
-function calculatePrediction(history) {
+function calculateV5(
+  history
+) {
 
   const arr =
-    sideArray(history);
+    sides(history);
 
 
   if (!arr.length) {
@@ -1175,7 +1513,12 @@ function calculatePrediction(history) {
       regime: "MIXED",
 
       reason:
-        "Waiting for settled BIG/SMALL history."
+        "Waiting for settled BIG/SMALL history.",
+
+      score: 0,
+
+      model_version:
+        MODEL_VERSION
 
     };
 
@@ -1183,43 +1526,72 @@ function calculatePrediction(history) {
 
 
   const recent =
-    weightedMomentum(
+    recentSignal(
+      arr,
+      5
+    );
+
+
+  const micro =
+    windowSignal(
+      arr,
+      3
+    );
+
+
+  const short =
+    windowSignal(
       arr,
       7
     );
 
 
   const medium =
-    balanceScore(
+    windowSignal(
+      arr,
+      15
+    );
+
+
+  const long =
+    windowSignal(
+      arr,
+      40
+    );
+
+
+  const transition =
+    transitionSignal(
       arr,
       20
     );
 
 
-  const micro =
-    balanceScore(
+  const conditional =
+    conditionalSignal(
+      arr,
+      30
+    );
+
+
+  const pattern =
+    patternSignal(
+      arr,
+      3
+    );
+
+
+  const pattern4 =
+    patternSignal(
       arr,
       4
     );
 
 
-  const transition =
-    transitionScore(
-      arr,
-      25
-    );
-
-
   const alternation =
-    alternationScore(
+    alternationRate(
       arr,
-      10
-    );
-
-
-  const pattern =
-    patternScore(
-      arr
+      8
     );
 
 
@@ -1229,83 +1601,57 @@ function calculatePrediction(history) {
     );
 
 
-  const streakLength =
-    streak.length;
-
-
-  /*
-    Reversal signal:
-    Long streak gets a controlled
-    counter-pressure, not blind reversal.
-  */
-
-  let streakBreak = 0;
-
-
-  if (
-    streakLength >= 3
-  ) {
-
-    streakBreak =
-      streak.side === "BIG"
-        ? -Math.min(
-            1,
-            (streakLength - 2) /
-            4
-          )
-        : Math.min(
-            1,
-            (streakLength - 2) /
-            4
-          );
-
-  }
-
-
-  let reversalSignal = 0;
-
-
-  if (
-    arr.length >= 2 &&
-    arr[0] !== arr[1]
-  ) {
-
-    reversalSignal =
-      arr[0] === "BIG"
-        ? -0.15
-        : 0.15;
-
-  }
-
-
-  const longBalance =
-    balanceScore(
-      arr,
-      60
+  const streakBreak =
+    streakBreakSignal(
+      arr
     );
 
 
-  const features = {
+  const reversal =
+    reversalSignal(
+      arr
+    );
+
+
+  const global =
+    globalBalance(
+      arr.slice(
+        0,
+        60
+      )
+    );
+
+
+  const f = {
 
     recent,
 
+    micro,
+
+    short,
+
     medium,
 
-    micro,
+    long,
 
     transition,
 
-    alternation,
+    conditional,
 
     pattern,
 
+    pattern4,
+
+    alternation,
+
+    streakLength:
+      streak.length,
+
     streakBreak,
 
-    reversalSignal,
+    reversal,
 
-    long: longBalance,
-
-    streakLength
+    global
 
   };
 
@@ -1313,183 +1659,344 @@ function calculatePrediction(history) {
   const regime =
     classifyRegime(
       arr,
-      features
+      f
     );
 
 
   /*
-    Base weighted score.
-    Positive = BIG
-    Negative = SMALL
+    ========================================================
+    BALANCED ENSEMBLE
+
+    IMPORTANT:
+    Every component is centered around ZERO.
+
+    +1 = BIG
+    -1 = SMALL
+
+    Global historical imbalance is used
+    as a correction, not as a reason to
+    permanently predict the majority side.
+    ========================================================
   */
 
   let score = 0;
 
 
+  /*
+    Most important:
+    recent 3-5 rounds
+  */
+
   score +=
-    recent * 0.27;
+    recent * 0.25;
+
+
+  /*
+    Micro movement
+  */
 
   score +=
     micro * 0.12;
 
-  score +=
-    medium * 0.12;
+
+  /*
+    Short window
+  */
 
   score +=
-    transition * 0.14;
-
-  score +=
-    streakBreak * 0.12;
-
-  score +=
-    (
-      alternation > 0.5
-        ? -recent
-        : recent
-    ) * 0.10;
-
-  score +=
-    pattern * 0.05;
-
-  score +=
-    reversalSignal * 0.05;
-
-  score +=
-    longBalance * 0.03;
+    short * 0.12;
 
 
   /*
-    Alternating regime:
-    Do not simply follow the last result.
+    Medium context
   */
+
+  score +=
+    medium * 0.10;
+
+
+  /*
+    Transition behaviour
+  */
+
+  score +=
+    transition * 0.10;
+
+
+  /*
+    Conditional next-side behaviour
+  */
+
+  score +=
+    conditional * 0.11;
+
+
+  /*
+    Pattern signals
+  */
+
+  score +=
+    pattern * 0.04;
+
+  score +=
+    pattern4 * 0.03;
+
+
+  /*
+    Long window gets very low weight
+    so BIG/SMALL imbalance cannot
+    dominate the model.
+  */
+
+  score +=
+    long * 0.03;
+
+
+  /*
+    Historical balance correction.
+
+    If last 60 has too many BIGs,
+    slightly pulls score toward SMALL.
+    If too many SMALLs, pulls toward BIG.
+  */
+
+  score -=
+    global * 0.08;
+
+
+  /*
+    Streak break
+  */
+
+  score +=
+    streakBreak * 0.08;
+
+
+  /*
+    Reversal confirmation
+  */
+
+  score +=
+    reversal * 0.05;
+
+
+  /* ======================================================
+     REGIME-SPECIFIC CALIBRATION
+  ====================================================== */
+
 
   if (
     regime === "ALTERNATING"
   ) {
+
+    /*
+      In alternating conditions,
+      following the latest result is
+      usually less useful than checking
+      the opposite side.
+    */
 
     const opposite =
       arr[0] === "BIG"
         ? -1
         : 1;
 
+
     score +=
-      opposite * 0.12;
+      opposite * 0.10;
 
   }
 
-
-  /*
-    Long streak:
-    increase reversal pressure
-    but keep it controlled.
-  */
 
   if (
     regime === "STREAK_BREAK"
   ) {
 
     score +=
-      streakBreak * 0.10;
+      streakBreak * 0.07;
 
   }
 
-
-  /*
-    If short and medium disagree,
-    reduce confidence rather than
-    blindly forcing the short trend.
-  */
 
   if (
     regime === "CONFLICT"
   ) {
 
-    score *= 0.68;
+    /*
+      Conflicting windows should produce
+      weaker confidence and a smaller score.
+    */
 
-  }
-
-
-  /*
-    Agreement boost.
-  */
-
-  const signs = [
-
-    Math.sign(recent),
-
-    Math.sign(micro),
-
-    Math.sign(medium),
-
-    Math.sign(transition)
-
-  ].filter(
-    x => x !== 0
-  );
-
-
-  let agreement = 0;
-
-
-  if (signs.length) {
-
-    const positive =
-      signs.filter(
-        x => x > 0
-      ).length;
-
-    const negative =
-      signs.filter(
-        x => x < 0
-      ).length;
-
-    agreement =
-      Math.max(
-        positive,
-        negative
-      ) / signs.length;
+    score *=
+      0.62;
 
   }
 
 
   if (
-    agreement >= 0.75
+    regime === "TRANSITION"
   ) {
 
-    score *= 1.08;
+    score *=
+      0.78;
 
   }
 
 
   /*
-    Keep score bounded.
+    Prevent any single component from
+    forcing an extreme result.
   */
 
   score =
-    Math.max(
+    clamp(
+      score,
       -1,
-      Math.min(
-        1,
-        score
-      )
+      1
     );
 
 
-  const prediction =
-    score >= 0
-      ? "BIG"
-      : "SMALL";
+  /* ======================================================
+     SIDE DECISION
+  ====================================================== */
+
+  let prediction;
 
 
-  /*
-    Confidence is a model-strength
-    score, NOT a win probability.
-  */
+  if (
+    score > 0
+  ) {
+
+    prediction =
+      "BIG";
+
+  } else if (
+    score < 0
+  ) {
+
+    prediction =
+      "SMALL";
+
+  } else {
+
+    /*
+      Perfect neutral case:
+      use the better-supported conditional
+      signal first, then short window.
+
+      This avoids hard-coded BIG default.
+    */
+
+    if (
+      conditional > 0
+    ) {
+
+      prediction =
+        "BIG";
+
+    } else if (
+      conditional < 0
+    ) {
+
+      prediction =
+        "SMALL";
+
+    } else if (
+      short > 0
+    ) {
+
+      prediction =
+        "BIG";
+
+    } else {
+
+      prediction =
+        "SMALL";
+
+    }
+
+  }
+
+
+  /* ======================================================
+     SIGNAL AGREEMENT
+  ====================================================== */
+
+  const signals = [
+
+    recent,
+
+    micro,
+
+    short,
+
+    medium,
+
+    transition,
+
+    conditional,
+
+    pattern,
+
+    streakBreak
+
+  ];
+
+
+  const nonZero =
+    signals.filter(
+      x =>
+        Math.abs(x) >
+        0.04
+    );
+
+
+  let agreement = 0;
+
+
+  if (nonZero.length) {
+
+    let positive = 0;
+    let negative = 0;
+
+
+    for (
+      const value of nonZero
+    ) {
+
+      if (
+        value > 0
+      ) {
+
+        positive++;
+
+      } else {
+
+        negative++;
+
+      }
+
+    }
+
+
+    agreement =
+      Math.max(
+        positive,
+        negative
+      ) /
+      nonZero.length;
+
+  }
+
+
+  /* ======================================================
+     CONFIDENCE
+  ====================================================== */
 
   let confidence =
     45 +
     Math.round(
-      Math.abs(score) * 30
+      Math.abs(score) * 28
     );
 
 
@@ -1497,9 +2004,18 @@ function calculatePrediction(history) {
     Math.round(
       Math.max(
         0,
-        agreement - 0.5
-      ) * 15
+        agreement - 0.50
+      ) * 16
     );
+
+
+  if (
+    arr.length < 8
+  ) {
+
+    confidence -= 5;
+
+  }
 
 
   if (
@@ -1507,6 +2023,15 @@ function calculatePrediction(history) {
   ) {
 
     confidence -= 8;
+
+  }
+
+
+  if (
+    regime === "TRANSITION"
+  ) {
+
+    confidence -= 4;
 
   }
 
@@ -1521,16 +2046,20 @@ function calculatePrediction(history) {
 
 
   confidence =
-    Math.max(
-      45,
-      Math.min(
-        88,
-        confidence
+    Math.round(
+      clamp(
+        confidence,
+        45,
+        86
       )
     );
 
 
-  let reason = "";
+  /* ======================================================
+     REASON
+  ====================================================== */
+
+  let reason;
 
 
   if (
@@ -1538,40 +2067,47 @@ function calculatePrediction(history) {
   ) {
 
     reason =
-      "Recent sequence shows alternating pressure; V4 is avoiding blind trend-following.";
+      "V5 detected alternating behaviour and reduced blind trend-following.";
 
   } else if (
     regime === "STREAK_BREAK"
   ) {
 
     reason =
-      "Extended streak detected; V4 is applying controlled trend-break pressure.";
+      "V5 detected an extended streak and applied controlled reversal pressure.";
 
   } else if (
     regime === "CONFLICT"
   ) {
 
     reason =
-      "Short and medium signals conflict; V4 is reducing signal strength.";
+      "Recent and medium windows disagree, so V5 reduced signal strength.";
 
   } else if (
     regime === "TREND"
   ) {
 
     reason =
-      "Recent and medium windows show aligned directional pressure.";
+      "Recent and medium windows are aligned, with historical balance correction.";
 
   } else if (
     regime === "TRANSITION"
   ) {
 
     reason =
-      "Transition behaviour detected; recent and reversal signals are being balanced.";
+      "Transition behaviour detected; V5 is keeping the directional signal conservative.";
+
+  } else if (
+    regime === "SHORT_SHIFT"
+  ) {
+
+    reason =
+      "Recent rounds show a short-term shift while longer context is kept at low weight.";
 
   } else {
 
     reason =
-      "V4 is combining recent momentum, transitions, streak behaviour and historical patterns.";
+      "V5 combines recent rounds, transitions, streaks, patterns and balance calibration.";
 
   }
 
@@ -1588,6 +2124,28 @@ function calculatePrediction(history) {
 
     score,
 
+    agreement,
+
+    features: {
+
+      recent,
+      micro,
+      short,
+      medium,
+      long,
+      transition,
+      conditional,
+      pattern,
+      pattern4,
+      alternation,
+      streakLength:
+        streak.length,
+      streakBreak,
+      reversal,
+      global
+
+    },
+
     model_version:
       MODEL_VERSION
 
@@ -1597,127 +2155,8 @@ function calculatePrediction(history) {
 
 
 /* =========================================================
-   CREATE / GET PREDICTION
-   ========================================================= */
-
-async function getOrCreatePrediction(
-  targetIssue,
-  history
-) {
-
-  if (!targetIssue) {
-    return null;
-  }
-
-
-  const existing =
-    await findPrediction(
-      targetIssue
-    );
-
-
-  if (existing) {
-
-    return existing;
-
-  }
-
-
-  const model =
-    calculatePrediction(
-      history
-    );
-
-
-  if (pool) {
-
-    try {
-
-      const result =
-        await pool.query(
-          `
-          INSERT INTO prediction_records
-          (
-            target_issue,
-            prediction,
-            confidence,
-            model_version,
-            created_at
-          )
-          VALUES ($1,$2,$3,$4,$5)
-          ON CONFLICT
-          (model_version,target_issue)
-          DO NOTHING
-          RETURNING *
-          `,
-          [
-            targetIssue,
-            model.prediction,
-            model.confidence,
-            MODEL_VERSION,
-            now()
-          ]
-        );
-
-
-      if (
-        result.rows.length
-      ) {
-
-        return result.rows[0];
-
-      }
-
-
-      const again =
-        await findPrediction(
-          targetIssue
-        );
-
-
-      if (again) {
-        return again;
-      }
-
-    } catch (error) {
-
-      console.error(
-        "Prediction insert error:",
-        error.message
-      );
-
-    }
-
-  }
-
-
-  return {
-
-    target_issue:
-      targetIssue,
-
-    prediction:
-      model.prediction,
-
-    confidence:
-      model.confidence,
-
-    model_version:
-      MODEL_VERSION,
-
-    created_at:
-      now(),
-
-    actual_result:
-      null,
-
-    settled_at:
-      null
-
-  };
-
-}
-
+   FIND PREDICTION
+========================================================= */
 
 async function findPrediction(
   targetIssue
@@ -1762,23 +2201,134 @@ async function findPrediction(
 
 
 /* =========================================================
+   CREATE PREDICTION
+========================================================= */
+
+async function getOrCreatePrediction(
+  targetIssue,
+  history
+) {
+
+  if (!targetIssue) {
+    return null;
+  }
+
+
+  const existing =
+    await findPrediction(
+      targetIssue
+    );
+
+
+  if (existing) {
+    return existing;
+  }
+
+
+  const model =
+    calculateV5(
+      history
+    );
+
+
+  if (pool) {
+
+    try {
+
+      const result =
+        await pool.query(
+          `
+          INSERT INTO prediction_records
+          (
+            target_issue,
+            prediction,
+            confidence,
+            model_version,
+            created_at
+          )
+          VALUES ($1,$2,$3,$4,$5)
+          ON CONFLICT
+          (model_version,target_issue)
+          DO NOTHING
+          RETURNING *
+          `,
+          [
+            targetIssue,
+            model.prediction,
+            model.confidence,
+            MODEL_VERSION,
+            now()
+          ]
+        );
+
+
+      if (
+        result.rows.length
+      ) {
+
+        return result.rows[0];
+
+      }
+
+
+      return await findPrediction(
+        targetIssue
+      );
+
+    } catch (error) {
+
+      console.error(
+        "Create prediction:",
+        error.message
+      );
+
+    }
+
+  }
+
+
+  return {
+
+    target_issue:
+      targetIssue,
+
+    prediction:
+      model.prediction,
+
+    confidence:
+      model.confidence,
+
+    model_version:
+      MODEL_VERSION,
+
+    created_at:
+      now(),
+
+    actual_result:
+      null
+
+  };
+
+}
+
+
+/* =========================================================
    SETTLEMENT
-   ========================================================= */
+========================================================= */
 
 async function settlePredictions(
   history
 ) {
 
-  if (!pool ||
-      !Array.isArray(history) ||
-      !history.length) {
-
+  if (
+    !pool ||
+    !Array.isArray(history)
+  ) {
     return;
-
   }
 
 
-  const map =
+  const actualMap =
     new Map();
 
 
@@ -1795,8 +2345,10 @@ async function settlePredictions(
       )
     ) {
 
-      map.set(
-        String(row.issueNumber),
+      actualMap.set(
+        String(
+          row.issueNumber
+        ),
         row
       );
 
@@ -1805,7 +2357,7 @@ async function settlePredictions(
   }
 
 
-  if (!map.size) {
+  if (!actualMap.size) {
     return;
   }
 
@@ -1820,29 +2372,27 @@ async function settlePredictions(
         WHERE model_version = $1
           AND actual_result IS NULL
         ORDER BY id DESC
-        LIMIT 200
+        LIMIT 300
         `,
         [MODEL_VERSION]
       );
 
 
     for (
-      const prediction
+      const record
       of pending.rows
     ) {
 
-      const issue =
-        String(
-          prediction.target_issue
+      const actual =
+        actualMap.get(
+          String(
+            record.target_issue
+          )
         );
 
 
-      const actual =
-        map.get(issue);
-
-
       /*
-        Exact issue match ONLY.
+        EXACT PERIOD ONLY.
       */
 
       if (!actual) {
@@ -1850,13 +2400,9 @@ async function settlePredictions(
       }
 
 
-      const actualResult =
-        actual.result;
-
-
       if (
-        actualResult !== "BIG" &&
-        actualResult !== "SMALL"
+        actual.result !== "BIG" &&
+        actual.result !== "SMALL"
       ) {
         continue;
       }
@@ -1874,9 +2420,9 @@ async function settlePredictions(
         `,
         [
           actual.number,
-          actualResult,
+          actual.result,
           now(),
-          prediction.id
+          record.id
         ]
       );
 
@@ -1885,7 +2431,7 @@ async function settlePredictions(
   } catch (error) {
 
     console.error(
-      "Settlement error:",
+      "Settlement:",
       error.message
     );
 
@@ -1895,10 +2441,10 @@ async function settlePredictions(
 
 
 /* =========================================================
-   LAST 30 PREDICTIONS
-   ========================================================= */
+   LAST 30
+========================================================= */
 
-async function last30Predictions(
+async function last30(
   history
 ) {
 
@@ -1940,7 +2486,9 @@ async function last30Predictions(
       ) {
 
         actualMap.set(
-          String(row.issueNumber),
+          String(
+            row.issueNumber
+          ),
           row
         );
 
@@ -1964,12 +2512,11 @@ async function last30Predictions(
           );
 
 
-        let status =
-          "PENDING";
-
-
         let actualResult =
           null;
+
+        let status =
+          "PENDING";
 
 
         if (actual) {
@@ -1978,20 +2525,11 @@ async function last30Predictions(
             actual.result;
 
 
-          if (
-            actualResult ===
-              "BIG" ||
-            actualResult ===
-              "SMALL"
-          ) {
-
-            status =
-              row.prediction ===
-              actualResult
-                ? "WIN"
-                : "LOSS";
-
-          }
+          status =
+            row.prediction ===
+            actualResult
+              ? "WIN"
+              : "LOSS";
 
         } else if (
           row.actual_result ===
@@ -1999,13 +2537,6 @@ async function last30Predictions(
           row.actual_result ===
             "SMALL"
         ) {
-
-          /*
-            Stored settlement is only
-            used if provider history
-            currently does not contain
-            the row.
-          */
 
           actualResult =
             row.actual_result;
@@ -2061,7 +2592,7 @@ async function last30Predictions(
   } catch (error) {
 
     console.error(
-      "Last30 error:",
+      "Last30:",
       error.message
     );
 
@@ -2074,9 +2605,9 @@ async function last30Predictions(
 
 /* =========================================================
    STATS
-   ========================================================= */
+========================================================= */
 
-async function predictionStats() {
+async function getStats() {
 
   if (!pool) {
 
@@ -2097,26 +2628,26 @@ async function predictionStats() {
       await pool.query(
         `
         SELECT
-          COUNT(*) FILTER
-            (WHERE actual_result IS NOT NULL)
-            AS settled,
 
-          COUNT(*) FILTER
-            (WHERE actual_result =
-              prediction)
-            AS wins,
+          COUNT(*) FILTER (
+            WHERE actual_result IS NOT NULL
+          ) AS settled,
 
-          COUNT(*) FILTER
-            (WHERE actual_result IS NOT NULL
-              AND actual_result <>
-              prediction)
-            AS losses,
+          COUNT(*) FILTER (
+            WHERE actual_result = prediction
+          ) AS wins,
 
-          COUNT(*) FILTER
-            (WHERE actual_result IS NULL)
-            AS pending
+          COUNT(*) FILTER (
+            WHERE actual_result IS NOT NULL
+            AND actual_result <> prediction
+          ) AS losses,
+
+          COUNT(*) FILTER (
+            WHERE actual_result IS NULL
+          ) AS pending
 
         FROM prediction_records
+
         WHERE model_version = $1
         `,
         [MODEL_VERSION]
@@ -2128,26 +2659,25 @@ async function predictionStats() {
 
 
     const wins =
-      Number(row.wins || 0);
+      Number(
+        row.wins || 0
+      );
+
 
     const losses =
-      Number(row.losses || 0);
+      Number(
+        row.losses || 0
+      );
+
 
     const pending =
-      Number(row.pending || 0);
+      Number(
+        row.pending || 0
+      );
+
 
     const total =
       wins + losses;
-
-
-    const winRate =
-      total > 0
-        ? Math.round(
-            wins /
-            total *
-            100
-          )
-        : 0;
 
 
     return {
@@ -2160,7 +2690,14 @@ async function predictionStats() {
 
       total,
 
-      winRate
+      winRate:
+        total
+          ? Math.round(
+              wins /
+              total *
+              100
+            )
+          : 0
 
     };
 
@@ -2186,8 +2723,8 @@ async function predictionStats() {
 
 
 /* =========================================================
-   STATE
-   ========================================================= */
+   BUILD STATE
+========================================================= */
 
 async function buildState() {
 
@@ -2211,7 +2748,7 @@ async function buildState() {
     );
 
 
-  const predictionRecord =
+  const record =
     await getOrCreatePrediction(
       target,
       history
@@ -2219,34 +2756,34 @@ async function buildState() {
 
 
   const model =
-    calculatePrediction(
+    calculateV5(
       history
     );
 
 
   const predictions =
-    await last30Predictions(
+    await last30(
       history
     );
 
 
   const stats =
-    await predictionStats();
+    await getStats();
 
 
   const prediction =
-    predictionRecord
+    record
       ? {
 
           target_issue:
-            predictionRecord.target_issue,
+            record.target_issue,
 
           prediction:
-            predictionRecord.prediction,
+            record.prediction,
 
           confidence:
             Number(
-              predictionRecord.confidence ||
+              record.confidence ||
               model.confidence
             ),
 
@@ -2257,11 +2794,10 @@ async function buildState() {
             model.reason,
 
           model_version:
-            predictionRecord.model_version ||
             MODEL_VERSION,
 
           actual_result:
-            predictionRecord.actual_result ||
+            record.actual_result ||
             null
 
         }
@@ -2358,8 +2894,8 @@ async function buildState() {
 
 
 /* =========================================================
-   ACCESS KEY CHECK
-   ========================================================= */
+   ACCESS CHECK
+========================================================= */
 
 async function checkAccess(
   req,
@@ -2381,14 +2917,14 @@ async function checkAccess(
 
 
   const key =
-    accessKeyFromRequest(
+    accessKey(
       req,
       body
     );
 
 
   const device =
-    deviceFromRequest(
+    deviceId(
       req,
       body
     );
@@ -2437,7 +2973,7 @@ async function checkAccess(
 
 
     if (
-      result.rows.length === 0
+      !result.rows.length
     ) {
 
       return {
@@ -2455,10 +2991,6 @@ async function checkAccess(
     const row =
       result.rows[0];
 
-
-    /*
-      One key = one browser device.
-    */
 
     if (
       row.device_id &&
@@ -2501,7 +3033,8 @@ async function checkAccess(
 
       success: true,
 
-      key: row.access_key,
+      key:
+        row.access_key,
 
       device_bound:
         Boolean(row.device_id),
@@ -2529,7 +3062,7 @@ async function checkAccess(
 
 /* =========================================================
    ADMIN STATUS
-   ========================================================= */
+========================================================= */
 
 async function adminStatus() {
 
@@ -2566,7 +3099,8 @@ async function adminStatus() {
 
     ok: true,
 
-    status: "ok",
+    status:
+      "ok",
 
     server:
       "ONLINE",
@@ -2614,7 +3148,7 @@ async function adminStatus() {
 
 /* =========================================================
    ADMIN KEYS
-   ========================================================= */
+========================================================= */
 
 async function listKeys() {
 
@@ -2643,23 +3177,22 @@ async function listKeys() {
 }
 
 
-function generateAccessKey() {
+function generateKey() {
 
-  const random =
+  return (
+    "DY-" +
     crypto
       .randomBytes(8)
       .toString("hex")
-      .toUpperCase();
-
-
-  return `DY-${random}`;
+      .toUpperCase()
+  );
 
 }
 
 
 /* =========================================================
    STATIC FILES
-   ========================================================= */
+========================================================= */
 
 function contentType(file) {
 
@@ -2668,16 +3201,16 @@ function contentType(file) {
       .toLowerCase();
 
 
-  const types = {
+  const map = {
 
     ".html":
       "text/html; charset=utf-8",
 
-    ".js":
-      "application/javascript; charset=utf-8",
-
     ".css":
       "text/css; charset=utf-8",
+
+    ".js":
+      "application/javascript; charset=utf-8",
 
     ".json":
       "application/json; charset=utf-8",
@@ -2704,8 +3237,26 @@ function contentType(file) {
 
 
   return (
-    types[ext] ||
+    map[ext] ||
     "application/octet-stream"
+  );
+
+}
+
+
+function safeFilePath(
+  filename
+) {
+
+  const clean =
+    path.basename(
+      filename
+    );
+
+
+  return path.join(
+    ROOT,
+    clean
   );
 
 }
@@ -2714,17 +3265,18 @@ function contentType(file) {
 function serveFile(
   req,
   res,
-  file
+  filename
 ) {
 
   const full =
-    path.join(
-      ROOT,
-      file
+    safeFilePath(
+      filename
     );
 
 
-  if (!fs.existsSync(full)) {
+  if (
+    !fs.existsSync(full)
+  ) {
 
     text(
       res,
@@ -2746,7 +3298,7 @@ function serveFile(
 
 
   /*
-    MP3 range support
+    MP3 RANGE SUPPORT
   */
 
   if (
@@ -2835,7 +3387,7 @@ function serveFile(
     }
 
 
-    const chunkSize =
+    const length =
       end - start + 1;
 
 
@@ -2847,7 +3399,7 @@ function serveFile(
           type,
 
         "Content-Length":
-          chunkSize,
+          length,
 
         "Content-Range":
           `bytes ${start}-${end}/${stat.size}`,
@@ -2896,8 +3448,8 @@ function serveFile(
 
 
 /* =========================================================
-   HTTP SERVER
-   ========================================================= */
+   SERVER
+========================================================= */
 
 const server =
   http.createServer(
@@ -2942,9 +3494,9 @@ const server =
           url.pathname;
 
 
-        /* =================================================
+        /* ================================================
            HEALTH
-           ================================================= */
+        ================================================ */
 
         if (
           pathname ===
@@ -2955,12 +3507,18 @@ const server =
             res,
             200,
             {
+
               ok: true,
-              status: "healthy",
+
+              status:
+                "healthy",
+
               model:
                 MODEL_VERSION,
+
               time:
                 now()
+
             }
           );
 
@@ -2969,15 +3527,13 @@ const server =
         }
 
 
-        /* =================================================
+        /* ================================================
            ROOT
-           ================================================= */
+        ================================================ */
 
         if (
-          pathname ===
-            "/" ||
-          pathname ===
-            "/prediction"
+          pathname === "/" ||
+          pathname === "/prediction"
         ) {
 
           serveFile(
@@ -2991,9 +3547,9 @@ const server =
         }
 
 
-        /* =================================================
-           ADMIN HTML
-           ================================================= */
+        /* ================================================
+           ADMIN PAGE
+        ================================================ */
 
         if (
           pathname ===
@@ -3011,9 +3567,9 @@ const server =
         }
 
 
-        /* =================================================
-           ACCESS KEY CHECK
-           ================================================= */
+        /* ================================================
+           ACCESS CHECK
+        ================================================ */
 
         if (
           pathname ===
@@ -3045,9 +3601,9 @@ const server =
         }
 
 
-        /* =================================================
+        /* ================================================
            STATE
-           ================================================= */
+        ================================================ */
 
         if (
           pathname ===
@@ -3056,40 +3612,24 @@ const server =
         ) {
 
           const key =
-            accessKeyFromRequest(
-              req
-            );
+            accessKey(req);
+
 
           const device =
-            deviceFromRequest(
-              req
-            );
+            deviceId(req);
 
 
-          if (!pool) {
-
-            json(
-              res,
-              503,
-              {
-                ok: false,
-                error:
-                  "Database is not configured."
-              }
-            );
-
-            return;
-
-          }
-
-
-          if (!key || !device) {
+          if (
+            !key ||
+            !device
+          ) {
 
             json(
               res,
               401,
               {
                 ok: false,
+
                 error:
                   "Access key and device ID required."
               }
@@ -3101,9 +3641,7 @@ const server =
 
 
           const access =
-            await checkAccess(
-              req
-            );
+            await checkAccess(req);
 
 
           if (!access.ok) {
@@ -3134,9 +3672,9 @@ const server =
         }
 
 
-        /* =================================================
+        /* ================================================
            HISTORY
-           ================================================= */
+        ================================================ */
 
         if (
           pathname ===
@@ -3144,38 +3682,8 @@ const server =
           req.method === "GET"
         ) {
 
-          const key =
-            accessKeyFromRequest(
-              req
-            );
-
-          const device =
-            deviceFromRequest(
-              req
-            );
-
-
-          if (!key || !device) {
-
-            json(
-              res,
-              401,
-              {
-                ok: false,
-                error:
-                  "Access key and device ID required."
-              }
-            );
-
-            return;
-
-          }
-
-
           const access =
-            await checkAccess(
-              req
-            );
+            await checkAccess(req);
 
 
           if (!access.ok) {
@@ -3201,13 +3709,13 @@ const server =
 
 
           const predictions =
-            await last30Predictions(
+            await last30(
               provider.history
             );
 
 
           const stats =
-            await predictionStats();
+            await getStats();
 
 
           json(
@@ -3235,9 +3743,9 @@ const server =
         }
 
 
-        /* =================================================
+        /* ================================================
            ADMIN AUTH
-           ================================================= */
+        ================================================ */
 
         if (
           pathname.startsWith(
@@ -3253,9 +3761,12 @@ const server =
               res,
               401,
               {
+
                 ok: false,
+
                 error:
                   "Unauthorized admin request."
+
               }
             );
 
@@ -3266,9 +3777,9 @@ const server =
         }
 
 
-        /* =================================================
+        /* ================================================
            ADMIN STATUS
-           ================================================= */
+        ================================================ */
 
         if (
           pathname ===
@@ -3276,14 +3787,10 @@ const server =
           req.method === "GET"
         ) {
 
-          const result =
-            await adminStatus();
-
-
           json(
             res,
             200,
-            result
+            await adminStatus()
           );
 
           return;
@@ -3291,9 +3798,9 @@ const server =
         }
 
 
-        /* =================================================
+        /* ================================================
            ADMIN PING
-           ================================================= */
+        ================================================ */
 
         if (
           pathname ===
@@ -3305,13 +3812,18 @@ const server =
             res,
             200,
             {
+
               ok: true,
+
               message:
                 "PONG",
+
               model:
                 MODEL_VERSION,
+
               time:
                 now()
+
             }
           );
 
@@ -3320,9 +3832,9 @@ const server =
         }
 
 
-        /* =================================================
-           ADMIN WINGO TEST
-           ================================================= */
+        /* ================================================
+           WINGO TEST
+        ================================================ */
 
         if (
           pathname ===
@@ -3369,9 +3881,9 @@ const server =
         }
 
 
-        /* =================================================
-           ADMIN MODEL TEST
-           ================================================= */
+        /* ================================================
+           MODEL TEST
+        ================================================ */
 
         if (
           pathname ===
@@ -3386,7 +3898,7 @@ const server =
 
 
           const model =
-            calculatePrediction(
+            calculateV5(
               provider.history
             );
 
@@ -3413,11 +3925,24 @@ const server =
               reason:
                 model.reason,
 
+              score:
+                Number(
+                  model.score.toFixed(4)
+                ),
+
+              agreement:
+                Number(
+                  model.agreement.toFixed(4)
+                ),
+
               history_used:
                 provider.history.length,
 
               number_model:
-                "DISABLED"
+                "DISABLED",
+
+              features:
+                model.features
 
             }
           );
@@ -3427,9 +3952,9 @@ const server =
         }
 
 
-        /* =================================================
-           ADMIN KEYS GET
-           ================================================= */
+        /* ================================================
+           ADMIN KEYS — GET
+        ================================================ */
 
         if (
           pathname ===
@@ -3437,16 +3962,16 @@ const server =
           req.method === "GET"
         ) {
 
-          const keys =
-            await listKeys();
-
-
           json(
             res,
             200,
             {
+
               ok: true,
-              keys
+
+              keys:
+                await listKeys()
+
             }
           );
 
@@ -3455,9 +3980,9 @@ const server =
         }
 
 
-        /* =================================================
-           ADMIN KEYS CREATE
-           ================================================= */
+        /* ================================================
+           ADMIN KEYS — CREATE
+        ================================================ */
 
         if (
           pathname ===
@@ -3471,9 +3996,12 @@ const server =
               res,
               503,
               {
+
                 ok: false,
+
                 error:
                   "Database is not configured."
+
               }
             );
 
@@ -3496,7 +4024,7 @@ const server =
 
           if (!key) {
             key =
-              generateAccessKey();
+              generateKey();
           }
 
 
@@ -3509,9 +4037,12 @@ const server =
               res,
               400,
               {
+
                 ok: false,
+
                 error:
                   "Invalid access key length."
+
               }
             );
 
@@ -3545,9 +4076,12 @@ const server =
               res,
               200,
               {
+
                 ok: true,
+
                 key:
                   result.rows[0]
+
               }
             );
 
@@ -3562,9 +4096,12 @@ const server =
                 res,
                 409,
                 {
+
                   ok: false,
+
                   error:
                     "This access key already exists."
+
                 }
               );
 
@@ -3574,9 +4111,12 @@ const server =
                 res,
                 500,
                 {
+
                   ok: false,
+
                   error:
                     error.message
+
                 }
               );
 
@@ -3589,9 +4129,9 @@ const server =
         }
 
 
-        /* =================================================
-           ADMIN KEYS DELETE
-           ================================================= */
+        /* ================================================
+           ADMIN KEYS — DELETE
+        ================================================ */
 
         if (
           pathname ===
@@ -3605,9 +4145,12 @@ const server =
               res,
               503,
               {
+
                 ok: false,
+
                 error:
                   "Database is not configured."
+
               }
             );
 
@@ -3645,7 +4188,7 @@ const server =
                 `
                 DELETE FROM access_keys
                 WHERE id = $1
-                RETURNING id, access_key
+                RETURNING id,access_key
                 `,
                 [id]
               );
@@ -3657,7 +4200,7 @@ const server =
                 `
                 DELETE FROM access_keys
                 WHERE access_key = $1
-                RETURNING id, access_key
+                RETURNING id,access_key
                 `,
                 [key]
               );
@@ -3668,9 +4211,12 @@ const server =
               res,
               400,
               {
+
                 ok: false,
+
                 error:
                   "Key or ID required."
+
               }
             );
 
@@ -3680,16 +4226,19 @@ const server =
 
 
           if (
-            result.rows.length === 0
+            !result.rows.length
           ) {
 
             json(
               res,
               404,
               {
+
                 ok: false,
+
                 error:
                   "Key not found."
+
               }
             );
 
@@ -3702,9 +4251,12 @@ const server =
             res,
             200,
             {
+
               ok: true,
+
               deleted:
                 result.rows[0]
+
             }
           );
 
@@ -3713,9 +4265,9 @@ const server =
         }
 
 
-        /* =================================================
+        /* ================================================
            RESET DEVICE
-           ================================================= */
+        ================================================ */
 
         if (
           pathname ===
@@ -3729,9 +4281,12 @@ const server =
               res,
               503,
               {
+
                 ok: false,
+
                 error:
                   "Database is not configured."
+
               }
             );
 
@@ -3758,9 +4313,12 @@ const server =
               res,
               400,
               {
+
                 ok: false,
+
                 error:
                   "Access key required."
+
               }
             );
 
@@ -3775,23 +4333,26 @@ const server =
               UPDATE access_keys
               SET device_id = NULL
               WHERE access_key = $1
-              RETURNING id, access_key
+              RETURNING id,access_key
               `,
               [key]
             );
 
 
           if (
-            result.rows.length === 0
+            !result.rows.length
           ) {
 
             json(
               res,
               404,
               {
+
                 ok: false,
+
                 error:
                   "Access key not found."
+
               }
             );
 
@@ -3804,9 +4365,12 @@ const server =
             res,
             200,
             {
+
               ok: true,
+
               reset:
                 result.rows[0]
+
             }
           );
 
@@ -3815,9 +4379,9 @@ const server =
         }
 
 
-        /* =================================================
-           STATIC MUSIC
-           ================================================= */
+        /* ================================================
+           MUSIC
+        ================================================ */
 
         if (
           pathname ===
@@ -3835,51 +4399,20 @@ const server =
         }
 
 
-        /* =================================================
-           OTHER STATIC FILES
-           ================================================= */
-
-        const allowed =
-          [
-            "favicon.ico",
-            "robots.txt"
-          ];
-
-
-        const filename =
-          path.basename(
-            pathname
-          );
-
-
-        if (
-          allowed.includes(
-            filename
-          )
-        ) {
-
-          serveFile(
-            req,
-            res,
-            filename
-          );
-
-          return;
-
-        }
-
-
-        /* =================================================
+        /* ================================================
            404
-           ================================================= */
+        ================================================ */
 
         json(
           res,
           404,
           {
+
             ok: false,
+
             error:
               "Not found"
+
           }
         );
 
@@ -3891,17 +4424,23 @@ const server =
         );
 
 
-        if (!res.headersSent) {
+        if (
+          !res.headersSent
+        ) {
 
           json(
             res,
             500,
             {
+
               ok: false,
+
               error:
                 "Internal server error",
+
               message:
                 error.message
+
             }
           );
 
@@ -3918,8 +4457,8 @@ const server =
 
 
 /* =========================================================
-   STARTUP
-   ========================================================= */
+   START
+========================================================= */
 
 async function start() {
 
@@ -3947,15 +4486,15 @@ async function start() {
     () => {
 
       console.log(
-        `DY AI Wingo V4 server running on port ${PORT}`
-      );
-
-      console.log(
-        `Model: ${MODEL_VERSION}`
+        `DY AI Wingo ${MODEL_VERSION} running on port ${PORT}`
       );
 
       console.log(
         `Game: ${GAME_URL}`
+      );
+
+      console.log(
+        `Model: ${MODEL_VERSION}`
       );
 
     }
@@ -3968,8 +4507,8 @@ start();
 
 
 /* =========================================================
-   BACKGROUND PROVIDER REFRESH
-   ========================================================= */
+   BACKGROUND REFRESH
+========================================================= */
 
 setInterval(
   async () => {
@@ -4007,8 +4546,8 @@ setInterval(
 
 
 /* =========================================================
-   SAFE SHUTDOWN
-   ========================================================= */
+   SHUTDOWN
+========================================================= */
 
 async function shutdown() {
 
