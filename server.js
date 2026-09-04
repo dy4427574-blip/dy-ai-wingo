@@ -1,3180 +1,1961 @@
-"use strict";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-const http = require("http");
-const fs = require("fs");
-const path = require("path");
-const crypto = require("crypto");
-const { URL } = require("url");
-const { Pool } = require("pg");
+  <title>DY AI • Admin Panel</title>
 
-// ============================================================
-// DY AI WINGO 30S - V4
-// BIG / SMALL ONLY
-// ============================================================
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-const PORT = Number(process.env.PORT || 10000);
+    body {
+      font-family: Inter, Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(30, 136, 229, .18), transparent 30%),
+        radial-gradient(circle at bottom right, rgba(124, 58, 237, .16), transparent 30%),
+        #070b14;
+      color: #fff;
+      min-height: 100vh;
+    }
 
-const DATABASE_URL =
-  process.env.DATABASE_URL || "";
+    button,
+    input {
+      font: inherit;
+    }
 
-const ADMIN_KEY =
-  process.env.ADMIN_KEY || "dy4427574";
+    .hidden {
+      display: none !important;
+    }
 
-const WINGOBOT_TOKEN =
-  process.env.WINGOBOT_TOKEN || "";
+    /* LOGIN */
 
-const WINGOBOT_URL =
-  "https://api.wingobot.com/v2/30-sec-game-history";
+    .login-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
 
-const GAME_URL =
-  "https://www.shreewin38.com/#/register?invitationCode=88523152383";
+    .login-card {
+      width: 100%;
+      max-width: 430px;
+      padding: 30px 24px;
+      border-radius: 24px;
+      background: rgba(14, 20, 34, .88);
+      border: 1px solid rgba(255,255,255,.09);
+      box-shadow: 0 25px 80px rgba(0,0,0,.45);
+      backdrop-filter: blur(20px);
+    }
 
-const MODEL_VERSION =
-  "DY-AI-BS-V4";
+    .logo {
+      width: 74px;
+      height: 74px;
+      margin: 0 auto 18px;
+      border-radius: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg,#2563eb,#7c3aed);
+      font-size: 25px;
+      font-weight: 900;
+      box-shadow: 0 12px 35px rgba(37,99,235,.35);
+    }
 
-const PROVIDER_POLL_MS = 3000;
+    .login-card h1 {
+      text-align: center;
+      font-size: 25px;
+      margin-bottom: 7px;
+    }
 
-const MAX_HISTORY = 200;
+    .login-card p {
+      text-align: center;
+      color: #8d99ad;
+      font-size: 13px;
+      margin-bottom: 25px;
+    }
 
-const LAST30 = 30;
+    .input {
+      width: 100%;
+      padding: 15px;
+      border-radius: 14px;
+      border: 1px solid #263149;
+      outline: none;
+      background: #0b1120;
+      color: white;
+      margin-bottom: 13px;
+    }
 
+    .input:focus {
+      border-color: #3b82f6;
+    }
 
-// ============================================================
-// DATABASE
-// ============================================================
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: 0;
+      border-radius: 14px;
+      color: white;
+      cursor: pointer;
+      font-weight: 800;
+      transition: .2s;
+    }
 
-let pool = null;
+    .btn:active {
+      transform: scale(.98);
+    }
 
-if (DATABASE_URL) {
-  pool = new Pool({
-    connectionString: DATABASE_URL,
-    ssl: {
-      rejectUnauthorized: false
-    },
-    max: 5,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000
-  });
-}
+    .btn-primary {
+      background: linear-gradient(135deg,#2563eb,#7c3aed);
+    }
 
+    .error {
+      margin-top: 13px;
+      padding: 11px;
+      border-radius: 11px;
+      background: rgba(239,68,68,.12);
+      color: #ff8585;
+      font-size: 13px;
+      text-align: center;
+    }
 
-// ============================================================
-// PROVIDER STATE
-// ============================================================
+    /* APP */
 
-let provider = {
-  ok: false,
-  history: [],
-  currentIssue: null,
-  lastUpdated: null,
-  fetched: 0,
-  error: null,
-  fetchedAt: 0
-};
+    .app {
+      display: none;
+      min-height: 100vh;
+    }
 
-let providerFetching = false;
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px 18px;
+      background: rgba(7,11,20,.86);
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      backdrop-filter: blur(18px);
+    }
 
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+    }
 
-// ============================================================
-// HELPERS
-// ============================================================
+    .brand-logo {
+      width: 43px;
+      height: 43px;
+      border-radius: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg,#2563eb,#7c3aed);
+      font-size: 14px;
+      font-weight: 900;
+    }
 
-function now() {
-  return Date.now();
-}
+    .brand h2 {
+      font-size: 16px;
+    }
 
-function safeString(v) {
-  if (v === null || v === undefined) {
-    return "";
-  }
+    .brand span {
+      display: block;
+      color: #76839a;
+      font-size: 11px;
+      margin-top: 2px;
+    }
 
-  return String(v);
-}
+    .logout {
+      border: 1px solid #27324a;
+      background: #0e1524;
+      color: #cbd5e1;
+      padding: 9px 13px;
+      border-radius: 11px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+    }
 
-function cleanIssue(v) {
-  const s = safeString(v).trim();
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      padding: 18px;
+    }
 
-  return s || null;
-}
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12,1fr);
+      gap: 15px;
+    }
 
-function clamp(v, min, max) {
-  return Math.max(min, Math.min(max, v));
-}
+    .card {
+      background: rgba(14,20,34,.84);
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 20px;
+      padding: 18px;
+      box-shadow: 0 15px 50px rgba(0,0,0,.18);
+    }
 
-function sideFromNumber(number) {
-  const n = Number(number);
+    .col-12 { grid-column: span 12; }
+    .col-8 { grid-column: span 8; }
+    .col-6 { grid-column: span 6; }
+    .col-4 { grid-column: span 4; }
 
-  if (!Number.isInteger(n)) {
-    return null;
-  }
+    .title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
 
-  if (n >= 0 && n <= 4) {
-    return "SMALL";
-  }
+    .title h3 {
+      font-size: 15px;
+    }
 
-  if (n >= 5 && n <= 9) {
-    return "BIG";
-  }
+    .title span {
+      font-size: 11px;
+      color: #718096;
+    }
 
-  return null;
-}
+    /* STATUS */
 
-function normalizeSide(value, number) {
-  const s =
-    safeString(value)
-      .trim()
-      .toUpperCase();
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(4,1fr);
+      gap: 10px;
+    }
 
-  if (
-    s === "BIG" ||
-    s === "B" ||
-    s === "BIGGEST"
-  ) {
-    return "BIG";
-  }
+    .status-box {
+      background: #0a101d;
+      border: 1px solid #1b263b;
+      border-radius: 14px;
+      padding: 13px;
+    }
 
-  if (
-    s === "SMALL" ||
-    s === "S" ||
-    s === "SMALLEST"
-  ) {
-    return "SMALL";
-  }
+    .status-box small {
+      color: #718096;
+      display: block;
+      margin-bottom: 7px;
+      font-size: 10px;
+    }
 
-  return sideFromNumber(number);
-}
+    .status-box strong {
+      font-size: 14px;
+      word-break: break-word;
+    }
 
-function opposite(side) {
-  return side === "BIG"
-    ? "SMALL"
-    : "BIG";
-}
+    .live {
+      color: #22c55e !important;
+    }
 
-function incrementIssue(issue) {
-  if (!issue) {
-    return null;
-  }
+    .offline {
+      color: #ef4444 !important;
+    }
 
-  if (!/^\d+$/.test(String(issue))) {
-    return null;
-  }
+    /* AI */
 
-  try {
-    return (
-      BigInt(issue) + 1n
-    ).toString();
-  } catch {
-    return null;
-  }
-}
+    .ai-box {
+      text-align: center;
+      padding: 8px;
+    }
 
-function json(res, status, data) {
-  const body =
-    JSON.stringify(data);
+    .prediction {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      margin: 8px auto 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        radial-gradient(circle,#18243a 45%,transparent 46%),
+        linear-gradient(135deg,#2563eb,#7c3aed);
+      box-shadow: 0 0 45px rgba(59,130,246,.18);
+    }
 
-  res.writeHead(status, {
-    "Content-Type":
-      "application/json; charset=utf-8",
-    "Cache-Control":
-      "no-store",
-    "Access-Control-Allow-Origin":
-      "*",
-    "Access-Control-Allow-Headers":
-      "Content-Type, Authorization, X-Admin-Key",
-    "Access-Control-Allow-Methods":
-      "GET, POST, DELETE, OPTIONS"
-  });
+    .prediction strong {
+      font-size: 29px;
+      letter-spacing: 1px;
+    }
 
-  res.end(body);
-}
+    .confidence {
+      font-size: 13px;
+      color: #9ba8bb;
+      margin-bottom: 7px;
+    }
 
-function text(
-  res,
-  status,
-  body,
-  type = "text/plain; charset=utf-8"
-) {
-  res.writeHead(status, {
-    "Content-Type": type,
-    "Cache-Control": "no-store"
-  });
+    .regime {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 20px;
+      background: #111b2e;
+      color: #93c5fd;
+      font-size: 11px;
+      font-weight: 800;
+    }
 
-  res.end(body);
-}
+    .reason {
+      color: #7d8aa0;
+      font-size: 12px;
+      margin-top: 13px;
+      line-height: 1.6;
+    }
 
-function randomKey() {
-  return (
-    "DY-" +
-    crypto
-      .randomBytes(12)
-      .toString("hex")
-      .toUpperCase()
-  );
-}
+    /* BUTTONS */
 
+    .actions {
+      display: grid;
+      grid-template-columns: repeat(2,1fr);
+      gap: 9px;
+    }
 
-// ============================================================
-// BODY
-// ============================================================
+    .action-btn {
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid #25324b;
+      background: #0c1423;
+      color: #dbeafe;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 800;
+    }
 
-function readBody(req) {
-  return new Promise((resolve, reject) => {
-    let body = "";
+    .action-btn:hover {
+      background: #131e33;
+    }
 
-    req.on("data", chunk => {
-      body += chunk.toString();
+    /* KEY */
 
-      if (body.length > 1024 * 1024) {
-        reject(
-          new Error("Request too large")
-        );
+    .key-create {
+      display: grid;
+      grid-template-columns: 1fr 130px;
+      gap: 9px;
+      margin-bottom: 15px;
+    }
 
-        req.destroy();
+    .key-create button {
+      border: 0;
+      border-radius: 13px;
+      background: linear-gradient(135deg,#2563eb,#7c3aed);
+      color: white;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .key-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 450px;
+      overflow-y: auto;
+    }
+
+    .key-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 12px;
+      border-radius: 13px;
+      background: #0a101d;
+      border: 1px solid #19243a;
+    }
+
+    .key-value {
+      font-family: monospace;
+      font-size: 12px;
+      color: #dbeafe;
+      word-break: break-all;
+    }
+
+    .key-meta {
+      color: #697890;
+      font-size: 10px;
+      margin-top: 5px;
+    }
+
+    .key-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .mini-btn {
+      border: 1px solid #26334c;
+      background: #111a2a;
+      color: #cbd5e1;
+      border-radius: 9px;
+      padding: 8px;
+      cursor: pointer;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .mini-btn.danger {
+      color: #fca5a5;
+      border-color: rgba(239,68,68,.25);
+    }
+
+    /* LOG */
+
+    .log {
+      max-height: 280px;
+      overflow-y: auto;
+      background: #070c16;
+      border-radius: 13px;
+      padding: 10px;
+    }
+
+    .log-row {
+      border-bottom: 1px solid #121c2c;
+      padding: 9px 5px;
+      font-family: monospace;
+      font-size: 10px;
+      color: #8fa0b7;
+      line-height: 1.5;
+    }
+
+    .log-row:last-child {
+      border-bottom: 0;
+    }
+
+    /* TABLE */
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 600px;
+    }
+
+    th {
+      color: #64748b;
+      font-size: 10px;
+      text-align: left;
+      padding: 10px;
+      border-bottom: 1px solid #1c2638;
+    }
+
+    td {
+      padding: 11px 10px;
+      font-size: 11px;
+      border-bottom: 1px solid #121c2b;
+    }
+
+    .badge {
+      display: inline-flex;
+      padding: 5px 8px;
+      border-radius: 8px;
+      font-size: 9px;
+      font-weight: 900;
+    }
+
+    .badge-win {
+      color: #4ade80;
+      background: rgba(34,197,94,.1);
+    }
+
+    .badge-loss {
+      color: #fb7185;
+      background: rgba(244,63,94,.1);
+    }
+
+    .badge-pending {
+      color: #fbbf24;
+      background: rgba(245,158,11,.1);
+    }
+
+    /* TOAST */
+
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 100;
+      max-width: 340px;
+      padding: 13px 16px;
+      border-radius: 13px;
+      background: #111827;
+      border: 1px solid #26344d;
+      box-shadow: 0 20px 50px rgba(0,0,0,.4);
+      color: #dbeafe;
+      font-size: 12px;
+      transform: translateY(120px);
+      opacity: 0;
+      transition: .25s;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    footer {
+      text-align: center;
+      color: #4d5b70;
+      font-size: 10px;
+      padding: 25px 10px;
+    }
+
+    @media(max-width:850px) {
+      .col-8,
+      .col-6,
+      .col-4 {
+        grid-column: span 12;
       }
+
+      .status-grid {
+        grid-template-columns: repeat(2,1fr);
+      }
+    }
+
+    @media(max-width:520px) {
+      .container {
+        padding: 12px;
+      }
+
+      .card {
+        padding: 14px;
+        border-radius: 17px;
+      }
+
+      .status-grid {
+        grid-template-columns: repeat(2,1fr);
+      }
+
+      .key-create {
+        grid-template-columns: 1fr;
+      }
+
+      .key-create button {
+        min-height: 45px;
+      }
+
+      .key-row {
+        grid-template-columns: 1fr;
+      }
+
+      .key-actions {
+        justify-content: flex-start;
+      }
+
+      .topbar {
+        padding: 12px;
+      }
+
+      .prediction {
+        width: 135px;
+        height: 135px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- LOGIN -->
+
+  <section class="login-screen" id="loginScreen">
+
+    <div class="login-card">
+
+      <div class="logo">DY</div>
+
+      <h1>DY AI ADMIN</h1>
+
+      <p>Secure administrator control panel</p>
+
+      <input
+        id="adminKey"
+        class="input"
+        type="password"
+        placeholder="Enter Admin Key"
+        autocomplete="off"
+      >
+
+      <button class="btn btn-primary" onclick="login()">
+        LOGIN TO ADMIN
+      </button>
+
+      <div id="loginError" class="error hidden"></div>
+
+    </div>
+
+  </section>
+
+
+  <!-- APP -->
+
+  <main class="app" id="app">
+
+    <header class="topbar">
+
+      <div class="brand">
+
+        <div class="brand-logo">DY</div>
+
+        <div>
+          <h2>DY AI WINGO</h2>
+          <span>Administrator Panel • V4</span>
+        </div>
+
+      </div>
+
+      <button class="logout" onclick="logout()">
+        LOGOUT
+      </button>
+
+    </header>
+
+
+    <div class="container">
+
+      <div class="grid">
+
+        <!-- SYSTEM STATUS -->
+
+        <section class="card col-12">
+
+          <div class="title">
+            <h3>⚡ SYSTEM STATUS</h3>
+            <span id="lastUpdate">Waiting...</span>
+          </div>
+
+          <div class="status-grid">
+
+            <div class="status-box">
+              <small>SERVER</small>
+              <strong id="serverStatus">CHECKING</strong>
+            </div>
+
+            <div class="status-box">
+              <small>DATABASE</small>
+              <strong id="dbStatus">CHECKING</strong>
+            </div>
+
+            <div class="status-box">
+              <small>WINGOBOT</small>
+              <strong id="wingoStatus">CHECKING</strong>
+            </div>
+
+            <div class="status-box">
+              <small>MODEL</small>
+              <strong id="modelVersion">DY-AI-BS-V4</strong>
+            </div>
+
+          </div>
+
+        </section>
+
+
+        <!-- CURRENT AI -->
+
+        <section class="card col-4">
+
+          <div class="title">
+            <h3>🤖 CURRENT AI</h3>
+            <span>LIVE</span>
+          </div>
+
+          <div class="ai-box">
+
+            <div class="prediction">
+              <strong id="currentPrediction">—</strong>
+            </div>
+
+            <div class="confidence">
+              Confidence: <b id="currentConfidence">—</b>
+            </div>
+
+            <div class="regime" id="currentRegime">
+              WAITING
+            </div>
+
+            <div class="reason" id="currentReason">
+              Waiting for live prediction data...
+            </div>
+
+          </div>
+
+        </section>
+
+
+        <!-- GAME INFO -->
+
+        <section class="card col-4">
+
+          <div class="title">
+            <h3>🎯 GAME INFO</h3>
+            <span>30 SEC</span>
+          </div>
+
+          <div class="status-box" style="margin-bottom:10px;">
+            <small>CURRENT ISSUE</small>
+            <strong id="currentIssue">—</strong>
+          </div>
+
+          <div class="status-box" style="margin-bottom:10px;">
+            <small>TARGET ISSUE</small>
+            <strong id="targetIssue">—</strong>
+          </div>
+
+          <div class="status-box">
+            <small>HISTORY COUNT</small>
+            <strong id="historyCount">0</strong>
+          </div>
+
+        </section>
+
+
+        <!-- DIAGNOSTICS -->
+
+        <section class="card col-4">
+
+          <div class="title">
+            <h3>🛠 DIAGNOSTICS</h3>
+            <span>TOOLS</span>
+          </div>
+
+          <div class="actions">
+
+            <button class="action-btn" onclick="pingServer()">
+              PING
+            </button>
+
+            <button class="action-btn" onclick="testWingo()">
+              WINGO TEST
+            </button>
+
+            <button class="action-btn" onclick="testModel()">
+              MODEL TEST
+            </button>
+
+            <button class="action-btn" onclick="refreshAll()">
+              REFRESH
+            </button>
+
+          </div>
+
+        </section>
+
+
+        <!-- ACCESS KEYS -->
+
+        <section class="card col-8">
+
+          <div class="title">
+            <h3>🔑 ACCESS KEY MANAGEMENT</h3>
+            <span id="keyCount">0 KEYS</span>
+          </div>
+
+          <div class="key-create">
+
+            <input
+              id="newKey"
+              class="input"
+              style="margin:0;"
+              placeholder="Custom key or leave empty for auto"
+              autocomplete="off"
+            >
+
+            <button onclick="createKey()">
+              + CREATE KEY
+            </button>
+
+          </div>
+
+          <div class="key-list" id="keyList">
+            <div style="color:#64748b;font-size:12px;text-align:center;padding:20px;">
+              Loading keys...
+            </div>
+          </div>
+
+        </section>
+
+
+        <!-- ADMIN LOG -->
+
+        <section class="card col-4">
+
+          <div class="title">
+            <h3>📋 ADMIN LOG</h3>
+            <span>LIVE</span>
+          </div>
+
+          <div class="log" id="logBox">
+            <div class="log-row">
+              [SYSTEM] Admin panel initialized.
+            </div>
+          </div>
+
+        </section>
+
+
+        <!-- MODEL TEST -->
+
+        <section class="card col-12">
+
+          <div class="title">
+            <h3>🧠 V4 MODEL INFORMATION</h3>
+            <span>BIG / SMALL ONLY</span>
+          </div>
+
+          <div class="status-grid">
+
+            <div class="status-box">
+              <small>MODEL VERSION</small>
+              <strong>DY-AI-BS-V4</strong>
+            </div>
+
+            <div class="status-box">
+              <small>NUMBER MODEL</small>
+              <strong>DISABLED</strong>
+            </div>
+
+            <div class="status-box">
+              <small>OUTPUT</small>
+              <strong>BIG / SMALL</strong>
+            </div>
+
+            <div class="status-box">
+              <small>SETTLEMENT</small>
+              <strong>EXACT ISSUE</strong>
+            </div>
+
+          </div>
+
+        </section>
+
+
+        <!-- PREDICTION HISTORY -->
+
+        <section class="card col-12">
+
+          <div class="title">
+            <h3>📊 RECENT PREDICTIONS</h3>
+            <span>LAST 30</span>
+          </div>
+
+          <div class="table-wrap">
+
+            <table>
+
+              <thead>
+                <tr>
+                  <th>PERIOD</th>
+                  <th>PREDICTION</th>
+                  <th>CONFIDENCE</th>
+                  <th>RESULT</th>
+                  <th>STATUS</th>
+                </tr>
+              </thead>
+
+              <tbody id="predictionTable">
+
+                <tr>
+                  <td colspan="5" style="text-align:center;color:#64748b;">
+                    Loading...
+                  </td>
+                </tr>
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+        </section>
+
+      </div>
+
+
+      <footer>
+        DY AI Wingo • Administrator Panel • V4
+        <br>
+        AI estimates are not guaranteed outcomes.
+      </footer>
+
+    </div>
+
+  </main>
+
+
+  <div class="toast" id="toast"></div>
+
+
+<script>
+
+  let ADMIN_KEY = "";
+  let stateTimer = null;
+
+
+  /* -------------------------
+     BASIC HELPERS
+  ------------------------- */
+
+  function $(id) {
+    return document.getElementById(id);
+  }
+
+
+  function esc(value) {
+
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+
+  }
+
+
+  function toast(message) {
+
+    const el = $("toast");
+
+    el.textContent = message;
+
+    el.classList.add("show");
+
+    clearTimeout(window.toastTimer);
+
+    window.toastTimer = setTimeout(() => {
+      el.classList.remove("show");
+    }, 2600);
+
+  }
+
+
+  function log(message) {
+
+    const box = $("logBox");
+
+    const row = document.createElement("div");
+
+    row.className = "log-row";
+
+    const time = new Date().toLocaleTimeString();
+
+    row.textContent = `[${time}] ${message}`;
+
+    box.prepend(row);
+
+    while (box.children.length > 80) {
+      box.removeChild(box.lastChild);
+    }
+
+  }
+
+
+  async function api(url, options = {}) {
+
+    const headers = {
+      ...(options.headers || {})
+    };
+
+    if (ADMIN_KEY) {
+      headers["x-admin-key"] = ADMIN_KEY;
+    }
+
+    const response = await fetch(url, {
+      ...options,
+      headers
     });
 
-    req.on("end", () => {
-      if (!body) {
-        resolve({});
-        return;
-      }
+    let data = null;
 
-      try {
-        resolve(JSON.parse(body));
-      } catch {
-        reject(
-          new Error("Invalid JSON")
-        );
-      }
-    });
-
-    req.on("error", reject);
-  });
-}
-
-
-// ============================================================
-// DATABASE INIT
-// ============================================================
-
-async function initDatabase() {
-  if (!pool) {
-    console.log(
-      "DATABASE_URL not configured"
-    );
-
-    return;
-  }
-
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS access_keys (
-      id SERIAL PRIMARY KEY,
-      access_key TEXT UNIQUE NOT NULL,
-      device_id TEXT,
-      created_at BIGINT NOT NULL,
-      last_seen BIGINT DEFAULT 0
-    )
-  `);
-
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS prediction_records (
-      id SERIAL PRIMARY KEY,
-      target_issue TEXT NOT NULL,
-      prediction TEXT NOT NULL,
-      confidence INTEGER DEFAULT 0,
-      model_version TEXT,
-      actual_number INTEGER,
-      actual_result TEXT,
-      settled_at BIGINT,
-      created_at BIGINT NOT NULL
-    )
-  `);
-
-  await pool.query(`
-    ALTER TABLE prediction_records
-    ADD COLUMN IF NOT EXISTS confidence INTEGER DEFAULT 0
-  `);
-
-  await pool.query(`
-    ALTER TABLE prediction_records
-    ADD COLUMN IF NOT EXISTS model_version TEXT
-  `);
-
-  await pool.query(`
-    ALTER TABLE prediction_records
-    ADD COLUMN IF NOT EXISTS actual_number INTEGER
-  `);
-
-  await pool.query(`
-    ALTER TABLE prediction_records
-    ADD COLUMN IF NOT EXISTS actual_result TEXT
-  `);
-
-  await pool.query(`
-    ALTER TABLE prediction_records
-    ADD COLUMN IF NOT EXISTS settled_at BIGINT
-  `);
-
-  await pool.query(`
-    ALTER TABLE prediction_records
-    ADD COLUMN IF NOT EXISTS created_at BIGINT
-  `);
-
-  await pool.query(`
-    UPDATE prediction_records
-    SET model_version = 'LEGACY'
-    WHERE model_version IS NULL
-  `);
-
-  await pool.query(`
-    CREATE UNIQUE INDEX IF NOT EXISTS
-    prediction_model_issue_unique
-    ON prediction_records(model_version, target_issue)
-  `);
-
-  console.log(
-    "Database initialized"
-  );
-}
-
-
-// ============================================================
-// WINGOBOT
-// ============================================================
-
-async function fetchWingoBot() {
-  if (!WINGOBOT_TOKEN) {
-    provider.ok = false;
-    provider.error =
-      "WINGOBOT_TOKEN is not configured";
-
-    return provider;
-  }
-
-  if (providerFetching) {
-    return provider;
-  }
-
-  providerFetching = true;
-
-  try {
-    const response =
-      await fetch(
-        WINGOBOT_URL,
-        {
-          method: "GET",
-          headers: {
-            "Authorization":
-              `Bearer ${WINGOBOT_TOKEN}`,
-            "Accept":
-              "application/json"
-          }
-        }
-      );
-
-    const raw =
-      await response.text();
+    try {
+      data = await response.json();
+    } catch {
+      data = {};
+    }
 
     if (!response.ok) {
-      throw new Error(
-        `WingoBot HTTP ${response.status}`
-      );
+
+      const message =
+        data.error ||
+        data.message ||
+        `HTTP ${response.status}`;
+
+      throw new Error(message);
     }
 
-    let data;
+    return data;
+
+  }
+
+
+  /* -------------------------
+     LOGIN
+  ------------------------- */
+
+  async function login() {
+
+    const key = $("adminKey").value.trim();
+
+    if (!key) {
+
+      showLoginError("Admin key enter karo.");
+
+      return;
+    }
+
+    $("loginError").classList.add("hidden");
 
     try {
-      data =
-        JSON.parse(raw);
-    } catch {
-      throw new Error(
-        "Invalid WingoBot JSON"
-      );
-    }
 
-    const normalized =
-      normalizeResponse(data);
-
-    provider = {
-      ok: true,
-      history:
-        normalized.history,
-      currentIssue:
-        normalized.currentIssue,
-      lastUpdated:
-        normalized.lastUpdated,
-      fetched:
-        normalized.fetched,
-      error: null,
-      fetchedAt: now()
-    };
-
-    return provider;
-
-  } catch (error) {
-    provider.ok = false;
-
-    provider.error =
-      error.message ||
-      "Provider error";
-
-    provider.fetchedAt =
-      now();
-
-    console.error(
-      "Provider:",
-      provider.error
-    );
-
-    return provider;
-
-  } finally {
-    providerFetching = false;
-  }
-}
-
-
-// ============================================================
-// NORMALIZE PROVIDER DATA
-// ============================================================
-
-function normalizeResponse(data) {
-  const currentIssue =
-    cleanIssue(
-      data?.current?.issueNumber ??
-      data?.current?.issue ??
-      data?.currentIssue
-    );
-
-  const rows =
-    Array.isArray(data?.history)
-      ? data.history
-      : Array.isArray(data?.data)
-        ? data.data
-        : Array.isArray(data)
-          ? data
-          : [];
-
-  const map = new Map();
-
-  for (const row of rows) {
-    if (!row) {
-      continue;
-    }
-
-    const issue =
-      cleanIssue(
-        row.issueNumber ??
-        row.issue ??
-        row.period ??
-        row.periodNumber
-      );
-
-    if (!issue) {
-      continue;
-    }
-
-    const rawNumber =
-      row.number ??
-      row.num ??
-      null;
-
-    let number = null;
-
-    if (
-      rawNumber !== null &&
-      rawNumber !== undefined &&
-      String(rawNumber).trim() !== ""
-    ) {
-      const n =
-        Number(rawNumber);
+      const data = await api("/api/admin/status", {
+        headers: {
+          "x-admin-key": key
+        }
+      });
 
       if (
-        Number.isInteger(n) &&
-        n >= 0 &&
-        n <= 9
+        data &&
+        (
+          data.ok === true ||
+          data.status === "ok" ||
+          data.success === true
+        )
       ) {
-        number = n;
-      }
-    }
 
-    const side =
-      normalizeSide(
-        row.colour ??
-        row.color ??
-        row.resultType ??
-        row.bigSmall ??
-        row.side,
-        number
+        ADMIN_KEY = key;
+
+        $("loginScreen").style.display = "none";
+        $("app").style.display = "block";
+
+        log("Admin login successful.");
+
+        await refreshAll();
+
+        if (!stateTimer) {
+
+          stateTimer = setInterval(() => {
+
+            refreshState(false);
+
+          }, 3000);
+
+        }
+
+        return;
+      }
+
+      showLoginError("Invalid admin key.");
+
+    } catch (error) {
+
+      console.error(error);
+
+      showLoginError(
+        error.message || "Admin login failed."
       );
 
-    /*
-      A row without a valid side/number
-      is NOT a settled result.
-    */
-
-    if (!side) {
-      continue;
     }
 
-    map.set(
-      issue,
-      {
-        issueNumber: issue,
-        number,
-        side,
-        colour:
-          row.colour ??
-          row.color ??
-          side,
-        premium:
-          row.premium ?? null,
-        sum:
-          row.sum ?? null
-      }
-    );
   }
 
-  const history =
-    Array.from(map.values());
 
-  history.sort((a, b) => {
-    try {
-      const aa =
-        BigInt(a.issueNumber);
+  function showLoginError(message) {
 
-      const bb =
-        BigInt(b.issueNumber);
+    const el = $("loginError");
 
-      if (aa > bb) return -1;
-      if (aa < bb) return 1;
+    el.textContent = message;
 
-      return 0;
-    } catch {
-      return String(
-        b.issueNumber
-      ).localeCompare(
-        String(a.issueNumber)
-      );
+    el.classList.remove("hidden");
+
+  }
+
+
+  function logout() {
+
+    ADMIN_KEY = "";
+
+    if (stateTimer) {
+
+      clearInterval(stateTimer);
+
+      stateTimer = null;
+
     }
+
+    $("app").style.display = "none";
+    $("loginScreen").style.display = "flex";
+
+    $("adminKey").value = "";
+
+    log("Admin logged out.");
+
+  }
+
+
+  $("adminKey").addEventListener("keydown", function(e) {
+
+    if (e.key === "Enter") {
+      login();
+    }
+
   });
 
-  return {
-    currentIssue,
-    history:
-      history.slice(
-        0,
-        MAX_HISTORY
-      ),
-    lastUpdated:
-      data?.stats?.last_updated ??
-      data?.last_updated ??
-      data?.lastUpdated ??
-      null,
-    fetched:
-      Number(
-        data?.stats?.fetched ??
-        history.length
-      ) ||
-      history.length
-  };
-}
 
+  /* -------------------------
+     STATUS
+  ------------------------- */
 
-// ============================================================
-// TARGET RESOLVER
-// ============================================================
+  async function refreshStatus() {
 
-function resolveTargetIssue() {
-  const history =
-    provider.history || [];
-
-  const latestSettled =
-    history.length
-      ? history[0].issueNumber
-      : null;
-
-  const current =
-    cleanIssue(
-      provider.currentIssue
-    );
-
-  if (
-    latestSettled &&
-    current
-  ) {
     try {
-      const h =
-        BigInt(latestSettled);
 
-      const c =
-        BigInt(current);
+      const data = await api("/api/admin/status");
 
-      /*
-        Provider current is ahead:
-        use it as target.
-      */
+      $("serverStatus").textContent =
+        data.server ||
+        data.status ||
+        "ONLINE";
 
-      if (c > h) {
-        return current;
-      }
+      $("serverStatus").className = "live";
 
-      /*
-        Otherwise latest settled + 1.
-      */
+      $("dbStatus").textContent =
+        data.database ||
+        data.db ||
+        "CONNECTED";
 
-      return (
-        h + 1n
-      ).toString();
+      $("dbStatus").className =
+        String(data.database || data.db || "")
+          .toLowerCase()
+          .includes("fail")
+          ? "offline"
+          : "live";
 
-    } catch {
-      if (
-        current !==
-        latestSettled
-      ) {
-        return current;
-      }
+      $("wingoStatus").textContent =
+        data.wingobot ||
+        data.wingo ||
+        "CONNECTED";
 
-      return incrementIssue(
-        latestSettled
-      );
-    }
-  }
-
-  if (current) {
-    return current;
-  }
-
-  if (latestSettled) {
-    return incrementIssue(
-      latestSettled
-    );
-  }
-
-  return null;
-}
-
-
-// ============================================================
-// HISTORY SIDES
-// ============================================================
-
-function getSides(limit = 100) {
-  return (provider.history || [])
-    .filter(
-      x => x && x.side
-    )
-    .slice(0, limit)
-    .map(
-      x => x.side
-    );
-}
-
-
-// ============================================================
-// SIGNAL 1
-// RECENT WEIGHTED MOMENTUM
-// ============================================================
-
-function recentMomentum(sides) {
-  const arr =
-    sides.slice(0, 7);
-
-  if (!arr.length) {
-    return 0;
-  }
-
-  const weights = [
-    1.00,
-    0.92,
-    0.82,
-    0.70,
-    0.58,
-    0.45,
-    0.32
-  ];
-
-  let score = 0;
-  let total = 0;
-
-  for (
-    let i = 0;
-    i < arr.length;
-    i++
-  ) {
-    const value =
-      arr[i] === "BIG"
-        ? 1
-        : -1;
-
-    score +=
-      value *
-      weights[i];
-
-    total +=
-      weights[i];
-  }
-
-  return total
-    ? clamp(
-        score / total,
-        -1,
-        1
-      )
-    : 0;
-}
-
-
-// ============================================================
-// SIGNAL 2
-// MEDIUM BALANCE
-// ============================================================
-
-function mediumBalance(sides) {
-  const arr =
-    sides.slice(0, 20);
-
-  if (!arr.length) {
-    return 0;
-  }
-
-  let big = 0;
-  let small = 0;
-
-  for (const side of arr) {
-    if (side === "BIG") {
-      big++;
-    } else {
-      small++;
-    }
-  }
-
-  return clamp(
-    (big - small) /
-    arr.length,
-    -1,
-    1
-  );
-}
-
-
-// ============================================================
-// SIGNAL 3
-// VERY RECENT BALANCE
-// ============================================================
-
-function microBalance(sides) {
-  const arr =
-    sides.slice(0, 4);
-
-  if (!arr.length) {
-    return 0;
-  }
-
-  let big = 0;
-  let small = 0;
-
-  for (const side of arr) {
-    if (side === "BIG") {
-      big++;
-    } else {
-      small++;
-    }
-  }
-
-  return clamp(
-    (big - small) /
-    arr.length,
-    -1,
-    1
-  );
-}
-
-
-// ============================================================
-// SIGNAL 4
-// TRANSITIONS
-// ============================================================
-
-function transitionModel(sides) {
-  const arr =
-    sides.slice(0, 25);
-
-  if (arr.length < 3) {
-    return 0;
-  }
-
-  let bb = 0;
-  let bs = 0;
-  let sb = 0;
-  let ss = 0;
-
-  for (
-    let i = 0;
-    i < arr.length - 1;
-    i++
-  ) {
-    const current =
-      arr[i];
-
-    const older =
-      arr[i + 1];
-
-    if (
-      older === "BIG" &&
-      current === "BIG"
-    ) {
-      bb++;
-    }
-
-    if (
-      older === "BIG" &&
-      current === "SMALL"
-    ) {
-      bs++;
-    }
-
-    if (
-      older === "SMALL" &&
-      current === "BIG"
-    ) {
-      sb++;
-    }
-
-    if (
-      older === "SMALL" &&
-      current === "SMALL"
-    ) {
-      ss++;
-    }
-  }
-
-  const latest =
-    arr[0];
-
-  let predictionScore = 0;
-
-  if (latest === "BIG") {
-
-    const total =
-      bb + bs;
-
-    if (total > 0) {
-      /*
-        P(next BIG) vs P(next SMALL)
-      */
-
-      predictionScore =
-        (bb - bs) /
-        total;
-    }
-
-  } else {
-
-    const total =
-      sb + ss;
-
-    if (total > 0) {
-
-      predictionScore =
-        (sb - ss) /
-        total;
-    }
-  }
-
-  return clamp(
-    predictionScore,
-    -1,
-    1
-  );
-}
-
-
-// ============================================================
-// SIGNAL 5
-// STREAK BREAK
-// ============================================================
-
-function streakBreak(sides) {
-  const arr =
-    sides.slice(0, 20);
-
-  if (!arr.length) {
-    return 0;
-  }
-
-  const first =
-    arr[0];
-
-  let streak = 1;
-
-  while (
-    streak < arr.length &&
-    arr[streak] === first
-  ) {
-    streak++;
-  }
-
-  if (streak >= 7) {
-    return first === "BIG"
-      ? -0.90
-      : 0.90;
-  }
-
-  if (streak === 6) {
-    return first === "BIG"
-      ? -0.70
-      : 0.70;
-  }
-
-  if (streak === 5) {
-    return first === "BIG"
-      ? -0.48
-      : 0.48;
-  }
-
-  if (streak === 4) {
-    return first === "BIG"
-      ? -0.25
-      : 0.25;
-  }
-
-  if (streak === 3) {
-    return first === "BIG"
-      ? -0.08
-      : 0.08;
-  }
-
-  return 0;
-}
-
-
-// ============================================================
-// SIGNAL 6
-// ALTERNATION DETECTOR
-// ============================================================
-
-function alternationSignal(sides) {
-  const arr =
-    sides.slice(0, 10);
-
-  if (arr.length < 5) {
-    return 0;
-  }
-
-  let changes = 0;
-
-  for (
-    let i = 0;
-    i < arr.length - 1;
-    i++
-  ) {
-    if (
-      arr[i] !==
-      arr[i + 1]
-    ) {
-      changes++;
-    }
-  }
-
-  const ratio =
-    changes /
-    (arr.length - 1);
-
-  if (ratio >= 0.80) {
-
-    /*
-      Strong alternating sequence:
-      next side leans opposite latest.
-    */
-
-    return arr[0] === "BIG"
-      ? -0.75
-      : 0.75;
-  }
-
-  if (ratio >= 0.65) {
-
-    return arr[0] === "BIG"
-      ? -0.38
-      : 0.38;
-  }
-
-  return 0;
-}
-
-
-// ============================================================
-// SIGNAL 7
-// PATTERN MATCHING
-// ============================================================
-
-function patternSignal(sides) {
-  const arr =
-    sides.slice(0, 40);
-
-  if (arr.length < 7) {
-    return 0;
-  }
-
-  const patternLength = 4;
-
-  const pattern =
-    arr
-      .slice(0, patternLength)
-      .map(
-        x =>
-          x === "BIG"
-            ? "B"
-            : "S"
-      )
-      .join("");
-
-  let big = 0;
-  let small = 0;
-
-  for (
-    let i = patternLength;
-    i < arr.length - 1;
-    i++
-  ) {
-
-    const candidate =
-      arr
-        .slice(
-          i,
-          i + patternLength
-        )
-        .map(
-          x =>
-            x === "BIG"
-              ? "B"
-              : "S"
-        )
-        .join("");
-
-    if (
-      candidate !==
-      pattern
-    ) {
-      continue;
-    }
-
-    const next =
-      arr[i - 1];
-
-    if (next === "BIG") {
-      big++;
-    } else if (
-      next === "SMALL"
-    ) {
-      small++;
-    }
-  }
-
-  const total =
-    big + small;
-
-  if (!total) {
-    return 0;
-  }
-
-  return clamp(
-    (big - small) /
-    total,
-    -1,
-    1
-  );
-}
-
-
-// ============================================================
-// SIGNAL 8
-// LOCAL REVERSAL
-// ============================================================
-
-function reversalSignal(sides) {
-  const arr =
-    sides.slice(0, 6);
-
-  if (arr.length < 4) {
-    return 0;
-  }
-
-  /*
-    If last 3 contain same side
-    and older context disagrees,
-    reversal gets a modest boost.
-  */
-
-  const latest =
-    arr[0];
-
-  const same =
-    arr.filter(
-      x => x === latest
-    ).length;
-
-  if (same >= 4) {
-    return latest === "BIG"
-      ? -0.58
-      : 0.58;
-  }
-
-  if (same === 3) {
-    return latest === "BIG"
-      ? -0.25
-      : 0.25;
-  }
-
-  return 0;
-}
-
-
-// ============================================================
-// SIGNAL 9
-// LONG BALANCE
-// ============================================================
-
-function longBalance(sides) {
-  const arr =
-    sides.slice(0, 60);
-
-  if (!arr.length) {
-    return 0;
-  }
-
-  let big = 0;
-  let small = 0;
-
-  for (const side of arr) {
-    if (side === "BIG") {
-      big++;
-    } else {
-      small++;
-    }
-  }
-
-  return clamp(
-    (big - small) /
-    arr.length,
-    -1,
-    1
-  );
-}
-
-
-// ============================================================
-// REGIME
-// ============================================================
-
-function classifyRegime(
-  recent,
-  medium,
-  transition,
-  streak,
-  alternation,
-  reversal
-) {
-
-  if (
-    Math.abs(alternation) >= 0.60
-  ) {
-    return "ALTERNATING";
-  }
-
-  if (
-    Math.abs(streak) >= 0.45
-  ) {
-    return "STREAK_BREAK";
-  }
-
-  if (
-    Math.sign(recent) !==
-      Math.sign(medium) &&
-    Math.abs(recent) > 0.22 &&
-    Math.abs(medium) > 0.22
-  ) {
-    return "CONFLICT";
-  }
-
-  if (
-    Math.abs(transition) > 0.50
-  ) {
-    return "TRANSITION";
-  }
-
-  if (
-    Math.abs(recent) > 0.50 &&
-    Math.abs(medium) > 0.30
-  ) {
-    return "TREND";
-  }
-
-  if (
-    Math.abs(recent) > 0.25
-  ) {
-    return "SHORT_SHIFT";
-  }
-
-  return "MIXED";
-}
-
-
-// ============================================================
-// V4 AI
-// ============================================================
-
-function createPrediction() {
-
-  const sides =
-    getSides(100);
-
-  /*
-    Important:
-    Even one settled result is enough
-    for a BIG/SMALL prediction.
-  */
-
-  if (!sides.length) {
-
-    return {
-      prediction: null,
-      confidence: 0,
-      regime: "WAITING",
-      reason:
-        "Waiting for first settled result",
-      diagnostics: {}
-    };
-
-  }
-
-  const recent =
-    recentMomentum(sides);
-
-  const medium =
-    mediumBalance(sides);
-
-  const micro =
-    microBalance(sides);
-
-  const transition =
-    transitionModel(sides);
-
-  const streak =
-    streakBreak(sides);
-
-  const alternation =
-    alternationSignal(sides);
-
-  const pattern =
-    patternSignal(sides);
-
-  const reversal =
-    reversalSignal(sides);
-
-  const long =
-    longBalance(sides);
-
-  /*
-    V4 core score.
-  */
-
-  let score =
-    recent * 0.27 +
-    micro * 0.12 +
-    medium * 0.12 +
-    transition * 0.14 +
-    streak * 0.12 +
-    alternation * 0.10 +
-    pattern * 0.05 +
-    reversal * 0.05 +
-    long * 0.03;
-
-  /*
-    Strong alternating sequence gets
-    priority over simple trend.
-  */
-
-  if (
-    Math.abs(alternation) >= 0.60
-  ) {
-
-    score =
-      score * 0.70 +
-      alternation * 0.30;
-
-  }
-
-  /*
-    Long streak should not be blindly followed.
-  */
-
-  if (
-    Math.abs(streak) >= 0.45
-  ) {
-
-    score =
-      score * 0.72 +
-      streak * 0.28;
-
-  }
-
-  /*
-    If recent and transition agree,
-    give a small boost.
-  */
-
-  if (
-    Math.sign(recent) ===
-      Math.sign(transition) &&
-    Math.abs(recent) > 0.25 &&
-    Math.abs(transition) > 0.25
-  ) {
-
-    score *= 1.08;
-
-  }
-
-  /*
-    If signals strongly conflict,
-    reduce confidence but still select
-    a side.
-  */
-
-  const regime =
-    classifyRegime(
-      recent,
-      medium,
-      transition,
-      streak,
-      alternation,
-      reversal
-    );
-
-  if (
-    regime === "CONFLICT"
-  ) {
-
-    score *= 0.82;
-
-  }
-
-  /*
-    Compulsory BIG/SMALL.
-  */
-
-  const prediction =
-    score >= 0
-      ? "BIG"
-      : "SMALL";
-
-  /*
-    Confidence represents signal strength,
-    NOT guaranteed probability.
-  */
-
-  let confidence =
-    48 +
-    Math.abs(score) * 32;
-
-  if (
-    regime === "CONFLICT"
-  ) {
-    confidence -= 6;
-  }
-
-  if (
-    regime === "MIXED"
-  ) {
-    confidence -= 2;
-  }
-
-  if (
-    sides.length < 5
-  ) {
-    confidence -= 4;
-  }
-
-  confidence =
-    Math.round(
-      clamp(
-        confidence,
-        45,
-        88
-      )
-    );
-
-  let reason;
-
-  switch (regime) {
-
-    case "ALTERNATING":
-      reason =
-        "Alternating pattern detected";
-
-      break;
-
-    case "STREAK_BREAK":
-      reason =
-        "Strong streak-break pressure";
-
-      break;
-
-    case "CONFLICT":
-      reason =
-        "Recent and medium signals conflict";
-
-      break;
-
-    case "TRANSITION":
-      reason =
-        "Transition pattern is dominant";
-
-      break;
-
-    case "TREND":
-      reason =
-        "Recent and medium trend aligned";
-
-      break;
-
-    case "SHORT_SHIFT":
-      reason =
-        "Recent-side momentum shifted";
-
-      break;
-
-    default:
-      reason =
-        "Multiple mixed signals combined";
-
-      break;
-  }
-
-  return {
-    prediction,
-    confidence,
-    regime,
-    reason,
-
-    diagnostics: {
-      recent:
-        Number(
-          recent.toFixed(4)
-        ),
-
-      micro:
-        Number(
-          micro.toFixed(4)
-        ),
-
-      medium:
-        Number(
-          medium.toFixed(4)
-        ),
-
-      transition:
-        Number(
-          transition.toFixed(4)
-        ),
-
-      streak:
-        Number(
-          streak.toFixed(4)
-        ),
-
-      alternation:
-        Number(
-          alternation.toFixed(4)
-        ),
-
-      pattern:
-        Number(
-          pattern.toFixed(4)
-        ),
-
-      reversal:
-        Number(
-          reversal.toFixed(4)
-        ),
-
-      long:
-        Number(
-          long.toFixed(4)
-        ),
-
-      score:
-        Number(
-          score.toFixed(4)
-        ),
-
-      history:
-        sides.length
-    }
-  };
-}
-
-
-// ============================================================
-// GET STORED PREDICTION
-// ============================================================
-
-async function getStoredPrediction(issue) {
-
-  if (
-    !pool ||
-    !issue
-  ) {
-    return null;
-  }
-
-  const result =
-    await pool.query(
-      `
-        SELECT *
-        FROM prediction_records
-        WHERE model_version = $1
-        AND target_issue = $2
-        ORDER BY id DESC
-        LIMIT 1
-      `,
-      [
-        MODEL_VERSION,
-        issue
-      ]
-    );
-
-  return (
-    result.rows[0] ||
-    null
-  );
-}
-
-
-// ============================================================
-// CREATE STORED PREDICTION
-// ============================================================
-
-async function ensurePrediction(issue) {
-
-  if (!issue) {
-    return null;
-  }
-
-  const existing =
-    await getStoredPrediction(
-      issue
-    );
-
-  if (existing) {
-    return existing;
-  }
-
-  const ai =
-    createPrediction();
-
-  /*
-    V4 must always choose a side
-    when at least one settled result exists.
-  */
-
-  if (!ai.prediction) {
-    return null;
-  }
-
-  if (!pool) {
-
-    return {
-      id: null,
-
-      target_issue:
-        issue,
-
-      prediction:
-        ai.prediction,
-
-      confidence:
-        ai.confidence,
-
-      model_version:
-        MODEL_VERSION,
-
-      actual_number:
-        null,
-
-      actual_result:
-        null,
-
-      settled_at:
-        null,
-
-      created_at:
-        now(),
-
-      regime:
-        ai.regime,
-
-      reason:
-        ai.reason,
-
-      diagnostics:
-        ai.diagnostics
-    };
-
-  }
-
-  const result =
-    await pool.query(
-      `
-        INSERT INTO prediction_records
-        (
-          target_issue,
-          prediction,
-          confidence,
-          model_version,
-          actual_number,
-          actual_result,
-          settled_at,
-          created_at
-        )
-        VALUES
-        ($1,$2,$3,$4,NULL,NULL,NULL,$5)
-        ON CONFLICT
-        (model_version,target_issue)
-        DO NOTHING
-        RETURNING *
-      `,
-      [
-        issue,
-        ai.prediction,
-        ai.confidence,
-        MODEL_VERSION,
-        now()
-      ]
-    );
-
-  if (
-    result.rows[0]
-  ) {
-
-    return {
-      ...result.rows[0],
-
-      regime:
-        ai.regime,
-
-      reason:
-        ai.reason,
-
-      diagnostics:
-        ai.diagnostics
-    };
-
-  }
-
-  return getStoredPrediction(
-    issue
-  );
-}
-
-
-// ============================================================
-// SETTLEMENT
-// ============================================================
-
-async function settlePredictions() {
-
-  if (
-    !pool ||
-    !provider.history?.length
-  ) {
-    return;
-  }
-
-  const pending =
-    await pool.query(
-      `
-        SELECT *
-        FROM prediction_records
-        WHERE model_version = $1
-        AND actual_result IS NULL
-        ORDER BY id DESC
-        LIMIT 100
-      `,
-      [MODEL_VERSION]
-    );
-
-  if (!pending.rows.length) {
-    return;
-  }
-
-  const actualMap =
-    new Map();
-
-  for (
-    const row of provider.history
-  ) {
-
-    if (
-      !row.issueNumber ||
-      !row.side
-    ) {
-      continue;
-    }
-
-    actualMap.set(
-      String(
-        row.issueNumber
-      ),
-      row
-    );
-
-  }
-
-  for (
-    const prediction
-    of pending.rows
-  ) {
-
-    const actual =
-      actualMap.get(
+      $("wingoStatus").className =
         String(
-          prediction.target_issue
+          data.wingobot ||
+          data.wingo ||
+          ""
         )
-      );
+          .toLowerCase()
+          .includes("fail")
+          ? "offline"
+          : "live";
 
-    /*
-      Exact period only.
-    */
+      $("modelVersion").textContent =
+        data.model_version ||
+        data.model ||
+        "DY-AI-BS-V4";
 
-    if (!actual) {
-      continue;
+    } catch (error) {
+
+      $("serverStatus").textContent = "ERROR";
+      $("serverStatus").className = "offline";
+
+      log("Status error: " + error.message);
+
     }
 
-    const actualSide =
-      actual.side ||
-      sideFromNumber(
-        actual.number
-      );
-
-    if (!actualSide) {
-      continue;
-    }
-
-    const result =
-      actualSide ===
-      prediction.prediction
-        ? "WIN"
-        : "LOSS";
-
-    await pool.query(
-      `
-        UPDATE prediction_records
-        SET
-          actual_number = $1,
-          actual_result = $2,
-          settled_at = $3
-        WHERE id = $4
-        AND actual_result IS NULL
-      `,
-      [
-        actual.number,
-        result,
-        now(),
-        prediction.id
-      ]
-    );
-  }
-}
-
-
-// ============================================================
-// CURRENT PREDICTION
-// ============================================================
-
-async function currentPrediction() {
-
-  const target =
-    resolveTargetIssue();
-
-  if (!target) {
-
-    return {
-      targetIssue: null,
-      prediction: null,
-      confidence: 0,
-      regime: "WAITING",
-      reason:
-        "Waiting for provider data",
-      modelVersion:
-        MODEL_VERSION,
-      diagnostics: null
-    };
-
   }
 
-  const record =
-    await ensurePrediction(
-      target
-    );
 
-  if (!record) {
-
-    return {
-      targetIssue:
-        target,
-
-      prediction:
-        null,
-
-      confidence:
-        0,
-
-      regime:
-        "WAITING",
-
-      reason:
-        "Waiting for settled history",
-
-      modelVersion:
-        MODEL_VERSION,
-
-      diagnostics:
-        null
-    };
-
-  }
-
-  /*
-    Stored prediction stays locked
-    for the exact target issue.
-  */
-
-  return {
-    targetIssue:
-      target,
-
-    prediction:
-      record.prediction,
-
-    confidence:
-      Number(
-        record.confidence || 0
-      ),
-
-    regime:
-      record.regime ||
-      "MIXED",
-
-    reason:
-      record.reason ||
-      "AI analysis complete",
-
-    modelVersion:
-      record.model_version ||
-      MODEL_VERSION,
-
-    diagnostics:
-      record.diagnostics ||
-      null,
-
-    createdAt:
-      record.created_at ||
-      null
-  };
-}
-
-
-// ============================================================
-// LAST 30
-// ============================================================
-
-async function last30() {
-
-  if (!pool) {
-    return [];
-  }
-
-  const result =
-    await pool.query(
-      `
-        SELECT
-          id,
-          target_issue,
-          prediction,
-          confidence,
-          model_version,
-          actual_number,
-          actual_result,
-          settled_at,
-          created_at
-        FROM prediction_records
-        WHERE model_version = $1
-        ORDER BY id DESC
-        LIMIT 30
-      `,
-      [MODEL_VERSION]
-    );
-
-  const actualMap =
-    new Map();
-
-  for (
-    const row of provider.history || []
-  ) {
-
-    if (
-      !row.issueNumber ||
-      !row.side
-    ) {
-      continue;
-    }
-
-    actualMap.set(
-      String(
-        row.issueNumber
-      ),
-      row
-    );
-
-  }
-
-  return result.rows.map(
-    row => {
-
-      const actual =
-        actualMap.get(
-          String(
-            row.target_issue
-          )
-        );
-
-      let resultText =
-        null;
-
-      let wl =
-        "PENDING";
-
-      /*
-        Do NOT use database actual_result
-        blindly for display if provider has
-        no exact result.
-
-        Exact current provider period wins.
-      */
-
-      if (actual) {
-
-        resultText =
-          actual.side;
-
-        wl =
-          actual.side ===
-          row.prediction
-            ? "WIN"
-            : "LOSS";
-
-      }
-
-      return {
-        id:
-          row.id,
-
-        issue:
-          row.target_issue,
-
-        period:
-          row.target_issue,
-
-        number:
-          null,
-
-        result:
-          resultText,
-
-        predict:
-          row.prediction,
-
-        prediction:
-          row.prediction,
-
-        wl,
-
-        confidence:
-          Number(
-            row.confidence || 0
-          ),
-
-        modelVersion:
-          row.model_version,
-
-        settled:
-          Boolean(actual),
-
-        createdAt:
-          row.created_at,
-
-        settledAt:
-          row.settled_at
-      };
-
-    }
-  );
-}
-
-
-// ============================================================
-// STATS
-// ============================================================
-
-async function stats() {
-
-  if (!pool) {
-
-    return {
-      wins: 0,
-      losses: 0,
-      pending: 0,
-      total: 0,
-      winRate: 0
-    };
-
-  }
-
-  const result =
-    await pool.query(
-      `
-        SELECT
-          COUNT(*) FILTER
-          (
-            WHERE actual_result = 'WIN'
-          ) AS wins,
-
-          COUNT(*) FILTER
-          (
-            WHERE actual_result = 'LOSS'
-          ) AS losses,
-
-          COUNT(*) FILTER
-          (
-            WHERE actual_result IS NULL
-          ) AS pending
-
-        FROM prediction_records
-        WHERE model_version = $1
-      `,
-      [MODEL_VERSION]
-    );
-
-  const row =
-    result.rows[0];
-
-  const wins =
-    Number(row.wins || 0);
-
-  const losses =
-    Number(row.losses || 0);
-
-  const pending =
-    Number(row.pending || 0);
-
-  const total =
-    wins + losses;
-
-  const winRate =
-    total
-      ? Number(
-          (
-            wins /
-            total *
-            100
-          ).toFixed(1)
-        )
-      : 0;
-
-  return {
-    wins,
-    losses,
-    pending,
-    total,
-    winRate
-  };
-}
-
-
-// ============================================================
-// ACCESS KEY
-// ============================================================
-
-async function checkAccessKey(
-  accessKey,
-  deviceId
-) {
-
-  if (!pool) {
-
-    return {
-      ok: false,
-      message:
-        "Database unavailable"
-    };
-
-  }
-
-  if (!accessKey) {
-
-    return {
-      ok: false,
-      message:
-        "Access key required"
-    };
-
-  }
-
-  if (!deviceId) {
-
-    return {
-      ok: false,
-      message:
-        "Device ID required"
-    };
-
-  }
-
-  const result =
-    await pool.query(
-      `
-        SELECT *
-        FROM access_keys
-        WHERE access_key = $1
-        LIMIT 1
-      `,
-      [accessKey]
-    );
-
-  if (!result.rows.length) {
-
-    return {
-      ok: false,
-      message:
-        "Invalid access key"
-    };
-
-  }
-
-  const row =
-    result.rows[0];
-
-  /*
-    First device binds.
-  */
-
-  if (!row.device_id) {
-
-    await pool.query(
-      `
-        UPDATE access_keys
-        SET
-          device_id = $1,
-          last_seen = $2
-        WHERE id = $3
-      `,
-      [
-        deviceId,
-        now(),
-        row.id
-      ]
-    );
-
-    return {
-      ok: true,
-      message:
-        "Access granted"
-    };
-
-  }
-
-  if (
-    row.device_id !==
-    deviceId
-  ) {
-
-    return {
-      ok: false,
-      message:
-        "This key is already bound to another device"
-    };
-
-  }
-
-  await pool.query(
-    `
-      UPDATE access_keys
-      SET last_seen = $1
-      WHERE id = $2
-    `,
-    [
-      now(),
-      row.id
-    ]
-  );
-
-  return {
-    ok: true,
-    message:
-      "Access granted"
-  };
-}
-
-
-// ============================================================
-// ADMIN AUTH
-// ============================================================
-
-function isAdmin(req) {
-
-  const header =
-    req.headers["x-admin-key"];
-
-  const authorization =
-    req.headers["authorization"];
-
-  const key =
-    header ||
-    (
-      authorization
-        ? authorization.replace(
-            /^Bearer\s+/i,
-            ""
-          )
-        : ""
-    );
-
-  return (
-    safeString(key) ===
-    ADMIN_KEY
-  );
-}
-
-
-// ============================================================
-// ADMIN KEYS
-// ============================================================
-
-async function listKeys() {
-
-  if (!pool) {
-    return [];
-  }
-
-  const result =
-    await pool.query(
-      `
-        SELECT
-          id,
-          access_key,
-          device_id,
-          created_at,
-          last_seen
-        FROM access_keys
-        ORDER BY id DESC
-      `
-    );
-
-  return result.rows;
-}
-
-
-async function createKey(custom) {
-
-  if (!pool) {
-    throw new Error(
-      "Database unavailable"
-    );
-  }
-
-  const key =
-    safeString(custom).trim() ||
-    randomKey();
-
-  const result =
-    await pool.query(
-      `
-        INSERT INTO access_keys
-        (
-          access_key,
-          device_id,
-          created_at,
-          last_seen
-        )
-        VALUES
-        ($1,NULL,$2,0)
-        RETURNING *
-      `,
-      [
-        key,
-        now()
-      ]
-    );
-
-  return result.rows[0];
-}
-
-
-async function resetDevice(id) {
-
-  if (!pool) {
-    throw new Error(
-      "Database unavailable"
-    );
-  }
-
-  const result =
-    await pool.query(
-      `
-        UPDATE access_keys
-        SET
-          device_id = NULL,
-          last_seen = 0
-        WHERE id = $1
-        RETURNING *
-      `,
-      [id]
-    );
-
-  return (
-    result.rows[0] ||
-    null
-  );
-}
-
-
-async function deleteKey(id) {
-
-  if (!pool) {
-    throw new Error(
-      "Database unavailable"
-    );
-  }
-
-  const result =
-    await pool.query(
-      `
-        DELETE FROM access_keys
-        WHERE id = $1
-        RETURNING id
-      `,
-      [id]
-    );
-
-  return Boolean(
-    result.rows.length
-  );
-}
-
-
-// ============================================================
-// STATE
-// ============================================================
-
-async function getState() {
-
-  await settlePredictions();
-
-  const current =
-    await currentPrediction();
-
-  return {
-
-    ok: true,
-
-    gameUrl:
-      GAME_URL,
-
-    model: {
-
-      version:
-        MODEL_VERSION,
-
-      type:
-        "BIG/SMALL",
-
-      numberPrediction:
-        false
-
-    },
-
-    provider: {
-
-      ok:
-        provider.ok,
-
-      currentIssue:
-        provider.currentIssue,
-
-      lastUpdated:
-        provider.lastUpdated,
-
-      fetched:
-        provider.fetched,
-
-      historyCount:
-        provider.history?.length || 0,
-
-      fetchedAt:
-        provider.fetchedAt,
-
-      error:
-        provider.error
-
-    },
-
-    current: {
-
-      issue:
-        current.targetIssue,
-
-      targetIssue:
-        current.targetIssue,
-
-      prediction:
-        current.prediction,
-
-      confidence:
-        current.confidence,
-
-      regime:
-        current.regime,
-
-      reason:
-        current.reason,
-
-      modelVersion:
-        current.modelVersion,
-
-      diagnostics:
-        current.diagnostics
-
-    },
-
-    stats:
-      await stats(),
-
-    last30:
-      await last30(),
-
-    serverTime:
-      now()
-
-  };
-}
-
-
-// ============================================================
-// MODEL TEST
-// ============================================================
-
-function modelTest() {
-
-  const ai =
-    createPrediction();
-
-  return {
-
-    ok:
-      Boolean(
-        ai.prediction
-      ),
-
-    modelVersion:
-      MODEL_VERSION,
-
-    prediction:
-      ai.prediction,
-
-    confidence:
-      ai.confidence,
-
-    regime:
-      ai.regime,
-
-    reason:
-      ai.reason,
-
-    diagnostics:
-      ai.diagnostics,
-
-    historyCount:
-      provider.history?.length || 0,
-
-    providerOk:
-      provider.ok
-
-  };
-}
-
-
-// ============================================================
-// STATIC FILES
-// ============================================================
-
-function serveFile(
-  res,
-  fileName,
-  contentType
-) {
-
-  const filePath =
-    path.join(
-      __dirname,
-      fileName
-    );
-
-  fs.stat(
-    filePath,
-    (statError, stat) => {
-
-      if (
-        statError ||
-        !stat.isFile()
-      ) {
-
-        text(
-          res,
-          404,
-          "File not found"
-        );
-
-        return;
-
-      }
-
-      fs.readFile(
-        filePath,
-        (error, data) => {
-
-          if (error) {
-
-            text(
-              res,
-              500,
-              "Unable to read file"
-            );
-
-            return;
-
-          }
-
-          res.writeHead(
-            200,
-            {
-              "Content-Type":
-                contentType,
-
-              "Cache-Control":
-                fileName.endsWith(".html")
-                  ? "no-store"
-                  : "public, max-age=3600"
-            }
-          );
-
-          res.end(data);
-
-        }
-      );
-
-    }
-  );
-}
-
-
-// ============================================================
-// MUSIC
-// ============================================================
-
-function serveMusic(res, req) {
-
-  const filePath =
-    path.join(
-      __dirname,
-      "music.mp3"
-    );
-
-  fs.stat(
-    filePath,
-    (error, stat) => {
-
-      if (
-        error ||
-        !stat.isFile()
-      ) {
-
-        text(
-          res,
-          404,
-          "music.mp3 not found"
-        );
-
-        return;
-
-      }
-
-      const size =
-        stat.size;
-
-      const range =
-        req.headers.range;
-
-      if (!range) {
-
-        res.writeHead(
-          200,
-          {
-            "Content-Type":
-              "audio/mpeg",
-
-            "Content-Length":
-              size,
-
-            "Accept-Ranges":
-              "bytes"
-          }
-        );
-
-        fs.createReadStream(
-          filePath
-        ).pipe(res);
-
-        return;
-
-      }
-
-      const match =
-        range.match(
-          /bytes=(\d*)-(\d*)/
-        );
-
-      if (!match) {
-
-        res.writeHead(
-          416,
-          {
-            "Content-Range":
-              `bytes */${size}`
-          }
-        );
-
-        res.end();
-
-        return;
-
-      }
-
-      let start =
-        match[1]
-          ? Number(match[1])
+  /* -------------------------
+     STATE
+  ------------------------- */
+
+  async function refreshState(writeLog = true) {
+
+    try {
+
+      const data = await api("/api/state");
+
+      const state = data.state || data;
+
+      const prediction =
+        state.prediction ||
+        data.prediction ||
+        {};
+
+      const target =
+        state.targetIssue ||
+        state.target_issue ||
+        data.targetIssue ||
+        data.target_issue ||
+        prediction.target_issue ||
+        "—";
+
+      const current =
+        state.currentIssue ||
+        state.current_issue ||
+        data.currentIssue ||
+        data.current_issue ||
+        "—";
+
+      $("currentIssue").textContent = current;
+      $("targetIssue").textContent = target;
+
+      const side =
+        prediction.prediction ||
+        prediction.side ||
+        state.predictionSide ||
+        state.prediction ||
+        "—";
+
+      $("currentPrediction").textContent =
+        String(side).toUpperCase();
+
+      const confidence =
+        prediction.confidence ??
+        state.confidence ??
+        "—";
+
+      $("currentConfidence").textContent =
+        confidence === "—"
+          ? "—"
+          : `${confidence}%`;
+
+      $("currentRegime").textContent =
+        prediction.regime ||
+        state.regime ||
+        "MIXED";
+
+      $("currentReason").textContent =
+        prediction.reason ||
+        state.reason ||
+        "Live V4 model analysis.";
+
+      const history =
+        state.history ||
+        data.history ||
+        [];
+
+      $("historyCount").textContent =
+        Array.isArray(history)
+          ? history.length
           : 0;
 
-      let end =
-        match[2]
-          ? Number(match[2])
-          : size - 1;
+      $("lastUpdate").textContent =
+        new Date().toLocaleTimeString();
 
-      start =
-        Math.max(
-          0,
-          Math.min(
-            start,
-            size - 1
+      if (writeLog) {
+        log("State refreshed.");
+      }
+
+      renderPredictionHistory(
+        state.predictions ||
+        state.predictionHistory ||
+        data.predictions ||
+        data.predictionHistory ||
+        []
+      );
+
+    } catch (error) {
+
+      log("State error: " + error.message);
+
+    }
+
+  }
+
+
+  /* -------------------------
+     PREDICTION HISTORY
+  ------------------------- */
+
+  function renderPredictionHistory(rows) {
+
+    const tbody = $("predictionTable");
+
+    if (!Array.isArray(rows) || rows.length === 0) {
+
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5"
+              style="text-align:center;color:#64748b;padding:25px;">
+            No prediction records found.
+          </td>
+        </tr>
+      `;
+
+      return;
+    }
+
+    tbody.innerHTML = rows
+      .slice(0, 30)
+      .map(row => {
+
+        const period =
+          row.target_issue ||
+          row.targetIssue ||
+          row.issueNumber ||
+          row.period ||
+          "—";
+
+        const prediction =
+          row.prediction ||
+          row.side ||
+          "—";
+
+        const confidence =
+          row.confidence == null
+            ? "—"
+            : `${row.confidence}%`;
+
+        const result =
+          row.actual_result ||
+          row.actualResult ||
+          row.result ||
+          "—";
+
+        const statusRaw =
+          row.status ||
+          (
+            result === "BIG" ||
+            result === "SMALL"
+              ? (
+                  String(prediction).toUpperCase() ===
+                  String(result).toUpperCase()
+                    ? "WIN"
+                    : "LOSS"
+                )
+              : "PENDING"
+          );
+
+        const status =
+          String(statusRaw).toUpperCase();
+
+        let badge = "badge-pending";
+
+        if (status === "WIN") {
+          badge = "badge-win";
+        }
+
+        if (status === "LOSS") {
+          badge = "badge-loss";
+        }
+
+        return `
+          <tr>
+
+            <td>${esc(period)}</td>
+
+            <td>
+              <b>${esc(String(prediction).toUpperCase())}</b>
+            </td>
+
+            <td>${esc(confidence)}</td>
+
+            <td>
+              ${esc(String(result).toUpperCase())}
+            </td>
+
+            <td>
+              <span class="badge ${badge}">
+                ${esc(status)}
+              </span>
+            </td>
+
+          </tr>
+        `;
+
+      })
+      .join("");
+
+  }
+
+
+  /* -------------------------
+     ACCESS KEYS
+  ------------------------- */
+
+  async function loadKeys() {
+
+    try {
+
+      const data = await api("/api/admin/keys");
+
+      const keys =
+        Array.isArray(data)
+          ? data
+          : (
+              data.keys ||
+              data.data ||
+              []
+            );
+
+      renderKeys(keys);
+
+    } catch (error) {
+
+      $("keyList").innerHTML = `
+        <div style="color:#fb7185;text-align:center;padding:20px;font-size:12px;">
+          Failed to load keys.
+        </div>
+      `;
+
+      log("Key load error: " + error.message);
+
+    }
+
+  }
+
+
+  function renderKeys(keys) {
+
+    $("keyCount").textContent =
+      `${keys.length} KEY${keys.length === 1 ? "" : "S"}`;
+
+    const box = $("keyList");
+
+    if (!keys.length) {
+
+      box.innerHTML = `
+        <div style="color:#64748b;text-align:center;padding:20px;font-size:12px;">
+          No access keys found.
+        </div>
+      `;
+
+      return;
+    }
+
+    box.innerHTML = keys.map(key => {
+
+      const value =
+        key.access_key ||
+        key.key ||
+        key.token ||
+        "—";
+
+      const device =
+        key.device_id
+          ? `Device: ${key.device_id}`
+          : "Device: Not bound";
+
+      const created =
+        key.created_at
+          ? formatDate(key.created_at)
+          : "—";
+
+      const lastSeen =
+        key.last_seen
+          ? formatDate(key.last_seen)
+          : "Never";
+
+      const id =
+        key.id ??
+        "";
+
+      return `
+        <div class="key-row">
+
+          <div>
+
+            <div class="key-value">
+              ${esc(value)}
+            </div>
+
+            <div class="key-meta">
+              ${esc(device)}
+              • Created: ${esc(created)}
+              • Last seen: ${esc(lastSeen)}
+            </div>
+
+          </div>
+
+          <div class="key-actions">
+
+            <button
+              class="mini-btn"
+              onclick="resetDevice('${esc(value)}')">
+              RESET DEVICE
+            </button>
+
+            <button
+              class="mini-btn danger"
+              onclick="deleteKey(${Number(id)}, '${esc(value)}')">
+              DELETE
+            </button>
+
+          </div>
+
+        </div>
+      `;
+
+    }).join("");
+
+  }
+
+
+  function formatDate(value) {
+
+    let date;
+
+    if (typeof value === "number") {
+
+      date = new Date(
+        value < 100000000000
+          ? value * 1000
+          : value
+      );
+
+    } else {
+
+      date = new Date(value);
+
+    }
+
+    if (Number.isNaN(date.getTime())) {
+      return String(value);
+    }
+
+    return date.toLocaleString();
+
+  }
+
+
+  function randomKey() {
+
+    const chars =
+      "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+    let output = "DY-";
+
+    for (let i = 0; i < 12; i++) {
+
+      output +=
+        chars[
+          Math.floor(
+            Math.random() * chars.length
           )
-        );
+        ];
 
-      end =
-        Math.max(
-          start,
-          Math.min(
-            end,
-            size - 1
-          )
-        );
+    }
 
-      const length =
-        end - start + 1;
+    return output;
 
-      res.writeHead(
-        206,
+  }
+
+
+  async function createKey() {
+
+    let key =
+      $("newKey").value.trim();
+
+    if (!key) {
+      key = randomKey();
+    }
+
+    try {
+
+      const data = await api("/api/admin/keys", {
+
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+          access_key: key,
+          key: key
+        })
+
+      });
+
+      $("newKey").value = "";
+
+      toast("Access key created.");
+      log(`Key created: ${key}`);
+
+      await loadKeys();
+
+    } catch (error) {
+
+      toast(error.message);
+      log("Key create failed: " + error.message);
+
+    }
+
+  }
+
+
+  async function resetDevice(key) {
+
+    if (
+      !confirm(
+        `Device binding reset karna hai?\n\n${key}`
+      )
+    ) {
+      return;
+    }
+
+    try {
+
+      await api("/api/admin/reset-device", {
+
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+          access_key: key,
+          key: key
+        })
+
+      });
+
+      toast("Device reset successfully.");
+      log(`Device reset: ${key}`);
+
+      await loadKeys();
+
+    } catch (error) {
+
+      toast(error.message);
+      log("Device reset failed: " + error.message);
+
+    }
+
+  }
+
+
+  async function deleteKey(id, key) {
+
+    if (
+      !confirm(
+        `Delete this access key?\n\n${key}`
+      )
+    ) {
+      return;
+    }
+
+    try {
+
+      const query =
+        id !== ""
+          ? `?id=${encodeURIComponent(id)}`
+          : `?access_key=${encodeURIComponent(key)}`;
+
+      await api(
+        "/api/admin/keys" + query,
         {
-          "Content-Type":
-            "audio/mpeg",
-
-          "Content-Length":
-            length,
-
-          "Content-Range":
-            `bytes ${start}-${end}/${size}`,
-
-          "Accept-Ranges":
-            "bytes"
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            id,
+            access_key: key,
+            key
+          })
         }
       );
 
-      fs.createReadStream(
-        filePath,
-        {
-          start,
-          end
-        }
-      ).pipe(res);
+      toast("Key deleted.");
+      log(`Key deleted: ${key}`);
+
+      await loadKeys();
+
+    } catch (error) {
+
+      toast(error.message);
+      log("Key delete failed: " + error.message);
 
     }
-  );
-}
+
+  }
 
 
-// ============================================================
-// HTTP SERVER
-// ============================================================
+  /* -------------------------
+     DIAGNOSTICS
+  ------------------------- */
 
-const server =
-  http.createServer(
-    async (req, res) => {
+  async function pingServer() {
 
-      if (
-        req.method === "OPTIONS"
-      ) {
+    try {
 
-        res.writeHead(
-          204,
+      const start = performance.now();
+
+      const data =
+        await api("/api/admin/ping");
+
+      const ms =
+        Math.round(
+          performance.now() - start
+        );
+
+      toast(`PING OK • ${ms} ms`);
+
+      log(
+        `Ping successful • ${ms} ms`
+      );
+
+      console.log(data);
+
+    } catch (error) {
+
+      toast("Ping failed.");
+      log("Ping failed: " + error.message);
+
+    }
+
+  }
+
+
+  async function testWingo() {
+
+    toast("Testing WingoBot...");
+
+    try {
+
+      const data =
+        await api("/api/admin/wingo-test");
+
+      log(
+        "WingoBot test: " +
+        JSON.stringify(data)
+      );
+
+      toast("WingoBot test complete.");
+
+    } catch (error) {
+
+      toast("WingoBot test failed.");
+      log(
+        "WingoBot test failed: " +
+        error.message
+      );
+
+    }
+
+  }
+
+
+  async function testModel() {
+
+    toast("Testing V4 model...");
+
+    try {
+
+      const data =
+        await api("/api/admin/model-test");
+
+      log(
+        "Model test: " +
+        JSON.stringify(data)
+      );
+
+      toast("V4 model test complete.");
+
+    } catch (error) {
+
+      toast("Model test failed.");
+      log(
+        "Model test failed: " +
+        error.message
+      );
+
+    }
+
+  }
+
+
+  /* -------------------------
+     REFRESH
+  ------------------------- */
+
+  async function refreshAll() {
+
+    toast("Refreshing...");
+
+    await Promise.all([
+      refreshStatus(),
+      refreshState(false),
+      loadKeys()
+    ]);
+
+    $("lastUpdate").textContent =
+      new Date().toLocaleTimeString();
+
+    log("Full admin refresh complete.");
+
+  }
+
+
+  /* -------------------------
+     AUTO LOGIN
+  ------------------------- */
+
+  window.addEventListener("load", () => {
+
+    const saved =
+      sessionStorage.getItem(
+        "dy_admin_key"
+      );
+
+    if (saved) {
+
+      $("adminKey").value = saved;
+
+    }
+
+  });
+
+
+  /* Save key only for current browser session */
+
+  const originalLogin = login;
+
+  login = async function() {
+
+    const key =
+      $("adminKey").value.trim();
+
+    if (!key) {
+
+      showLoginError(
+        "Admin key enter karo."
+      );
+
+      return;
+
+    }
+
+    try {
+
+      const data =
+        await fetch(
+          "/api/admin/status",
           {
-            "Access-Control-Allow-Origin":
-              "*",
-
-            "Access-Control-Allow-Headers":
-              "Content-Type, Authorization, X-Admin-Key",
-
-            "Access-Control-Allow-Methods":
-              "GET, POST, DELETE, OPTIONS"
+            headers: {
+              "x-admin-key": key
+            }
           }
         );
 
-        return res.end();
+      let json = {};
+
+      try {
+        json = await data.json();
+      } catch {}
+
+      if (!data.ok) {
+
+        throw new Error(
+          json.error ||
+          json.message ||
+          "Invalid admin key."
+        );
 
       }
 
-      const parsed =
-        new URL(
-          req.url,
-          `http://${req.headers.host || "localhost"}`
-        );
+      ADMIN_KEY = key;
 
-      const pathname =
-        parsed.pathname;
+      sessionStorage.setItem(
+        "dy_admin_key",
+        key
+      );
 
-      try {
+      $("loginError")
+        .classList
+        .add("hidden");
 
-        // ==================================================
-        // ROOT -> PREDICTION
-        // ==================================================
+      $("loginScreen").style.display =
+        "none";
 
-        if (
-          req.method === "GET" &&
-          (
-            pathname === "/" ||
-            pathname === "/index.html"
-          )
-        ) {
+      $("app").style.display =
+        "block";
 
-          return serveFile(
-            res,
-            "prediction.html",
-            "text/html; charset=utf-8"
+      log("Admin login successful.");
+
+      await refreshAll();
+
+      if (!stateTimer) {
+
+        stateTimer =
+          setInterval(
+            () => refreshState(false),
+            3000
           );
 
-        }
-
-
-        // ==================================================
-        // ADMIN
-        // ==================================================
-
-        if (
-          req.method === "GET" &&
-          pathname === "/admin.html"
-        ) {
-
-          return serveFile(
-            res,
-            "admin.html",
-            "text/html; charset=utf-8"
-          );
-
-        }
-
-
-        // ==================================================
-        // HEALTH
-        // ==================================================
+      }
 
-        if (
-          req.method === "GET" &&
-          pathname === "/health"
-        ) {
-
-          return json(
-            res,
-            200,
-            {
-              ok: true,
-              model:
-                MODEL_VERSION,
-              provider:
-                provider.ok,
-              time:
-                now()
-            }
-          );
-
-        }
-
-
-        // ==================================================
-        // MUSIC
-        // ==================================================
-
-        if (
-          req.method === "GET" &&
-          pathname === "/music.mp3"
-        ) {
+    } catch (error) {
 
-          return serveMusic(
-            res,
-            req
-          );
+      console.error(error);
 
-        }
+      showLoginError(
+        error.message ||
+        "Admin login failed."
+      );
 
+    }
 
-        // ==================================================
-        // KEY CHECK
-        // ==================================================
+  };
 
-        if (
-          req.method === "POST" &&
-          pathname === "/api/key/check"
-        ) {
-
-          const body =
-            await readBody(req);
 
-          const accessKey =
-            safeString(
-              body.accessKey ||
-              body.key
-            ).trim();
-
-          const deviceId =
-            safeString(
-              body.deviceId ||
-              body.device_id
-            ).trim();
+  const originalLogout = logout;
 
-          const result =
-            await checkAccessKey(
-              accessKey,
-              deviceId
-            );
+  logout = function() {
 
-          return json(
-            res,
-            result.ok
-              ? 200
-              : 403,
-            result
-          );
+    sessionStorage.removeItem(
+      "dy_admin_key"
+    );
 
-        }
+    ADMIN_KEY = "";
 
+    if (stateTimer) {
 
-        // ==================================================
-        // STATE
-        // ==================================================
+      clearInterval(stateTimer);
 
-        if (
-          req.method === "GET" &&
-          pathname === "/api/state"
-        ) {
+      stateTimer = null;
 
-          return json(
-            res,
-            200,
-            await getState()
-          );
+    }
 
-        }
+    $("app").style.display =
+      "none";
 
+    $("loginScreen").style.display =
+      "flex";
 
-        // ==================================================
-        // HISTORY
-        // ==================================================
+    $("adminKey").value = "";
 
-        if (
-          req.method === "GET" &&
-          pathname === "/api/history"
-        ) {
+  };
 
-          return json(
-            res,
-            200,
-            {
-              ok: true,
 
-              history:
-                provider.history || [],
+  /* -------------------------
+     SECURITY / TAB VISIBILITY
+  ------------------------- */
 
-              count:
-                provider.history?.length || 0,
+  document.addEventListener(
+    "visibilitychange",
+    () => {
 
-              currentIssue:
-                provider.currentIssue
-            }
-          );
+      if (
+        !document.hidden &&
+        ADMIN_KEY
+      ) {
+        refreshAll();
+      }
 
-        }
+    }
+  );
 
+</script>
 
-        // ==================================================
-        // ADMIN STATUS
-        // ==================================================
-
-        if (
-          req.method === "GET" &&
-          pathname === "/api/admin/status"
-        ) {
-
-          if (!isAdmin(req)) {
-
-            return json(
-              res,
-              401,
-              {
-                ok: false,
-                message:
-                  "Unauthorized"
-              }
-            );
-
-          }
-
-          const ai =
-            createPrediction();
-
-          return json(
-            res,
-            200,
-            {
-
-              ok: true,
-
-              service:
-                "DY AI Wingo 30S",
-
-              modelVersion:
-                MODEL_VERSION,
-
-              numberPrediction:
-                false,
-
-              predictionType:
-                "BIG/SMALL",
-
-              gameUrl:
-                GAME_URL,
-
-              database:
-                Boolean(pool),
-
-              provider: {
-
-                ok:
-                  provider.ok,
-
-                currentIssue:
-                  provider.currentIssue,
-
-                historyCount:
-                  provider.history?.length || 0,
-
-                fetched:
-                  provider.fetched,
-
-                lastUpdated:
-                  provider.lastUpdated,
-
-                error:
-                  provider.error,
-
-                fetchedAt:
-                  provider.fetchedAt
-
-              },
-
-              ai: {
-
-                prediction:
-                  ai.prediction,
-
-                confidence:
-                  ai.confidence,
-
-                regime:
-                  ai.regime,
-
-                reason:
-                  ai.reason,
-
-                diagnostics:
-                  ai.diagnostics
-
-              },
-
-              serverTime:
-                now()
-
-            }
-          );
-
-        }
-
-
-        // ==================================================
-        // ADMIN PING
-        // ==================================================
-
-        if (
-          req.method === "GET" &&
-          pathname === "/api/admin/ping"
-        ) {
-
-          if (!isAdmin(req)) {
-
-            return json(
-              res,
-              401,
-              {
-                ok: false
-              }
-            );
-
-          }
-
-          return json(
-            res,
-            200,
-            {
-              ok: true,
-              model:
-                MODEL_VERSION,
-              message:
-                "Server online",
-              time:
-                now()
-            }
-          );
-
-        }
-
-
-        // ==================================================
-        // WINGOBOT TEST
-        // ==================================================
-
-        if (
-          req.method === "GET" &&
-          pathname === "/api/admin/wingo-test"
-        ) {
-
-          if (!isAdmin(req)) {
-
-            return json(
-              res,
-              401,
-              {
-                ok: false,
-                message:
-                  "Unauthorized"
-              }
-            );
-
-          }
-
-          await fetchWingoBot();
-
-          return json(
-            res,
-            200,
-            {
-
-              ok:
-                provider.ok,
-
-              currentIssue:
-                provider.currentIssue,
-
-              historyCount:
-                provider.history?.length || 0,
-
-              fetched:
-                provider.fetched,
-
-              lastUpdated:
-                provider.lastUpdated,
-
-              error:
-                provider.error,
-
-              sample:
-                (
-                  provider.history || []
-                )
-                  .slice(0, 10)
-                  .map(row => ({
-                    issueNumber:
-                      row.issueNumber,
-                    side:
-                      row.side
-                  }))
-
-            }
-          );
-
-        }
-
-
-        // ==================================================
-        // MODEL TEST
-        // ==================================================
-
-        if (
-          req.method === "GET" &&
-          pathname === "/api/admin/model-test"
-        ) {
-
-          if (!isAdmin(req)) {
-
-            return json(
-              res,
-              401,
-              {
-                ok: false,
-                message:
-                  "Unauthorized"
-              }
-            );
-
-          }
-
-          return json(
-            res,
-            200,
-            model
+</body>
+</html>
