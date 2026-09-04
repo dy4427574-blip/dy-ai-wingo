@@ -7,11 +7,11 @@ const crypto = require("crypto");
 const { Pool } = require("pg");
 
 /* =========================================================
-   DY AI WINGO 30S — V5
+   DY AI WINGO — V6
+   FULL SERVER
    ========================================================= */
 
-const PORT =
-  Number(process.env.PORT || 10000);
+const PORT = Number(process.env.PORT || 10000);
 
 const ADMIN_KEY =
   process.env.ADMIN_KEY || "dy4427574";
@@ -26,20 +26,14 @@ const GAME_URL =
   "https://www.shreewin38.com/#/register?invitationCode=88523152383";
 
 const MODEL_VERSION =
-  "DY-AI-BS-V5";
+  "DY-AI-BS-V6";
 
 const ROOT =
   __dirname;
 
-
-/* =========================================================
-   DATABASE
-========================================================= */
-
 let pool = null;
 
 if (process.env.DATABASE_URL) {
-
   pool = new Pool({
     connectionString:
       process.env.DATABASE_URL,
@@ -57,7 +51,6 @@ if (process.env.DATABASE_URL) {
     connectionTimeoutMillis:
       10000
   });
-
 }
 
 
@@ -78,11 +71,19 @@ let lastProviderFetch = 0;
 
 
 /* =========================================================
-   BASIC HELPERS
+   BASIC
 ========================================================= */
 
 function now() {
   return Date.now();
+}
+
+
+function clamp(v, min, max) {
+  return Math.max(
+    min,
+    Math.min(max, v)
+  );
 }
 
 
@@ -201,16 +202,12 @@ function safeEqual(a, b) {
   }
 
   try {
-
     return crypto.timingSafeEqual(
       aa,
       bb
     );
-
   } catch {
-
     return false;
-
   }
 
 }
@@ -250,27 +247,21 @@ function deviceId(req, body = {}) {
 
 
 /* =========================================================
-   ISSUE HELPERS
+   ISSUE
 ========================================================= */
 
 function compareIssue(a, b) {
 
-  const aa =
-    String(a);
-
-  const bb =
-    String(b);
+  const aa = String(a);
+  const bb = String(b);
 
   if (
     /^\d+$/.test(aa) &&
     /^\d+$/.test(bb)
   ) {
 
-    const A =
-      BigInt(aa);
-
-    const B =
-      BigInt(bb);
+    const A = BigInt(aa);
+    const B = BigInt(bb);
 
     if (A > B) return 1;
     if (A < B) return -1;
@@ -284,30 +275,26 @@ function compareIssue(a, b) {
 
 function incrementIssue(issue) {
 
-  const value =
+  const s =
     String(issue || "").trim();
 
-  if (!/^\d+$/.test(value)) {
+  if (!/^\d+$/.test(s)) {
     return "";
   }
 
   try {
-
     return (
-      BigInt(value) + 1n
+      BigInt(s) + 1n
     ).toString();
-
   } catch {
-
     return "";
-
   }
 
 }
 
 
 /* =========================================================
-   DATABASE INIT
+   DATABASE
 ========================================================= */
 
 async function initDatabase() {
@@ -315,7 +302,6 @@ async function initDatabase() {
   if (!pool) {
     return;
   }
-
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS access_keys (
@@ -326,7 +312,6 @@ async function initDatabase() {
       last_seen BIGINT DEFAULT 0
     )
   `);
-
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS prediction_records (
@@ -342,7 +327,6 @@ async function initDatabase() {
     )
   `);
 
-
   const columns = [
     ["confidence", "INTEGER DEFAULT 0"],
     ["model_version", "TEXT"],
@@ -350,7 +334,6 @@ async function initDatabase() {
     ["actual_result", "TEXT"],
     ["settled_at", "BIGINT"]
   ];
-
 
   for (const [name, type] of columns) {
 
@@ -365,13 +348,11 @@ async function initDatabase() {
 
   }
 
-
   await pool.query(`
     UPDATE prediction_records
     SET model_version = 'LEGACY'
     WHERE model_version IS NULL
   `);
-
 
   await pool.query(`
     CREATE UNIQUE INDEX IF NOT EXISTS
@@ -383,7 +364,7 @@ async function initDatabase() {
 
 
 /* =========================================================
-   NORMALIZE PROVIDER ROW
+   NORMALIZE
 ========================================================= */
 
 function normalizeSide(value) {
@@ -444,7 +425,6 @@ function normalizeHistoryRow(row) {
     return null;
   }
 
-
   let number = null;
 
   if (
@@ -466,7 +446,6 @@ function normalizeHistoryRow(row) {
 
   }
 
-
   let result =
     normalizeSide(
       row.result ||
@@ -477,11 +456,11 @@ function normalizeHistoryRow(row) {
       row.color
     );
 
-
   /*
-    Number is used ONLY to normalize
-    provider's actual BIG/SMALL result.
-    It is NOT used as a prediction target.
+    Number is ONLY used to determine
+    the provider's actual side.
+
+    It is NOT predicted.
   */
 
   if (
@@ -496,13 +475,9 @@ function normalizeHistoryRow(row) {
 
   }
 
-
   return {
-
     issueNumber,
-
     number,
-
     result,
 
     colour:
@@ -517,14 +492,13 @@ function normalizeHistoryRow(row) {
     sum:
       row.sum ??
       null
-
   };
 
 }
 
 
 /* =========================================================
-   WINGOBOT
+   WINGOBOT FETCH
 ========================================================= */
 
 async function fetchWingoHistory(
@@ -536,11 +510,8 @@ async function fetchWingoHistory(
     providerCache.history.length &&
     now() - lastProviderFetch < 2500
   ) {
-
     return providerCache;
-
   }
-
 
   if (!WINGOBOT_TOKEN) {
 
@@ -548,13 +519,10 @@ async function fetchWingoHistory(
       "WINGOBOT_TOKEN is missing";
 
     return providerCache;
-
   }
-
 
   lastProviderFetch =
     now();
-
 
   try {
 
@@ -577,7 +545,6 @@ async function fetchWingoHistory(
         }
       );
 
-
     if (!response.ok) {
 
       throw new Error(
@@ -586,16 +553,13 @@ async function fetchWingoHistory(
 
     }
 
-
     const data =
       await response.json();
-
 
     const raw =
       Array.isArray(data.history)
         ? data.history
         : [];
-
 
     const history =
       raw
@@ -609,7 +573,6 @@ async function fetchWingoHistory(
             )
         );
 
-
     const currentIssue =
       data.current &&
       data.current.issueNumber
@@ -618,10 +581,8 @@ async function fetchWingoHistory(
           )
         : "";
 
-
     const stats =
       data.stats || {};
-
 
     const lastUpdated =
       Number(
@@ -630,7 +591,6 @@ async function fetchWingoHistory(
         data.lastUpdated ||
         now()
       );
-
 
     providerCache = {
 
@@ -651,9 +611,7 @@ async function fetchWingoHistory(
 
       error:
         null
-
     };
-
 
     return providerCache;
 
@@ -690,8 +648,7 @@ function resolveTarget(
 
   }
 
-
-  const settled =
+  const latestSettled =
     history.find(
       row =>
         row &&
@@ -701,22 +658,24 @@ function resolveTarget(
         )
     );
 
-
   const latestIssue =
-    settled
+    latestSettled
       ? String(
-          settled.issueNumber
+          latestSettled.issueNumber
         )
       : String(
           history[0].issueNumber
         );
-
 
   const current =
     currentIssue
       ? String(currentIssue)
       : "";
 
+  /*
+    If provider current issue is ahead,
+    it is the correct target.
+  */
 
   if (
     current &&
@@ -725,11 +684,8 @@ function resolveTarget(
       latestIssue
     ) > 0
   ) {
-
     return current;
-
   }
-
 
   return incrementIssue(
     latestIssue
@@ -739,13 +695,15 @@ function resolveTarget(
 
 
 /* =========================================================
-   V5 DATA
+   SIDE DATA
 ========================================================= */
 
-function sides(history) {
+function getSides(history) {
 
   return history
-    .map(row => row.result)
+    .map(
+      row => row.result
+    )
     .filter(
       side =>
         side === "BIG" ||
@@ -755,7 +713,7 @@ function sides(history) {
 }
 
 
-function toValue(side) {
+function valueOf(side) {
 
   return side === "BIG"
     ? 1
@@ -764,221 +722,190 @@ function toValue(side) {
 }
 
 
-function clamp(
-  value,
-  min,
-  max
-) {
-
-  return Math.max(
-    min,
-    Math.min(max, value)
-  );
-
-}
-
-
 /* =========================================================
-   BALANCED BASELINE
-========================================================= */
-
-function globalBalance(arr) {
-
-  if (!arr.length) {
-    return 0;
-  }
-
-
-  let big = 0;
-
-
-  for (const side of arr) {
-
-    if (side === "BIG") {
-      big++;
-    }
-
-  }
-
-
-  const p =
-    big / arr.length;
-
-
-  /*
-    + = BIG excess
-    - = SMALL excess
-  */
-
-  return (
-    p - 0.5
-  ) * 2;
-
-}
-
-
-/* =========================================================
-   RECENT WEIGHTED SIGNAL
+   SIGNAL 1 — RECENT
 ========================================================= */
 
 function recentSignal(
   arr,
-  count
+  n = 5
 ) {
 
-  const values =
-    arr.slice(
-      0,
-      count
-    );
+  const x =
+    arr.slice(0, n);
 
-
-  if (!values.length) {
+  if (!x.length) {
     return 0;
   }
 
-
-  let numerator = 0;
-  let denominator = 0;
-
+  let num = 0;
+  let den = 0;
 
   for (
     let i = 0;
-    i < values.length;
+    i < x.length;
     i++
   ) {
 
-    const weight =
-      values.length - i;
+    const w =
+      x.length - i;
 
+    num +=
+      valueOf(x[i]) * w;
 
-    numerator +=
-      toValue(values[i]) *
-      weight;
-
-
-    denominator +=
-      weight;
-
+    den += w;
   }
 
-
-  return (
-    numerator /
-    denominator
-  );
+  return den
+    ? num / den
+    : 0;
 
 }
 
 
 /* =========================================================
-   WINDOW BALANCE
+   SIGNAL 2 — WINDOW BALANCE
 ========================================================= */
 
 function windowSignal(
   arr,
-  count
+  n
 ) {
 
-  const values =
-    arr.slice(
-      0,
-      count
-    );
+  const x =
+    arr.slice(0, n);
 
-
-  if (!values.length) {
+  if (!x.length) {
     return 0;
   }
 
+  let total = 0;
 
-  let score = 0;
-
-
-  for (
-    const side of values
-  ) {
-
-    score +=
-      toValue(side);
-
+  for (const side of x) {
+    total += valueOf(side);
   }
 
-
   return (
-    score /
-    values.length
+    total /
+    x.length
   );
 
 }
 
 
 /* =========================================================
-   TRANSITIONS
+   SIGNAL 3 — TRANSITION
 ========================================================= */
 
-function transitionSignal(
+function transitionStats(
   arr,
-  count
+  n = 40
 ) {
 
-  const values =
+  const x =
     arr.slice(
       0,
-      count + 1
+      Math.min(
+        arr.length,
+        n
+      )
     );
 
-
-  if (values.length < 2) {
-    return 0;
-  }
-
-
-  let same = 0;
-  let change = 0;
-
+  let BB = 0;
+  let BS = 0;
+  let SB = 0;
+  let SS = 0;
 
   for (
     let i = 0;
-    i < values.length - 1;
+    i < x.length - 1;
     i++
   ) {
 
+    const current =
+      x[i];
+
+    const next =
+      x[i + 1];
+
+    /*
+      x is newest -> oldest.
+
+      For prediction after newest result,
+      we need historical transition behaviour.
+    */
+
     if (
-      values[i] ===
-      values[i + 1]
+      current === "BIG" &&
+      next === "BIG"
     ) {
+      BB++;
+    }
 
-      same++;
+    if (
+      current === "BIG" &&
+      next === "SMALL"
+    ) {
+      BS++;
+    }
 
-    } else {
+    if (
+      current === "SMALL" &&
+      next === "BIG"
+    ) {
+      SB++;
+    }
 
-      change++;
-
+    if (
+      current === "SMALL" &&
+      next === "SMALL"
+    ) {
+      SS++;
     }
 
   }
 
+  const smooth =
+    1;
 
-  const total =
-    same + change;
+  const pBB =
+    (BB + smooth) /
+    (
+      BB +
+      BS +
+      smooth * 2
+    );
 
+  const pSB =
+    (SB + smooth) /
+    (
+      SB +
+      SS +
+      smooth * 2
+    );
 
-  if (!total) {
-    return 0;
-  }
+  const last =
+    x[0];
 
+  const pBig =
+    last === "BIG"
+      ? pBB
+      : pSB;
 
-  return (
-    (same - change) /
-    total
-  );
+  return {
+    BB,
+    BS,
+    SB,
+    SS,
+    signal:
+      (pBig - 0.5) * 2
+  };
 
 }
 
 
 /* =========================================================
-   STREAK
+   SIGNAL 4 — STREAK
 ========================================================= */
 
 function streakInfo(arr) {
@@ -992,26 +919,22 @@ function streakInfo(arr) {
 
   }
 
-
   const side =
     arr[0];
 
-
   let length = 0;
 
-
   for (
-    const value of arr
+    const x of arr
   ) {
 
-    if (value !== side) {
+    if (x !== side) {
       break;
     }
 
     length++;
 
   }
-
 
   return {
     side,
@@ -1022,287 +945,7 @@ function streakInfo(arr) {
 
 
 /* =========================================================
-   ALTERNATION
-========================================================= */
-
-function alternationRate(
-  arr,
-  count
-) {
-
-  const values =
-    arr.slice(
-      0,
-      count
-    );
-
-
-  if (values.length < 2) {
-    return 0;
-  }
-
-
-  let changes = 0;
-
-
-  for (
-    let i = 0;
-    i < values.length - 1;
-    i++
-  ) {
-
-    if (
-      values[i] !==
-      values[i + 1]
-    ) {
-
-      changes++;
-
-    }
-
-  }
-
-
-  return (
-    changes /
-    (values.length - 1)
-  );
-
-}
-
-
-/* =========================================================
-   MARKOV / TRANSITION PROBABILITY
-========================================================= */
-
-function conditionalSignal(
-  arr,
-  count
-) {
-
-  const values =
-    arr.slice(
-      0,
-      Math.min(
-        arr.length,
-        count
-      )
-    );
-
-
-  if (values.length < 4) {
-    return 0;
-  }
-
-
-  let bigAfterBig = 0;
-  let totalAfterBig = 0;
-
-  let bigAfterSmall = 0;
-  let totalAfterSmall = 0;
-
-
-  for (
-    let i = 1;
-    i < values.length;
-    i++
-  ) {
-
-    const previous =
-      values[i - 1];
-
-    const current =
-      values[i];
-
-
-    if (
-      previous === "BIG"
-    ) {
-
-      totalAfterBig++;
-
-      if (
-        current === "BIG"
-      ) {
-        bigAfterBig++;
-      }
-
-    } else {
-
-      totalAfterSmall++;
-
-      if (
-        current === "BIG"
-      ) {
-        bigAfterSmall++;
-      }
-
-    }
-
-  }
-
-
-  /*
-    Laplace smoothing prevents
-    extreme 0/1 probabilities.
-  */
-
-  const pAfterBig =
-    (
-      bigAfterBig + 1
-    ) /
-    (
-      totalAfterBig + 2
-    );
-
-
-  const pAfterSmall =
-    (
-      bigAfterSmall + 1
-    ) /
-    (
-      totalAfterSmall + 2
-    );
-
-
-  const last =
-    values[0];
-
-
-  const p =
-    last === "BIG"
-      ? pAfterBig
-      : pAfterSmall;
-
-
-  return (
-    p - 0.5
-  ) * 2;
-
-}
-
-
-/* =========================================================
-   PATTERN SIGNAL
-========================================================= */
-
-function patternSignal(
-  arr,
-  patternLength = 3
-) {
-
-  if (
-    arr.length <
-    patternLength + 4
-  ) {
-
-    return 0;
-
-  }
-
-
-  const key =
-    arr
-      .slice(
-        0,
-        patternLength
-      )
-      .map(
-        x =>
-          x === "BIG"
-            ? "B"
-            : "S"
-      )
-      .join("");
-
-
-  let matches = 0;
-  let nextBig = 0;
-  let nextSmall = 0;
-
-
-  for (
-    let i = patternLength;
-    i < arr.length;
-    i++
-  ) {
-
-    const previous =
-      arr
-        .slice(
-          i - patternLength,
-          i
-        )
-        .map(
-          x =>
-            x === "BIG"
-              ? "B"
-              : "S"
-        )
-        .join("");
-
-
-    if (
-      previous !== key
-    ) {
-      continue;
-    }
-
-
-    matches++;
-
-
-    if (
-      arr[i] === "BIG"
-    ) {
-
-      nextBig++;
-
-    } else {
-
-      nextSmall++;
-
-    }
-
-  }
-
-
-  if (!matches) {
-    return 0;
-  }
-
-
-  /*
-    Shrink tiny samples so one match
-    cannot dominate the whole model.
-  */
-
-  const raw =
-    (
-      nextBig -
-      nextSmall
-    ) /
-    matches;
-
-
-  const reliability =
-    clamp(
-      matches / 8,
-      0,
-      1
-    );
-
-
-  return (
-    raw *
-    reliability
-  );
-
-}
-
-
-/* =========================================================
-   STREAK BREAK
+   SIGNAL 5 — STREAK BREAK
 ========================================================= */
 
 function streakBreakSignal(
@@ -1312,29 +955,20 @@ function streakBreakSignal(
   const streak =
     streakInfo(arr);
 
-
   if (
     streak.length < 3
   ) {
     return 0;
   }
 
-
   const strength =
     clamp(
-      (streak.length - 2) /
-      5,
+      (
+        streak.length - 2
+      ) / 5,
       0,
       1
     );
-
-
-  /*
-    Long BIG streak => controlled SMALL
-    pressure.
-    Long SMALL streak => controlled BIG
-    pressure.
-  */
 
   return (
     streak.side === "BIG"
@@ -1346,58 +980,62 @@ function streakBreakSignal(
 
 
 /* =========================================================
-   REVERSAL CONFIRMATION
+   SIGNAL 6 — ALTERNATION
 ========================================================= */
 
-function reversalSignal(
-  arr
+function alternationSignal(
+  arr,
+  n = 8
 ) {
 
-  if (
-    arr.length < 4
-  ) {
+  const x =
+    arr.slice(0, n);
+
+  if (x.length < 3) {
     return 0;
   }
 
+  let changes = 0;
 
-  const latest =
-    arr[0];
+  for (
+    let i = 0;
+    i < x.length - 1;
+    i++
+  ) {
 
-  const second =
-    arr[1];
+    if (
+      x[i] !== x[i + 1]
+    ) {
+      changes++;
+    }
 
-  const third =
-    arr[2];
+  }
 
-  const fourth =
-    arr[3];
-
+  const rate =
+    changes /
+    (x.length - 1);
 
   /*
-    Example:
-    BIG BIG SMALL SMALL
-    means recent direction may
-    be shifting toward SMALL.
+    High alternation:
+    latest result is less likely to
+    simply repeat.
   */
 
   if (
-    latest === second &&
-    third === fourth &&
-    latest !== third
+    rate >= 0.70
   ) {
 
     return (
-      latest === "BIG"
+      x[0] === "BIG"
         ? -1
         : 1
     );
 
   }
 
-
   /*
-    One isolated opposite result is
-    not enough for a full reversal.
+    Low alternation:
+    no automatic trend-following.
   */
 
   return 0;
@@ -1406,116 +1044,841 @@ function reversalSignal(
 
 
 /* =========================================================
-   REGIME
+   SIGNAL 7 — REVERSAL
 ========================================================= */
 
-function classifyRegime(
-  arr,
-  f
+function reversalSignal(
+  arr
 ) {
 
+  if (arr.length < 5) {
+    return 0;
+  }
+
+  const a = arr[0];
+  const b = arr[1];
+  const c = arr[2];
+  const d = arr[3];
+  const e = arr[4];
+
+  /*
+    Stronger reversal shape:
+    
+    B B S S S
+    => pressure toward B
+
+    S S B B B
+    => pressure toward S
+  */
+
   if (
-    arr.length < 3
+    a === b &&
+    c === d &&
+    d === e &&
+    a !== c
   ) {
 
-    return "MIXED";
+    return (
+      a === "BIG"
+        ? -1
+        : 1
+    );
 
   }
 
+  /*
+    Two latest opposite from
+    previous three.
+  */
 
   if (
-    f.alternation >= 0.72
+    a === b &&
+    c === d &&
+    a !== c
   ) {
 
-    return "ALTERNATING";
+    return (
+      a === "BIG"
+        ? -0.65
+        : 0.65
+    );
 
   }
 
-
-  if (
-    f.streakLength >= 4
-  ) {
-
-    return "STREAK_BREAK";
-
-  }
-
-
-  if (
-    Math.abs(
-      f.recent -
-      f.medium
-    ) >= 0.42
-  ) {
-
-    return "CONFLICT";
-
-  }
-
-
-  if (
-    Math.abs(
-      f.transition
-    ) < 0.08
-  ) {
-
-    return "TRANSITION";
-
-  }
-
-
-  if (
-    Math.abs(f.recent) >= 0.40 &&
-    Math.abs(f.medium) >= 0.30
-  ) {
-
-    return "TREND";
-
-  }
-
-
-  if (
-    Math.abs(
-      f.recent
-    ) >= 0.35
-  ) {
-
-    return "SHORT_SHIFT";
-
-  }
-
-
-  return "MIXED";
+  return 0;
 
 }
 
 
 /* =========================================================
-   V5 MODEL
+   SIGNAL 8 — PATTERN
 ========================================================= */
 
-function calculateV5(
+function patternSignal(
+  arr,
+  len = 3
+) {
+
+  if (
+    arr.length <
+    len + 6
+  ) {
+    return 0;
+  }
+
+  const latestKey =
+    arr
+      .slice(0, len)
+      .map(
+        x =>
+          x === "BIG"
+            ? "B"
+            : "S"
+      )
+      .join("");
+
+  let matches = 0;
+  let big = 0;
+  let small = 0;
+
+  /*
+    Historical windows.
+  */
+
+  for (
+    let i = len;
+    i < arr.length;
+    i++
+  ) {
+
+    const key =
+      arr
+        .slice(
+          i - len,
+          i
+        )
+        .map(
+          x =>
+            x === "BIG"
+              ? "B"
+              : "S"
+        )
+        .join("");
+
+    if (
+      key !== latestKey
+    ) {
+      continue;
+    }
+
+    /*
+      Ignore immediate newest window
+      when it would be leaking current
+      prediction context.
+    */
+
+    matches++;
+
+    if (
+      arr[i] === "BIG"
+    ) {
+      big++;
+    } else {
+      small++;
+    }
+
+  }
+
+  if (!matches) {
+    return 0;
+  }
+
+  const raw =
+    (
+      big -
+      small
+    ) / matches;
+
+  const reliability =
+    clamp(
+      matches / 10,
+      0,
+      1
+    );
+
+  return (
+    raw *
+    reliability
+  );
+
+}
+
+
+/* =========================================================
+   SIGNAL 9 — BALANCE
+========================================================= */
+
+function balanceSignal(
+  arr,
+  n = 60
+) {
+
+  const x =
+    arr.slice(0, n);
+
+  if (!x.length) {
+    return 0;
+  }
+
+  let big = 0;
+
+  for (
+    const side of x
+  ) {
+
+    if (
+      side === "BIG"
+    ) {
+      big++;
+    }
+
+  }
+
+  const p =
+    big / x.length;
+
+  return (
+    p - 0.5
+  ) * 2;
+
+}
+
+
+/* =========================================================
+   FEATURE BUILDER
+========================================================= */
+
+function featuresFor(
+  arr
+) {
+
+  const transition =
+    transitionStats(
+      arr,
+      40
+    );
+
+  const streak =
+    streakInfo(arr);
+
+  return {
+
+    recent:
+      recentSignal(
+        arr,
+        5
+      ),
+
+    micro:
+      windowSignal(
+        arr,
+        3
+      ),
+
+    short:
+      windowSignal(
+        arr,
+        7
+      ),
+
+    medium:
+      windowSignal(
+        arr,
+        15
+      ),
+
+    long:
+      windowSignal(
+        arr,
+        40
+      ),
+
+    transition:
+      transition.signal,
+
+    conditional:
+      transition.signal,
+
+    streakBreak:
+      streakBreakSignal(
+        arr
+      ),
+
+    alternation:
+      alternationSignal(
+        arr,
+        8
+      ),
+
+    reversal:
+      reversalSignal(
+        arr
+      ),
+
+    pattern3:
+      patternSignal(
+        arr,
+        3
+      ),
+
+    pattern4:
+      patternSignal(
+        arr,
+        4
+      ),
+
+    balance:
+      balanceSignal(
+        arr,
+        60
+      ),
+
+    streakSide:
+      streak.side,
+
+    streakLength:
+      streak.length
+
+  };
+
+}
+
+
+/* =========================================================
+   RAW SCORE
+========================================================= */
+
+function rawScore(
+  f,
+  weights
+) {
+
+  let score = 0;
+
+  score +=
+    f.recent *
+    weights.recent;
+
+  score +=
+    f.micro *
+    weights.micro;
+
+  score +=
+    f.short *
+    weights.short;
+
+  score +=
+    f.medium *
+    weights.medium;
+
+  score +=
+    f.transition *
+    weights.transition;
+
+  score +=
+    f.streakBreak *
+    weights.streakBreak;
+
+  score +=
+    f.alternation *
+    weights.alternation;
+
+  score +=
+    f.reversal *
+    weights.reversal;
+
+  score +=
+    f.pattern3 *
+    weights.pattern3;
+
+  score +=
+    f.pattern4 *
+    weights.pattern4;
+
+  /*
+    Balance is a correction only.
+  */
+
+  score -=
+    f.balance *
+    weights.balance;
+
+  return clamp(
+    score,
+    -1,
+    1
+  );
+
+}
+
+
+/* =========================================================
+   DEFAULT WEIGHTS
+========================================================= */
+
+const DEFAULT_WEIGHTS = {
+
+  recent:
+    0.21,
+
+  micro:
+    0.08,
+
+  short:
+    0.10,
+
+  medium:
+    0.08,
+
+  transition:
+    0.15,
+
+  streakBreak:
+    0.12,
+
+  alternation:
+    0.09,
+
+  reversal:
+    0.08,
+
+  pattern3:
+    0.04,
+
+  pattern4:
+    0.02,
+
+  balance:
+    0.03
+
+};
+
+
+/* =========================================================
+   WALK-FORWARD BACKTEST
+========================================================= */
+
+function evaluateWeights(
+  arr,
+  weights
+) {
+
+  /*
+    IMPORTANT:
+
+    For every historical target,
+    only older results are used.
+
+    No future-result leakage.
+  */
+
+  if (
+    arr.length < 25
+  ) {
+
+    return {
+
+      accuracy:
+        0.5,
+
+      coverage:
+        0,
+
+      wins: 0,
+
+      losses: 0,
+
+      predictions: 0
+
+    };
+
+  }
+
+  let wins = 0;
+  let losses = 0;
+
+  /*
+    Test from older history toward
+    newer history.
+
+    arr[0] is newest.
+  */
+
+  const start =
+    Math.min(
+      arr.length - 1,
+      100
+    );
+
+  const end =
+    8;
+
+  for (
+    let i = start;
+    i >= end;
+    i--
+  ) {
+
+    /*
+      arr[i] is the actual result
+      we are pretending to predict.
+
+      Available history is strictly
+      arr[i+1 ...].
+    */
+
+    const training =
+      arr.slice(
+        i + 1
+      );
+
+    if (
+      training.length < 8
+    ) {
+      continue;
+    }
+
+    const f =
+      featuresFor(
+        training
+      );
+
+    const score =
+      rawScore(
+        f,
+        weights
+      );
+
+    /*
+      If neutral, use a deterministic
+      tie-break based on transition,
+      not hard-coded BIG.
+    */
+
+    let predicted;
+
+    if (
+      score > 0
+    ) {
+
+      predicted =
+        "BIG";
+
+    } else if (
+      score < 0
+    ) {
+
+      predicted =
+        "SMALL";
+
+    } else {
+
+      predicted =
+        f.transition >= 0
+          ? "BIG"
+          : "SMALL";
+
+    }
+
+    const actual =
+      arr[i];
+
+    if (
+      predicted === actual
+    ) {
+
+      wins++;
+
+    } else {
+
+      losses++;
+
+    }
+
+  }
+
+  const total =
+    wins + losses;
+
+  return {
+
+    accuracy:
+      total
+        ? wins / total
+        : 0.5,
+
+    coverage:
+      total,
+
+    wins,
+
+    losses,
+
+    predictions:
+      total
+
+  };
+
+}
+
+
+/* =========================================================
+   ADAPTIVE WEIGHTS
+========================================================= */
+
+function adaptiveWeights(
+  arr
+) {
+
+  const candidates = [];
+
+
+  /*
+    Candidate A:
+    balanced default
+  */
+
+  candidates.push({
+    name: "BALANCED",
+    weights: {
+      ...DEFAULT_WEIGHTS
+    }
+  });
+
+
+  /*
+    Candidate B:
+    recent + transition
+  */
+
+  candidates.push({
+    name: "TRANSITION",
+    weights: {
+      ...DEFAULT_WEIGHTS,
+
+      recent:
+        0.18,
+
+      transition:
+        0.21,
+
+      streakBreak:
+        0.15,
+
+      alternation:
+        0.11
+    }
+  });
+
+
+  /*
+    Candidate C:
+    reversal focused
+  */
+
+  candidates.push({
+    name: "REVERSAL",
+    weights: {
+      ...DEFAULT_WEIGHTS,
+
+      recent:
+        0.16,
+
+      transition:
+        0.14,
+
+      streakBreak:
+        0.18,
+
+      reversal:
+        0.15,
+
+      alternation:
+        0.11
+    }
+  });
+
+
+  /*
+    Candidate D:
+    recent balanced
+  */
+
+  candidates.push({
+    name: "RECENT",
+    weights: {
+      ...DEFAULT_WEIGHTS,
+
+      recent:
+        0.26,
+
+      micro:
+        0.10,
+
+      short:
+        0.13,
+
+      medium:
+        0.07,
+
+      transition:
+        0.13,
+
+      streakBreak:
+        0.11
+    }
+  });
+
+
+  let best =
+    candidates[0];
+
+  let bestScore =
+    -Infinity;
+
+
+  for (
+    const candidate
+    of candidates
+  ) {
+
+    const result =
+      evaluateWeights(
+        arr,
+        candidate.weights
+      );
+
+
+    /*
+      Accuracy is not enough.
+
+      Penalize very low sample count.
+      Penalize extreme one-sided behaviour.
+    */
+
+    let score =
+      result.accuracy;
+
+
+    if (
+      result.predictions < 20
+    ) {
+
+      score -=
+        0.03;
+
+    }
+
+
+    /*
+      Don't select a candidate solely
+      because it accidentally predicts
+      one side more often.
+    */
+
+    const bias =
+      Math.abs(
+        (
+          result.wins -
+          result.losses
+        ) /
+        Math.max(
+          result.predictions,
+          1
+        )
+      );
+
+
+    if (
+      bias > 0.65
+    ) {
+
+      score -=
+        0.04;
+
+    }
+
+
+    if (
+      score > bestScore
+    ) {
+
+      bestScore =
+        score;
+
+      best =
+        candidate;
+
+    }
+
+  }
+
+
+  const test =
+    evaluateWeights(
+      arr,
+      best.weights
+    );
+
+
+  return {
+
+    name:
+      best.name,
+
+    weights:
+      best.weights,
+
+    backtest:
+      test
+
+  };
+
+}
+
+
+/* =========================================================
+   V6 MODEL
+========================================================= */
+
+function calculateV6(
   history
 ) {
 
   const arr =
-    sides(history);
+    getSides(
+      history
+    );
 
 
   if (!arr.length) {
 
     return {
 
-      prediction: "BIG",
+      prediction:
+        "SMALL",
 
-      confidence: 45,
+      confidence:
+        45,
 
-      regime: "MIXED",
+      regime:
+        "NO_DATA",
 
       reason:
         "Waiting for settled BIG/SMALL history.",
 
-      score: 0,
+      score:
+        0,
 
       model_version:
         MODEL_VERSION
@@ -1525,316 +1888,133 @@ function calculateV5(
   }
 
 
-  const recent =
-    recentSignal(
-      arr,
-      5
-    );
-
-
-  const micro =
-    windowSignal(
-      arr,
-      3
-    );
-
-
-  const short =
-    windowSignal(
-      arr,
-      7
-    );
-
-
-  const medium =
-    windowSignal(
-      arr,
-      15
-    );
-
-
-  const long =
-    windowSignal(
-      arr,
-      40
-    );
-
-
-  const transition =
-    transitionSignal(
-      arr,
-      20
-    );
-
-
-  const conditional =
-    conditionalSignal(
-      arr,
-      30
-    );
-
-
-  const pattern =
-    patternSignal(
-      arr,
-      3
-    );
-
-
-  const pattern4 =
-    patternSignal(
-      arr,
-      4
-    );
-
-
-  const alternation =
-    alternationRate(
-      arr,
-      8
-    );
-
-
-  const streak =
-    streakInfo(
+  const adaptive =
+    adaptiveWeights(
       arr
     );
 
 
-  const streakBreak =
-    streakBreakSignal(
+  const f =
+    featuresFor(
       arr
     );
 
 
-  const reversal =
-    reversalSignal(
-      arr
+  let score =
+    rawScore(
+      f,
+      adaptive.weights
     );
-
-
-  const global =
-    globalBalance(
-      arr.slice(
-        0,
-        60
-      )
-    );
-
-
-  const f = {
-
-    recent,
-
-    micro,
-
-    short,
-
-    medium,
-
-    long,
-
-    transition,
-
-    conditional,
-
-    pattern,
-
-    pattern4,
-
-    alternation,
-
-    streakLength:
-      streak.length,
-
-    streakBreak,
-
-    reversal,
-
-    global
-
-  };
-
-
-  const regime =
-    classifyRegime(
-      arr,
-      f
-    );
-
-
-  /*
-    ========================================================
-    BALANCED ENSEMBLE
-
-    IMPORTANT:
-    Every component is centered around ZERO.
-
-    +1 = BIG
-    -1 = SMALL
-
-    Global historical imbalance is used
-    as a correction, not as a reason to
-    permanently predict the majority side.
-    ========================================================
-  */
-
-  let score = 0;
-
-
-  /*
-    Most important:
-    recent 3-5 rounds
-  */
-
-  score +=
-    recent * 0.25;
-
-
-  /*
-    Micro movement
-  */
-
-  score +=
-    micro * 0.12;
-
-
-  /*
-    Short window
-  */
-
-  score +=
-    short * 0.12;
-
-
-  /*
-    Medium context
-  */
-
-  score +=
-    medium * 0.10;
-
-
-  /*
-    Transition behaviour
-  */
-
-  score +=
-    transition * 0.10;
-
-
-  /*
-    Conditional next-side behaviour
-  */
-
-  score +=
-    conditional * 0.11;
-
-
-  /*
-    Pattern signals
-  */
-
-  score +=
-    pattern * 0.04;
-
-  score +=
-    pattern4 * 0.03;
-
-
-  /*
-    Long window gets very low weight
-    so BIG/SMALL imbalance cannot
-    dominate the model.
-  */
-
-  score +=
-    long * 0.03;
-
-
-  /*
-    Historical balance correction.
-
-    If last 60 has too many BIGs,
-    slightly pulls score toward SMALL.
-    If too many SMALLs, pulls toward BIG.
-  */
-
-  score -=
-    global * 0.08;
-
-
-  /*
-    Streak break
-  */
-
-  score +=
-    streakBreak * 0.08;
-
-
-  /*
-    Reversal confirmation
-  */
-
-  score +=
-    reversal * 0.05;
 
 
   /* ======================================================
-     REGIME-SPECIFIC CALIBRATION
+     REGIME
   ====================================================== */
 
+  let regime =
+    "MIXED";
+
 
   if (
-    regime === "ALTERNATING"
+    f.alternation !== 0
+  ) {
+
+    regime =
+      "ALTERNATING";
+
+  } else if (
+    f.streakLength >= 4
+  ) {
+
+    regime =
+      "STREAK_BREAK";
+
+  } else if (
+    Math.abs(
+      f.recent -
+      f.medium
+    ) > 0.45
+  ) {
+
+    regime =
+      "CONFLICT";
+
+  } else if (
+    Math.abs(
+      f.transition
+    ) < 0.08
+  ) {
+
+    regime =
+      "TRANSITION";
+
+  } else if (
+    Math.abs(f.recent) > 0.4 &&
+    Math.abs(f.medium) > 0.3
+  ) {
+
+    regime =
+      "TREND";
+
+  } else if (
+    Math.abs(f.recent) > 0.32
+  ) {
+
+    regime =
+      "SHORT_SHIFT";
+
+  }
+
+
+  /* ======================================================
+     REGIME CALIBRATION
+  ====================================================== */
+
+  if (
+    regime ===
+    "ALTERNATING"
   ) {
 
     /*
-      In alternating conditions,
-      following the latest result is
-      usually less useful than checking
-      the opposite side.
+      Alternating signal already contains
+      reversal direction.
+
+      Don't blindly add another huge
+      opposite-side bonus.
     */
 
-    const opposite =
-      arr[0] === "BIG"
-        ? -1
-        : 1;
-
-
-    score +=
-      opposite * 0.10;
+    score =
+      score * 0.88;
 
   }
 
 
   if (
-    regime === "STREAK_BREAK"
+    regime ===
+    "STREAK_BREAK"
   ) {
 
     score +=
-      streakBreak * 0.07;
+      f.streakBreak *
+      0.08;
 
   }
 
 
   if (
-    regime === "CONFLICT"
+    regime ===
+    "CONFLICT"
   ) {
-
-    /*
-      Conflicting windows should produce
-      weaker confidence and a smaller score.
-    */
 
     score *=
-      0.62;
+      0.58;
 
   }
 
 
   if (
-    regime === "TRANSITION"
+    regime ===
+    "TRANSITION"
   ) {
 
     score *=
@@ -1844,9 +2024,60 @@ function calculateV5(
 
 
   /*
-    Prevent any single component from
-    forcing an extreme result.
+    HARD ANTI-STICKINESS:
+
+    If model has a long streak and
+    current score still follows that
+    same side weakly, pull it toward
+    neutral.
+
+    This does NOT force reversal.
   */
+
+  if (
+    f.streakLength >= 4
+  ) {
+
+    const sameDirection =
+      (
+        f.streakSide === "BIG" &&
+        score > 0
+      ) ||
+      (
+        f.streakSide === "SMALL" &&
+        score < 0
+      );
+
+
+    if (
+      sameDirection &&
+      Math.abs(score) < 0.38
+    ) {
+
+      score *=
+        0.35;
+
+    }
+
+  }
+
+
+  /*
+    If recent and transition disagree,
+    reduce recent trend pressure.
+  */
+
+  if (
+    f.recent *
+    f.transition <
+    -0.10
+  ) {
+
+    score *=
+      0.72;
+
+  }
+
 
   score =
     clamp(
@@ -1857,21 +2088,21 @@ function calculateV5(
 
 
   /* ======================================================
-     SIDE DECISION
+     SIDE
   ====================================================== */
 
   let prediction;
 
 
   if (
-    score > 0
+    score > 0.035
   ) {
 
     prediction =
       "BIG";
 
   } else if (
-    score < 0
+    score < -0.035
   ) {
 
     prediction =
@@ -1880,29 +2111,61 @@ function calculateV5(
   } else {
 
     /*
-      Perfect neutral case:
-      use the better-supported conditional
-      signal first, then short window.
+      Neutral zone.
 
-      This avoids hard-coded BIG default.
+      Use strongest directional signal,
+      not a permanent BIG default.
     */
 
+    const options = [
+
+      {
+        name: "transition",
+        value:
+          f.transition
+      },
+
+      {
+        name: "reversal",
+        value:
+          f.reversal
+      },
+
+      {
+        name: "alternation",
+        value:
+          f.alternation
+      },
+
+      {
+        name: "recent",
+        value:
+          f.recent
+      },
+
+      {
+        name: "short",
+        value:
+          f.short
+      }
+
+    ];
+
+
+    options.sort(
+      (a, b) =>
+        Math.abs(b.value) -
+        Math.abs(a.value)
+    );
+
+
+    const strongest =
+      options[0];
+
+
     if (
-      conditional > 0
-    ) {
-
-      prediction =
-        "BIG";
-
-    } else if (
-      conditional < 0
-    ) {
-
-      prediction =
-        "SMALL";
-
-    } else if (
-      short > 0
+      strongest &&
+      strongest.value >= 0
     ) {
 
       prediction =
@@ -1919,74 +2182,60 @@ function calculateV5(
 
 
   /* ======================================================
-     SIGNAL AGREEMENT
+     AGREEMENT
   ====================================================== */
 
-  const signals = [
+  const signalValues = [
 
-    recent,
-
-    micro,
-
-    short,
-
-    medium,
-
-    transition,
-
-    conditional,
-
-    pattern,
-
-    streakBreak
+    f.recent,
+    f.micro,
+    f.short,
+    f.medium,
+    f.transition,
+    f.streakBreak,
+    f.alternation,
+    f.reversal,
+    f.pattern3,
+    f.pattern4
 
   ];
 
 
-  const nonZero =
-    signals.filter(
-      x =>
-        Math.abs(x) >
-        0.04
-    );
+  let positive = 0;
+  let negative = 0;
+  let active = 0;
 
 
-  let agreement = 0;
+  for (
+    const v of signalValues
+  ) {
 
-
-  if (nonZero.length) {
-
-    let positive = 0;
-    let negative = 0;
-
-
-    for (
-      const value of nonZero
+    if (
+      Math.abs(v) < 0.05
     ) {
-
-      if (
-        value > 0
-      ) {
-
-        positive++;
-
-      } else {
-
-        negative++;
-
-      }
-
+      continue;
     }
 
+    active++;
 
-    agreement =
-      Math.max(
-        positive,
-        negative
-      ) /
-      nonZero.length;
+    if (
+      v > 0
+    ) {
+      positive++;
+    } else {
+      negative++;
+    }
 
   }
+
+
+  const agreement =
+    active
+      ? Math.max(
+          positive,
+          negative
+        ) / active
+      : 0.5;
 
 
   /* ======================================================
@@ -1996,7 +2245,7 @@ function calculateV5(
   let confidence =
     45 +
     Math.round(
-      Math.abs(score) * 28
+      Math.abs(score) * 24
     );
 
 
@@ -2004,43 +2253,70 @@ function calculateV5(
     Math.round(
       Math.max(
         0,
-        agreement - 0.50
-      ) * 16
+        agreement - 0.5
+      ) * 14
     );
 
 
   if (
-    arr.length < 8
+    adaptive.backtest.predictions >= 20
   ) {
 
-    confidence -= 5;
+    /*
+      Backtest only adjusts confidence
+      slightly. It never guarantees future
+      results.
+    */
+
+    if (
+      adaptive.backtest.accuracy >=
+      0.60
+    ) {
+
+      confidence +=
+        3;
+
+    } else if (
+      adaptive.backtest.accuracy <
+      0.48
+    ) {
+
+      confidence -=
+        5;
+
+    }
 
   }
 
 
   if (
-    regime === "CONFLICT"
+    regime ===
+    "CONFLICT"
   ) {
 
-    confidence -= 8;
+    confidence -=
+      9;
 
   }
 
 
   if (
-    regime === "TRANSITION"
+    regime ===
+    "TRANSITION"
   ) {
 
-    confidence -= 4;
+    confidence -=
+      4;
 
   }
 
 
   if (
-    regime === "MIXED"
+    arr.length < 15
   ) {
 
-    confidence -= 2;
+    confidence -=
+      5;
 
   }
 
@@ -2063,51 +2339,49 @@ function calculateV5(
 
 
   if (
-    regime === "ALTERNATING"
+    regime ===
+    "ALTERNATING"
   ) {
 
     reason =
-      "V5 detected alternating behaviour and reduced blind trend-following.";
+      "V6 detected alternating behaviour and reduced simple trend repetition.";
 
   } else if (
-    regime === "STREAK_BREAK"
+    regime ===
+    "STREAK_BREAK"
   ) {
 
     reason =
-      "V5 detected an extended streak and applied controlled reversal pressure.";
+      "V6 detected a long streak and applied controlled anti-stickiness.";
 
   } else if (
-    regime === "CONFLICT"
+    regime ===
+    "CONFLICT"
   ) {
 
     reason =
-      "Recent and medium windows disagree, so V5 reduced signal strength.";
+      "Recent and medium signals conflict, so V6 reduced directional strength.";
 
   } else if (
-    regime === "TREND"
+    regime ===
+    "TREND"
   ) {
 
     reason =
-      "Recent and medium windows are aligned, with historical balance correction.";
+      "Recent and medium signals align; transition and balance checks are also applied.";
 
   } else if (
-    regime === "TRANSITION"
+    regime ===
+    "TRANSITION"
   ) {
 
     reason =
-      "Transition behaviour detected; V5 is keeping the directional signal conservative.";
-
-  } else if (
-    regime === "SHORT_SHIFT"
-  ) {
-
-    reason =
-      "Recent rounds show a short-term shift while longer context is kept at low weight.";
+      "Transition behaviour is mixed, so V6 is keeping the signal conservative.";
 
   } else {
 
     reason =
-      "V5 combines recent rounds, transitions, streaks, patterns and balance calibration.";
+      "V6 combines recent, transition, reversal, streak, pattern and adaptive backtest signals.";
 
   }
 
@@ -2126,28 +2400,23 @@ function calculateV5(
 
     agreement,
 
-    features: {
-
-      recent,
-      micro,
-      short,
-      medium,
-      long,
-      transition,
-      conditional,
-      pattern,
-      pattern4,
-      alternation,
-      streakLength:
-        streak.length,
-      streakBreak,
-      reversal,
-      global
-
-    },
-
     model_version:
-      MODEL_VERSION
+      MODEL_VERSION,
+
+    adaptive:
+
+      {
+
+        strategy:
+          adaptive.name,
+
+        backtest:
+          adaptive.backtest
+
+      },
+
+    features:
+      f
 
   };
 
@@ -2155,7 +2424,7 @@ function calculateV5(
 
 
 /* =========================================================
-   FIND PREDICTION
+   PREDICTION DB
 ========================================================= */
 
 async function findPrediction(
@@ -2165,7 +2434,6 @@ async function findPrediction(
   if (!pool) {
     return null;
   }
-
 
   try {
 
@@ -2185,7 +2453,6 @@ async function findPrediction(
         ]
       );
 
-
     return (
       result.rows[0] ||
       null
@@ -2201,7 +2468,7 @@ async function findPrediction(
 
 
 /* =========================================================
-   CREATE PREDICTION
+   CREATE
 ========================================================= */
 
 async function getOrCreatePrediction(
@@ -2213,20 +2480,17 @@ async function getOrCreatePrediction(
     return null;
   }
 
-
   const existing =
     await findPrediction(
       targetIssue
     );
 
-
   if (existing) {
     return existing;
   }
 
-
   const model =
-    calculateV5(
+    calculateV6(
       history
     );
 
@@ -2327,7 +2591,6 @@ async function settlePredictions(
     return;
   }
 
-
   const actualMap =
     new Map();
 
@@ -2372,7 +2635,7 @@ async function settlePredictions(
         WHERE model_version = $1
           AND actual_result IS NULL
         ORDER BY id DESC
-        LIMIT 300
+        LIMIT 500
         `,
         [MODEL_VERSION]
       );
@@ -2392,7 +2655,7 @@ async function settlePredictions(
 
 
       /*
-        EXACT PERIOD ONLY.
+        EXACT TARGET ONLY.
       */
 
       if (!actual) {
@@ -2451,7 +2714,6 @@ async function last30(
   if (!pool) {
     return [];
   }
-
 
   try {
 
@@ -2519,6 +2781,10 @@ async function last30(
           "PENDING";
 
 
+        /*
+          Exact actual result has priority.
+        */
+
         if (actual) {
 
           actualResult =
@@ -2532,10 +2798,8 @@ async function last30(
               : "LOSS";
 
         } else if (
-          row.actual_result ===
-            "BIG" ||
-          row.actual_result ===
-            "SMALL"
+          row.actual_result === "BIG" ||
+          row.actual_result === "SMALL"
         ) {
 
           actualResult =
@@ -2547,6 +2811,24 @@ async function last30(
             actualResult
               ? "WIN"
               : "LOSS";
+
+        }
+
+
+        /*
+          No actual result means PENDING.
+        */
+
+        if (
+          actualResult !== "BIG" &&
+          actualResult !== "SMALL"
+        ) {
+
+          actualResult =
+            null;
+
+          status =
+            "PENDING";
 
         }
 
@@ -2563,7 +2845,9 @@ async function last30(
             row.prediction,
 
           confidence:
-            row.confidence,
+            Number(
+              row.confidence || 0
+            ),
 
           model_version:
             row.model_version,
@@ -2612,11 +2896,13 @@ async function getStats() {
   if (!pool) {
 
     return {
+
       wins: 0,
       losses: 0,
       pending: 0,
       total: 0,
       winRate: 0
+
     };
 
   }
@@ -2706,13 +2992,9 @@ async function getStats() {
     return {
 
       wins: 0,
-
       losses: 0,
-
       pending: 0,
-
       total: 0,
-
       winRate: 0
 
     };
@@ -2723,7 +3005,7 @@ async function getStats() {
 
 
 /* =========================================================
-   BUILD STATE
+   STATE
 ========================================================= */
 
 async function buildState() {
@@ -2756,7 +3038,7 @@ async function buildState() {
 
 
   const model =
-    calculateV5(
+    calculateV6(
       history
     );
 
@@ -2769,62 +3051,6 @@ async function buildState() {
 
   const stats =
     await getStats();
-
-
-  const prediction =
-    record
-      ? {
-
-          target_issue:
-            record.target_issue,
-
-          prediction:
-            record.prediction,
-
-          confidence:
-            Number(
-              record.confidence ||
-              model.confidence
-            ),
-
-          regime:
-            model.regime,
-
-          reason:
-            model.reason,
-
-          model_version:
-            MODEL_VERSION,
-
-          actual_result:
-            record.actual_result ||
-            null
-
-        }
-      : {
-
-          target_issue:
-            target,
-
-          prediction:
-            model.prediction,
-
-          confidence:
-            model.confidence,
-
-          regime:
-            model.regime,
-
-          reason:
-            model.reason,
-
-          model_version:
-            MODEL_VERSION,
-
-          actual_result:
-            null
-
-        };
 
 
   return {
@@ -2850,14 +3076,67 @@ async function buildState() {
       target,
 
     providerLastUpdated:
-      provider.lastUpdated || 0,
+      provider.lastUpdated,
 
     provider_last_updated:
-      provider.lastUpdated || 0,
+      provider.lastUpdated,
 
     history,
 
-    prediction,
+    prediction:
+      record
+        ? {
+
+            target_issue:
+              record.target_issue,
+
+            prediction:
+              record.prediction,
+
+            confidence:
+              Number(
+                record.confidence ||
+                model.confidence
+              ),
+
+            regime:
+              model.regime,
+
+            reason:
+              model.reason,
+
+            model_version:
+              MODEL_VERSION,
+
+            actual_result:
+              record.actual_result ||
+              null
+
+          }
+        : {
+
+            target_issue:
+              target,
+
+            prediction:
+              model.prediction,
+
+            confidence:
+              model.confidence,
+
+            regime:
+              model.regime,
+
+            reason:
+              model.reason,
+
+            model_version:
+              MODEL_VERSION,
+
+            actual_result:
+              null
+
+          },
 
     predictions,
 
@@ -2894,7 +3173,7 @@ async function buildState() {
 
 
 /* =========================================================
-   ACCESS CHECK
+   ACCESS
 ========================================================= */
 
 async function checkAccess(
@@ -3135,6 +3414,9 @@ async function adminStatus() {
     settlement:
       "EXACT ISSUE",
 
+    adaptive_model:
+      "WALK-FORWARD",
+
     game_url:
       GAME_URL,
 
@@ -3248,15 +3530,11 @@ function safeFilePath(
   filename
 ) {
 
-  const clean =
-    path.basename(
-      filename
-    );
-
-
   return path.join(
     ROOT,
-    clean
+    path.basename(
+      filename
+    )
   );
 
 }
@@ -3314,6 +3592,7 @@ function serveFile(
       res.writeHead(
         200,
         {
+
           "Content-Type":
             type,
 
@@ -3322,6 +3601,7 @@ function serveFile(
 
           "Accept-Ranges":
             "bytes"
+
         }
       );
 
@@ -3428,6 +3708,7 @@ function serveFile(
   res.writeHead(
     200,
     {
+
       "Content-Type":
         type,
 
@@ -3436,6 +3717,7 @@ function serveFile(
 
       "Cache-Control":
         "no-cache"
+
     }
   );
 
@@ -3465,6 +3747,7 @@ const server =
           res.writeHead(
             204,
             {
+
               "Access-Control-Allow-Origin":
                 "*",
 
@@ -3473,6 +3756,7 @@ const server =
 
               "Access-Control-Allow-Methods":
                 "GET,POST,DELETE,OPTIONS"
+
             }
           );
 
@@ -3568,7 +3852,7 @@ const server =
 
 
         /* ================================================
-           ACCESS CHECK
+           KEY CHECK
         ================================================ */
 
         if (
@@ -3628,10 +3912,12 @@ const server =
               res,
               401,
               {
+
                 ok: false,
 
                 error:
                   "Access key and device ID required."
+
               }
             );
 
@@ -3641,7 +3927,9 @@ const server =
 
 
           const access =
-            await checkAccess(req);
+            await checkAccess(
+              req
+            );
 
 
           if (!access.ok) {
@@ -3683,7 +3971,9 @@ const server =
         ) {
 
           const access =
-            await checkAccess(req);
+            await checkAccess(
+              req
+            );
 
 
           if (!access.ok) {
@@ -3898,7 +4188,7 @@ const server =
 
 
           const model =
-            calculateV5(
+            calculateV6(
               provider.history
             );
 
@@ -3938,6 +4228,14 @@ const server =
               history_used:
                 provider.history.length,
 
+              adaptive_strategy:
+                model.adaptive &&
+                model.adaptive.strategy,
+
+              backtest:
+                model.adaptive &&
+                model.adaptive.backtest,
+
               number_model:
                 "DISABLED",
 
@@ -3953,7 +4251,7 @@ const server =
 
 
         /* ================================================
-           ADMIN KEYS — GET
+           ADMIN KEYS GET
         ================================================ */
 
         if (
@@ -3981,7 +4279,7 @@ const server =
 
 
         /* ================================================
-           ADMIN KEYS — CREATE
+           ADMIN KEY CREATE
         ================================================ */
 
         if (
@@ -4130,7 +4428,7 @@ const server =
 
 
         /* ================================================
-           ADMIN KEYS — DELETE
+           ADMIN KEY DELETE
         ================================================ */
 
         if (
@@ -4490,11 +4788,11 @@ async function start() {
       );
 
       console.log(
-        `Game: ${GAME_URL}`
+        `Model: ${MODEL_VERSION}`
       );
 
       console.log(
-        `Model: ${MODEL_VERSION}`
+        `Game: ${GAME_URL}`
       );
 
     }
