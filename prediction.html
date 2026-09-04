@@ -1,938 +1,917 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>DY AI Wingo 30S</title>
 
 <style>
-*{box-sizing:border-box}
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+
+html,body{
+  margin:0;
+  min-height:100%;
+  background:#050914;
+  color:#eef4ff;
+  font-family:Inter,Arial,sans-serif;
+}
 
 body{
-  margin:0;
-  background:#070b16;
-  color:#fff;
-  font-family:Arial,sans-serif;
+  padding:14px;
 }
 
-.wrap{
-  width:100%;
-  max-width:500px;
+.app{
+  width:min(620px,100%);
   margin:auto;
-  padding:12px;
 }
 
-.card{
-  background:#0e1528;
-  border:1px solid #27345b;
-  border-radius:18px;
-  padding:15px;
-  margin-top:12px;
-  box-shadow:0 8px 25px rgba(0,0,0,.25);
-}
+/* HEADER */
 
 .header{
-  text-align:center;
-  padding:17px;
-  background:linear-gradient(135deg,#111b35,#0b1022);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:16px 4px 18px;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:11px;
 }
 
 .logo{
-  font-size:25px;
+  width:45px;
+  height:45px;
+  border-radius:14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:
+    linear-gradient(135deg,#5b5cff,#00c6ff);
+  box-shadow:0 0 25px rgba(73,102,255,.35);
+  font-size:22px;
   font-weight:900;
-  letter-spacing:1px;
 }
 
-.sub{
-  margin-top:5px;
-  color:#8996b8;
-  font-size:12px;
+.brand h1{
+  margin:0;
+  font-size:20px;
+  letter-spacing:.3px;
 }
 
-.game{
-  position:relative;
-  width:100%;
-  height:330px;
-  overflow:hidden;
-  border-radius:18px;
-  background:#111827;
-  border:1px solid #27345b;
+.brand small{
+  display:block;
+  margin-top:3px;
+  color:#8492aa;
+  font-size:10px;
+  letter-spacing:1.4px;
 }
 
-.game iframe{
-  width:100%;
-  height:100%;
-  border:0;
-}
-
-.openGame{
-  position:absolute;
-  z-index:5;
-  right:10px;
-  top:10px;
-  padding:9px 12px;
-  border-radius:10px;
-  background:#172443;
-  color:#fff;
-  border:1px solid #405486;
-  text-decoration:none;
-  font-size:11px;
+.live{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:7px 10px;
+  border:1px solid #1e3048;
+  border-radius:30px;
+  color:#8ef0bd;
+  font-size:10px;
   font-weight:800;
 }
 
-.label{
-  color:#7f8cad;
-  font-size:10px;
-  text-transform:uppercase;
-  letter-spacing:1px;
+.dot{
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:#39e98b;
+  box-shadow:0 0 10px #39e98b;
 }
 
-.issue{
-  margin-top:5px;
-  font-size:18px;
-  font-weight:900;
+/* CARDS */
+
+.card{
+  background:
+    linear-gradient(
+      145deg,
+      rgba(17,29,50,.98),
+      rgba(8,15,28,.98)
+    );
+  border:1px solid #1c2d45;
+  border-radius:22px;
+  padding:18px;
+  margin-bottom:14px;
+  box-shadow:0 14px 40px rgba(0,0,0,.22);
+}
+
+.label{
+  color:#71819b;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+}
+
+.period{
+  margin-top:7px;
+  font-family:monospace;
+  font-size:19px;
+  font-weight:800;
   word-break:break-all;
 }
 
-.timer{
-  text-align:center;
-  font-size:34px;
-  font-weight:900;
-  margin-top:10px;
+/* TIMER */
+
+.timerBox{
+  margin-top:15px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:13px 15px;
+  background:#08111f;
+  border:1px solid #1a2b43;
+  border-radius:15px;
 }
 
-.analysis{
-  text-align:center;
-  padding:20px 5px;
-}
-
-.spinner{
-  width:36px;
-  height:36px;
-  margin:auto;
-  border:4px solid #27345b;
-  border-top-color:#fff;
-  border-radius:50%;
-  animation:spin .8s linear infinite;
-}
-
-@keyframes spin{
-  to{transform:rotate(360deg)}
-}
-
-.analysisText{
-  margin-top:12px;
-  color:#9da9c4;
-  font-size:12px;
-}
-
-.predictionBox{
-  display:none;
-  text-align:center;
-  padding:8px 0 3px;
-}
-
-.prediction{
-  margin-top:7px;
-  font-size:45px;
-  line-height:1;
-  font-weight:1000;
-  letter-spacing:2px;
-}
-
-.big{
-  color:#ffb35c;
-}
-
-.small{
-  color:#6fa8ff;
-}
-
-.confidence{
-  margin-top:10px;
-  color:#9ca9c5;
-  font-size:13px;
-}
-
-.confidence b{
-  color:#fff;
-}
-
-.reason{
-  margin-top:10px;
-  background:#080d1b;
-  border:1px solid #1d2947;
-  border-radius:10px;
-  padding:9px;
-  color:#8592b1;
+.timerText{
+  color:#8797b0;
   font-size:11px;
 }
 
-.regime{
-  margin-top:8px;
-  color:#647291;
-  font-size:10px;
+.timer{
+  font-family:monospace;
+  font-size:22px;
+  font-weight:900;
 }
 
-.status{
+/* ANALYSIS */
+
+.analysis{
   text-align:center;
-  margin-top:10px;
-  color:#63708e;
-  font-size:10px;
+  padding:25px 8px 18px;
+}
+
+.brain{
+  width:82px;
+  height:82px;
+  margin:auto;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:
+    radial-gradient(
+      circle,
+      rgba(92,100,255,.30),
+      rgba(22,30,54,.35) 55%,
+      transparent 70%
+    );
+  border:1px solid #354b9d;
+  box-shadow:
+    0 0 35px rgba(88,96,255,.22);
+  font-size:35px;
+  animation:pulse 1.3s infinite;
+}
+
+@keyframes pulse{
+  0%,100%{
+    transform:scale(1);
+    opacity:.8;
+  }
+  50%{
+    transform:scale(1.06);
+    opacity:1;
+  }
+}
+
+.analyzing{
+  margin-top:14px;
+  font-size:11px;
+  color:#8998b1;
+  letter-spacing:1.5px;
+  font-weight:800;
+}
+
+.progress{
+  width:100%;
+  height:5px;
+  margin-top:13px;
+  background:#101d31;
+  border-radius:10px;
+  overflow:hidden;
+}
+
+.progressBar{
+  height:100%;
+  width:0%;
+  background:linear-gradient(
+    90deg,
+    #5b5cff,
+    #00c6ff
+  );
+  border-radius:10px;
+  transition:width .15s linear;
+}
+
+/* SIGNAL */
+
+.signal{
+  display:none;
+  text-align:center;
+}
+
+.signalWord{
+  font-size:47px;
+  font-weight:950;
+  letter-spacing:1px;
+}
+
+.signalSub{
+  margin-top:7px;
+  color:#8c9ab0;
+  font-size:11px;
+}
+
+.confidence{
+  margin:20px auto 0;
+  width:145px;
+  height:145px;
+  border-radius:50%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  border:7px solid #26395b;
+  box-shadow:inset 0 0 30px rgba(71,93,255,.08);
+}
+
+.confidence strong{
+  font-size:32px;
+}
+
+.confidence span{
+  margin-top:3px;
+  color:#8090a9;
+  font-size:9px;
+  letter-spacing:1px;
+}
+
+/* STATS */
+
+.stats{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:16px;
+}
+
+.stat{
+  background:#08111f;
+  border:1px solid #1b2b42;
+  border-radius:14px;
+  padding:13px;
+}
+
+.stat span{
+  display:block;
+  color:#71819a;
+  font-size:9px;
+  letter-spacing:1px;
+}
+
+.stat strong{
+  display:block;
+  margin-top:5px;
+  font-size:17px;
+}
+
+/* PATTERN */
+
+.pattern{
+  margin-top:15px;
+  padding:13px;
+  border-radius:14px;
+  background:#091321;
+  border:1px solid #1b2c44;
+}
+
+.patternTitle{
+  color:#73839c;
+  font-size:9px;
+  letter-spacing:1px;
+  font-weight:800;
+}
+
+.patternValue{
+  margin-top:6px;
+  font-size:13px;
+  font-weight:800;
+}
+
+/* HISTORY */
+
+.historyHead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:12px;
+}
+
+.historyHead h2{
+  margin:0;
+  font-size:16px;
+}
+
+.badge{
+  padding:5px 8px;
+  border-radius:8px;
+  background:#15213a;
+  color:#91a4c2;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:1px;
+}
+
+.tableWrap{
+  overflow-x:auto;
+  border:1px solid #1b2b42;
+  border-radius:15px;
 }
 
 table{
   width:100%;
   border-collapse:collapse;
-  margin-top:10px;
-  font-size:10px;
+  min-width:480px;
 }
 
 th{
-  color:#6e7b9b;
-  padding:9px 3px;
-  border-bottom:1px solid #26345a;
+  background:#091321;
+  color:#697a94;
+  font-size:9px;
+  letter-spacing:1px;
+  text-align:left;
+  padding:11px 10px;
 }
 
 td{
-  padding:9px 3px;
-  text-align:center;
-  border-bottom:1px solid #18233e;
+  padding:11px 10px;
+  border-top:1px solid #142339;
+  font-size:11px;
+}
+
+.issue{
+  font-family:monospace;
+  color:#a9b6c9;
+}
+
+.big{
+  color:#58b8ff;
+  font-weight:900;
+}
+
+.small{
+  color:#ffb45c;
+  font-weight:900;
 }
 
 .win{
-  color:#55e39b;
+  color:#49e391;
   font-weight:900;
 }
 
 .loss{
-  color:#ff657c;
+  color:#ff6378;
   font-weight:900;
 }
 
 .pending{
-  color:#7f8cad;
+  color:#8a98ad;
   font-weight:900;
 }
 
-.stats{
-  display:flex;
-  justify-content:space-between;
-  margin-top:7px;
-  color:#8490ad;
-  font-size:11px;
-}
-
-.music{
-  position:fixed;
-  right:15px;
-  bottom:15px;
-  width:46px;
-  height:46px;
-  border-radius:50%;
-  border:1px solid #405486;
-  background:#111b35;
-  color:#fff;
-  font-size:18px;
-  z-index:20;
-}
+/* FOOTER */
 
 .footer{
   text-align:center;
-  padding:16px 0;
-  color:#4f5c78;
+  color:#56657c;
   font-size:9px;
+  line-height:1.6;
+  padding:5px 15px 18px;
+}
+
+/* ACCESS */
+
+.access{
+  position:fixed;
+  inset:0;
+  z-index:50;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background:#050914;
+}
+
+.accessBox{
+  width:min(400px,100%);
+  padding:22px;
+  border-radius:22px;
+  background:#0c1728;
+  border:1px solid #213553;
+  box-shadow:0 20px 60px rgba(0,0,0,.45);
+}
+
+.accessBox h2{
+  margin:0;
+  font-size:21px;
+}
+
+.accessBox p{
+  color:#7889a2;
+  font-size:11px;
+  line-height:1.6;
+}
+
+.accessBox input{
+  width:100%;
+  padding:14px;
+  border-radius:12px;
+  border:1px solid #273b58;
+  outline:none;
+  background:#07101c;
+  color:#fff;
+  font-size:14px;
+}
+
+.accessBox button{
+  width:100%;
+  margin-top:10px;
+  padding:13px;
+  border:0;
+  border-radius:12px;
+  background:linear-gradient(
+    135deg,
+    #565cff,
+    #008edb
+  );
+  color:white;
+  font-weight:900;
+}
+
+#error{
+  margin-top:9px;
+  color:#ff6579;
+  font-size:11px;
+}
+
+.hidden{
+  display:none!important;
+}
+
+@media(max-width:420px){
+  body{
+    padding:8px;
+  }
+
+  .card{
+    padding:15px;
+    border-radius:19px;
+  }
+
+  .signalWord{
+    font-size:40px;
+  }
+
+  .period{
+    font-size:16px;
+  }
 }
 </style>
 </head>
 
 <body>
 
-<div class="wrap">
+<div id="access" class="access">
+  <div class="accessBox">
+    <h2>DY AI ACCESS</h2>
+    <p>
+      Enter your access key to open the live
+      analytical dashboard.
+    </p>
 
-  <div class="card header">
-    <div class="logo">DY AI WINGO 30S</div>
-    <div class="sub">
-      Live AI Analysis • 30 Second Game
-    </div>
+    <input
+      id="accessKey"
+      type="password"
+      placeholder="Access key"
+      autocomplete="off"
+    >
+
+    <button onclick="login()">
+      CONNECT DASHBOARD
+    </button>
+
+    <div id="error"></div>
   </div>
+</div>
 
 
-  <div class="card" style="padding:0;overflow:hidden">
+<div id="app" class="app hidden">
 
-    <div class="game">
+  <!-- HEADER -->
 
-      <a
-        class="openGame"
-        href="https://www.shreewin38.com/#/register?invitationCode=88523152383"
-        target="_blank"
-        rel="noopener"
-      >
-        OPEN GAME
-      </a>
+  <header class="header">
 
-      <iframe
-        src="https://www.shreewin38.com/#/register?invitationCode=88523152383"
-        allow="fullscreen"
-        loading="eager"
-      ></iframe>
-
-    </div>
-
-  </div>
-
-
-  <div class="card">
-
-    <div class="label">
-      Target Period
-    </div>
-
-    <div
-      class="issue"
-      id="targetIssue"
-    >
-      Loading...
-    </div>
-
-    <div
-      class="timer"
-      id="timer"
-    >
-      30
-    </div>
-
-
-    <div
-      class="analysis"
-      id="analysisBox"
-    >
-
-      <div class="spinner"></div>
-
-      <div
-        class="analysisText"
-        id="analysisText"
-      >
-        Waiting for live data...
-      </div>
-
-    </div>
-
-
-    <div
-      class="predictionBox"
-      id="predictionBox"
-    >
-
-      <div class="label">
-        AI PREDICTION
-      </div>
-
-      <div
-        class="prediction"
-        id="prediction"
-      >
-        —
-      </div>
-
-      <div class="confidence">
-        Confidence:
-        <b id="confidence">0%</b>
-      </div>
-
-      <div
-        class="reason"
-        id="reason"
-      >
-        —
-      </div>
-
-      <div
-        class="regime"
-        id="regime"
-      >
-        —
-      </div>
-
-      <div
-        class="status"
-        id="status"
-      >
-        Waiting for synchronization
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <div class="card">
-
-    <div
-      style="
-        display:flex;
-        justify-content:space-between;
-        align-items:center;
-      "
-    >
+    <div class="brand">
+      <div class="logo">AI</div>
 
       <div>
-        <div class="label">
-          Prediction History
+        <h1>DY Wingo AI</h1>
+        <small>30 SECOND ANALYTICS</small>
+      </div>
+    </div>
+
+    <div class="live">
+      <span class="dot"></span>
+      LIVE
+    </div>
+
+  </header>
+
+
+  <!-- PERIOD -->
+
+  <section class="card">
+
+    <div class="label">
+      ACTIVE PERIOD
+    </div>
+
+    <div id="period" class="period">
+      CONNECTING...
+    </div>
+
+    <div class="timerBox">
+      <div class="timerText">
+        NEXT ANALYSIS CYCLE
+      </div>
+
+      <div id="timer" class="timer">
+        --:--
+      </div>
+    </div>
+
+  </section>
+
+
+  <!-- AI ENGINE -->
+
+  <section class="card">
+
+    <div
+      id="analysis"
+      class="analysis"
+    >
+
+      <div class="brain">
+        ◉
+      </div>
+
+      <div class="analyzing">
+        AI ENGINE INITIALIZING
+      </div>
+
+      <div class="progress">
+        <div
+          id="progressBar"
+          class="progressBar"
+        ></div>
+      </div>
+
+    </div>
+
+
+    <div
+      id="signal"
+      class="signal"
+    >
+
+      <div
+        id="signalWord"
+        class="signalWord"
+      >
+        WAIT
+      </div>
+
+      <div
+        id="signalSub"
+        class="signalSub"
+      >
+        Historical trend analysis
+      </div>
+
+      <div
+        id="confidence"
+        class="confidence"
+      >
+        <strong id="confidenceValue">
+          0%
+        </strong>
+
+        <span>
+          ANALYSIS STRENGTH
+        </span>
+      </div>
+
+      <div class="stats">
+
+        <div class="stat">
+          <span>BIG SHARE</span>
+          <strong id="bigPct">--%</strong>
+        </div>
+
+        <div class="stat">
+          <span>SMALL SHARE</span>
+          <strong id="smallPct">--%</strong>
+        </div>
+
+        <div class="stat">
+          <span>STREAK</span>
+          <strong id="streak">--</strong>
+        </div>
+
+        <div class="stat">
+          <span>REGIME</span>
+          <strong id="regime">--</strong>
+        </div>
+
+      </div>
+
+      <div class="pattern">
+        <div class="patternTitle">
+          DETECTED PATTERN
         </div>
 
         <div
-          style="
-            font-size:19px;
-            font-weight:900;
-            margin-top:4px;
-          "
+          id="pattern"
+          class="patternValue"
         >
-          LAST 30
+          Waiting for data...
         </div>
-      </div>
-
-      <div
-        id="stats"
-        style="
-          font-size:11px;
-          color:#8390ad;
-        "
-      >
-        0W • 0L
       </div>
 
     </div>
 
+  </section>
 
-    <table>
 
-      <thead>
+  <!-- HISTORY -->
 
-        <tr>
-          <th>PERIOD</th>
-          <th>PRED</th>
-          <th>RESULT</th>
-          <th>W/L</th>
-        </tr>
+  <section class="card">
 
-      </thead>
+    <div class="historyHead">
 
-      <tbody id="historyBody">
+      <h2>Live Verification</h2>
 
-        <tr>
-          <td colspan="4">
-            Loading...
-          </td>
-        </tr>
+      <div class="badge">
+        LAST 30
+      </div>
 
-      </tbody>
+    </div>
 
-    </table>
+    <div class="tableWrap">
 
-  </div>
+      <table>
+
+        <thead>
+          <tr>
+            <th>PERIOD</th>
+            <th>ANALYSIS</th>
+            <th>ACTUAL</th>
+            <th>STATUS</th>
+          </tr>
+        </thead>
+
+        <tbody id="historyBody">
+
+          <tr>
+            <td colspan="4">
+              Loading...
+            </td>
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </section>
 
 
   <div class="footer">
-    DY AI • Live Data
+    DY AI uses historical sequence analysis.
+    Analytical confidence is not a guarantee of
+    future outcomes.
   </div>
 
 </div>
 
 
-<button
-  class="music"
-  id="musicBtn"
->
-  ♫
-</button>
-
-
-<audio
-  id="music"
-  loop
-  preload="none"
->
-  <source
-    src="/music.mp3"
-    type="audio/mpeg"
-  >
-</audio>
-
-
 <script>
+"use strict";
 
-const music =
-  document.getElementById("music");
+/* =========================================================
+   CONFIG
+========================================================= */
 
-const musicBtn =
-  document.getElementById("musicBtn");
+const API = "/api/state";
 
-let musicPlaying = false;
+const $ = id =>
+  document.getElementById(id);
 
-let lastTarget = "";
+let accessKey =
+  localStorage.getItem(
+    "dy_access_key"
+  ) || "";
 
-let analysisRunning = false;
+let deviceId =
+  localStorage.getItem(
+    "dy_device_id"
+  );
 
-let providerUpdated = 0;
-
-let localTimer = 30;
-
-
-/* =========================================
-   ESCAPE HTML
-========================================= */
-
-function escapeHtml(value){
-
-  return String(value ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-
-}
-
-
-/* =========================================
-   RESULT CLASS
-========================================= */
-
-function resultClass(value){
-
-  const x =
-    String(value || "")
-      .toUpperCase();
-
-  if(x === "BIG"){
-    return "big";
-  }
-
-  if(x === "SMALL"){
-    return "small";
-  }
-
-  if(x === "WIN"){
-    return "win";
-  }
-
-  if(x === "LOSS"){
-    return "loss";
-  }
-
-  return "pending";
-}
-
-
-/* =========================================
-   TIMER
-========================================= */
-
-function updateTimer(){
-
-  if(providerUpdated){
-
-    const elapsed =
-      Math.floor(
-        (Date.now() - providerUpdated) / 1000
+if(!deviceId){
+  deviceId =
+    crypto.randomUUID
+      ? crypto.randomUUID()
+      : (
+        Date.now() +
+        "-" +
+        Math.random()
+          .toString(36)
+          .slice(2)
       );
 
-    let remaining =
-      30 - (elapsed % 30);
-
-    if(
-      remaining < 1 ||
-      remaining > 30
-    ){
-      remaining = 30;
-    }
-
-    localTimer = remaining;
-
-  }else{
-
-    localTimer--;
-
-    if(localTimer <= 0){
-      localTimer = 30;
-    }
-
-  }
-
-  document.getElementById("timer")
-    .textContent =
-      String(localTimer)
-        .padStart(2,"0");
-
+  localStorage.setItem(
+    "dy_device_id",
+    deviceId
+  );
 }
 
-setInterval(
-  updateTimer,
-  1000
-);
+let lastTarget = null;
+let analysisRunning = false;
+let latestData = null;
+let timerBase = null;
 
 
-/* =========================================
-   ANALYSIS ANIMATION
-========================================= */
+/* =========================================================
+   LOGIN
+========================================================= */
 
-function startAnalysis(){
+async function login(){
 
-  if(analysisRunning){
+  const key =
+    $("accessKey")
+      .value
+      .trim();
+
+  if(!key){
+    $("error").textContent =
+      "Access key enter karo.";
     return;
   }
 
-  analysisRunning = true;
-
-  const box =
-    document.getElementById(
-      "analysisBox"
-    );
-
-  const predictionBox =
-    document.getElementById(
-      "predictionBox"
-    );
-
-  const text =
-    document.getElementById(
-      "analysisText"
-    );
-
-  box.style.display =
-    "block";
-
-  predictionBox.style.display =
-    "none";
-
-  let seconds = 3;
-
-  text.textContent =
-    "Analyzing recent data... 3";
-
-  const timer =
-    setInterval(() => {
-
-      seconds--;
-
-      if(seconds === 2){
-
-        text.textContent =
-          "Checking trend & transitions... 2";
-
-      }
-
-      if(seconds === 1){
-
-        text.textContent =
-          "Finalizing AI analysis... 1";
-
-      }
-
-      if(seconds <= 0){
-
-        clearInterval(timer);
-
-        box.style.display =
-          "none";
-
-        predictionBox.style.display =
-          "block";
-
-        analysisRunning =
-          false;
-      }
-
-    },1000);
-
-}
-
-
-/* =========================================
-   RENDER PREDICTION
-========================================= */
-
-function renderPrediction(data){
-
-  const value =
-    String(
-      data.prediction || "—"
-    ).toUpperCase();
-
-  const element =
-    document.getElementById(
-      "prediction"
-    );
-
-  element.textContent =
-    value;
-
-  element.className =
-    "prediction " +
-    resultClass(value);
-
-
-  const confidence =
-    Number(
-      data.confidence || 0
-    );
-
-  document.getElementById(
-    "confidence"
-  ).textContent =
-    Math.max(
-      0,
-      Math.min(100,confidence)
-    ) + "%";
-
-
-  document.getElementById(
-    "reason"
-  ).textContent =
-    data.reason ||
-    "Multi-signal analysis";
-
-
-  document.getElementById(
-    "regime"
-  ).textContent =
-    data.regime
-      ? "REGIME: " + data.regime
-      : "";
-
-
-  document.getElementById(
-    "status"
-  ).textContent =
-    data.error
-      ? "Data connection issue"
-      : "AI synchronized";
-
-}
-
-
-/* =========================================
-   HISTORY
-========================================= */
-
-function renderHistory(rows){
-
-  const body =
-    document.getElementById(
-      "historyBody"
-    );
-
-  if(
-    !Array.isArray(rows) ||
-    rows.length === 0
-  ){
-
-    body.innerHTML = `
-      <tr>
-        <td colspan="4">
-          No history available
-        </td>
-      </tr>
-    `;
-
-    document.getElementById(
-      "stats"
-    ).textContent =
-      "0W • 0L";
-
-    return;
-  }
-
-
-  let wins = 0;
-  let losses = 0;
-
-
-  body.innerHTML =
-    rows
-      .slice(0,30)
-      .map(row => {
-
-        const period =
-          row.target_issue ??
-          row.issue ??
-          row.issueNumber ??
-          "—";
-
-
-        const prediction =
-          String(
-            row.prediction ??
-            row.pred ??
-            ""
-          ).toUpperCase();
-
-
-        const actual =
-          String(
-            row.actual_result ??
-            row.result ??
-            ""
-          ).toUpperCase();
-
-
-        let status =
-          String(
-            row.status ??
-            ""
-          ).toUpperCase();
-
-
-        /*
-          Missing actual result means
-          PENDING — never WIN/LOSS.
-        */
-
-        if(
-          !actual ||
-          actual === "NULL" ||
-          actual === "UNDEFINED" ||
-          actual === "—"
-        ){
-
-          status =
-            "PENDING";
-
-        }else{
-
-          if(
-            status !== "WIN" &&
-            status !== "LOSS"
-          ){
-
-            status =
-              prediction === actual
-                ? "WIN"
-                : "LOSS";
-
-          }
-
-        }
-
-
-        if(status === "WIN"){
-          wins++;
-        }
-
-        if(status === "LOSS"){
-          losses++;
-        }
-
-
-        return `
-          <tr>
-
-            <td>
-              ${escapeHtml(period)}
-            </td>
-
-            <td
-              class="${resultClass(prediction)}"
-            >
-              ${escapeHtml(
-                prediction || "—"
-              )}
-            </td>
-
-            <td
-              class="${resultClass(actual)}"
-            >
-              ${escapeHtml(
-                actual || "—"
-              )}
-            </td>
-
-            <td
-              class="${resultClass(status)}"
-            >
-              ${escapeHtml(
-                status || "PENDING"
-              )}
-            </td>
-
-          </tr>
-        `;
-
-      })
-      .join("");
-
-
-  document.getElementById(
-    "stats"
-  ).textContent =
-    `${wins}W • ${losses}L`;
-
-}
-
-
-/* =========================================
-   LOAD STATE
-========================================= */
-
-async function loadState(){
+  $("error").textContent =
+    "Connecting...";
 
   try{
 
     const response =
       await fetch(
-        "/api/state?ts=" +
-        Date.now(),
+        "/api/key/check",
         {
-          cache:"no-store"
+          method:"POST",
+
+          headers:{
+            "Content-Type":
+              "application/json"
+          },
+
+          body:JSON.stringify({
+            accessKey:key,
+            deviceId:deviceId
+          })
         }
       );
-
-
-    if(!response.ok){
-
-      throw new Error(
-        "HTTP " +
-        response.status
-      );
-    }
-
 
     const data =
       await response.json();
 
-
-    if(!data.ok){
-      return;
+    if(!response.ok || !data.ok){
+      throw new Error(
+        data.reason ||
+        data.error ||
+        "Access denied"
+      );
     }
 
+    accessKey = key;
+
+    localStorage.setItem(
+      "dy_access_key",
+      key
+    );
+
+    $("access").classList.add(
+      "hidden"
+    );
+
+    $("app").classList.remove(
+      "hidden"
+    );
+
+    loadState();
+
+  }catch(err){
+
+    $("error").textContent =
+      err.message ||
+      "Connection failed";
+  }
+}
+
+
+/* =========================================================
+   REQUEST
+========================================================= */
+
+async function getState(){
+
+  const response =
+    await fetch(
+      API,
+      {
+        method:"GET",
+        cache:"no-store",
+        headers:{
+          "X-Access-Key":
+            accessKey,
+
+          "X-Device-Id":
+            deviceId
+        }
+      }
+    );
+
+  const data =
+    await response.json();
+
+  if(
+    response.status === 403
+  ){
+    logout();
+    throw new Error(
+      "Access expired"
+    );
+  }
+
+  if(!response.ok){
+    throw new Error(
+      data.error ||
+      data.reason ||
+      "Server error"
+    );
+  }
+
+  return data;
+}
+
+
+/* =========================================================
+   STATE
+========================================================= */
+
+async function loadState(){
+
+  try{
+
+    const data =
+      await getState();
+
+    latestData = data;
+
+    updatePeriod(data);
+    updateHistory(data);
+    updateTimer(data);
 
     const target =
-      data.targetIssue ||
-      data.currentIssue ||
-      "";
-
-
-    document.getElementById(
-      "targetIssue"
-    ).textContent =
-      target || "Waiting...";
-
-
-    if(data.providerLastUpdated){
-
-      providerUpdated =
-        Number(
-          data.providerLastUpdated
-        );
-
-    }
-
+      data.targetIssue;
 
     /*
-      New target = new 3-second
-      analysis animation.
+      Analysis animation only runs
+      when the target period changes.
     */
 
     if(
@@ -940,114 +919,621 @@ async function loadState(){
       target !== lastTarget
     ){
 
-      lastTarget =
-        target;
+      lastTarget = target;
 
-      startAnalysis();
+      runAnalysis(
+        data.analysis
+      );
 
+    }else if(
+      !analysisRunning &&
+      data.analysis
+    ){
 
-      setTimeout(() => {
-
-        renderPrediction(data);
-
-      },3000);
-
-    }else{
-
-      /*
-        Same target:
-        update current information
-        without restarting animation.
-      */
-
-      if(
-        !analysisRunning &&
-        data.prediction
-      ){
-
-        renderPrediction(data);
-
-      }
-
+      renderAnalysis(
+        data.analysis
+      );
     }
 
+  }catch(err){
 
-    renderHistory(
-      data.history || []
-    );
+    $("period").textContent =
+      "CONNECTION ERROR";
 
-
-  }catch(error){
-
-    console.log(
-      "STATE ERROR:",
-      error
-    );
-
-    document.getElementById(
-      "status"
-    ).textContent =
-      "Connecting to server...";
-
+    $("signalSub").textContent =
+      err.message;
   }
-
 }
 
 
-/* =========================================
-   MUSIC
-========================================= */
+/* =========================================================
+   PERIOD
+========================================================= */
 
-musicBtn.addEventListener(
-  "click",
-  async () => {
+function updatePeriod(data){
 
-    try{
+  $("period").textContent =
+    data.targetIssue ||
+    data.provider?.currentIssue ||
+    "WAITING";
+}
 
-      if(!musicPlaying){
 
-        await music.play();
+/* =========================================================
+   ANALYSIS ANIMATION
+========================================================= */
 
-        musicPlaying =
-          true;
+function runAnalysis(analysis){
 
-        musicBtn.textContent =
-          "🔊";
+  analysisRunning = true;
 
-      }else{
+  $("analysis")
+    .style.display = "block";
 
-        music.pause();
+  $("signal")
+    .style.display = "none";
 
-        musicPlaying =
-          false;
+  const progress =
+    $("progressBar");
 
-        musicBtn.textContent =
-          "♫";
+  const text =
+    document.querySelector(
+      ".analyzing"
+    );
+
+  progress.style.width =
+    "0%";
+
+  const steps = [
+    "SYNCING PERIOD",
+    "READING RECENT HISTORY",
+    "CHECKING STREAKS",
+    "CHECKING TRANSITIONS",
+    "CHECKING SEQUENCE PATTERNS",
+    "CALCULATING ANALYSIS"
+  ];
+
+  let step = 0;
+  let value = 0;
+
+  const interval =
+    setInterval(() => {
+
+      value += 5;
+
+      progress.style.width =
+        Math.min(
+          value,
+          100
+        ) + "%";
+
+      if(
+        value % 15 === 0 &&
+        step < steps.length
+      ){
+        text.textContent =
+          steps[step++];
 
       }
 
-    }catch(error){
+      if(value >= 100){
 
-      console.log(
-        "Music error:",
-        error
+        clearInterval(interval);
+
+        setTimeout(() => {
+
+          analysisRunning = false;
+
+          renderAnalysis(
+            analysis
+          );
+
+        },250);
+      }
+
+    },150);
+}
+
+
+/* =========================================================
+   RENDER ANALYSIS
+========================================================= */
+
+function renderAnalysis(a){
+
+  if(!a){
+    return;
+  }
+
+  $("analysis")
+    .style.display = "none";
+
+  $("signal")
+    .style.display = "block";
+
+
+  const prediction =
+    String(
+      a.prediction || "WAIT"
+    ).toUpperCase();
+
+  const signal =
+    $("signalWord");
+
+  signal.textContent =
+    prediction;
+
+
+  if(prediction === "BIG"){
+
+    signal.style.color =
+      "#58b8ff";
+
+    $("signalSub").textContent =
+      "BIG-side historical trend detected";
+
+  }else if(
+    prediction === "SMALL"
+  ){
+
+    signal.style.color =
+      "#ffb45c";
+
+    $("signalSub").textContent =
+      "SMALL-side historical trend detected";
+
+  }else{
+
+    signal.style.color =
+      "#9ca9bb";
+
+    $("signalSub").textContent =
+      "No strong directional pattern detected";
+  }
+
+
+  const confidence =
+    Number(
+      a.confidence || 0
+    );
+
+  $("confidenceValue")
+    .textContent =
+    confidence + "%";
+
+
+  $("bigPct").textContent =
+    (a.bigPercent ?? "--") +
+    "%";
+
+  $("smallPct").textContent =
+    (a.smallPercent ?? "--") +
+    "%";
+
+
+  const streak =
+    a.streak || {};
+
+  $("streak").textContent =
+    streak.length
+      ? streak.length +
+        " × " +
+        (streak.side || "")
+      : "--";
+
+
+  $("regime").textContent =
+    a.regime ||
+    "--";
+
+
+  const s =
+    a.signals || {};
+
+  const patternParts = [];
+
+  if(
+    Number(s.alternating || 0)
+    >= .70
+  ){
+    patternParts.push(
+      "Alternating sequence"
+    );
+  }
+
+  if(
+    Number(s.split22 || 0)
+    >= .50
+  ){
+    patternParts.push(
+      "2-2 split"
+    );
+  }
+
+  if(
+    streak.length >= 5
+  ){
+    patternParts.push(
+      "Long streak"
+    );
+  }
+
+  if(
+    Number(
+      Math.abs(
+        Number(a.bigPercent || 50) -
+        Number(a.smallPercent || 50)
+      )
+    ) >= 15
+  ){
+    patternParts.push(
+      "Directional imbalance"
+    );
+  }
+
+  $("pattern").textContent =
+    patternParts.length
+      ? patternParts.join(
+          " · "
+        )
+      : "Mixed / no dominant pattern";
+}
+
+
+/* =========================================================
+   TIMER
+========================================================= */
+
+function updateTimer(data){
+
+  /*
+    WingoBot last_updated can be seconds
+    or milliseconds depending on provider.
+  */
+
+  let timestamp =
+    Number(
+      data.provider?.lastFetch || 0
+    );
+
+  if(!timestamp){
+    return;
+  }
+
+  if(timestamp < 10000000000){
+    timestamp *= 1000;
+  }
+
+  timerBase = timestamp;
+}
+
+
+/*
+  The timer is only a client-side
+  cycle indicator. It is not treated
+  as an authoritative provider clock.
+*/
+
+function tickTimer(){
+
+  if(!timerBase){
+
+    $("timer").textContent =
+      "--:--";
+
+    return;
+  }
+
+  const elapsed =
+    Date.now() -
+    timerBase;
+
+  const cycle =
+    30000;
+
+  let remaining =
+    cycle -
+    (elapsed % cycle);
+
+  if(
+    remaining < 0 ||
+    remaining > cycle
+  ){
+    remaining = cycle;
+  }
+
+  const seconds =
+    Math.ceil(
+      remaining / 1000
+    );
+
+  $("timer").textContent =
+    "00:" +
+    String(seconds)
+      .padStart(2,"0");
+}
+
+
+/* =========================================================
+   HISTORY
+========================================================= */
+
+function resultClass(result){
+
+  return result === "BIG"
+    ? "big"
+    : result === "SMALL"
+      ? "small"
+      : "pending";
+}
+
+function statusClass(status){
+
+  if(status === "WIN")
+    return "win";
+
+  if(status === "LOSS")
+    return "loss";
+
+  return "pending";
+}
+
+function updateHistory(data){
+
+  const body =
+    $("historyBody");
+
+  const records =
+    Array.isArray(
+      data?.history
+    )
+      ? data.history
+      : [];
+
+  const prediction =
+    data?.prediction;
+
+  const rows = [];
+
+  /*
+    Provider history is actual-result
+    history. Prediction record is shown
+    only for its exact target issue.
+  */
+
+  if(
+    prediction &&
+    prediction.target_issue
+  ){
+
+    const actual =
+      records.find(
+        x =>
+          String(
+            x.issueNumber
+          ) ===
+          String(
+            prediction.target_issue
+          )
       );
 
+    const actualResult =
+      actual?.result || null;
+
+    let status =
+      "PENDING";
+
+    if(actualResult){
+
+      status =
+        prediction.prediction ===
+        actualResult
+          ? "WIN"
+          : "LOSS";
     }
 
+    rows.push({
+      issue:
+        prediction.target_issue,
+
+      predicted:
+        prediction.prediction,
+
+      actual:
+        actualResult,
+
+      status
+    });
   }
-);
 
 
-/* =========================================
-   START
-========================================= */
+  /*
+    Add actual provider rows.
+    These remain transparent and do
+    not fabricate prediction outcomes.
+  */
 
-loadState();
+  for(
+    const item of records
+  ){
+
+    if(rows.length >= 30){
+      break;
+    }
+
+    const exists =
+      rows.some(
+        x =>
+          String(x.issue) ===
+          String(
+            item.issueNumber
+          )
+      );
+
+    if(exists){
+      continue;
+    }
+
+    rows.push({
+      issue:
+        item.issueNumber,
+
+      predicted:
+        "—",
+
+      actual:
+        item.result ||
+        "—",
+
+      status:
+        "—"
+    });
+  }
+
+
+  if(!rows.length){
+
+    body.innerHTML =
+      `<tr>
+        <td colspan="4">
+          No history available
+        </td>
+      </tr>`;
+
+    return;
+  }
+
+
+  body.innerHTML =
+    rows.slice(0,30)
+      .map(row => {
+
+        const predicted =
+          row.predicted ===
+          "BIG"
+            ? `<span class="big">BIG</span>`
+            : row.predicted ===
+              "SMALL"
+              ? `<span class="small">SMALL</span>`
+              : "—";
+
+        const actual =
+          row.actual ===
+          "BIG"
+            ? `<span class="big">BIG</span>`
+            : row.actual ===
+              "SMALL"
+              ? `<span class="small">SMALL</span>`
+              : "—";
+
+        const status =
+          row.status === "WIN"
+            ? `<span class="win">WIN</span>`
+            : row.status === "LOSS"
+              ? `<span class="loss">LOSS</span>`
+              : row.status === "PENDING"
+                ? `<span class="pending">PENDING</span>`
+                : "—";
+
+        return `
+          <tr>
+            <td class="issue">
+              ${escapeHTML(
+                row.issue
+              )}
+            </td>
+
+            <td>
+              ${predicted}
+            </td>
+
+            <td>
+              ${actual}
+            </td>
+
+            <td>
+              ${status}
+            </td>
+          </tr>
+        `;
+      })
+      .join("");
+}
+
+
+/* =========================================================
+   ESCAPE
+========================================================= */
+
+function escapeHTML(value){
+
+  return String(
+    value ?? ""
+  )
+  .replaceAll("&","&amp;")
+  .replaceAll("<","&lt;")
+  .replaceAll(">","&gt;")
+  .replaceAll('"',"&quot;")
+  .replaceAll("'","&#039;");
+}
+
+
+/* =========================================================
+   LOGOUT
+========================================================= */
+
+function logout(){
+
+  localStorage.removeItem(
+    "dy_access_key"
+  );
+
+  accessKey = "";
+
+  $("app")
+    .classList.add(
+      "hidden"
+    );
+
+  $("access")
+    .classList.remove(
+      "hidden"
+    );
+}
+
+
+/* =========================================================
+   AUTO START
+========================================================= */
+
+if(accessKey){
+
+  $("access")
+    .classList.add(
+      "hidden"
+    );
+
+  $("app")
+    .classList.remove(
+      "hidden"
+    );
+
+  loadState();
+}
+
+
+/*
+  Smooth live refresh.
+*/
 
 setInterval(
   loadState,
   1000
+);
+
+setInterval(
+  tickTimer,
+  250
 );
 
 </script>
