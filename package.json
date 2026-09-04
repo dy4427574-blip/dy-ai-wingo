@@ -1,7 +1,7 @@
 {
-  "name": "dy-ai-wingo-tracker",
-  "version": "7.0.0",
-  "description": "DY AI Wingo 30S live result tracker",
+  "name": "dy-ai-wingo",
+  "version": "1.0.0",
+  "description": "DY AI Wingo 30S",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
