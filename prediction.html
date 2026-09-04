@@ -2,26 +2,29 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>DY AI Wingo Prediction</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+
+<title>DY AI • Wingo 30S</title>
 
 <style>
 *{
   box-sizing:border-box;
   margin:0;
   padding:0;
-  -webkit-tap-highlight-color:transparent;
 }
 
 html,body{
   width:100%;
   min-height:100%;
-  background:#030712;
-  color:#fff;
-  font-family:Arial,Helvetica,sans-serif;
 }
 
 body{
+  font-family:Inter,Arial,sans-serif;
+  background:
+    radial-gradient(circle at 15% 0%,rgba(37,99,235,.20),transparent 30%),
+    radial-gradient(circle at 100% 100%,rgba(124,58,237,.18),transparent 32%),
+    #060a12;
+  color:#fff;
   overflow-x:hidden;
 }
 
@@ -29,18 +32,11 @@ button,input{
   font:inherit;
 }
 
-button{
-  border:0;
-  cursor:pointer;
-}
-
 .hidden{
   display:none!important;
 }
 
-/* =========================================================
-   LOGIN
-========================================================= */
+/* LOGIN */
 
 #loginScreen{
   min-height:100vh;
@@ -48,235 +44,208 @@ button{
   align-items:center;
   justify-content:center;
   padding:20px;
-  background:
-    radial-gradient(circle at 50% 15%,rgba(255,92,92,.16),transparent 30%),
-    linear-gradient(180deg,#02050d,#050a15);
 }
 
 .login-card{
   width:100%;
-  max-width:440px;
-  padding:32px 24px 28px;
-  border:1px solid rgba(99,137,190,.28);
-  border-radius:28px;
-  background:rgba(9,17,31,.94);
-  box-shadow:
-    0 25px 80px rgba(0,0,0,.55),
-    inset 0 1px rgba(255,255,255,.04);
-  text-align:center;
+  max-width:410px;
+  padding:30px 22px;
+  background:rgba(13,19,32,.92);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:25px;
+  box-shadow:0 25px 80px rgba(0,0,0,.5);
+  backdrop-filter:blur(20px);
 }
 
 .logo{
-  width:92px;
-  height:92px;
-  margin:0 auto 24px;
-  border-radius:30px;
+  width:76px;
+  height:76px;
+  margin:0 auto 18px;
+  border-radius:23px;
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:34px;
+  background:linear-gradient(135deg,#2563eb,#7c3aed);
+  font-size:25px;
   font-weight:900;
-  background:linear-gradient(135deg,#ff9748,#ff4f7b);
-  box-shadow:0 15px 40px rgba(255,80,110,.22);
+  box-shadow:0 12px 35px rgba(37,99,235,.35);
 }
 
-.login-title{
-  font-size:27px;
-  font-weight:900;
-  margin-bottom:8px;
+.login-card h1{
+  text-align:center;
+  font-size:24px;
 }
 
-.login-subtitle{
-  color:#7f8ca5;
-  font-size:14px;
-  margin-bottom:28px;
+.login-card p{
+  text-align:center;
+  color:#77849a;
+  font-size:12px;
+  margin:7px 0 24px;
 }
 
-.key-input{
+.input{
   width:100%;
-  height:58px;
-  padding:0 18px;
-  border-radius:17px;
-  border:1px solid rgba(255,126,80,.65);
+  height:49px;
+  border:1px solid #263149;
   outline:none;
+  border-radius:14px;
+  background:#090f1b;
   color:#fff;
-  background:#050a13;
-  box-shadow:0 0 20px rgba(255,100,70,.08);
+  padding:0 14px;
 }
 
-.key-input:focus{
-  border-color:#ff8065;
-  box-shadow:0 0 25px rgba(255,100,70,.16);
+.input:focus{
+  border-color:#3b82f6;
 }
 
 .login-btn{
   width:100%;
-  height:58px;
-  margin-top:15px;
-  border-radius:17px;
+  height:49px;
+  margin-top:11px;
+  border:0;
+  border-radius:14px;
   color:#fff;
-  font-size:17px;
   font-weight:900;
-  background:linear-gradient(90deg,#ff9148,#ff4d78);
-  box-shadow:0 12px 30px rgba(255,74,105,.18);
+  background:linear-gradient(135deg,#2563eb,#7c3aed);
+  cursor:pointer;
 }
 
-.login-btn:active{
-  transform:scale(.98);
+.login-error{
+  color:#fb7185;
+  text-align:center;
+  font-size:12px;
+  margin-top:12px;
 }
 
-.login-msg{
-  min-height:22px;
-  margin-top:15px;
-  color:#ff7182;
-  font-size:13px;
-}
-
-
-/* =========================================================
-   APP
-========================================================= */
+/* APP */
 
 #app{
+  display:none;
   min-height:100vh;
-  padding-bottom:30px;
-  background:
-    radial-gradient(circle at 50% -5%,rgba(47,102,190,.12),transparent 35%),
-    #030712;
 }
 
 .topbar{
   position:sticky;
   top:0;
-  z-index:20;
-  height:68px;
+  z-index:50;
   display:flex;
   align-items:center;
   justify-content:space-between;
-  padding:0 16px;
-  background:rgba(3,7,18,.88);
-  backdrop-filter:blur(16px);
-  border-bottom:1px solid rgba(255,255,255,.06);
+  padding:12px 15px;
+  background:rgba(6,10,18,.86);
+  border-bottom:1px solid rgba(255,255,255,.07);
+  backdrop-filter:blur(18px);
 }
 
 .brand{
   display:flex;
   align-items:center;
-  gap:11px;
+  gap:10px;
 }
 
 .brand-logo{
-  width:40px;
-  height:40px;
+  width:42px;
+  height:42px;
   border-radius:13px;
   display:flex;
   align-items:center;
   justify-content:center;
+  background:linear-gradient(135deg,#2563eb,#7c3aed);
+  font-size:13px;
   font-weight:900;
-  background:linear-gradient(135deg,#ff9748,#ff4f7b);
 }
 
-.brand-text strong{
+.brand h2{
+  font-size:15px;
+}
+
+.brand small{
   display:block;
+  color:#69778d;
+  font-size:9px;
+  margin-top:2px;
+}
+
+.top-actions{
+  display:flex;
+  gap:7px;
+}
+
+.icon-btn{
+  width:40px;
+  height:40px;
+  border-radius:12px;
+  border:1px solid #202c42;
+  background:#0c1423;
+  color:#dbeafe;
+  cursor:pointer;
   font-size:16px;
 }
 
-.brand-text span{
-  display:block;
-  margin-top:2px;
-  color:#75829a;
-  font-size:10px;
-  letter-spacing:1px;
+/* CONTAINER */
+
+.container{
+  width:100%;
+  max-width:760px;
+  margin:auto;
+  padding:12px;
 }
 
-.live-pill{
+/* GAME */
+
+.game-card{
+  position:relative;
+  overflow:hidden;
+  border-radius:21px;
+  background:#080d17;
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow:0 18px 55px rgba(0,0,0,.32);
+}
+
+.game-head{
+  height:48px;
   display:flex;
   align-items:center;
-  gap:6px;
-  padding:8px 11px;
-  border-radius:30px;
-  border:1px solid rgba(57,218,139,.22);
-  background:rgba(38,180,110,.08);
-  color:#54e7a0;
-  font-size:11px;
+  justify-content:space-between;
+  padding:0 13px;
+  border-bottom:1px solid rgba(255,255,255,.07);
+}
+
+.game-title{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:12px;
   font-weight:800;
 }
 
 .live-dot{
-  width:7px;
-  height:7px;
+  width:8px;
+  height:8px;
   border-radius:50%;
-  background:#4ee79c;
-  box-shadow:0 0 10px #4ee79c;
-}
-
-
-/* =========================================================
-   CONTAINER
-========================================================= */
-
-.container{
-  width:100%;
-  max-width:620px;
-  margin:0 auto;
-  padding:14px;
-}
-
-.card{
-  border:1px solid rgba(91,124,173,.22);
-  border-radius:22px;
-  background:linear-gradient(
-    145deg,
-    rgba(12,23,42,.96),
-    rgba(6,13,26,.96)
-  );
-  box-shadow:
-    0 18px 50px rgba(0,0,0,.28),
-    inset 0 1px rgba(255,255,255,.025);
-}
-
-
-/* =========================================================
-   GAME
-========================================================= */
-
-.game-card{
-  overflow:hidden;
-  margin-bottom:14px;
-}
-
-.game-head{
-  min-height:54px;
-  padding:10px 13px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  border-bottom:1px solid rgba(255,255,255,.06);
-}
-
-.game-title{
-  font-size:14px;
-  font-weight:900;
+  background:#22c55e;
+  box-shadow:0 0 12px rgba(34,197,94,.8);
 }
 
 .game-status{
-  color:#60e6a2;
-  font-size:11px;
-  font-weight:800;
+  color:#22c55e;
+  font-size:10px;
+  font-weight:900;
 }
 
-.game-wrap{
-  position:relative;
+.game-frame-wrap{
   width:100%;
-  height:390px;
-  background:#000;
+  height:430px;
+  background:#05080e;
+  position:relative;
 }
 
-.game-frame{
+#gameFrame{
   width:100%;
   height:100%;
   border:0;
-  background:#000;
+  display:block;
+  background:#05080e;
 }
 
 .game-fallback{
@@ -287,497 +256,398 @@ button{
   justify-content:center;
   flex-direction:column;
   gap:13px;
-  padding:20px;
-  text-align:center;
   background:
-    radial-gradient(circle,#101b2e,#02050b 70%);
+    radial-gradient(circle at center,rgba(37,99,235,.12),transparent 50%),
+    #05080e;
+  text-align:center;
+  padding:20px;
 }
 
-.game-fallback p{
-  color:#7e8ca5;
-  font-size:13px;
+.game-fallback.show{
+  display:flex;
+}
+
+.game-fallback strong{
+  font-size:15px;
+}
+
+.game-fallback span{
+  color:#718096;
+  font-size:11px;
 }
 
 .open-game{
-  padding:12px 19px;
-  border-radius:13px;
+  border:0;
+  border-radius:12px;
+  padding:12px 18px;
   color:#fff;
-  font-weight:900;
-  background:linear-gradient(90deg,#ff9148,#ff4f78);
-}
-
-
-/* =========================================================
-   TARGET
-========================================================= */
-
-.target-card{
-  padding:17px;
-  margin-bottom:14px;
-}
-
-.target-label{
-  color:#77859d;
-  font-size:10px;
-  letter-spacing:1.4px;
+  background:linear-gradient(135deg,#2563eb,#7c3aed);
   font-weight:800;
+  cursor:pointer;
 }
 
-.target-row{
+/* PERIOD */
+
+.period-card{
+  margin-top:11px;
+  padding:15px;
+  border-radius:19px;
+  background:rgba(13,19,32,.88);
+  border:1px solid rgba(255,255,255,.07);
+}
+
+.period-line{
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap:10px;
-  margin-top:9px;
 }
 
-.target-issue{
-  min-width:0;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
+.period-label{
+  color:#6f7d92;
+  font-size:10px;
+  font-weight:700;
+}
+
+.period-number{
+  margin-top:5px;
+  font-family:monospace;
+  font-size:15px;
+  font-weight:900;
+  letter-spacing:.4px;
+  word-break:break-all;
+}
+
+.timer-box{
+  min-width:76px;
+  text-align:center;
+  padding:9px 7px;
+  border-radius:13px;
+  background:#0a1220;
+  border:1px solid #1d2a41;
+}
+
+.timer-label{
+  color:#66758b;
+  font-size:8px;
+  margin-bottom:3px;
+}
+
+#timer{
+  font-family:monospace;
   font-size:19px;
   font-weight:900;
 }
 
-.timer{
-  flex:none;
-  min-width:65px;
-  padding:9px 12px;
-  border-radius:12px;
-  text-align:center;
-  font-size:19px;
-  font-weight:900;
-  background:#101c31;
-  color:#73b8ff;
-  border:1px solid rgba(115,184,255,.16);
-}
+/* ANALYSIS */
 
-
-/* =========================================================
-   AI ANALYSIS
-========================================================= */
-
-.ai-card{
-  padding:18px;
-  margin-bottom:14px;
-  text-align:center;
-  overflow:hidden;
-}
-
-.ai-header{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  margin-bottom:18px;
-}
-
-.ai-header-title{
-  font-size:14px;
-  font-weight:900;
-}
-
-.model-badge{
-  padding:6px 9px;
-  border-radius:9px;
-  color:#a9b9d0;
-  background:#0b1527;
-  border:1px solid rgba(255,255,255,.06);
-  font-size:9px;
-  font-weight:900;
-}
-
-.analysis{
-  min-height:235px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-}
-
-.scan-ring{
-  width:100px;
-  height:100px;
-  margin-bottom:19px;
-  border-radius:50%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  position:relative;
+.analysis-card{
+  margin-top:11px;
+  padding:20px 15px;
+  border-radius:21px;
   background:
-    conic-gradient(
-      #ff6c67,
-      #ff9a48,
-      #ff4d7d,
-      #ff6c67
-    );
-  animation:spin 1.2s linear infinite;
-  box-shadow:0 0 40px rgba(255,90,95,.13);
+    radial-gradient(circle at 50% 0%,rgba(59,130,246,.10),transparent 48%),
+    rgba(13,19,32,.90);
+  border:1px solid rgba(255,255,255,.07);
+  text-align:center;
 }
 
-.scan-ring::before{
-  content:"";
-  position:absolute;
-  inset:6px;
+.analysis-top{
+  color:#77859a;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:1px;
+}
+
+.analysis-loader{
+  width:64px;
+  height:64px;
+  margin:15px auto 12px;
+  border:4px solid #1a263b;
+  border-top-color:#3b82f6;
   border-radius:50%;
-  background:#081120;
-}
-
-.scan-ring span{
-  position:relative;
-  z-index:2;
-  font-size:13px;
-  font-weight:900;
+  animation:spin .75s linear infinite;
 }
 
 @keyframes spin{
-  to{transform:rotate(360deg);}
+  to{transform:rotate(360deg)}
 }
 
-.analysis-title{
-  font-size:18px;
-  font-weight:900;
+.analysis-count{
+  font-size:11px;
+  color:#7d8ba0;
 }
 
-.analysis-text{
-  margin-top:8px;
-  color:#718098;
-  font-size:12px;
-}
-
-.prediction-result{
+.result-wrap{
   display:none;
 }
 
-.result-label{
-  color:#738199;
+.result-wrap.show{
+  display:block;
+}
+
+.result-title{
+  color:#748198;
   font-size:10px;
-  font-weight:800;
-  letter-spacing:1.4px;
+  letter-spacing:1.5px;
+  font-weight:900;
 }
 
-.prediction-side{
-  width:100%;
-  margin:13px 0;
-  padding:21px 12px;
-  border-radius:20px;
-  font-size:38px;
-  font-weight:1000;
-  letter-spacing:2px;
-}
-
-.prediction-side.big{
-  color:#ffad67;
-  background:rgba(255,143,72,.10);
-  border:1px solid rgba(255,143,72,.28);
-  box-shadow:0 10px 35px rgba(255,130,60,.08);
-}
-
-.prediction-side.small{
-  color:#72b7ff;
-  background:rgba(70,151,255,.10);
-  border:1px solid rgba(70,151,255,.25);
-  box-shadow:0 10px 35px rgba(70,151,255,.08);
-}
-
-.confidence-wrap{
-  margin-top:5px;
-}
-
-.confidence-top{
+.big-result{
+  width:155px;
+  height:155px;
+  margin:14px auto;
+  border-radius:50%;
   display:flex;
-  justify-content:space-between;
-  color:#7e8ca4;
-  font-size:11px;
-  margin-bottom:7px;
+  align-items:center;
+  justify-content:center;
+  background:
+    radial-gradient(circle,#111b2d 49%,transparent 50%),
+    linear-gradient(135deg,#2563eb,#7c3aed);
+  box-shadow:
+    0 0 0 7px rgba(59,130,246,.05),
+    0 0 45px rgba(59,130,246,.18);
 }
 
-.confidence-top strong{
+.big-result span{
+  font-size:29px;
+  font-weight:1000;
+  letter-spacing:1px;
+}
+
+.confidence{
+  color:#9ba9bc;
+  font-size:12px;
+}
+
+.confidence b{
   color:#fff;
 }
 
-.progress{
-  height:7px;
-  overflow:hidden;
-  border-radius:10px;
-  background:#101a2b;
-}
-
-.progress-bar{
-  height:100%;
-  width:0%;
-  border-radius:10px;
-  background:linear-gradient(90deg,#ff9148,#ff4e79);
-  transition:width .7s ease;
-}
-
 .regime{
-  display:inline-block;
-  margin-top:13px;
-  padding:7px 10px;
-  border-radius:10px;
-  color:#a8b7cc;
-  background:#0b1525;
-  border:1px solid rgba(255,255,255,.06);
+  display:inline-flex;
+  margin-top:9px;
+  padding:6px 10px;
+  border-radius:20px;
+  background:#101a2c;
+  color:#93c5fd;
   font-size:9px;
   font-weight:900;
-  letter-spacing:.5px;
 }
 
 .reason{
-  margin-top:11px;
-  color:#718099;
+  max-width:500px;
+  margin:12px auto 0;
+  color:#69788e;
   font-size:11px;
+  line-height:1.6;
 }
 
+/* STATS */
 
-/* =========================================================
-   STATS
-========================================================= */
-
-.stats-grid{
+.stats{
   display:grid;
   grid-template-columns:repeat(3,1fr);
-  gap:10px;
-  margin-bottom:14px;
+  gap:8px;
+  margin-top:11px;
 }
 
 .stat{
-  padding:15px 9px;
-  border-radius:17px;
+  padding:13px 8px;
+  border-radius:15px;
+  background:#0c1422;
+  border:1px solid #18243a;
   text-align:center;
-  background:#081120;
-  border:1px solid rgba(255,255,255,.05);
 }
 
-.stat-number{
-  font-size:21px;
-  font-weight:900;
+.stat small{
+  display:block;
+  color:#617087;
+  font-size:8px;
+  margin-bottom:5px;
 }
 
-.stat-label{
-  margin-top:5px;
-  color:#68758c;
-  font-size:9px;
-  font-weight:800;
-  letter-spacing:.7px;
+.stat strong{
+  font-size:15px;
 }
 
-.win .stat-number{
-  color:#4ee6a0;
-}
-
-.loss .stat-number{
-  color:#ff6477;
-}
-
-.rate .stat-number{
-  color:#ffb35f;
-}
-
-
-/* =========================================================
-   HISTORY
-========================================================= */
+/* HISTORY */
 
 .history-card{
-  overflow:hidden;
-  margin-bottom:14px;
+  margin-top:11px;
+  padding:15px;
+  border-radius:20px;
+  background:rgba(13,19,32,.90);
+  border:1px solid rgba(255,255,255,.07);
 }
 
-.history-head{
-  min-height:58px;
-  padding:0 16px;
+.section-title{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  border-bottom:1px solid rgba(255,255,255,.06);
+  margin-bottom:12px;
 }
 
-.history-title{
-  font-size:14px;
-  font-weight:900;
+.section-title h3{
+  font-size:13px;
 }
 
-.last-badge{
-  padding:7px 10px;
-  border-radius:9px;
-  background:#0d192c;
-  color:#8da2bf;
+.section-title span{
+  color:#64748b;
   font-size:9px;
   font-weight:900;
 }
 
 .table-wrap{
-  width:100%;
   overflow-x:auto;
 }
 
 table{
   width:100%;
   border-collapse:collapse;
-  min-width:390px;
+  min-width:430px;
 }
 
 th{
-  padding:11px 10px;
+  color:#5f6d82;
+  font-size:8px;
   text-align:left;
-  color:#56647a;
-  font-size:9px;
-  font-weight:900;
-  letter-spacing:.6px;
-  background:#07101e;
+  padding:8px;
+  border-bottom:1px solid #1b2638;
 }
 
 td{
-  padding:12px 10px;
-  border-top:1px solid rgba(255,255,255,.045);
-  color:#b6c2d3;
+  padding:9px 8px;
   font-size:10px;
-  font-weight:700;
+  border-bottom:1px solid #111b2b;
 }
 
-td:first-child{
-  color:#8090a8;
+.period-cell{
+  font-family:monospace;
   font-size:9px;
 }
 
-.result-big{
-  color:#ffad67;
+.side{
+  font-weight:900;
 }
 
-.result-small{
-  color:#72b7ff;
+.result{
+  font-weight:900;
 }
 
-.predict-big{
-  color:#ffad67;
+.win{
+  color:#4ade80;
 }
 
-.predict-small{
-  color:#72b7ff;
+.loss{
+  color:#fb7185;
+}
+
+.pending{
+  color:#fbbf24;
+}
+
+.status-badge{
+  display:inline-flex;
+  padding:5px 7px;
+  border-radius:7px;
+  font-size:8px;
+  font-weight:900;
 }
 
 .status-win{
-  color:#4ee6a0;
-  font-weight:900;
+  background:rgba(34,197,94,.10);
+  color:#4ade80;
 }
 
 .status-loss{
-  color:#ff6579;
-  font-weight:900;
+  background:rgba(244,63,94,.10);
+  color:#fb7185;
 }
 
 .status-pending{
-  color:#718099;
-  font-weight:900;
+  background:rgba(245,158,11,.10);
+  color:#fbbf24;
 }
 
-.empty-history{
-  padding:30px 15px;
-  text-align:center;
-  color:#65738b;
-  font-size:12px;
-}
-
-
-/* =========================================================
-   FOOTER / MUSIC
-========================================================= */
-
-.bottom-actions{
-  display:flex;
-  gap:10px;
-  margin-bottom:13px;
-}
-
-.action-btn{
-  flex:1;
-  min-height:48px;
-  border-radius:14px;
-  color:#aebbd0;
-  background:#091426;
-  border:1px solid rgba(255,255,255,.06);
-  font-size:12px;
-  font-weight:900;
-}
-
-.action-btn:active{
-  transform:scale(.98);
-}
+/* FOOTER */
 
 .footer{
+  padding:20px 8px 30px;
   text-align:center;
-  color:#3e4b61;
+  color:#46536a;
   font-size:9px;
-  line-height:1.7;
+  line-height:1.6;
 }
 
-
-/* =========================================================
-   TOAST
-========================================================= */
+/* TOAST */
 
 .toast{
   position:fixed;
-  z-index:100;
   left:50%;
-  bottom:22px;
-  transform:translate(-50%,20px);
+  bottom:20px;
+  transform:translate(-50%,120px);
   opacity:0;
-  pointer-events:none;
+  z-index:100;
+  max-width:90%;
   padding:11px 15px;
   border-radius:12px;
-  background:#111d31;
-  border:1px solid rgba(255,255,255,.08);
-  color:#d8e0ec;
+  background:#111827;
+  border:1px solid #293750;
+  color:#dbeafe;
   font-size:11px;
-  font-weight:800;
-  transition:.25s ease;
+  transition:.25s;
+  text-align:center;
 }
 
 .toast.show{
-  opacity:1;
   transform:translate(-50%,0);
+  opacity:1;
 }
 
+/* MOBILE */
 
-/* =========================================================
-   MOBILE
-========================================================= */
-
-@media(max-width:480px){
+@media(max-width:600px){
 
   .container{
-    padding:10px;
+    padding:9px;
   }
 
-  .game-wrap{
-    height:400px;
+  .game-frame-wrap{
+    height:440px;
   }
 
-  .prediction-side{
-    font-size:34px;
+  .period-number{
+    font-size:12px;
   }
 
-  .target-issue{
-    font-size:16px;
+  .big-result{
+    width:140px;
+    height:140px;
   }
 
-  .timer{
-    font-size:17px;
+  .big-result span{
+    font-size:27px;
   }
-
 }
 
-@media(min-width:700px){
+@media(max-width:380px){
 
-  .container{
-    padding-top:20px;
+  .game-frame-wrap{
+    height:390px;
   }
 
-  .game-wrap{
-    height:470px;
+  .brand h2{
+    font-size:13px;
+  }
+
+  .brand-logo{
+    width:38px;
+    height:38px;
+  }
+
+  .timer-box{
+    min-width:68px;
   }
 
 }
@@ -786,9 +656,7 @@ td:first-child{
 
 <body>
 
-<!-- =======================================================
-     LOGIN
-======================================================= -->
+<!-- LOGIN -->
 
 <section id="loginScreen">
 
@@ -796,46 +664,37 @@ td:first-child{
 
     <div class="logo">DY</div>
 
-    <div class="login-title">
-      DY AI WINGO
-    </div>
+    <h1>DY AI WINGO</h1>
 
-    <div class="login-subtitle">
-      Secure prediction access
-    </div>
+    <p>Enter your premium access key</p>
 
     <input
-      id="keyInput"
-      class="key-input"
-      type="text"
-      placeholder="Enter access key"
+      id="accessKey"
+      class="input"
+      type="password"
+      placeholder="Enter Access Key"
       autocomplete="off"
-      spellcheck="false"
     >
 
     <button
-      id="loginBtn"
       class="login-btn"
-      type="button"
-    >
+      onclick="login()">
       ACCESS PREDICTION
     </button>
 
     <div
-      id="loginMsg"
-      class="login-msg"
-    ></div>
+      id="loginError"
+      class="login-error hidden">
+    </div>
 
   </div>
 
 </section>
 
 
-<!-- =======================================================
-     APP
-======================================================= -->
+<!-- APP -->
 
-<main id="app" class="hidden">
+<main id="app">
 
   <header class="topbar">
 
@@ -845,16 +704,30 @@ td:first-child{
         DY
       </div>
 
-      <div class="brand-text">
-        <strong>DY AI WINGO</strong>
-        <span>30 SECOND AI</span>
+      <div>
+        <h2>DY AI WINGO</h2>
+        <small>30 SECOND • BIG / SMALL</small>
       </div>
 
     </div>
 
-    <div class="live-pill">
-      <span class="live-dot"></span>
-      LIVE AI
+    <div class="top-actions">
+
+      <button
+        class="icon-btn"
+        onclick="toggleMusic()"
+        id="musicBtn"
+        title="Music">
+        🔊
+      </button>
+
+      <button
+        class="icon-btn"
+        onclick="manualRefresh()"
+        title="Refresh">
+        ↻
+      </button>
+
     </div>
 
   </header>
@@ -863,56 +736,54 @@ td:first-child{
   <div class="container">
 
 
-    <!-- ===================================================
-         GAME
-    ==================================================== -->
+    <!-- GAME -->
 
-    <section class="card game-card">
+    <section class="game-card">
 
       <div class="game-head">
 
         <div class="game-title">
-          WINGO 30S GAME
+
+          <span class="live-dot"></span>
+
+          <span>SHREEWIN 30S GAME</span>
+
         </div>
 
         <div
           id="gameStatus"
-          class="game-status"
-        >
-          CONNECTING
+          class="game-status">
+          LIVE
         </div>
 
       </div>
 
-      <div class="game-wrap">
+
+      <div class="game-frame-wrap">
 
         <iframe
           id="gameFrame"
-          class="game-frame"
           src="https://www.shreewin38.com/#/register?invitationCode=88523152383"
           allow="fullscreen"
-          loading="eager"
-          referrerpolicy="no-referrer"
-        ></iframe>
+          referrerpolicy="no-referrer-when-downgrade">
+        </iframe>
+
 
         <div
           id="gameFallback"
-          class="game-fallback"
-        >
+          class="game-fallback">
 
           <strong>
-            GAME PREVIEW UNAVAILABLE
+            Game preview unavailable
           </strong>
 
-          <p>
-            Open the game directly if the site blocks embedding.
-          </p>
+          <span>
+            Game ko new tab me open karke play kar sakte ho.
+          </span>
 
           <button
-            id="openGameBtn"
             class="open-game"
-            type="button"
-          >
+            onclick="openGame()">
             OPEN GAME
           </button>
 
@@ -923,30 +794,37 @@ td:first-child{
     </section>
 
 
-    <!-- ===================================================
-         TARGET
-    ==================================================== -->
+    <!-- PERIOD -->
 
-    <section class="card target-card">
+    <section class="period-card">
 
-      <div class="target-label">
-        NEXT TARGET PERIOD
-      </div>
+      <div class="period-line">
 
-      <div class="target-row">
+        <div>
 
-        <div
-          id="targetIssue"
-          class="target-issue"
-        >
-          WAITING...
+          <div class="period-label">
+            CURRENT TARGET PERIOD
+          </div>
+
+          <div
+            id="targetIssue"
+            class="period-number">
+            —
+          </div>
+
         </div>
 
-        <div
-          id="timer"
-          class="timer"
-        >
-          30
+
+        <div class="timer-box">
+
+          <div class="timer-label">
+            NEXT UPDATE
+          </div>
+
+          <div id="timer">
+            00:30
+          </div>
+
         </div>
 
       </div>
@@ -954,96 +832,61 @@ td:first-child{
     </section>
 
 
-    <!-- ===================================================
-         AI
-    ==================================================== -->
+    <!-- ANALYSIS -->
 
-    <section class="card ai-card">
+    <section class="analysis-card">
 
-      <div class="ai-header">
+      <div class="analysis-top">
+        DY AI • V4 ANALYSIS
+      </div>
 
-        <div class="ai-header-title">
-          🤖 DY AI ANALYSIS
-        </div>
 
-        <div class="model-badge">
-          DY-AI-BS-V3
+      <div
+        id="analysisLoading">
+
+        <div class="analysis-loader"></div>
+
+        <div class="analysis-count">
+          Analyzing market pattern...
+          <b id="analysisSeconds">3</b>s
         </div>
 
       </div>
 
 
-      <!-- ANALYSIS STATE -->
-
       <div
-        id="analysis"
-        class="analysis"
-      >
+        id="resultWrap"
+        class="result-wrap">
 
-        <div class="scan-ring">
-          <span>AI</span>
-        </div>
-
-        <div class="analysis-title">
-          Analysing...
-        </div>
-
-        <div
-          id="analysisText"
-          class="analysis-text"
-        >
-          Reading recent trend
-        </div>
-
-      </div>
-
-
-      <!-- PREDICTION -->
-
-      <div
-        id="predictionResult"
-        class="prediction-result"
-      >
-
-        <div class="result-label">
+        <div class="result-title">
           AI PREDICTION
         </div>
 
-        <div
-          id="predictionSide"
-          class="prediction-side"
-        >
-          BIG
+        <div class="big-result">
+
+          <span id="prediction">
+            —
+          </span>
+
         </div>
 
-        <div class="confidence-wrap">
-
-          <div class="confidence-top">
-            <span>MODEL CONFIDENCE</span>
-            <strong id="confidence">0%</strong>
-          </div>
-
-          <div class="progress">
-            <div
-              id="confidenceBar"
-              class="progress-bar"
-            ></div>
-          </div>
-
+        <div class="confidence">
+          Confidence:
+          <b id="confidence">
+            —
+          </b>
         </div>
 
         <div
           id="regime"
-          class="regime"
-        >
-          NEUTRAL
+          class="regime">
+          MIXED
         </div>
 
         <div
           id="reason"
-          class="reason"
-        >
-          AI analysis complete
+          class="reason">
+          Waiting for live analysis.
         </div>
 
       </div>
@@ -1051,130 +894,107 @@ td:first-child{
     </section>
 
 
-    <!-- ===================================================
-         STATS
-    ==================================================== -->
+    <!-- STATS -->
 
-    <section class="stats-grid">
+    <section class="stats">
 
-      <div class="stat win">
-        <div
+      <div class="stat">
+
+        <small>WINS</small>
+
+        <strong
           id="wins"
-          class="stat-number"
-        >
+          class="win">
           0
-        </div>
+        </strong>
 
-        <div class="stat-label">
-          WIN
-        </div>
       </div>
 
-      <div class="stat loss">
-        <div
+      <div class="stat">
+
+        <small>LOSS</small>
+
+        <strong
           id="losses"
-          class="stat-number"
-        >
+          class="loss">
           0
-        </div>
+        </strong>
 
-        <div class="stat-label">
-          LOSS
-        </div>
       </div>
 
-      <div class="stat rate">
-        <div
-          id="winRate"
-          class="stat-number"
-        >
-          0%
-        </div>
+      <div class="stat">
 
-        <div class="stat-label">
-          WIN RATE
-        </div>
+        <small>WIN RATE</small>
+
+        <strong id="winRate">
+          0%
+        </strong>
+
       </div>
 
     </section>
 
 
-    <!-- ===================================================
-         HISTORY
-    ==================================================== -->
+    <!-- HISTORY -->
 
-    <section class="card history-card">
+    <section class="history-card">
 
-      <div class="history-head">
+      <div class="section-title">
 
-        <div class="history-title">
-          PREDICTION HISTORY
-        </div>
+        <h3>
+          📊 PREDICTION HISTORY
+        </h3>
 
-        <div class="last-badge">
+        <span>
           LAST 30
-        </div>
+        </span>
 
       </div>
+
 
       <div class="table-wrap">
 
         <table>
 
           <thead>
+
             <tr>
               <th>PERIOD</th>
+              <th>PREDICTION</th>
               <th>RESULT</th>
-              <th>PREDICT</th>
-              <th>W/L</th>
+              <th>STATUS</th>
             </tr>
+
           </thead>
 
-          <tbody id="historyBody">
+          <tbody id="historyTable">
+
+            <tr>
+
+              <td
+                colspan="4"
+                style="text-align:center;color:#59677c;padding:25px;">
+                Loading history...
+              </td>
+
+            </tr>
+
           </tbody>
 
         </table>
 
       </div>
 
-      <div
-        id="emptyHistory"
-        class="empty-history hidden"
-      >
-        No prediction history yet.
-      </div>
-
     </section>
 
 
-    <!-- ===================================================
-         ACTIONS
-    ==================================================== -->
-
-    <div class="bottom-actions">
-
-      <button
-        id="musicBtn"
-        class="action-btn"
-        type="button"
-      >
-        🎵 MUSIC OFF
-      </button>
-
-      <button
-        id="refreshBtn"
-        class="action-btn"
-        type="button"
-      >
-        ↻ REFRESH
-      </button>
-
-    </div>
-
-
     <div class="footer">
-      DY AI Wingo 30S<br>
-      BIG/SMALL statistical estimate • No guaranteed outcome
+
+      DY AI Wingo • V4<br>
+
+      AI predictions are estimates only and
+      do not guarantee game outcomes.
+
     </div>
 
   </div>
@@ -1182,231 +1002,176 @@ td:first-child{
 </main>
 
 
-<!-- =======================================================
-     TOAST
-======================================================= -->
-
 <div
   id="toast"
-  class="toast"
-></div>
+  class="toast">
+</div>
 
-
-<!-- =======================================================
-     AUDIO
-======================================================= -->
 
 <audio
   id="music"
   src="/music.mp3"
   loop
-  preload="none"
-></audio>
+  preload="none">
+</audio>
 
 
 <script>
-"use strict";
 
-/* =========================================================
-   CONFIG
-========================================================= */
+/* =========================
+   GLOBAL
+========================= */
 
-const GAME_URL =
-  "https://www.shreewin38.com/#/register?invitationCode=88523152383";
+let ACCESS_KEY = "";
+let DEVICE_ID = "";
 
-const DEVICE_KEY =
-  "dy_ai_device_id";
+let currentTarget = "";
+let displayedTarget = "";
 
-const ACCESS_KEY =
-  "dy_ai_access_key";
+let analysisTimer = null;
+let analysisRunning = false;
 
-const POLL_MS = 1000;
+let stateInterval = null;
+let fallbackTimer = null;
 
-const ANALYSIS_MS = 3000;
+let lastProviderUpdate = 0;
+let timerValue = 30;
 
-
-/* =========================================================
-   DOM
-========================================================= */
-
-const loginScreen =
-  document.getElementById("loginScreen");
-
-const app =
-  document.getElementById("app");
-
-const keyInput =
-  document.getElementById("keyInput");
-
-const loginBtn =
-  document.getElementById("loginBtn");
-
-const loginMsg =
-  document.getElementById("loginMsg");
-
-const targetIssue =
-  document.getElementById("targetIssue");
-
-const timer =
-  document.getElementById("timer");
-
-const analysis =
-  document.getElementById("analysis");
-
-const analysisText =
-  document.getElementById("analysisText");
-
-const predictionResult =
-  document.getElementById("predictionResult");
-
-const predictionSide =
-  document.getElementById("predictionSide");
-
-const confidence =
-  document.getElementById("confidence");
-
-const confidenceBar =
-  document.getElementById("confidenceBar");
-
-const regime =
-  document.getElementById("regime");
-
-const reason =
-  document.getElementById("reason");
-
-const historyBody =
-  document.getElementById("historyBody");
-
-const emptyHistory =
-  document.getElementById("emptyHistory");
-
-const wins =
-  document.getElementById("wins");
-
-const losses =
-  document.getElementById("losses");
-
-const winRate =
-  document.getElementById("winRate");
-
-const gameFrame =
-  document.getElementById("gameFrame");
-
-const gameFallback =
-  document.getElementById("gameFallback");
-
-const gameStatus =
-  document.getElementById("gameStatus");
-
-const openGameBtn =
-  document.getElementById("openGameBtn");
-
-const musicBtn =
-  document.getElementById("musicBtn");
-
-const refreshBtn =
-  document.getElementById("refreshBtn");
-
-const music =
-  document.getElementById("music");
-
-const toast =
-  document.getElementById("toast");
+let musicPlaying = false;
 
 
-/* =========================================================
-   STATE
-========================================================= */
+/* =========================
+   HELPERS
+========================= */
 
-let deviceId = null;
-
-let accessKey = null;
-
-let pollTimer = null;
-
-let lastTargetIssue = null;
-
-let analysisToken = 0;
-
-let latestProviderUpdate = null;
-
-let latestServerTime = Date.now();
-
-let lastTimerSecond = null;
+function $(id){
+  return document.getElementById(id);
+}
 
 
-/* =========================================================
-   DEVICE ID
-========================================================= */
+function esc(value){
+
+  return String(value ?? "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+
+}
+
+
+function toast(message){
+
+  const el = $("toast");
+
+  el.textContent = message;
+
+  el.classList.add("show");
+
+  clearTimeout(window.toastTimer);
+
+  window.toastTimer =
+    setTimeout(()=>{
+      el.classList.remove("show");
+    },2500);
+
+}
+
 
 function getDeviceId(){
 
   let id =
-    localStorage.getItem(
-      DEVICE_KEY
-    );
+    localStorage.getItem("dy_ai_device_id");
 
   if(!id){
 
-    if(
-      window.crypto &&
-      crypto.randomUUID
-    ){
-      id = crypto.randomUUID();
-    }else{
-      id =
-        "dy-" +
-        Date.now() +
-        "-" +
-        Math.random()
-          .toString(36)
-          .slice(2);
-    }
+    id =
+      "dy-" +
+      crypto.randomUUID();
 
     localStorage.setItem(
-      DEVICE_KEY,
+      "dy_ai_device_id",
       id
     );
+
   }
 
   return id;
+
 }
 
 
-/* =========================================================
-   TOAST
-========================================================= */
+/* =========================
+   API
+========================= */
 
-let toastTimer = null;
+async function api(url,options={}){
 
-function showToast(message){
+  const headers = {
+    ...(options.headers || {})
+  };
 
-  toast.textContent = message;
+  if(ACCESS_KEY){
 
-  toast.classList.add("show");
+    headers["x-access-key"] =
+      ACCESS_KEY;
 
-  clearTimeout(toastTimer);
+    headers["x-device-id"] =
+      DEVICE_ID;
 
-  toastTimer =
-    setTimeout(
-      () => {
-        toast.classList.remove("show");
-      },
-      2200
+  }
+
+  const response =
+    await fetch(url,{
+      ...options,
+      headers
+    });
+
+  let data = {};
+
+  try{
+    data = await response.json();
+  }catch{}
+
+  if(!response.ok){
+
+    throw new Error(
+      data.error ||
+      data.message ||
+      `HTTP ${response.status}`
     );
+
+  }
+
+  return data;
+
 }
 
 
-/* =========================================================
+/* =========================
    LOGIN
-========================================================= */
+========================= */
 
-async function checkKey(key){
+async function login(){
 
-  loginMsg.textContent =
-    "Checking access...";
+  const key =
+    $("accessKey")
+      .value
+      .trim();
 
-  loginBtn.disabled = true;
+  if(!key){
+
+    showLoginError(
+      "Access key enter karo."
+    );
+
+    return;
+
+  }
+
+  DEVICE_ID =
+    getDeviceId();
 
   try{
 
@@ -1417,864 +1182,1004 @@ async function checkKey(key){
           method:"POST",
           headers:{
             "Content-Type":
-              "application/json"
+              "application/json",
+
+            "x-access-key":
+              key,
+
+            "x-device-id":
+              DEVICE_ID
           },
           body:JSON.stringify({
-            accessKey:key,
-            deviceId
-          }),
-          cache:"no-store"
+            access_key:key,
+            key:key,
+            device_id:DEVICE_ID
+          })
         }
       );
 
-    const data =
-      await response.json();
+    let data = {};
 
-    if(!response.ok || !data.ok){
+    try{
+      data = await response.json();
+    }catch{}
+
+    if(!response.ok){
 
       throw new Error(
+        data.error ||
         data.message ||
-        "Invalid access key"
+        "Access denied."
       );
+
     }
 
-    accessKey = key;
+    if(
+      data.ok === false ||
+      data.valid === false ||
+      data.success === false
+    ){
+
+      throw new Error(
+        data.error ||
+        "Invalid access key."
+      );
+
+    }
+
+    ACCESS_KEY = key;
 
     localStorage.setItem(
-      ACCESS_KEY,
+      "dy_ai_access_key",
       key
     );
 
-    loginMsg.textContent = "";
+    $("loginScreen")
+      .style
+      .display = "none";
 
-    loginScreen.classList.add(
-      "hidden"
-    );
+    $("app")
+      .style
+      .display = "block";
 
-    app.classList.remove(
-      "hidden"
-    );
+    $("loginError")
+      .classList
+      .add("hidden");
+
+    toast("Access granted.");
 
     startApp();
 
   }catch(error){
 
-    loginMsg.textContent =
+    console.error(error);
+
+    showLoginError(
       error.message ||
-      "Access denied";
+      "Access denied."
+    );
 
-  }finally{
-
-    loginBtn.disabled = false;
   }
+
 }
 
 
-loginBtn.addEventListener(
-  "click",
-  () => {
+function showLoginError(message){
 
-    const key =
-      keyInput.value.trim();
+  const el =
+    $("loginError");
 
-    if(!key){
+  el.textContent =
+    message;
 
-      loginMsg.textContent =
-        "Please enter access key.";
+  el.classList.remove(
+    "hidden"
+  );
 
+}
+
+
+$("accessKey")
+  .addEventListener(
+    "keydown",
+    e=>{
+      if(e.key==="Enter"){
+        login();
+      }
+    }
+  );
+
+
+/* =========================
+   AUTO LOGIN
+========================= */
+
+window.addEventListener(
+  "load",
+  async ()=>{
+
+    DEVICE_ID =
+      getDeviceId();
+
+    const saved =
+      localStorage.getItem(
+        "dy_ai_access_key"
+      );
+
+    if(!saved){
       return;
     }
 
-    checkKey(key);
+    $("accessKey").value =
+      saved;
+
+    ACCESS_KEY =
+      saved;
+
+    try{
+
+      const response =
+        await fetch(
+          "/api/key/check",
+          {
+            method:"POST",
+            headers:{
+              "Content-Type":
+                "application/json",
+
+              "x-access-key":
+                ACCESS_KEY,
+
+              "x-device-id":
+                DEVICE_ID
+            },
+            body:JSON.stringify({
+              access_key:
+                ACCESS_KEY,
+
+              key:
+                ACCESS_KEY,
+
+              device_id:
+                DEVICE_ID
+            })
+          }
+        );
+
+      if(!response.ok){
+
+        localStorage.removeItem(
+          "dy_ai_access_key"
+        );
+
+        ACCESS_KEY = "";
+
+        return;
+      }
+
+      $("loginScreen")
+        .style
+        .display = "none";
+
+      $("app")
+        .style
+        .display = "block";
+
+      startApp();
+
+    }catch{
+
+      ACCESS_KEY = "";
+
+    }
+
   }
 );
 
 
-keyInput.addEventListener(
-  "keydown",
-  event => {
+/* =========================
+   APP START
+========================= */
 
-    if(event.key === "Enter"){
+function startApp(){
 
-      loginBtn.click();
+  loadState();
 
-    }
-
+  if(stateInterval){
+    clearInterval(stateInterval);
   }
-);
 
-
-/* =========================================================
-   AUTO LOGIN
-========================================================= */
-
-deviceId = getDeviceId();
-
-const savedKey =
-  localStorage.getItem(
-    ACCESS_KEY
-  );
-
-if(savedKey){
-
-  keyInput.value = savedKey;
-
-  checkKey(savedKey);
-
-}
-
-
-/* =========================================================
-   STATE FETCH
-========================================================= */
-
-async function fetchState(){
-
-  try{
-
-    const response =
-      await fetch(
-        "/api/state?t=" +
-        Date.now(),
-        {
-          method:"GET",
-          cache:"no-store"
-        }
-      );
-
-    if(!response.ok){
-
-      throw new Error(
-        "State request failed"
-      );
-
-    }
-
-    const data =
-      await response.json();
-
-    renderState(data);
-
-  }catch(error){
-
-    gameStatus.textContent =
-      "OFFLINE";
-
-    console.log(
-      "State error:",
-      error.message
+  stateInterval =
+    setInterval(
+      loadState,
+      1000
     );
 
-  }
+  setupGameFallback();
 
 }
 
 
-/* =========================================================
-   RENDER STATE
-========================================================= */
+/* =========================
+   STATE
+========================= */
 
-function renderState(data){
+async function loadState(){
 
-  if(!data){
+  if(!ACCESS_KEY){
     return;
   }
 
-  latestServerTime =
-    Number(
-      data.serverTime ||
-      Date.now()
+  try{
+
+    const data =
+      await api("/api/state");
+
+    const state =
+      data.state ||
+      data;
+
+    updateState(
+      state,
+      data
     );
 
-  if(data.provider){
+  }catch(error){
 
-    latestProviderUpdate =
-      data.provider.lastUpdated;
-
-    if(data.provider.ok){
-
-      gameStatus.textContent =
-        "LIVE";
-
-    }else{
-
-      gameStatus.textContent =
-        "API WAITING";
-
-    }
+    console.error(
+      "State:",
+      error
+    );
 
   }
 
+}
 
-  /* TARGET */
+
+function updateState(state,data){
+
+  const prediction =
+    state.prediction ||
+    data.prediction ||
+    {};
+
+
+  const target =
+    state.targetIssue ||
+    state.target_issue ||
+    prediction.target_issue ||
+    data.targetIssue ||
+    data.target_issue ||
+    "";
+
 
   const current =
-    data.current || {};
+    state.currentIssue ||
+    state.current_issue ||
+    data.currentIssue ||
+    data.current_issue ||
+    "";
 
-  const issue =
-    current.targetIssue ||
-    current.issue;
 
-  if(issue){
+  if(target){
 
-    targetIssue.textContent =
-      issue;
-
-  }else{
-
-    targetIssue.textContent =
-      "WAITING...";
+    $("targetIssue")
+      .textContent =
+      target;
 
   }
+
+
+  const providerUpdate =
+    state.providerLastUpdated ||
+    state.provider_last_updated ||
+    state.lastUpdated ||
+    state.last_updated ||
+    data.lastUpdated ||
+    data.last_updated ||
+    0;
+
+
+  if(providerUpdate){
+
+    lastProviderUpdate =
+      Number(providerUpdate) || 0;
+
+  }
+
+
+  const side =
+    prediction.prediction ||
+    prediction.side ||
+    state.predictionSide ||
+    "";
+
+
+  const confidence =
+    prediction.confidence ??
+    state.confidence ??
+    null;
+
+
+  const regime =
+    prediction.regime ||
+    state.regime ||
+    "MIXED";
+
+
+  const reason =
+    prediction.reason ||
+    state.reason ||
+    "Live V4 analysis";
 
 
   /*
-    Start 3 second analysis only when
+    Prediction only restarts when
     target period changes.
   */
 
   if(
-    issue &&
-    issue !== lastTargetIssue
+    target &&
+    target !== displayedTarget
   ){
 
-    lastTargetIssue = issue;
+    displayedTarget =
+      target;
 
     startAnalysis(
-      issue,
-      current
+      target,
+      side,
+      confidence,
+      regime,
+      reason
     );
-
-  }else if(
-    !issue
-  ){
-
-    showWaiting();
-
-  }
-
-
-  /* TIMER */
-
-  updateTimer();
-
-
-  /* STATS */
-
-  const stats =
-    data.stats || {};
-
-  wins.textContent =
-    Number(stats.wins || 0);
-
-  losses.textContent =
-    Number(stats.losses || 0);
-
-  winRate.textContent =
-    Number(stats.winRate || 0) +
-    "%";
-
-
-  /* HISTORY */
-
-  drawHistory(
-    Array.isArray(data.last30)
-      ? data.last30
-      : []
-  );
-
-}
-
-
-/* =========================================================
-   AI ANALYSIS
-========================================================= */
-
-function startAnalysis(issue, current){
-
-  const token =
-    ++analysisToken;
-
-  predictionResult.style.display =
-    "none";
-
-  analysis.style.display =
-    "flex";
-
-  const messages = [
-    "Reading recent trend",
-    "Checking trend-break pressure",
-    "Comparing short and medium signals",
-    "Checking transition pattern",
-    "Finalising BIG/SMALL estimate"
-  ];
-
-  let index = 0;
-
-  analysisText.textContent =
-    messages[0];
-
-  const interval =
-    setInterval(
-      () => {
-
-        if(token !== analysisToken){
-
-          clearInterval(interval);
-
-          return;
-        }
-
-        index =
-          Math.min(
-            index + 1,
-            messages.length - 1
-          );
-
-        analysisText.textContent =
-          messages[index];
-
-      },
-      600
-    );
-
-
-  setTimeout(
-    () => {
-
-      clearInterval(interval);
-
-      if(token !== analysisToken){
-        return;
-      }
-
-      /*
-        Use the prediction already stored by
-        the server for this exact target.
-      */
-
-      if(
-        current &&
-        current.prediction
-      ){
-
-        showPrediction(current);
-
-      }else{
-
-        analysisText.textContent =
-          "Waiting for enough history...";
-
-      }
-
-    },
-    ANALYSIS_MS
-  );
-
-}
-
-
-/* =========================================================
-   SHOW PREDICTION
-========================================================= */
-
-function showPrediction(current){
-
-  analysis.style.display =
-    "none";
-
-  predictionResult.style.display =
-    "block";
-
-  const side =
-    String(
-      current.prediction || ""
-    ).toUpperCase();
-
-  predictionSide.textContent =
-    side || "WAITING";
-
-  predictionSide.classList.remove(
-    "big",
-    "small"
-  );
-
-  if(side === "BIG"){
-
-    predictionSide.classList.add(
-      "big"
-    );
-
-  }else if(side === "SMALL"){
-
-    predictionSide.classList.add(
-      "small"
-    );
-
-  }
-
-  const conf =
-    Math.round(
-      Number(
-        current.confidence || 0
-      )
-    );
-
-  confidence.textContent =
-    conf + "%";
-
-  confidenceBar.style.width =
-    Math.max(
-      0,
-      Math.min(
-        100,
-        conf
-      )
-    ) + "%";
-
-  regime.textContent =
-    String(
-      current.regime ||
-      "NEUTRAL"
-    ).replace(
-      /_/g,
-      " "
-    );
-
-  reason.textContent =
-    current.reason ||
-    "AI analysis complete";
-}
-
-
-/* =========================================================
-   WAITING
-========================================================= */
-
-function showWaiting(){
-
-  analysis.style.display =
-    "flex";
-
-  predictionResult.style.display =
-    "none";
-
-  analysisText.textContent =
-    "Waiting for provider data...";
-
-}
-
-
-/* =========================================================
-   HISTORY
-========================================================= */
-
-function drawHistory(rows){
-
-  historyBody.innerHTML = "";
-
-  if(!rows.length){
-
-    emptyHistory.classList.remove(
-      "hidden"
-    );
-
-    return;
-
-  }
-
-  emptyHistory.classList.add(
-    "hidden"
-  );
-
-  for(const row of rows){
-
-    const tr =
-      document.createElement("tr");
-
-    const period =
-      String(
-        row.issue ||
-        row.period ||
-        "-"
-      );
-
-    const actual =
-      String(
-        row.result ||
-        ""
-      ).toUpperCase();
-
-    const predict =
-      String(
-        row.predict ||
-        row.prediction ||
-        ""
-      ).toUpperCase();
-
-    const wl =
-      String(
-        row.wl ||
-        "PENDING"
-      ).toUpperCase();
-
-
-    const periodTd =
-      document.createElement("td");
-
-    periodTd.textContent =
-      period;
-
-
-    const resultTd =
-      document.createElement("td");
-
-    if(actual === "BIG"){
-
-      resultTd.textContent =
-        "BIG";
-
-      resultTd.className =
-        "result-big";
-
-    }else if(actual === "SMALL"){
-
-      resultTd.textContent =
-        "SMALL";
-
-      resultTd.className =
-        "result-small";
-
-    }else{
-
-      resultTd.textContent =
-        "—";
-
-    }
-
-
-    const predictTd =
-      document.createElement("td");
-
-    if(predict === "BIG"){
-
-      predictTd.textContent =
-        "BIG";
-
-      predictTd.className =
-        "predict-big";
-
-    }else if(predict === "SMALL"){
-
-      predictTd.textContent =
-        "SMALL";
-
-      predictTd.className =
-        "predict-small";
-
-    }else{
-
-      predictTd.textContent =
-        "—";
-
-    }
-
-
-    const wlTd =
-      document.createElement("td");
-
-    if(wl === "WIN"){
-
-      wlTd.textContent =
-        "WIN";
-
-      wlTd.className =
-        "status-win";
-
-    }else if(wl === "LOSS"){
-
-      wlTd.textContent =
-        "LOSS";
-
-      wlTd.className =
-        "status-loss";
-
-    }else{
-
-      wlTd.textContent =
-        "PENDING";
-
-      wlTd.className =
-        "status-pending";
-
-    }
-
-
-    tr.appendChild(
-      periodTd
-    );
-
-    tr.appendChild(
-      resultTd
-    );
-
-    tr.appendChild(
-      predictTd
-    );
-
-    tr.appendChild(
-      wlTd
-    );
-
-    historyBody.appendChild(
-      tr
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   TIMER
-========================================================= */
-
-function getProviderTimestamp(){
-
-  const value =
-    latestProviderUpdate;
-
-  if(
-    value === null ||
-    value === undefined ||
-    value === ""
-  ){
-
-    return null;
-
-  }
-
-
-  let n;
-
-  if(
-    typeof value === "number"
-  ){
-
-    n = value;
-
-  }else{
-
-    const s =
-      String(value).trim();
-
-    if(
-      /^\d+$/.test(s)
-    ){
-
-      n = Number(s);
-
-    }else{
-
-      const parsed =
-        Date.parse(s);
-
-      if(
-        Number.isFinite(parsed)
-      ){
-
-        n = parsed;
-
-      }else{
-
-        return null;
-
-      }
-
-    }
-
-  }
-
-
-  if(!Number.isFinite(n)){
-    return null;
-  }
-
-
-  /*
-    Convert seconds/milliseconds
-    into milliseconds.
-  */
-
-  if(n < 100000000000){
-
-    n *= 1000;
-
-  }
-
-  return n;
-}
-
-
-function updateTimer(){
-
-  const providerTs =
-    getProviderTimestamp();
-
-  let remaining = 30;
-
-  if(providerTs){
-
-    const elapsed =
-      Math.floor(
-        (Date.now() - providerTs) /
-        1000
-      );
-
-    remaining =
-      30 -
-      (
-        ((elapsed % 30) + 30) %
-        30
-      );
 
   }else{
 
     /*
-      Fallback estimated cycle.
+      If server already has prediction
+      and analysis has finished, update
+      the visible values smoothly.
     */
 
-    const sec =
-      Math.floor(
-        Date.now() / 1000
+    if(
+      !analysisRunning &&
+      side
+    ){
+
+      showPrediction(
+        side,
+        confidence,
+        regime,
+        reason
       );
 
-    remaining =
-      30 -
-      (sec % 30);
+    }
 
   }
 
-  if(remaining <= 0){
-    remaining = 30;
-  }
 
-  if(
-    remaining !==
-    lastTimerSecond
-  ){
+  updateHistory(
+    state,
+    data
+  );
 
-    lastTimerSecond =
-      remaining;
+  updateStats(
+    state,
+    data
+  );
 
-    timer.textContent =
-      String(
-        remaining
-      ).padStart(
-        2,
-        "0"
-      );
-
-  }
+  updateTimer();
 
 }
 
 
-/* =========================================================
-   OPEN GAME
-========================================================= */
+/* =========================
+   3 SECOND ANALYSIS
+========================= */
 
-openGameBtn.addEventListener(
-  "click",
-  () => {
+function startAnalysis(
+  target,
+  side,
+  confidence,
+  regime,
+  reason
+){
 
-    window.open(
-      GAME_URL,
-      "_blank",
-      "noopener,noreferrer"
+  if(analysisTimer){
+    clearInterval(
+      analysisTimer
     );
-
   }
-);
+
+  analysisRunning = true;
+
+  $("analysisLoading")
+    .style
+    .display = "block";
+
+  $("resultWrap")
+    .classList
+    .remove("show");
+
+  let seconds = 3;
+
+  $("analysisSeconds")
+    .textContent =
+    seconds;
 
 
-/* =========================================================
-   IFRAME
-========================================================= */
+  analysisTimer =
+    setInterval(()=>{
 
-gameFrame.addEventListener(
-  "load",
-  () => {
+      seconds--;
 
-    gameStatus.textContent =
-      "LIVE";
-
-  }
-);
-
-
-/*
-  If iframe is blocked by external
-  site security, the browser may not
-  fire a useful error event. Keep
-  fallback button available.
-*/
-
-setTimeout(
-  () => {
-
-    if(
-      gameStatus.textContent !==
-      "LIVE"
-    ){
-
-      gameFallback.style.display =
-        "flex";
-
-    }
-
-  },
-  7000
-);
-
-
-/* =========================================================
-   MUSIC
-========================================================= */
-
-musicBtn.addEventListener(
-  "click",
-  async () => {
-
-    try{
-
-      if(
-        music.paused
-      ){
-
-        await music.play();
-
-        musicBtn.textContent =
-          "🎵 MUSIC ON";
-
-        showToast(
-          "Music started"
+      $("analysisSeconds")
+        .textContent =
+        Math.max(
+          seconds,
+          0
         );
 
-      }else{
+      if(seconds <= 0){
 
-        music.pause();
+        clearInterval(
+          analysisTimer
+        );
 
-        musicBtn.textContent =
-          "🎵 MUSIC OFF";
+        analysisTimer =
+          null;
+
+        analysisRunning =
+          false;
+
+        /*
+          Use the server's V4 result.
+          No random prediction is generated
+          on client side.
+        */
+
+        if(side){
+
+          showPrediction(
+            side,
+            confidence,
+            regime,
+            reason
+          );
+
+        }else{
+
+          showPrediction(
+            "—",
+            confidence,
+            regime,
+            "Waiting for live V4 prediction."
+          );
+
+        }
 
       }
 
-    }catch(error){
+    },1000);
 
-      showToast(
-        "Tap again to start music"
+}
+
+
+function showPrediction(
+  side,
+  confidence,
+  regime,
+  reason
+){
+
+  const cleanSide =
+    String(side || "")
+      .toUpperCase();
+
+  $("analysisLoading")
+    .style
+    .display = "none";
+
+  $("resultWrap")
+    .classList
+    .add("show");
+
+  $("prediction")
+    .textContent =
+    cleanSide || "—";
+
+  $("confidence")
+    .textContent =
+    confidence == null
+      ? "—"
+      : `${confidence}%`;
+
+  $("regime")
+    .textContent =
+    regime || "MIXED";
+
+  $("reason")
+    .textContent =
+    reason ||
+    "V4 live analysis.";
+
+}
+
+
+/* =========================
+   TIMER
+========================= */
+
+function updateTimer(){
+
+  /*
+    Provider timestamp is used only
+    as a synchronization reference.
+    The documented history endpoint
+    does not provide an authoritative
+    countdown.
+  */
+
+  if(!lastProviderUpdate){
+
+    timerValue = 30;
+
+    $("timer")
+      .textContent =
+      "00:30";
+
+    return;
+
+  }
+
+  let stamp =
+    Number(lastProviderUpdate);
+
+  if(stamp < 100000000000){
+    stamp *= 1000;
+  }
+
+  const elapsed =
+    Math.floor(
+      (Date.now()-stamp)/1000
+    );
+
+  const remain =
+    30 -
+    (elapsed % 30);
+
+  timerValue =
+    remain <= 0
+      ? 30
+      : remain;
+
+  $("timer")
+    .textContent =
+    "00:" +
+    String(timerValue)
+      .padStart(2,"0");
+
+}
+
+
+/* =========================
+   HISTORY
+========================= */
+
+async function updateHistory(
+  state,
+  data
+){
+
+  let rows =
+    state.predictions ||
+    state.predictionHistory ||
+    data.predictions ||
+    data.predictionHistory ||
+    null;
+
+
+  /*
+    If /api/state doesn't include
+    prediction history, load it separately.
+  */
+
+  if(!Array.isArray(rows)){
+
+    try{
+
+      const historyData =
+        await api("/api/history");
+
+      rows =
+        historyData.predictions ||
+        historyData.history ||
+        historyData.data ||
+        [];
+
+    }catch{
+
+      rows = [];
+
+    }
+
+  }
+
+
+  renderHistory(rows);
+
+}
+
+
+function renderHistory(rows){
+
+  const tbody =
+    $("historyTable");
+
+  if(
+    !Array.isArray(rows) ||
+    rows.length === 0
+  ){
+
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="4"
+            style="text-align:center;color:#59677c;padding:25px;">
+          No prediction history yet.
+        </td>
+      </tr>
+    `;
+
+    return;
+
+  }
+
+
+  tbody.innerHTML =
+    rows
+      .slice(0,30)
+      .map(row=>{
+
+        const period =
+          row.target_issue ||
+          row.targetIssue ||
+          row.period ||
+          row.issueNumber ||
+          "—";
+
+
+        const prediction =
+          String(
+            row.prediction ||
+            row.side ||
+            "—"
+          ).toUpperCase();
+
+
+        const actual =
+          String(
+            row.actual_result ||
+            row.actualResult ||
+            row.result ||
+            "—"
+          ).toUpperCase();
+
+
+        /*
+          IMPORTANT:
+          No actual exact result =
+          PENDING.
+          Never show WIN/LOSS from
+          missing provider result.
+        */
+
+        let status =
+          String(
+            row.status || ""
+          ).toUpperCase();
+
+
+        if(
+          actual !== "BIG" &&
+          actual !== "SMALL"
+        ){
+
+          status =
+            "PENDING";
+
+        }else{
+
+          status =
+            prediction === actual
+              ? "WIN"
+              : "LOSS";
+
+        }
+
+
+        let statusClass =
+          "status-pending";
+
+        if(status==="WIN"){
+          statusClass =
+            "status-win";
+        }
+
+        if(status==="LOSS"){
+          statusClass =
+            "status-loss";
+        }
+
+
+        const resultClass =
+          actual==="BIG" ||
+          actual==="SMALL"
+            ? (
+                actual === prediction
+                  ? "win"
+                  : "loss"
+              )
+            : "pending";
+
+
+        return `
+          <tr>
+
+            <td class="period-cell">
+              ${esc(period)}
+            </td>
+
+            <td class="side">
+              ${esc(prediction)}
+            </td>
+
+            <td class="result ${resultClass}">
+              ${esc(actual)}
+            </td>
+
+            <td>
+              <span class="status-badge ${statusClass}">
+                ${esc(status)}
+              </span>
+            </td>
+
+          </tr>
+        `;
+
+      })
+      .join("");
+
+}
+
+
+/* =========================
+   STATS
+========================= */
+
+function updateStats(
+  state,
+  data
+){
+
+  let wins =
+    Number(
+      state.wins ??
+      data.wins ??
+      0
+    );
+
+  let losses =
+    Number(
+      state.losses ??
+      data.losses ??
+      0
+    );
+
+
+  const stats =
+    state.stats ||
+    data.stats ||
+    {};
+
+
+  if(
+    stats &&
+    (
+      stats.wins != null ||
+      stats.losses != null
+    )
+  ){
+
+    wins =
+      Number(
+        stats.wins || 0
       );
+
+    losses =
+      Number(
+        stats.losses || 0
+      );
+
+  }
+
+
+  $("wins")
+    .textContent =
+    wins;
+
+  $("losses")
+    .textContent =
+    losses;
+
+
+  const total =
+    wins + losses;
+
+
+  const rate =
+    total > 0
+      ? Math.round(
+          wins / total * 100
+        )
+      : 0;
+
+
+  $("winRate")
+    .textContent =
+    `${rate}%`;
+
+}
+
+
+/* =========================
+   GAME
+========================= */
+
+function openGame(){
+
+  window.open(
+    "https://www.shreewin38.com/#/register?invitationCode=88523152383",
+    "_blank",
+    "noopener,noreferrer"
+  );
+
+}
+
+
+function setupGameFallback(){
+
+  const frame =
+    $("gameFrame");
+
+  let loaded = false;
+
+  frame.addEventListener(
+    "load",
+    ()=>{
+      loaded = true;
+
+      $("gameStatus")
+        .textContent =
+        "LIVE";
+
+      $("gameFallback")
+        .classList
+        .remove("show");
+
+    }
+  );
+
+
+  clearTimeout(
+    fallbackTimer
+  );
+
+
+  fallbackTimer =
+    setTimeout(()=>{
+
+      /*
+        Cross-origin pages can refuse
+        iframe embedding. In that case
+        provide an Open Game button.
+      */
+
+      if(!loaded){
+
+        $("gameStatus")
+          .textContent =
+          "OPEN";
+
+        $("gameFallback")
+          .classList
+          .add("show");
+
+      }
+
+    },7000);
+
+}
+
+
+/* =========================
+   MUSIC
+========================= */
+
+async function toggleMusic(){
+
+  const audio =
+    $("music");
+
+  try{
+
+    if(!musicPlaying){
+
+      await audio.play();
+
+      musicPlaying = true;
+
+      $("musicBtn")
+        .textContent =
+        "🔊";
+
+      toast("Music ON.");
+
+    }else{
+
+      audio.pause();
+
+      musicPlaying = false;
+
+      $("musicBtn")
+        .textContent =
+        "🔇";
+
+      toast("Music OFF.");
+
+    }
+
+  }catch{
+
+    toast(
+      "Music start nahi ho paaya."
+    );
+
+  }
+
+}
+
+
+/* =========================
+   REFRESH
+========================= */
+
+async function manualRefresh(){
+
+  toast("Refreshing...");
+
+  await loadState();
+
+  toast("Updated.");
+
+}
+
+
+/* =========================
+   DEVICE / ACCESS ERROR
+========================= */
+
+window.addEventListener(
+  "storage",
+  e=>{
+
+    if(
+      e.key ===
+      "dy_ai_access_key" &&
+      !e.newValue
+    ){
+
+      ACCESS_KEY = "";
 
     }
 
@@ -2282,73 +2187,37 @@ musicBtn.addEventListener(
 );
 
 
-/* =========================================================
-   REFRESH
-========================================================= */
-
-refreshBtn.addEventListener(
-  "click",
-  async () => {
-
-    refreshBtn.disabled = true;
-
-    await fetchState();
-
-    refreshBtn.disabled = false;
-
-    showToast(
-      "Updated"
-    );
-
-  }
-);
-
-
-/* =========================================================
-   APP START
-========================================================= */
-
-function startApp(){
-
-  if(pollTimer){
-    return;
-  }
-
-  fetchState();
-
-  pollTimer =
-    setInterval(
-      fetchState,
-      POLL_MS
-    );
-
-}
-
-
-/* =========================================================
+/* =========================
    TIMER LOOP
-========================================================= */
+========================= */
 
 setInterval(
   updateTimer,
-  250
+  1000
 );
 
 
-/* =========================================================
-   PAGE VISIBILITY
-========================================================= */
+/* =========================
+   PAGE CLEANUP
+========================= */
 
-document.addEventListener(
-  "visibilitychange",
-  () => {
+window.addEventListener(
+  "beforeunload",
+  ()=>{
 
-    if(
-      !document.hidden &&
-      accessKey
-    ){
+    if(stateInterval){
 
-      fetchState();
+      clearInterval(
+        stateInterval
+      );
+
+    }
+
+    if(analysisTimer){
+
+      clearInterval(
+        analysisTimer
+      );
 
     }
 
@@ -2358,4 +2227,4 @@ document.addEventListener(
 </script>
 
 </body>
-</html>
+  </html>
