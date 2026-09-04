@@ -1,7 +1,7 @@
 {
   "name": "dy-ai-wingo",
-  "version": "1.0.0",
-  "description": "DY AI Wingo 30S",
+  "version": "2.0.0",
+  "description": "DY AI Wingo 30S historical analysis dashboard",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
