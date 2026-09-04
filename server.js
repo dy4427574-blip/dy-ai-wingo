@@ -1,8 +1,3 @@
-// ============================================================
-// DY AI WINGO 30S - COMPLETE SERVER
-// MODEL: DY-AI-BS-V3
-// ============================================================
-
 "use strict";
 
 const http = require("http");
@@ -13,16 +8,20 @@ const { URL } = require("url");
 const { Pool } = require("pg");
 
 // ============================================================
-// CONFIG
+// DY AI WINGO 30S - V4
+// BIG / SMALL ONLY
 // ============================================================
 
 const PORT = Number(process.env.PORT || 10000);
 
-const DATABASE_URL = process.env.DATABASE_URL || "";
+const DATABASE_URL =
+  process.env.DATABASE_URL || "";
 
-const ADMIN_KEY = process.env.ADMIN_KEY || "dy4427574";
+const ADMIN_KEY =
+  process.env.ADMIN_KEY || "dy4427574";
 
-const WINGOBOT_TOKEN = process.env.WINGOBOT_TOKEN || "";
+const WINGOBOT_TOKEN =
+  process.env.WINGOBOT_TOKEN || "";
 
 const WINGOBOT_URL =
   "https://api.wingobot.com/v2/30-sec-game-history";
@@ -30,11 +29,10 @@ const WINGOBOT_URL =
 const GAME_URL =
   "https://www.shreewin38.com/#/register?invitationCode=88523152383";
 
-const MODEL_VERSION = "DY-AI-BS-V3";
+const MODEL_VERSION =
+  "DY-AI-BS-V4";
 
 const PROVIDER_POLL_MS = 3000;
-
-const STATE_CACHE_MS = 800;
 
 const MAX_HISTORY = 200;
 
@@ -61,7 +59,7 @@ if (DATABASE_URL) {
 
 
 // ============================================================
-// GLOBAL PROVIDER STATE
+// PROVIDER STATE
 // ============================================================
 
 let provider = {
@@ -76,81 +74,37 @@ let provider = {
 
 let providerFetching = false;
 
-let lastStateCache = null;
-
-let lastStateCacheAt = 0;
-
 
 // ============================================================
-// BASIC HELPERS
+// HELPERS
 // ============================================================
 
 function now() {
   return Date.now();
 }
 
-function json(res, status, data) {
-  const body = JSON.stringify(data);
-
-  res.writeHead(status, {
-    "Content-Type": "application/json; charset=utf-8",
-    "Cache-Control": "no-store",
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS"
-  });
-
-  res.end(body);
-}
-
-function text(res, status, body, contentType = "text/plain; charset=utf-8") {
-  res.writeHead(status, {
-    "Content-Type": contentType,
-    "Cache-Control": "no-store"
-  });
-
-  res.end(body);
-}
-
-function safeString(value) {
-  if (value === null || value === undefined) return "";
-  return String(value);
-}
-
-function cleanIssue(value) {
-  if (value === null || value === undefined) return null;
-
-  const s = String(value).trim();
-
-  if (!s) return null;
-
-  return s;
-}
-
-function incrementIssue(issue) {
-  if (!issue) return null;
-
-  const s = String(issue).trim();
-
-  if (!/^\d+$/.test(s)) {
-    return null;
+function safeString(v) {
+  if (v === null || v === undefined) {
+    return "";
   }
 
-  try {
-    return (BigInt(s) + 1n).toString();
-  } catch {
-    return null;
-  }
+  return String(v);
 }
 
-function sameIssue(a, b) {
-  return String(a || "") === String(b || "");
+function cleanIssue(v) {
+  const s = safeString(v).trim();
+
+  return s || null;
+}
+
+function clamp(v, min, max) {
+  return Math.max(min, Math.min(max, v));
 }
 
 function sideFromNumber(number) {
   const n = Number(number);
 
-  if (!Number.isFinite(n)) {
+  if (!Number.isInteger(n)) {
     return null;
   }
 
@@ -165,8 +119,11 @@ function sideFromNumber(number) {
   return null;
 }
 
-function normalizeSide(value, number = null) {
-  const s = safeString(value).trim().toUpperCase();
+function normalizeSide(value, number) {
+  const s =
+    safeString(value)
+      .trim()
+      .toUpperCase();
 
   if (
     s === "BIG" ||
@@ -187,27 +144,77 @@ function normalizeSide(value, number = null) {
   return sideFromNumber(number);
 }
 
-function oppositeSide(side) {
-  return side === "BIG" ? "SMALL" : "BIG";
+function opposite(side) {
+  return side === "BIG"
+    ? "SMALL"
+    : "BIG";
 }
 
-function average(arr) {
-  if (!arr.length) return 0;
+function incrementIssue(issue) {
+  if (!issue) {
+    return null;
+  }
 
-  return arr.reduce((a, b) => a + b, 0) / arr.length;
+  if (!/^\d+$/.test(String(issue))) {
+    return null;
+  }
+
+  try {
+    return (
+      BigInt(issue) + 1n
+    ).toString();
+  } catch {
+    return null;
+  }
 }
 
-function clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value));
+function json(res, status, data) {
+  const body =
+    JSON.stringify(data);
+
+  res.writeHead(status, {
+    "Content-Type":
+      "application/json; charset=utf-8",
+    "Cache-Control":
+      "no-store",
+    "Access-Control-Allow-Origin":
+      "*",
+    "Access-Control-Allow-Headers":
+      "Content-Type, Authorization, X-Admin-Key",
+    "Access-Control-Allow-Methods":
+      "GET, POST, DELETE, OPTIONS"
+  });
+
+  res.end(body);
 }
 
-function randomId() {
-  return crypto.randomBytes(18).toString("hex");
+function text(
+  res,
+  status,
+  body,
+  type = "text/plain; charset=utf-8"
+) {
+  res.writeHead(status, {
+    "Content-Type": type,
+    "Cache-Control": "no-store"
+  });
+
+  res.end(body);
+}
+
+function randomKey() {
+  return (
+    "DY-" +
+    crypto
+      .randomBytes(12)
+      .toString("hex")
+      .toUpperCase()
+  );
 }
 
 
 // ============================================================
-// REQUEST BODY
+// BODY
 // ============================================================
 
 function readBody(req) {
@@ -218,7 +225,10 @@ function readBody(req) {
       body += chunk.toString();
 
       if (body.length > 1024 * 1024) {
-        reject(new Error("Request body too large"));
+        reject(
+          new Error("Request too large")
+        );
+
         req.destroy();
       }
     });
@@ -232,7 +242,9 @@ function readBody(req) {
       try {
         resolve(JSON.parse(body));
       } catch {
-        reject(new Error("Invalid JSON"));
+        reject(
+          new Error("Invalid JSON")
+        );
       }
     });
 
@@ -247,7 +259,10 @@ function readBody(req) {
 
 async function initDatabase() {
   if (!pool) {
-    console.log("DATABASE_URL not configured.");
+    console.log(
+      "DATABASE_URL not configured"
+    );
+
     return;
   }
 
@@ -275,7 +290,6 @@ async function initDatabase() {
     )
   `);
 
-  // Existing databases may not have these columns.
   await pool.query(`
     ALTER TABLE prediction_records
     ADD COLUMN IF NOT EXISTS confidence INTEGER DEFAULT 0
@@ -318,18 +332,22 @@ async function initDatabase() {
     ON prediction_records(model_version, target_issue)
   `);
 
-  console.log("Database initialized.");
+  console.log(
+    "Database initialized"
+  );
 }
 
 
 // ============================================================
-// WINGOBOT FETCH
+// WINGOBOT
 // ============================================================
 
 async function fetchWingoBot() {
   if (!WINGOBOT_TOKEN) {
     provider.ok = false;
-    provider.error = "WINGOBOT_TOKEN is not configured";
+    provider.error =
+      "WINGOBOT_TOKEN is not configured";
+
     return provider;
   }
 
@@ -340,52 +358,73 @@ async function fetchWingoBot() {
   providerFetching = true;
 
   try {
-    const response = await fetch(WINGOBOT_URL, {
-      method: "GET",
-      headers: {
-        "Authorization": `Bearer ${WINGOBOT_TOKEN}`,
-        "Accept": "application/json"
-      }
-    });
+    const response =
+      await fetch(
+        WINGOBOT_URL,
+        {
+          method: "GET",
+          headers: {
+            "Authorization":
+              `Bearer ${WINGOBOT_TOKEN}`,
+            "Accept":
+              "application/json"
+          }
+        }
+      );
 
-    const rawText = await response.text();
+    const raw =
+      await response.text();
 
     if (!response.ok) {
       throw new Error(
-        `WingoBot HTTP ${response.status}: ${rawText.slice(0, 300)}`
+        `WingoBot HTTP ${response.status}`
       );
     }
 
     let data;
 
     try {
-      data = JSON.parse(rawText);
+      data =
+        JSON.parse(raw);
     } catch {
-      throw new Error("WingoBot returned invalid JSON");
+      throw new Error(
+        "Invalid WingoBot JSON"
+      );
     }
 
-    const normalized = normalizeWingoResponse(data);
+    const normalized =
+      normalizeResponse(data);
 
     provider = {
       ok: true,
-      history: normalized.history,
-      currentIssue: normalized.currentIssue,
-      lastUpdated: normalized.lastUpdated,
-      fetched: normalized.fetched,
+      history:
+        normalized.history,
+      currentIssue:
+        normalized.currentIssue,
+      lastUpdated:
+        normalized.lastUpdated,
+      fetched:
+        normalized.fetched,
       error: null,
       fetchedAt: now()
     };
-
-    lastStateCache = null;
 
     return provider;
 
   } catch (error) {
     provider.ok = false;
-    provider.error = error.message || "Provider error";
-    provider.fetchedAt = now();
 
-    console.error("WingoBot fetch error:", provider.error);
+    provider.error =
+      error.message ||
+      "Provider error";
+
+    provider.fetchedAt =
+      now();
+
+    console.error(
+      "Provider:",
+      provider.error
+    );
 
     return provider;
 
@@ -396,10 +435,10 @@ async function fetchWingoBot() {
 
 
 // ============================================================
-// NORMALIZE WINGOBOT RESPONSE
+// NORMALIZE PROVIDER DATA
 // ============================================================
 
-function normalizeWingoResponse(data) {
+function normalizeResponse(data) {
   const currentIssue =
     cleanIssue(
       data?.current?.issueNumber ??
@@ -416,10 +455,12 @@ function normalizeWingoResponse(data) {
           ? data
           : [];
 
-  const history = [];
+  const map = new Map();
 
   for (const row of rows) {
-    if (!row) continue;
+    if (!row) {
+      continue;
+    }
 
     const issue =
       cleanIssue(
@@ -429,12 +470,14 @@ function normalizeWingoResponse(data) {
         row.periodNumber
       );
 
-    if (!issue) continue;
+    if (!issue) {
+      continue;
+    }
 
     const rawNumber =
       row.number ??
       row.num ??
-      row.result;
+      null;
 
     let number = null;
 
@@ -443,7 +486,8 @@ function normalizeWingoResponse(data) {
       rawNumber !== undefined &&
       String(rawNumber).trim() !== ""
     ) {
-      const n = Number(rawNumber);
+      const n =
+        Number(rawNumber);
 
       if (
         Number.isInteger(n) &&
@@ -465,54 +509,63 @@ function normalizeWingoResponse(data) {
       );
 
     /*
-      A row without a valid number/side is NOT considered settled.
-      This prevents pending rows from becoming fake WIN/LOSS.
+      A row without a valid side/number
+      is NOT a settled result.
     */
 
-    if (!side && number === null) {
+    if (!side) {
       continue;
     }
 
-    history.push({
-      issueNumber: issue,
-      number,
-      side,
-      colour: row.colour ?? row.color ?? side,
-      premium: row.premium ?? null,
-      sum: row.sum ?? null,
-      raw: row
-    });
+    map.set(
+      issue,
+      {
+        issueNumber: issue,
+        number,
+        side,
+        colour:
+          row.colour ??
+          row.color ??
+          side,
+        premium:
+          row.premium ?? null,
+        sum:
+          row.sum ?? null
+      }
+    );
   }
 
-  // Remove duplicate periods.
-  const unique = new Map();
+  const history =
+    Array.from(map.values());
 
-  for (const row of history) {
-    if (!unique.has(row.issueNumber)) {
-      unique.set(row.issueNumber, row);
-    }
-  }
-
-  const finalHistory = Array.from(unique.values());
-
-  finalHistory.sort((a, b) => {
+  history.sort((a, b) => {
     try {
-      const aa = BigInt(a.issueNumber);
-      const bb = BigInt(b.issueNumber);
+      const aa =
+        BigInt(a.issueNumber);
+
+      const bb =
+        BigInt(b.issueNumber);
 
       if (aa > bb) return -1;
       if (aa < bb) return 1;
 
       return 0;
     } catch {
-      return String(b.issueNumber)
-        .localeCompare(String(a.issueNumber));
+      return String(
+        b.issueNumber
+      ).localeCompare(
+        String(a.issueNumber)
+      );
     }
   });
 
   return {
     currentIssue,
-    history: finalHistory.slice(0, MAX_HISTORY),
+    history:
+      history.slice(
+        0,
+        MAX_HISTORY
+      ),
     lastUpdated:
       data?.stats?.last_updated ??
       data?.last_updated ??
@@ -521,18 +574,20 @@ function normalizeWingoResponse(data) {
     fetched:
       Number(
         data?.stats?.fetched ??
-        finalHistory.length
-      ) || finalHistory.length
+        history.length
+      ) ||
+      history.length
   };
 }
 
 
 // ============================================================
-// TARGET ISSUE
+// TARGET RESOLVER
 // ============================================================
 
 function resolveTargetIssue() {
-  const history = provider.history || [];
+  const history =
+    provider.history || [];
 
   const latestSettled =
     history.length
@@ -540,36 +595,49 @@ function resolveTargetIssue() {
       : null;
 
   const current =
-    cleanIssue(provider.currentIssue);
+    cleanIssue(
+      provider.currentIssue
+    );
 
-  /*
-    Correct target logic:
-
-    latest settled = history[0]
-
-    If provider current is ahead of latest settled,
-    current is the next target.
-
-    Otherwise target = latest settled + 1
-  */
-
-  if (latestSettled && current) {
+  if (
+    latestSettled &&
+    current
+  ) {
     try {
-      const h = BigInt(latestSettled);
-      const c = BigInt(current);
+      const h =
+        BigInt(latestSettled);
+
+      const c =
+        BigInt(current);
+
+      /*
+        Provider current is ahead:
+        use it as target.
+      */
 
       if (c > h) {
         return current;
       }
 
-      return (h + 1n).toString();
+      /*
+        Otherwise latest settled + 1.
+      */
+
+      return (
+        h + 1n
+      ).toString();
 
     } catch {
-      if (current !== latestSettled) {
+      if (
+        current !==
+        latestSettled
+      ) {
         return current;
       }
 
-      return incrementIssue(latestSettled);
+      return incrementIssue(
+        latestSettled
+      );
     }
   }
 
@@ -578,7 +646,9 @@ function resolveTargetIssue() {
   }
 
   if (latestSettled) {
-    return incrementIssue(latestSettled);
+    return incrementIssue(
+      latestSettled
+    );
   }
 
   return null;
@@ -586,164 +656,102 @@ function resolveTargetIssue() {
 
 
 // ============================================================
-// SIDE EXTRACTION
+// HISTORY SIDES
 // ============================================================
 
-function sidesFromHistory(limit = 30) {
+function getSides(limit = 100) {
   return (provider.history || [])
-    .filter(row => row && row.side)
+    .filter(
+      x => x && x.side
+    )
     .slice(0, limit)
-    .map(row => row.side);
+    .map(
+      x => x.side
+    );
 }
 
 
 // ============================================================
-// SHORT SIGNAL
+// SIGNAL 1
+// RECENT WEIGHTED MOMENTUM
 // ============================================================
 
-function shortSignal(sides) {
-  const arr = sides.slice(0, 5);
+function recentMomentum(sides) {
+  const arr =
+    sides.slice(0, 7);
 
   if (!arr.length) {
     return 0;
   }
-
-  let score = 0;
 
   const weights = [
-    1.0,
-    0.85,
+    1.00,
+    0.92,
+    0.82,
     0.70,
-    0.55,
-    0.40
+    0.58,
+    0.45,
+    0.32
   ];
 
-  for (let i = 0; i < arr.length; i++) {
-    score +=
-      arr[i] === "BIG"
-        ? weights[i]
-        : -weights[i];
-  }
-
-  return clamp(score / 3.5, -1, 1);
-}
-
-
-// ============================================================
-// MEDIUM SIGNAL
-// ============================================================
-
-function mediumSignal(sides) {
-  const arr = sides.slice(0, 15);
-
-  if (!arr.length) {
-    return 0;
-  }
-
   let score = 0;
+  let total = 0;
 
-  for (let i = 0; i < arr.length; i++) {
-    const weight =
-      1 -
-      (i / Math.max(1, arr.length)) * 0.55;
+  for (
+    let i = 0;
+    i < arr.length;
+    i++
+  ) {
+    const value =
+      arr[i] === "BIG"
+        ? 1
+        : -1;
 
     score +=
-      (arr[i] === "BIG" ? 1 : -1) *
-      weight;
+      value *
+      weights[i];
+
+    total +=
+      weights[i];
   }
 
-  const max =
-    arr.reduce((sum, _, i) => {
-      return sum +
-        (1 -
-          (i / Math.max(1, arr.length)) *
-          0.55);
-    }, 0);
-
-  return max
-    ? clamp(score / max, -1, 1)
+  return total
+    ? clamp(
+        score / total,
+        -1,
+        1
+      )
     : 0;
 }
 
 
 // ============================================================
-// TRANSITION SIGNAL
+// SIGNAL 2
+// MEDIUM BALANCE
 // ============================================================
 
-function transitionSignal(sides) {
-  const arr = sides.slice(0, 20);
+function mediumBalance(sides) {
+  const arr =
+    sides.slice(0, 20);
 
-  if (arr.length < 3) {
+  if (!arr.length) {
     return 0;
   }
 
-  let bigToSmall = 0;
-  let smallToBig = 0;
-  let same = 0;
+  let big = 0;
+  let small = 0;
 
-  for (let i = 0; i < arr.length - 1; i++) {
-    const current = arr[i];
-    const older = arr[i + 1];
-
-    if (
-      older === "BIG" &&
-      current === "SMALL"
-    ) {
-      bigToSmall++;
-    }
-
-    if (
-      older === "SMALL" &&
-      current === "BIG"
-    ) {
-      smallToBig++;
-    }
-
-    if (older === current) {
-      same++;
-    }
-  }
-
-  const total =
-    bigToSmall +
-    smallToBig +
-    same;
-
-  if (!total) return 0;
-
-  /*
-    More recent transition gets more influence.
-  */
-
-  let recent = 0;
-
-  for (
-    let i = 0;
-    i < Math.min(6, arr.length - 1);
-    i++
-  ) {
-    const current = arr[i];
-    const older = arr[i + 1];
-
-    if (
-      older === "BIG" &&
-      current === "SMALL"
-    ) {
-      recent -= 0.18;
-    }
-
-    if (
-      older === "SMALL" &&
-      current === "BIG"
-    ) {
-      recent += 0.18;
+  for (const side of arr) {
+    if (side === "BIG") {
+      big++;
+    } else {
+      small++;
     }
   }
 
   return clamp(
-    (smallToBig - bigToSmall) /
-      Math.max(1, total) +
-      recent,
+    (big - small) /
+    arr.length,
     -1,
     1
   );
@@ -751,118 +759,329 @@ function transitionSignal(sides) {
 
 
 // ============================================================
-// STREAK / BREAK SIGNAL
+// SIGNAL 3
+// VERY RECENT BALANCE
 // ============================================================
 
-function breakSignal(sides) {
-  const arr = sides.slice(0, 12);
+function microBalance(sides) {
+  const arr =
+    sides.slice(0, 4);
+
+  if (!arr.length) {
+    return 0;
+  }
+
+  let big = 0;
+  let small = 0;
+
+  for (const side of arr) {
+    if (side === "BIG") {
+      big++;
+    } else {
+      small++;
+    }
+  }
+
+  return clamp(
+    (big - small) /
+    arr.length,
+    -1,
+    1
+  );
+}
+
+
+// ============================================================
+// SIGNAL 4
+// TRANSITIONS
+// ============================================================
+
+function transitionModel(sides) {
+  const arr =
+    sides.slice(0, 25);
 
   if (arr.length < 3) {
     return 0;
   }
 
-  let streak = 1;
+  let bb = 0;
+  let bs = 0;
+  let sb = 0;
+  let ss = 0;
 
-  while (
-    streak < arr.length &&
-    arr[streak] === arr[0]
+  for (
+    let i = 0;
+    i < arr.length - 1;
+    i++
   ) {
-    streak++;
-  }
+    const current =
+      arr[i];
 
-  let signal = 0;
+    const older =
+      arr[i + 1];
 
-  /*
-    Do not blindly follow long streaks.
-    Detect potential trend break.
-  */
+    if (
+      older === "BIG" &&
+      current === "BIG"
+    ) {
+      bb++;
+    }
 
-  if (streak >= 5) {
-    signal =
-      arr[0] === "BIG"
-        ? -0.55
-        : 0.55;
-  } else if (streak === 4) {
-    signal =
-      arr[0] === "BIG"
-        ? -0.28
-        : 0.28;
-  } else if (streak === 3) {
-    signal =
-      arr[0] === "BIG"
-        ? -0.08
-        : 0.08;
-  }
+    if (
+      older === "BIG" &&
+      current === "SMALL"
+    ) {
+      bs++;
+    }
 
-  // Recent instability.
-  const recent = arr.slice(0, 6);
+    if (
+      older === "SMALL" &&
+      current === "BIG"
+    ) {
+      sb++;
+    }
 
-  let changes = 0;
-
-  for (let i = 0; i < recent.length - 1; i++) {
-    if (recent[i] !== recent[i + 1]) {
-      changes++;
+    if (
+      older === "SMALL" &&
+      current === "SMALL"
+    ) {
+      ss++;
     }
   }
 
-  if (changes >= 4) {
-    signal *= 0.65;
+  const latest =
+    arr[0];
+
+  let predictionScore = 0;
+
+  if (latest === "BIG") {
+
+    const total =
+      bb + bs;
+
+    if (total > 0) {
+      /*
+        P(next BIG) vs P(next SMALL)
+      */
+
+      predictionScore =
+        (bb - bs) /
+        total;
+    }
+
+  } else {
+
+    const total =
+      sb + ss;
+
+    if (total > 0) {
+
+      predictionScore =
+        (sb - ss) /
+        total;
+    }
   }
 
-  return clamp(signal, -1, 1);
+  return clamp(
+    predictionScore,
+    -1,
+    1
+  );
 }
 
 
 // ============================================================
-// HISTORICAL PATTERN SIGNAL
+// SIGNAL 5
+// STREAK BREAK
 // ============================================================
 
-function historicalSignal(sides) {
-  const arr = sides.slice(0, 12);
+function streakBreak(sides) {
+  const arr =
+    sides.slice(0, 20);
 
-  if (arr.length < 4) {
+  if (!arr.length) {
     return 0;
   }
 
+  const first =
+    arr[0];
+
+  let streak = 1;
+
+  while (
+    streak < arr.length &&
+    arr[streak] === first
+  ) {
+    streak++;
+  }
+
+  if (streak >= 7) {
+    return first === "BIG"
+      ? -0.90
+      : 0.90;
+  }
+
+  if (streak === 6) {
+    return first === "BIG"
+      ? -0.70
+      : 0.70;
+  }
+
+  if (streak === 5) {
+    return first === "BIG"
+      ? -0.48
+      : 0.48;
+  }
+
+  if (streak === 4) {
+    return first === "BIG"
+      ? -0.25
+      : 0.25;
+  }
+
+  if (streak === 3) {
+    return first === "BIG"
+      ? -0.08
+      : 0.08;
+  }
+
+  return 0;
+}
+
+
+// ============================================================
+// SIGNAL 6
+// ALTERNATION DETECTOR
+// ============================================================
+
+function alternationSignal(sides) {
+  const arr =
+    sides.slice(0, 10);
+
+  if (arr.length < 5) {
+    return 0;
+  }
+
+  let changes = 0;
+
+  for (
+    let i = 0;
+    i < arr.length - 1;
+    i++
+  ) {
+    if (
+      arr[i] !==
+      arr[i + 1]
+    ) {
+      changes++;
+    }
+  }
+
+  const ratio =
+    changes /
+    (arr.length - 1);
+
+  if (ratio >= 0.80) {
+
+    /*
+      Strong alternating sequence:
+      next side leans opposite latest.
+    */
+
+    return arr[0] === "BIG"
+      ? -0.75
+      : 0.75;
+  }
+
+  if (ratio >= 0.65) {
+
+    return arr[0] === "BIG"
+      ? -0.38
+      : 0.38;
+  }
+
+  return 0;
+}
+
+
+// ============================================================
+// SIGNAL 7
+// PATTERN MATCHING
+// ============================================================
+
+function patternSignal(sides) {
+  const arr =
+    sides.slice(0, 40);
+
+  if (arr.length < 7) {
+    return 0;
+  }
+
+  const patternLength = 4;
+
   const pattern =
     arr
-      .slice(0, 4)
-      .map(x => x === "BIG" ? "B" : "S")
+      .slice(0, patternLength)
+      .map(
+        x =>
+          x === "BIG"
+            ? "B"
+            : "S"
+      )
       .join("");
 
   let big = 0;
   let small = 0;
 
-  for (let i = 4; i < arr.length - 1; i++) {
+  for (
+    let i = patternLength;
+    i < arr.length - 1;
+    i++
+  ) {
+
     const candidate =
       arr
-        .slice(i, i + 4)
-        .map(x => x === "BIG" ? "B" : "S")
+        .slice(
+          i,
+          i + patternLength
+        )
+        .map(
+          x =>
+            x === "BIG"
+              ? "B"
+              : "S"
+        )
         .join("");
 
-    if (candidate !== pattern) {
+    if (
+      candidate !==
+      pattern
+    ) {
       continue;
     }
 
-    const next = arr[i - 1];
+    const next =
+      arr[i - 1];
 
     if (next === "BIG") {
       big++;
-    }
-
-    if (next === "SMALL") {
+    } else if (
+      next === "SMALL"
+    ) {
       small++;
     }
   }
 
-  const total = big + small;
+  const total =
+    big + small;
 
   if (!total) {
     return 0;
   }
 
   return clamp(
-    (big - small) / total,
+    (big - small) /
+    total,
     -1,
     1
   );
@@ -870,219 +1089,367 @@ function historicalSignal(sides) {
 
 
 // ============================================================
-// REGIME CLASSIFIER
+// SIGNAL 8
+// LOCAL REVERSAL
+// ============================================================
+
+function reversalSignal(sides) {
+  const arr =
+    sides.slice(0, 6);
+
+  if (arr.length < 4) {
+    return 0;
+  }
+
+  /*
+    If last 3 contain same side
+    and older context disagrees,
+    reversal gets a modest boost.
+  */
+
+  const latest =
+    arr[0];
+
+  const same =
+    arr.filter(
+      x => x === latest
+    ).length;
+
+  if (same >= 4) {
+    return latest === "BIG"
+      ? -0.58
+      : 0.58;
+  }
+
+  if (same === 3) {
+    return latest === "BIG"
+      ? -0.25
+      : 0.25;
+  }
+
+  return 0;
+}
+
+
+// ============================================================
+// SIGNAL 9
+// LONG BALANCE
+// ============================================================
+
+function longBalance(sides) {
+  const arr =
+    sides.slice(0, 60);
+
+  if (!arr.length) {
+    return 0;
+  }
+
+  let big = 0;
+  let small = 0;
+
+  for (const side of arr) {
+    if (side === "BIG") {
+      big++;
+    } else {
+      small++;
+    }
+  }
+
+  return clamp(
+    (big - small) /
+    arr.length,
+    -1,
+    1
+  );
+}
+
+
+// ============================================================
+// REGIME
 // ============================================================
 
 function classifyRegime(
-  sides,
-  short,
+  recent,
   medium,
   transition,
-  breakSig
+  streak,
+  alternation,
+  reversal
 ) {
-  const arr = sides.slice(0, 15);
-
-  if (arr.length < 4) {
-    return "NEUTRAL";
-  }
-
-  if (Math.abs(short) < 0.12) {
-    return "NEUTRAL";
-  }
 
   if (
-    Math.abs(breakSig) > 0.40 &&
-    Math.sign(breakSig) !== Math.sign(short)
+    Math.abs(alternation) >= 0.60
   ) {
-    return "POSSIBLE_BREAK";
+    return "ALTERNATING";
   }
 
   if (
-    Math.sign(short) !== Math.sign(medium) &&
-    Math.abs(short) > 0.20 &&
-    Math.abs(medium) > 0.20
+    Math.abs(streak) >= 0.45
+  ) {
+    return "STREAK_BREAK";
+  }
+
+  if (
+    Math.sign(recent) !==
+      Math.sign(medium) &&
+    Math.abs(recent) > 0.22 &&
+    Math.abs(medium) > 0.22
   ) {
     return "CONFLICT";
   }
 
   if (
-    Math.abs(short) > 0.40 &&
-    Math.abs(medium) < 0.22
+    Math.abs(transition) > 0.50
   ) {
-    return "NEW_TREND";
+    return "TRANSITION";
   }
 
   if (
-    Math.abs(medium) > 0.40 &&
-    Math.abs(short) < Math.abs(medium) * 0.55
-  ) {
-    return "TREND_WEAKENING";
-  }
-
-  if (
-    Math.sign(short) === Math.sign(medium) &&
-    Math.abs(short) > 0.30 &&
+    Math.abs(recent) > 0.50 &&
     Math.abs(medium) > 0.30
   ) {
-    return "TREND_CONTINUING";
+    return "TREND";
   }
 
-  return "NEUTRAL";
+  if (
+    Math.abs(recent) > 0.25
+  ) {
+    return "SHORT_SHIFT";
+  }
+
+  return "MIXED";
 }
 
 
 // ============================================================
-// PREDICTION MODEL
+// V4 AI
 // ============================================================
 
 function createPrediction() {
-  const sides = sidesFromHistory(40);
 
-  if (sides.length < 3) {
+  const sides =
+    getSides(100);
+
+  /*
+    Important:
+    Even one settled result is enough
+    for a BIG/SMALL prediction.
+  */
+
+  if (!sides.length) {
+
     return {
       prediction: null,
       confidence: 0,
       regime: "WAITING",
-      reason: "Not enough settled history",
-      diagnostics: {
-        short: 0,
-        medium: 0,
-        transition: 0,
-        break: 0,
-        historical: 0
-      }
+      reason:
+        "Waiting for first settled result",
+      diagnostics: {}
     };
+
   }
 
-  const short = shortSignal(sides);
-  const medium = mediumSignal(sides);
-  const transition = transitionSignal(sides);
-  const breakSig = breakSignal(sides);
-  const historical = historicalSignal(sides);
+  const recent =
+    recentMomentum(sides);
 
-  const regime =
-    classifyRegime(
-      sides,
-      short,
-      medium,
-      transition,
-      breakSig
-    );
+  const medium =
+    mediumBalance(sides);
+
+  const micro =
+    microBalance(sides);
+
+  const transition =
+    transitionModel(sides);
+
+  const streak =
+    streakBreak(sides);
+
+  const alternation =
+    alternationSignal(sides);
+
+  const pattern =
+    patternSignal(sides);
+
+  const reversal =
+    reversalSignal(sides);
+
+  const long =
+    longBalance(sides);
 
   /*
-    V3 weighting
-
-    short       40%
-    medium      22%
-    transition  18%
-    break       14%
-    historical   6%
+    V4 core score.
   */
 
   let score =
-    short * 0.40 +
-    medium * 0.22 +
-    transition * 0.18 +
-    breakSig * 0.14 +
-    historical * 0.06;
+    recent * 0.27 +
+    micro * 0.12 +
+    medium * 0.12 +
+    transition * 0.14 +
+    streak * 0.12 +
+    alternation * 0.10 +
+    pattern * 0.05 +
+    reversal * 0.05 +
+    long * 0.03;
 
   /*
-    Anti-blind trend protection.
+    Strong alternating sequence gets
+    priority over simple trend.
   */
 
-  if (regime === "POSSIBLE_BREAK") {
-    score *= 0.72;
-    score += breakSig * 0.12;
-  }
-
-  if (regime === "CONFLICT") {
-    score *= 0.70;
-  }
-
-  if (regime === "TREND_WEAKENING") {
-    score *= 0.82;
-  }
-
-  /*
-    Very strong same-side streak:
-    reduce blind continuation.
-  */
-
-  const first = sides[0];
-
-  let streak = 1;
-
-  while (
-    streak < sides.length &&
-    sides[streak] === first
+  if (
+    Math.abs(alternation) >= 0.60
   ) {
-    streak++;
-  }
 
-  if (streak >= 6) {
     score =
-      score * 0.58 +
-      (first === "BIG" ? -0.18 : 0.18);
-  }
+      score * 0.70 +
+      alternation * 0.30;
 
-  let prediction;
-
-  if (score >= 0) {
-    prediction = "BIG";
-  } else {
-    prediction = "SMALL";
   }
 
   /*
-    Confidence is intentionally capped.
-    This is a statistical estimate, not a guarantee.
+    Long streak should not be blindly followed.
+  */
+
+  if (
+    Math.abs(streak) >= 0.45
+  ) {
+
+    score =
+      score * 0.72 +
+      streak * 0.28;
+
+  }
+
+  /*
+    If recent and transition agree,
+    give a small boost.
+  */
+
+  if (
+    Math.sign(recent) ===
+      Math.sign(transition) &&
+    Math.abs(recent) > 0.25 &&
+    Math.abs(transition) > 0.25
+  ) {
+
+    score *= 1.08;
+
+  }
+
+  /*
+    If signals strongly conflict,
+    reduce confidence but still select
+    a side.
+  */
+
+  const regime =
+    classifyRegime(
+      recent,
+      medium,
+      transition,
+      streak,
+      alternation,
+      reversal
+    );
+
+  if (
+    regime === "CONFLICT"
+  ) {
+
+    score *= 0.82;
+
+  }
+
+  /*
+    Compulsory BIG/SMALL.
+  */
+
+  const prediction =
+    score >= 0
+      ? "BIG"
+      : "SMALL";
+
+  /*
+    Confidence represents signal strength,
+    NOT guaranteed probability.
   */
 
   let confidence =
-    45 +
-    Math.abs(score) * 31;
+    48 +
+    Math.abs(score) * 32;
 
-  if (regime === "CONFLICT") {
-    confidence -= 7;
+  if (
+    regime === "CONFLICT"
+  ) {
+    confidence -= 6;
   }
 
-  if (regime === "POSSIBLE_BREAK") {
-    confidence -= 5;
+  if (
+    regime === "MIXED"
+  ) {
+    confidence -= 2;
   }
 
-  if (regime === "NEUTRAL") {
-    confidence -= 3;
-  }
-
-  if (sides.length < 8) {
-    confidence -= 5;
+  if (
+    sides.length < 5
+  ) {
+    confidence -= 4;
   }
 
   confidence =
     Math.round(
-      clamp(confidence, 45, 86)
+      clamp(
+        confidence,
+        45,
+        88
+      )
     );
 
-  let reason = "";
+  let reason;
 
-  if (regime === "POSSIBLE_BREAK") {
-    reason =
-      "Trend-break pressure detected";
-  } else if (regime === "CONFLICT") {
-    reason =
-      "Short and medium trend are conflicting";
-  } else if (regime === "NEW_TREND") {
-    reason =
-      "Recent side is gaining momentum";
-  } else if (regime === "TREND_WEAKENING") {
-    reason =
-      "Existing trend is weakening";
-  } else if (regime === "TREND_CONTINUING") {
-    reason =
-      "Recent trend remains aligned";
-  } else {
-    reason =
-      "Mixed recent signals";
+  switch (regime) {
+
+    case "ALTERNATING":
+      reason =
+        "Alternating pattern detected";
+
+      break;
+
+    case "STREAK_BREAK":
+      reason =
+        "Strong streak-break pressure";
+
+      break;
+
+    case "CONFLICT":
+      reason =
+        "Recent and medium signals conflict";
+
+      break;
+
+    case "TRANSITION":
+      reason =
+        "Transition pattern is dominant";
+
+      break;
+
+    case "TREND":
+      reason =
+        "Recent and medium trend aligned";
+
+      break;
+
+    case "SHORT_SHIFT":
+      reason =
+        "Recent-side momentum shifted";
+
+      break;
+
+    default:
+      reason =
+        "Multiple mixed signals combined";
+
+      break;
   }
 
   return {
@@ -1090,192 +1457,314 @@ function createPrediction() {
     confidence,
     regime,
     reason,
+
     diagnostics: {
-      short: Number(short.toFixed(4)),
-      medium: Number(medium.toFixed(4)),
-      transition: Number(transition.toFixed(4)),
-      break: Number(breakSig.toFixed(4)),
-      historical: Number(historical.toFixed(4)),
-      score: Number(score.toFixed(4)),
-      streak
+      recent:
+        Number(
+          recent.toFixed(4)
+        ),
+
+      micro:
+        Number(
+          micro.toFixed(4)
+        ),
+
+      medium:
+        Number(
+          medium.toFixed(4)
+        ),
+
+      transition:
+        Number(
+          transition.toFixed(4)
+        ),
+
+      streak:
+        Number(
+          streak.toFixed(4)
+        ),
+
+      alternation:
+        Number(
+          alternation.toFixed(4)
+        ),
+
+      pattern:
+        Number(
+          pattern.toFixed(4)
+        ),
+
+      reversal:
+        Number(
+          reversal.toFixed(4)
+        ),
+
+      long:
+        Number(
+          long.toFixed(4)
+        ),
+
+      score:
+        Number(
+          score.toFixed(4)
+        ),
+
+      history:
+        sides.length
     }
   };
 }
 
 
 // ============================================================
-// SAVE / GET PREDICTION
+// GET STORED PREDICTION
 // ============================================================
 
-async function getPredictionRecord(issue) {
-  if (!pool || !issue) {
+async function getStoredPrediction(issue) {
+
+  if (
+    !pool ||
+    !issue
+  ) {
     return null;
   }
 
-  const result = await pool.query(
-    `
-      SELECT *
-      FROM prediction_records
-      WHERE model_version = $1
-      AND target_issue = $2
-      ORDER BY id DESC
-      LIMIT 1
-    `,
-    [MODEL_VERSION, issue]
-  );
+  const result =
+    await pool.query(
+      `
+        SELECT *
+        FROM prediction_records
+        WHERE model_version = $1
+        AND target_issue = $2
+        ORDER BY id DESC
+        LIMIT 1
+      `,
+      [
+        MODEL_VERSION,
+        issue
+      ]
+    );
 
-  return result.rows[0] || null;
+  return (
+    result.rows[0] ||
+    null
+  );
 }
 
 
-async function createStoredPrediction(issue) {
+// ============================================================
+// CREATE STORED PREDICTION
+// ============================================================
+
+async function ensurePrediction(issue) {
+
   if (!issue) {
     return null;
   }
 
   const existing =
-    await getPredictionRecord(issue);
+    await getStoredPrediction(
+      issue
+    );
 
   if (existing) {
     return existing;
   }
 
-  const ai = createPrediction();
+  const ai =
+    createPrediction();
+
+  /*
+    V4 must always choose a side
+    when at least one settled result exists.
+  */
 
   if (!ai.prediction) {
     return null;
   }
 
   if (!pool) {
+
     return {
       id: null,
-      target_issue: issue,
-      prediction: ai.prediction,
-      confidence: ai.confidence,
-      model_version: MODEL_VERSION,
-      actual_number: null,
-      actual_result: null,
-      settled_at: null,
-      created_at: now(),
-      regime: ai.regime,
-      reason: ai.reason,
-      diagnostics: ai.diagnostics
+
+      target_issue:
+        issue,
+
+      prediction:
+        ai.prediction,
+
+      confidence:
+        ai.confidence,
+
+      model_version:
+        MODEL_VERSION,
+
+      actual_number:
+        null,
+
+      actual_result:
+        null,
+
+      settled_at:
+        null,
+
+      created_at:
+        now(),
+
+      regime:
+        ai.regime,
+
+      reason:
+        ai.reason,
+
+      diagnostics:
+        ai.diagnostics
     };
+
   }
 
-  const result = await pool.query(
-    `
-      INSERT INTO prediction_records
-      (
-        target_issue,
-        prediction,
-        confidence,
-        model_version,
-        actual_number,
-        actual_result,
-        settled_at,
-        created_at
-      )
-      VALUES ($1, $2, $3, $4, NULL, NULL, NULL, $5)
-      ON CONFLICT (model_version, target_issue)
-      DO NOTHING
-      RETURNING *
-    `,
-    [
-      issue,
-      ai.prediction,
-      ai.confidence,
-      MODEL_VERSION,
-      now()
-    ]
-  );
+  const result =
+    await pool.query(
+      `
+        INSERT INTO prediction_records
+        (
+          target_issue,
+          prediction,
+          confidence,
+          model_version,
+          actual_number,
+          actual_result,
+          settled_at,
+          created_at
+        )
+        VALUES
+        ($1,$2,$3,$4,NULL,NULL,NULL,$5)
+        ON CONFLICT
+        (model_version,target_issue)
+        DO NOTHING
+        RETURNING *
+      `,
+      [
+        issue,
+        ai.prediction,
+        ai.confidence,
+        MODEL_VERSION,
+        now()
+      ]
+    );
 
-  if (result.rows[0]) {
+  if (
+    result.rows[0]
+  ) {
+
     return {
       ...result.rows[0],
-      regime: ai.regime,
-      reason: ai.reason,
-      diagnostics: ai.diagnostics
+
+      regime:
+        ai.regime,
+
+      reason:
+        ai.reason,
+
+      diagnostics:
+        ai.diagnostics
     };
+
   }
 
-  return await getPredictionRecord(issue);
+  return getStoredPrediction(
+    issue
+  );
 }
 
 
 // ============================================================
-// SETTLE PREDICTIONS
+// SETTLEMENT
 // ============================================================
 
 async function settlePredictions() {
-  if (!pool) {
+
+  if (
+    !pool ||
+    !provider.history?.length
+  ) {
     return;
   }
 
-  if (!provider.history?.length) {
+  const pending =
+    await pool.query(
+      `
+        SELECT *
+        FROM prediction_records
+        WHERE model_version = $1
+        AND actual_result IS NULL
+        ORDER BY id DESC
+        LIMIT 100
+      `,
+      [MODEL_VERSION]
+    );
+
+  if (!pending.rows.length) {
     return;
   }
 
-  const result = await pool.query(
-    `
-      SELECT *
-      FROM prediction_records
-      WHERE model_version = $1
-      AND actual_result IS NULL
-      ORDER BY id DESC
-      LIMIT 100
-    `,
-    [MODEL_VERSION]
-  );
+  const actualMap =
+    new Map();
 
-  if (!result.rows.length) {
-    return;
-  }
-
-  const actualMap = new Map();
-
-  for (const row of provider.history) {
-    if (!row.issueNumber) continue;
-
-    /*
-      Only settled rows are allowed.
-      No side + no number = pending/invalid.
-    */
+  for (
+    const row of provider.history
+  ) {
 
     if (
-      !row.side &&
-      row.number === null
+      !row.issueNumber ||
+      !row.side
     ) {
       continue;
     }
 
     actualMap.set(
-      String(row.issueNumber),
+      String(
+        row.issueNumber
+      ),
       row
     );
+
   }
 
-  for (const prediction of result.rows) {
+  for (
+    const prediction
+    of pending.rows
+  ) {
+
     const actual =
       actualMap.get(
-        String(prediction.target_issue)
+        String(
+          prediction.target_issue
+        )
       );
 
+    /*
+      Exact period only.
+    */
+
     if (!actual) {
-      // Still pending.
       continue;
     }
 
     const actualSide =
       actual.side ||
-      sideFromNumber(actual.number);
+      sideFromNumber(
+        actual.number
+      );
 
     if (!actualSide) {
       continue;
     }
 
-    const actualResult =
-      actualSide === prediction.prediction
+    const result =
+      actualSide ===
+      prediction.prediction
         ? "WIN"
         : "LOSS";
 
@@ -1291,7 +1780,7 @@ async function settlePredictions() {
       `,
       [
         actual.number,
-        actualResult,
+        result,
         now(),
         prediction.id
       ]
@@ -1305,61 +1794,94 @@ async function settlePredictions() {
 // ============================================================
 
 async function currentPrediction() {
-  const target = resolveTargetIssue();
+
+  const target =
+    resolveTargetIssue();
 
   if (!target) {
+
     return {
       targetIssue: null,
       prediction: null,
       confidence: 0,
       regime: "WAITING",
-      reason: "Waiting for provider data",
-      modelVersion: MODEL_VERSION,
+      reason:
+        "Waiting for provider data",
+      modelVersion:
+        MODEL_VERSION,
       diagnostics: null
     };
+
   }
 
-  let record =
-    await createStoredPrediction(target);
+  const record =
+    await ensurePrediction(
+      target
+    );
 
   if (!record) {
+
     return {
-      targetIssue: target,
-      prediction: null,
-      confidence: 0,
-      regime: "WAITING",
-      reason: "AI is analysing history",
-      modelVersion: MODEL_VERSION,
-      diagnostics: null
+      targetIssue:
+        target,
+
+      prediction:
+        null,
+
+      confidence:
+        0,
+
+      regime:
+        "WAITING",
+
+      reason:
+        "Waiting for settled history",
+
+      modelVersion:
+        MODEL_VERSION,
+
+      diagnostics:
+        null
     };
+
   }
 
   /*
-    Diagnostics are generated from current history,
-    but stored prediction itself never changes for the same
-    target issue.
+    Stored prediction stays locked
+    for the exact target issue.
   */
 
-  const diagnosticsAI =
-    createPrediction();
-
   return {
-    targetIssue: target,
-    prediction: record.prediction,
-    confidence: Number(record.confidence || 0),
+    targetIssue:
+      target,
+
+    prediction:
+      record.prediction,
+
+    confidence:
+      Number(
+        record.confidence || 0
+      ),
+
     regime:
-      diagnosticsAI.regime ||
-      "NEUTRAL",
+      record.regime ||
+      "MIXED",
+
     reason:
-      diagnosticsAI.reason ||
+      record.reason ||
       "AI analysis complete",
+
     modelVersion:
       record.model_version ||
       MODEL_VERSION,
+
     diagnostics:
-      diagnosticsAI.diagnostics || null,
+      record.diagnostics ||
+      null,
+
     createdAt:
-      record.created_at || null
+      record.created_at ||
+      null
   };
 }
 
@@ -1369,94 +1891,120 @@ async function currentPrediction() {
 // ============================================================
 
 async function last30() {
+
   if (!pool) {
     return [];
   }
 
-  const result = await pool.query(
-    `
-      SELECT
-        id,
-        target_issue,
-        prediction,
-        confidence,
-        model_version,
-        actual_number,
-        actual_result,
-        settled_at,
-        created_at
-      FROM prediction_records
-      WHERE model_version = $1
-      ORDER BY id DESC
-      LIMIT 100
-    `,
-    [MODEL_VERSION]
-  );
+  const result =
+    await pool.query(
+      `
+        SELECT
+          id,
+          target_issue,
+          prediction,
+          confidence,
+          model_version,
+          actual_number,
+          actual_result,
+          settled_at,
+          created_at
+        FROM prediction_records
+        WHERE model_version = $1
+        ORDER BY id DESC
+        LIMIT 30
+      `,
+      [MODEL_VERSION]
+    );
 
-  const actualMap = new Map();
+  const actualMap =
+    new Map();
 
-  for (const row of provider.history || []) {
-    if (!row.issueNumber) continue;
+  for (
+    const row of provider.history || []
+  ) {
 
-    const side =
-      row.side ||
-      sideFromNumber(row.number);
-
-    if (!side) continue;
+    if (
+      !row.issueNumber ||
+      !row.side
+    ) {
+      continue;
+    }
 
     actualMap.set(
-      String(row.issueNumber),
-      {
-        number: row.number,
-        side
-      }
+      String(
+        row.issueNumber
+      ),
+      row
     );
+
   }
 
-  return result.rows
-    .slice(0, LAST30)
-    .map(row => {
+  return result.rows.map(
+    row => {
+
       const actual =
         actualMap.get(
-          String(row.target_issue)
+          String(
+            row.target_issue
+          )
         );
 
-      let resultText = null;
-      let wl = "PENDING";
-      let actualNumber = null;
+      let resultText =
+        null;
+
+      let wl =
+        "PENDING";
 
       /*
-        IMPORTANT:
-        WIN/LOSS only when exact target issue exists
-        in actual provider history.
+        Do NOT use database actual_result
+        blindly for display if provider has
+        no exact result.
+
+        Exact current provider period wins.
       */
 
       if (actual) {
-        actualNumber = actual.number;
-        resultText = actual.side;
+
+        resultText =
+          actual.side;
 
         wl =
-          actual.side === row.prediction
+          actual.side ===
+          row.prediction
             ? "WIN"
             : "LOSS";
+
       }
 
       return {
-        id: row.id,
-        issue: row.target_issue,
-        period: row.target_issue,
+        id:
+          row.id,
 
-        // Number is intentionally not exposed to UI.
-        number: null,
+        issue:
+          row.target_issue,
 
-        result: resultText,
-        predict: row.prediction,
-        prediction: row.prediction,
+        period:
+          row.target_issue,
+
+        number:
+          null,
+
+        result:
+          resultText,
+
+        predict:
+          row.prediction,
+
+        prediction:
+          row.prediction,
 
         wl,
 
         confidence:
-          Number(row.confidence || 0),
+          Number(
+            row.confidence || 0
+          ),
 
         modelVersion:
           row.model_version,
@@ -1470,7 +2018,9 @@ async function last30() {
         settledAt:
           row.settled_at
       };
-    });
+
+    }
+  );
 }
 
 
@@ -1479,7 +2029,9 @@ async function last30() {
 // ============================================================
 
 async function stats() {
+
   if (!pool) {
+
     return {
       wins: 0,
       losses: 0,
@@ -1487,40 +2039,58 @@ async function stats() {
       total: 0,
       winRate: 0
     };
+
   }
 
-  const result = await pool.query(
-    `
-      SELECT
-        COUNT(*) FILTER (
-          WHERE actual_result = 'WIN'
-        ) AS wins,
+  const result =
+    await pool.query(
+      `
+        SELECT
+          COUNT(*) FILTER
+          (
+            WHERE actual_result = 'WIN'
+          ) AS wins,
 
-        COUNT(*) FILTER (
-          WHERE actual_result = 'LOSS'
-        ) AS losses,
+          COUNT(*) FILTER
+          (
+            WHERE actual_result = 'LOSS'
+          ) AS losses,
 
-        COUNT(*) FILTER (
-          WHERE actual_result IS NULL
-        ) AS pending
+          COUNT(*) FILTER
+          (
+            WHERE actual_result IS NULL
+          ) AS pending
 
-      FROM prediction_records
-      WHERE model_version = $1
-    `,
-    [MODEL_VERSION]
-  );
+        FROM prediction_records
+        WHERE model_version = $1
+      `,
+      [MODEL_VERSION]
+    );
 
-  const row = result.rows[0];
+  const row =
+    result.rows[0];
 
-  const wins = Number(row.wins || 0);
-  const losses = Number(row.losses || 0);
-  const pending = Number(row.pending || 0);
+  const wins =
+    Number(row.wins || 0);
 
-  const total = wins + losses;
+  const losses =
+    Number(row.losses || 0);
+
+  const pending =
+    Number(row.pending || 0);
+
+  const total =
+    wins + losses;
 
   const winRate =
-    total > 0
-      ? Number(((wins / total) * 100).toFixed(1))
+    total
+      ? Number(
+          (
+            wins /
+            total *
+            100
+          ).toFixed(1)
+        )
       : 0;
 
   return {
@@ -1534,78 +2104,74 @@ async function stats() {
 
 
 // ============================================================
-// ACCESS KEY HELPERS
+// ACCESS KEY
 // ============================================================
 
-function requireAdmin(req) {
-  const key =
-    req.headers["x-admin-key"] ||
-    req.headers["authorization"]?.replace(
-      /^Bearer\s+/i,
-      ""
-    );
+async function checkAccessKey(
+  accessKey,
+  deviceId
+) {
 
-  return safeString(key) === ADMIN_KEY;
-}
-
-function getDeviceId(body) {
-  return safeString(
-    body?.deviceId ||
-    body?.device_id
-  ).trim();
-}
-
-
-// ============================================================
-// KEY CHECK
-// ============================================================
-
-async function checkAccessKey(accessKey, deviceId) {
   if (!pool) {
+
     return {
       ok: false,
-      message: "Database unavailable"
+      message:
+        "Database unavailable"
     };
+
   }
 
   if (!accessKey) {
+
     return {
       ok: false,
-      message: "Access key required"
+      message:
+        "Access key required"
     };
+
   }
 
   if (!deviceId) {
+
     return {
       ok: false,
-      message: "Device ID required"
+      message:
+        "Device ID required"
     };
+
   }
 
-  const result = await pool.query(
-    `
-      SELECT *
-      FROM access_keys
-      WHERE access_key = $1
-      LIMIT 1
-    `,
-    [accessKey]
-  );
+  const result =
+    await pool.query(
+      `
+        SELECT *
+        FROM access_keys
+        WHERE access_key = $1
+        LIMIT 1
+      `,
+      [accessKey]
+    );
 
   if (!result.rows.length) {
+
     return {
       ok: false,
-      message: "Invalid access key"
+      message:
+        "Invalid access key"
     };
+
   }
 
-  const row = result.rows[0];
+  const row =
+    result.rows[0];
 
   /*
-    First device gets bound to key.
+    First device binds.
   */
 
   if (!row.device_id) {
+
     await pool.query(
       `
         UPDATE access_keys
@@ -1623,16 +2189,23 @@ async function checkAccessKey(accessKey, deviceId) {
 
     return {
       ok: true,
-      message: "Access granted",
-      bound: true
+      message:
+        "Access granted"
     };
+
   }
 
-  if (row.device_id !== deviceId) {
+  if (
+    row.device_id !==
+    deviceId
+  ) {
+
     return {
       ok: false,
-      message: "This key is already bound to another device"
+      message:
+        "This key is already bound to another device"
     };
+
   }
 
   await pool.query(
@@ -1641,146 +2214,163 @@ async function checkAccessKey(accessKey, deviceId) {
       SET last_seen = $1
       WHERE id = $2
     `,
-    [now(), row.id]
+    [
+      now(),
+      row.id
+    ]
   );
 
   return {
     ok: true,
-    message: "Access granted",
-    bound: true
+    message:
+      "Access granted"
   };
 }
 
 
 // ============================================================
-// ADMIN KEY LIST
+// ADMIN AUTH
 // ============================================================
 
-async function adminListKeys() {
+function isAdmin(req) {
+
+  const header =
+    req.headers["x-admin-key"];
+
+  const authorization =
+    req.headers["authorization"];
+
+  const key =
+    header ||
+    (
+      authorization
+        ? authorization.replace(
+            /^Bearer\s+/i,
+            ""
+          )
+        : ""
+    );
+
+  return (
+    safeString(key) ===
+    ADMIN_KEY
+  );
+}
+
+
+// ============================================================
+// ADMIN KEYS
+// ============================================================
+
+async function listKeys() {
+
   if (!pool) {
     return [];
   }
 
-  const result = await pool.query(
-    `
-      SELECT
-        id,
-        access_key,
-        device_id,
-        created_at,
-        last_seen
-      FROM access_keys
-      ORDER BY id DESC
-    `
-  );
+  const result =
+    await pool.query(
+      `
+        SELECT
+          id,
+          access_key,
+          device_id,
+          created_at,
+          last_seen
+        FROM access_keys
+        ORDER BY id DESC
+      `
+    );
 
   return result.rows;
 }
 
 
-// ============================================================
-// CREATE ACCESS KEY
-// ============================================================
+async function createKey(custom) {
 
-async function adminCreateKey(customKey = "") {
   if (!pool) {
-    throw new Error("Database unavailable");
+    throw new Error(
+      "Database unavailable"
+    );
   }
 
-  let key =
-    safeString(customKey).trim();
+  const key =
+    safeString(custom).trim() ||
+    randomKey();
 
-  if (!key) {
-    key =
-      "DY-" +
-      randomId().toUpperCase();
-  }
-
-  const result = await pool.query(
-    `
-      INSERT INTO access_keys
-      (
-        access_key,
-        device_id,
-        created_at,
-        last_seen
-      )
-      VALUES ($1, NULL, $2, 0)
-      RETURNING *
-    `,
-    [key, now()]
-  );
+  const result =
+    await pool.query(
+      `
+        INSERT INTO access_keys
+        (
+          access_key,
+          device_id,
+          created_at,
+          last_seen
+        )
+        VALUES
+        ($1,NULL,$2,0)
+        RETURNING *
+      `,
+      [
+        key,
+        now()
+      ]
+    );
 
   return result.rows[0];
 }
 
 
-// ============================================================
-// RESET DEVICE
-// ============================================================
+async function resetDevice(id) {
 
-async function adminResetDevice(id) {
   if (!pool) {
-    throw new Error("Database unavailable");
+    throw new Error(
+      "Database unavailable"
+    );
   }
 
-  const result = await pool.query(
-    `
-      UPDATE access_keys
-      SET
-        device_id = NULL,
-        last_seen = 0
-      WHERE id = $1
-      RETURNING *
-    `,
-    [id]
-  );
+  const result =
+    await pool.query(
+      `
+        UPDATE access_keys
+        SET
+          device_id = NULL,
+          last_seen = 0
+        WHERE id = $1
+        RETURNING *
+      `,
+      [id]
+    );
 
-  return result.rows[0] || null;
+  return (
+    result.rows[0] ||
+    null
+  );
 }
 
 
-// ============================================================
-// DELETE KEY
-// ============================================================
+async function deleteKey(id) {
 
-async function adminDeleteKey(id) {
   if (!pool) {
-    throw new Error("Database unavailable");
+    throw new Error(
+      "Database unavailable"
+    );
   }
 
-  const result = await pool.query(
-    `
-      DELETE FROM access_keys
-      WHERE id = $1
-      RETURNING id
-    `,
-    [id]
+  const result =
+    await pool.query(
+      `
+        DELETE FROM access_keys
+        WHERE id = $1
+        RETURNING id
+      `,
+      [id]
+    );
+
+  return Boolean(
+    result.rows.length
   );
-
-  return Boolean(result.rows.length);
-}
-
-
-// ============================================================
-// ADMIN MODEL TEST
-// ============================================================
-
-function modelTest() {
-  const ai = createPrediction();
-
-  return {
-    ok: Boolean(ai.prediction),
-    modelVersion: MODEL_VERSION,
-    prediction: ai.prediction,
-    confidence: ai.confidence,
-    regime: ai.regime,
-    reason: ai.reason,
-    diagnostics: ai.diagnostics,
-    historyCount:
-      provider.history?.length || 0,
-    providerOk: provider.ok
-  };
 }
 
 
@@ -1788,69 +2378,84 @@ function modelTest() {
 // STATE
 // ============================================================
 
-async function buildState() {
-  if (
-    lastStateCache &&
-    now() - lastStateCacheAt < STATE_CACHE_MS
-  ) {
-    return lastStateCache;
-  }
+async function getState() {
 
   await settlePredictions();
 
-  const prediction =
+  const current =
     await currentPrediction();
 
-  const result = {
+  return {
+
     ok: true,
 
-    gameUrl: GAME_URL,
+    gameUrl:
+      GAME_URL,
 
     model: {
-      version: MODEL_VERSION,
-      numberPrediction: false,
-      type: "BIG/SMALL"
+
+      version:
+        MODEL_VERSION,
+
+      type:
+        "BIG/SMALL",
+
+      numberPrediction:
+        false
+
     },
 
     provider: {
-      ok: provider.ok,
+
+      ok:
+        provider.ok,
+
       currentIssue:
         provider.currentIssue,
+
       lastUpdated:
         provider.lastUpdated,
+
       fetched:
         provider.fetched,
+
       historyCount:
         provider.history?.length || 0,
+
       fetchedAt:
         provider.fetchedAt,
+
       error:
         provider.error
+
     },
 
     current: {
+
       issue:
-        prediction.targetIssue,
+        current.targetIssue,
+
       targetIssue:
-        prediction.targetIssue,
+        current.targetIssue,
 
       prediction:
-        prediction.prediction,
+        current.prediction,
 
       confidence:
-        prediction.confidence,
+        current.confidence,
 
       regime:
-        prediction.regime,
+        current.regime,
 
       reason:
-        prediction.reason,
+        current.reason,
 
       modelVersion:
-        prediction.modelVersion,
+        current.modelVersion,
 
       diagnostics:
-        prediction.diagnostics
+        current.diagnostics
+
     },
 
     stats:
@@ -1861,186 +2466,300 @@ async function buildState() {
 
     serverTime:
       now()
+
   };
-
-  lastStateCache = result;
-  lastStateCacheAt = now();
-
-  return result;
 }
 
 
 // ============================================================
-// STATIC FILE SERVER
+// MODEL TEST
 // ============================================================
 
-function serveFile(res, fileName, contentType) {
+function modelTest() {
+
+  const ai =
+    createPrediction();
+
+  return {
+
+    ok:
+      Boolean(
+        ai.prediction
+      ),
+
+    modelVersion:
+      MODEL_VERSION,
+
+    prediction:
+      ai.prediction,
+
+    confidence:
+      ai.confidence,
+
+    regime:
+      ai.regime,
+
+    reason:
+      ai.reason,
+
+    diagnostics:
+      ai.diagnostics,
+
+    historyCount:
+      provider.history?.length || 0,
+
+    providerOk:
+      provider.ok
+
+  };
+}
+
+
+// ============================================================
+// STATIC FILES
+// ============================================================
+
+function serveFile(
+  res,
+  fileName,
+  contentType
+) {
+
   const filePath =
-    path.join(__dirname, fileName);
+    path.join(
+      __dirname,
+      fileName
+    );
 
-  fs.stat(filePath, (statError, stat) => {
-    if (statError || !stat.isFile()) {
-      text(
-        res,
-        404,
-        "File not found"
-      );
+  fs.stat(
+    filePath,
+    (statError, stat) => {
 
-      return;
-    }
+      if (
+        statError ||
+        !stat.isFile()
+      ) {
 
-    fs.readFile(
-      filePath,
-      (err, data) => {
-        if (err) {
-          text(
-            res,
-            500,
-            "Unable to read file"
+        text(
+          res,
+          404,
+          "File not found"
+        );
+
+        return;
+
+      }
+
+      fs.readFile(
+        filePath,
+        (error, data) => {
+
+          if (error) {
+
+            text(
+              res,
+              500,
+              "Unable to read file"
+            );
+
+            return;
+
+          }
+
+          res.writeHead(
+            200,
+            {
+              "Content-Type":
+                contentType,
+
+              "Cache-Control":
+                fileName.endsWith(".html")
+                  ? "no-store"
+                  : "public, max-age=3600"
+            }
           );
 
-          return;
+          res.end(data);
+
         }
+      );
 
-        res.writeHead(200, {
-          "Content-Type": contentType,
-          "Cache-Control":
-            fileName.endsWith(".html")
-              ? "no-store"
-              : "public, max-age=3600"
-        });
-
-        res.end(data);
-      }
-    );
-  });
+    }
+  );
 }
 
 
 // ============================================================
-// MP3 RANGE SERVER
+// MUSIC
 // ============================================================
 
-function serveMusic(res) {
+function serveMusic(res, req) {
+
   const filePath =
-    path.join(__dirname, "music.mp3");
-
-  fs.stat(filePath, (err, stat) => {
-    if (err || !stat.isFile()) {
-      text(
-        res,
-        404,
-        "music.mp3 not found"
-      );
-
-      return;
-    }
-
-    const size = stat.size;
-
-    const range =
-      res.req?.headers?.range;
-
-    if (!range) {
-      res.writeHead(200, {
-        "Content-Type": "audio/mpeg",
-        "Content-Length": size,
-        "Accept-Ranges": "bytes",
-        "Cache-Control": "public, max-age=3600"
-      });
-
-      fs.createReadStream(filePath)
-        .pipe(res);
-
-      return;
-    }
-
-    const match =
-      range.match(
-        /bytes=(\d*)-(\d*)/
-      );
-
-    if (!match) {
-      res.writeHead(416, {
-        "Content-Range":
-          `bytes */${size}`
-      });
-
-      res.end();
-
-      return;
-    }
-
-    let start =
-      match[1]
-        ? Number(match[1])
-        : 0;
-
-    let end =
-      match[2]
-        ? Number(match[2])
-        : size - 1;
-
-    if (!Number.isFinite(start)) {
-      start = 0;
-    }
-
-    if (!Number.isFinite(end)) {
-      end = size - 1;
-    }
-
-    start = Math.max(
-      0,
-      Math.min(start, size - 1)
+    path.join(
+      __dirname,
+      "music.mp3"
     );
 
-    end = Math.max(
-      start,
-      Math.min(end, size - 1)
-    );
+  fs.stat(
+    filePath,
+    (error, stat) => {
 
-    const chunkSize =
-      end - start + 1;
+      if (
+        error ||
+        !stat.isFile()
+      ) {
 
-    res.writeHead(206, {
-      "Content-Type": "audio/mpeg",
-      "Content-Length": chunkSize,
-      "Content-Range":
-        `bytes ${start}-${end}/${size}`,
-      "Accept-Ranges": "bytes",
-      "Cache-Control": "public, max-age=3600"
-    });
+        text(
+          res,
+          404,
+          "music.mp3 not found"
+        );
 
-    fs.createReadStream(
-      filePath,
-      {
-        start,
-        end
+        return;
+
       }
-    ).pipe(res);
-  });
+
+      const size =
+        stat.size;
+
+      const range =
+        req.headers.range;
+
+      if (!range) {
+
+        res.writeHead(
+          200,
+          {
+            "Content-Type":
+              "audio/mpeg",
+
+            "Content-Length":
+              size,
+
+            "Accept-Ranges":
+              "bytes"
+          }
+        );
+
+        fs.createReadStream(
+          filePath
+        ).pipe(res);
+
+        return;
+
+      }
+
+      const match =
+        range.match(
+          /bytes=(\d*)-(\d*)/
+        );
+
+      if (!match) {
+
+        res.writeHead(
+          416,
+          {
+            "Content-Range":
+              `bytes */${size}`
+          }
+        );
+
+        res.end();
+
+        return;
+
+      }
+
+      let start =
+        match[1]
+          ? Number(match[1])
+          : 0;
+
+      let end =
+        match[2]
+          ? Number(match[2])
+          : size - 1;
+
+      start =
+        Math.max(
+          0,
+          Math.min(
+            start,
+            size - 1
+          )
+        );
+
+      end =
+        Math.max(
+          start,
+          Math.min(
+            end,
+            size - 1
+          )
+        );
+
+      const length =
+        end - start + 1;
+
+      res.writeHead(
+        206,
+        {
+          "Content-Type":
+            "audio/mpeg",
+
+          "Content-Length":
+            length,
+
+          "Content-Range":
+            `bytes ${start}-${end}/${size}`,
+
+          "Accept-Ranges":
+            "bytes"
+        }
+      );
+
+      fs.createReadStream(
+        filePath,
+        {
+          start,
+          end
+        }
+      ).pipe(res);
+
+    }
+  );
 }
 
 
 // ============================================================
-// SERVER
+// HTTP SERVER
 // ============================================================
 
 const server =
   http.createServer(
     async (req, res) => {
 
-      // CORS preflight
-      if (req.method === "OPTIONS") {
-        res.writeHead(204, {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Headers":
-            "Content-Type, Authorization, X-Admin-Key",
-          "Access-Control-Allow-Methods":
-            "GET, POST, DELETE, OPTIONS"
-        });
+      if (
+        req.method === "OPTIONS"
+      ) {
+
+        res.writeHead(
+          204,
+          {
+            "Access-Control-Allow-Origin":
+              "*",
+
+            "Access-Control-Allow-Headers":
+              "Content-Type, Authorization, X-Admin-Key",
+
+            "Access-Control-Allow-Methods":
+              "GET, POST, DELETE, OPTIONS"
+          }
+        );
 
         return res.end();
+
       }
 
       const parsed =
@@ -2055,29 +2774,7 @@ const server =
       try {
 
         // ==================================================
-        // HEALTH
-        // ==================================================
-
-        if (
-          req.method === "GET" &&
-          pathname === "/health"
-        ) {
-          return json(
-            res,
-            200,
-            {
-              ok: true,
-              service: "DY AI Wingo 30S",
-              model: MODEL_VERSION,
-              provider: provider.ok,
-              time: now()
-            }
-          );
-        }
-
-
-        // ==================================================
-        // ROOT = PREDICTION
+        // ROOT -> PREDICTION
         // ==================================================
 
         if (
@@ -2087,11 +2784,13 @@ const server =
             pathname === "/index.html"
           )
         ) {
+
           return serveFile(
             res,
             "prediction.html",
             "text/html; charset=utf-8"
           );
+
         }
 
 
@@ -2103,11 +2802,39 @@ const server =
           req.method === "GET" &&
           pathname === "/admin.html"
         ) {
+
           return serveFile(
             res,
             "admin.html",
             "text/html; charset=utf-8"
           );
+
+        }
+
+
+        // ==================================================
+        // HEALTH
+        // ==================================================
+
+        if (
+          req.method === "GET" &&
+          pathname === "/health"
+        ) {
+
+          return json(
+            res,
+            200,
+            {
+              ok: true,
+              model:
+                MODEL_VERSION,
+              provider:
+                provider.ok,
+              time:
+                now()
+            }
+          );
+
         }
 
 
@@ -2119,18 +2846,24 @@ const server =
           req.method === "GET" &&
           pathname === "/music.mp3"
         ) {
-          return serveMusic(res);
+
+          return serveMusic(
+            res,
+            req
+          );
+
         }
 
 
         // ==================================================
-        // ACCESS KEY CHECK
+        // KEY CHECK
         // ==================================================
 
         if (
           req.method === "POST" &&
           pathname === "/api/key/check"
         ) {
+
           const body =
             await readBody(req);
 
@@ -2141,7 +2874,10 @@ const server =
             ).trim();
 
           const deviceId =
-            getDeviceId(body);
+            safeString(
+              body.deviceId ||
+              body.device_id
+            ).trim();
 
           const result =
             await checkAccessKey(
@@ -2151,9 +2887,12 @@ const server =
 
           return json(
             res,
-            result.ok ? 200 : 403,
+            result.ok
+              ? 200
+              : 403,
             result
           );
+
         }
 
 
@@ -2165,14 +2904,13 @@ const server =
           req.method === "GET" &&
           pathname === "/api/state"
         ) {
-          const state =
-            await buildState();
 
           return json(
             res,
             200,
-            state
+            await getState()
           );
+
         }
 
 
@@ -2184,19 +2922,24 @@ const server =
           req.method === "GET" &&
           pathname === "/api/history"
         ) {
+
           return json(
             res,
             200,
             {
               ok: true,
+
               history:
                 provider.history || [],
+
               count:
                 provider.history?.length || 0,
+
               currentIssue:
                 provider.currentIssue
             }
           );
+
         }
 
 
@@ -2208,27 +2951,29 @@ const server =
           req.method === "GET" &&
           pathname === "/api/admin/status"
         ) {
-          if (!requireAdmin(req)) {
+
+          if (!isAdmin(req)) {
+
             return json(
               res,
               401,
               {
                 ok: false,
-                message: "Unauthorized"
+                message:
+                  "Unauthorized"
               }
             );
+
           }
 
           const ai =
             createPrediction();
 
-          const database =
-            Boolean(pool);
-
           return json(
             res,
             200,
             {
+
               ok: true,
 
               service:
@@ -2246,9 +2991,11 @@ const server =
               gameUrl:
                 GAME_URL,
 
-              database,
+              database:
+                Boolean(pool),
 
               provider: {
+
                 ok:
                   provider.ok,
 
@@ -2269,9 +3016,11 @@ const server =
 
                 fetchedAt:
                   provider.fetchedAt
+
               },
 
               ai: {
+
                 prediction:
                   ai.prediction,
 
@@ -2286,12 +3035,15 @@ const server =
 
                 diagnostics:
                   ai.diagnostics
+
               },
 
               serverTime:
                 now()
+
             }
           );
+
         }
 
 
@@ -2303,7 +3055,9 @@ const server =
           req.method === "GET" &&
           pathname === "/api/admin/ping"
         ) {
-          if (!requireAdmin(req)) {
+
+          if (!isAdmin(req)) {
+
             return json(
               res,
               401,
@@ -2311,6 +3065,7 @@ const server =
                 ok: false
               }
             );
+
           }
 
           return json(
@@ -2318,31 +3073,39 @@ const server =
             200,
             {
               ok: true,
-              message: "DY AI server online",
-              model: MODEL_VERSION,
-              time: now()
+              model:
+                MODEL_VERSION,
+              message:
+                "Server online",
+              time:
+                now()
             }
           );
+
         }
 
 
         // ==================================================
-        // ADMIN WINGOBOT TEST
+        // WINGOBOT TEST
         // ==================================================
 
         if (
           req.method === "GET" &&
           pathname === "/api/admin/wingo-test"
         ) {
-          if (!requireAdmin(req)) {
+
+          if (!isAdmin(req)) {
+
             return json(
               res,
               401,
               {
                 ok: false,
-                message: "Unauthorized"
+                message:
+                  "Unauthorized"
               }
             );
+
           }
 
           await fetchWingoBot();
@@ -2351,376 +3114,67 @@ const server =
             res,
             200,
             {
-              ok: provider.ok,
+
+              ok:
+                provider.ok,
+
               currentIssue:
                 provider.currentIssue,
+
               historyCount:
                 provider.history?.length || 0,
+
               fetched:
                 provider.fetched,
+
               lastUpdated:
                 provider.lastUpdated,
+
               error:
                 provider.error,
+
               sample:
-                provider.history
-                  ?.slice(0, 5)
+                (
+                  provider.history || []
+                )
+                  .slice(0, 10)
                   .map(row => ({
                     issueNumber:
                       row.issueNumber,
                     side:
                       row.side
                   }))
+
             }
           );
+
         }
 
 
         // ==================================================
-        // ADMIN MODEL TEST
+        // MODEL TEST
         // ==================================================
 
         if (
           req.method === "GET" &&
           pathname === "/api/admin/model-test"
         ) {
-          if (!requireAdmin(req)) {
+
+          if (!isAdmin(req)) {
+
             return json(
               res,
               401,
               {
                 ok: false,
-                message: "Unauthorized"
+                message:
+                  "Unauthorized"
               }
             );
+
           }
 
           return json(
             res,
             200,
-            modelTest()
-          );
-        }
-
-
-        // ==================================================
-        // ADMIN KEYS GET
-        // ==================================================
-
-        if (
-          req.method === "GET" &&
-          pathname === "/api/admin/keys"
-        ) {
-          if (!requireAdmin(req)) {
-            return json(
-              res,
-              401,
-              {
-                ok: false,
-                message: "Unauthorized"
-              }
-            );
-          }
-
-          const keys =
-            await adminListKeys();
-
-          return json(
-            res,
-            200,
-            {
-              ok: true,
-              keys
-            }
-          );
-        }
-
-
-        // ==================================================
-        // ADMIN KEY CREATE
-        // ==================================================
-
-        if (
-          req.method === "POST" &&
-          pathname === "/api/admin/keys"
-        ) {
-          if (!requireAdmin(req)) {
-            return json(
-              res,
-              401,
-              {
-                ok: false,
-                message: "Unauthorized"
-              }
-            );
-          }
-
-          const body =
-            await readBody(req);
-
-          const key =
-            safeString(
-              body.accessKey ||
-              body.key
-            ).trim();
-
-          const created =
-            await adminCreateKey(key);
-
-          return json(
-            res,
-            200,
-            {
-              ok: true,
-              key: created
-            }
-          );
-        }
-
-
-        // ==================================================
-        // ADMIN RESET DEVICE
-        // ==================================================
-
-        if (
-          req.method === "POST" &&
-          pathname === "/api/admin/reset-device"
-        ) {
-          if (!requireAdmin(req)) {
-            return json(
-              res,
-              401,
-              {
-                ok: false,
-                message: "Unauthorized"
-              }
-            );
-          }
-
-          const body =
-            await readBody(req);
-
-          const id =
-            Number(body.id);
-
-          if (!Number.isInteger(id)) {
-            return json(
-              res,
-              400,
-              {
-                ok: false,
-                message: "Invalid key ID"
-              }
-            );
-          }
-
-          const updated =
-            await adminResetDevice(id);
-
-          return json(
-            res,
-            200,
-            {
-              ok: Boolean(updated),
-              key: updated
-            }
-          );
-        }
-
-
-        // ==================================================
-        // ADMIN DELETE KEY
-        // ==================================================
-
-        if (
-          req.method === "DELETE" &&
-          pathname === "/api/admin/keys"
-        ) {
-          if (!requireAdmin(req)) {
-            return json(
-              res,
-              401,
-              {
-                ok: false,
-                message: "Unauthorized"
-              }
-            );
-          }
-
-          const id =
-            Number(
-              parsed.searchParams.get("id")
-            );
-
-          if (!Number.isInteger(id)) {
-            return json(
-              res,
-              400,
-              {
-                ok: false,
-                message: "Invalid key ID"
-              }
-            );
-          }
-
-          const deleted =
-            await adminDeleteKey(id);
-
-          return json(
-            res,
-            200,
-            {
-              ok: deleted
-            }
-          );
-        }
-
-
-        // ==================================================
-        // FAVICON
-        // ==================================================
-
-        if (
-          req.method === "GET" &&
-          pathname === "/favicon.ico"
-        ) {
-          return text(
-            res,
-            204,
-            ""
-          );
-        }
-
-
-        // ==================================================
-        // 404
-        // ==================================================
-
-        return json(
-          res,
-          404,
-          {
-            ok: false,
-            message: "Not found"
-          }
-        );
-
-      } catch (error) {
-
-        console.error(
-          "Server request error:",
-          error
-        );
-
-        return json(
-          res,
-          500,
-          {
-            ok: false,
-            message:
-              error.message ||
-              "Internal server error"
-          }
-        );
-      }
-    }
-  );
-
-
-// ============================================================
-// BACKGROUND PROVIDER LOOP
-// ============================================================
-
-async function providerLoop() {
-  await fetchWingoBot();
-
-  try {
-    await settlePredictions();
-  } catch (error) {
-    console.error(
-      "Settlement error:",
-      error.message
-    );
-  }
-
-  setTimeout(
-    providerLoop,
-    PROVIDER_POLL_MS
-  );
-}
-
-
-// ============================================================
-// START
-// ============================================================
-
-async function start() {
-  try {
-
-    await initDatabase();
-
-    server.listen(
-      PORT,
-      "0.0.0.0",
-      () => {
-        console.log(
-          `DY AI Wingo server running on port ${PORT}`
-        );
-
-        console.log(
-          `Prediction: /`
-        );
-
-        console.log(
-          `Admin: /admin.html`
-        );
-
-        console.log(
-          `Model: ${MODEL_VERSION}`
-        );
-
-        console.log(
-          `Game: ${GAME_URL}`
-        );
-      }
-    );
-
-    providerLoop();
-
-  } catch (error) {
-
-    console.error(
-      "Startup error:",
-      error
-    );
-
-    process.exit(1);
-  }
-}
-
-start();
-
-
-// ============================================================
-// PROCESS SAFETY
-// ============================================================
-
-process.on(
-  "unhandledRejection",
-  error => {
-    console.error(
-      "Unhandled rejection:",
-      error
-    );
-  }
-);
-
-process.on(
-  "uncaughtException",
-  error => {
-    console.error(
-      "Uncaught exception:",
-      error
-    );
-  }
-);
+            model
