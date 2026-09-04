@@ -2,974 +2,308 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-
-<meta
-  name="viewport"
-  content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"
->
-
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>DY AI Wingo 30S</title>
 
 <style>
-*{
-  box-sizing:border-box;
-  -webkit-tap-highlight-color:transparent;
-}
-
-html,body{
-  margin:0;
-  padding:0;
-  min-height:100%;
-  background:#070b14;
-  color:#fff;
-  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,
-  "Segoe UI",sans-serif;
-}
-
+*{box-sizing:border-box}
 body{
-  overflow-x:hidden;
-}
-
-button,input{
-  font:inherit;
-}
-
-button{
-  cursor:pointer;
-}
-
-.hidden{
-  display:none!important;
-}
-
-/* =========================
-   APP
-========================= */
-
-.app{
-  width:100%;
-  max-width:720px;
-  margin:auto;
-  padding:10px;
-}
-
-/* =========================
-   LOGIN
-========================= */
-
-.login-screen{
-  min-height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:18px;
-}
-
-.login-card{
-  width:100%;
-  max-width:420px;
-  padding:25px;
-  border:1px solid #202c42;
-  border-radius:23px;
-  background:#101827;
-  box-shadow:0 20px 70px rgba(0,0,0,.4);
-}
-
-.logo{
-  width:68px;
-  height:68px;
-  margin:0 auto 15px;
-  border-radius:20px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:linear-gradient(145deg,#1d8cff,#693dff);
-  font-size:25px;
-  font-weight:950;
-}
-
-.login-card h1{
-  text-align:center;
   margin:0;
-  font-size:24px;
-}
-
-.login-card p{
-  text-align:center;
-  color:#8490a5;
-  font-size:12px;
-  margin:8px 0 20px;
-}
-
-.input{
-  width:100%;
-  height:52px;
-  padding:0 15px;
-  margin-bottom:11px;
-  border:1px solid #29364d;
-  border-radius:13px;
-  outline:none;
-  background:#080d17;
+  font-family:Arial,sans-serif;
+  background:#070b16;
   color:#fff;
 }
-
-.input:focus{
-  border-color:#318cff;
-}
-
-.btn{
+.wrap{
   width:100%;
-  height:52px;
-  border:0;
-  border-radius:13px;
-  background:linear-gradient(135deg,#1688ff,#5c45ff);
-  color:#fff;
-  font-weight:900;
+  max-width:480px;
+  margin:auto;
+  padding:12px;
 }
-
-.error{
-  min-height:20px;
-  margin-top:10px;
-  text-align:center;
-  color:#ff6879;
-  font-size:12px;
-}
-
-/* =========================
-   HEADER
-========================= */
-
 .header{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  padding:4px 2px 10px;
+  background:linear-gradient(135deg,#111b35,#0b1022);
+  border:1px solid #27345b;
+  border-radius:18px;
+  padding:16px;
+  text-align:center;
+  box-shadow:0 8px 30px #0008;
 }
-
-.brand{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  min-width:0;
+.logo{
+  font-size:25px;
+  font-weight:900;
+  letter-spacing:1px;
 }
-
-.brand-icon{
-  width:46px;
-  height:46px;
-  flex:none;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border-radius:14px;
-  background:linear-gradient(145deg,#1688ff,#643dff);
-  font-weight:950;
+.sub{
+  margin-top:5px;
+  color:#9ca9ca;
+  font-size:12px;
 }
-
-.brand-title{
-  font-size:17px;
-  font-weight:950;
-  white-space:nowrap;
-}
-
-.brand-sub{
-  margin-top:2px;
-  color:#78859a;
-  font-size:9px;
-  letter-spacing:.6px;
-}
-
-.header-actions{
-  display:flex;
-  gap:7px;
-}
-
-.icon-btn{
-  width:43px;
-  height:43px;
-  border:1px solid #253249;
-  border-radius:13px;
-  background:#101827;
-  color:#fff;
-  font-size:18px;
-}
-
-/* =========================
-   GAME
-========================= */
-
-.game-card{
-  position:relative;
-  width:100%;
-  height:390px;
+.game{
+  margin-top:12px;
+  height:310px;
+  border-radius:18px;
   overflow:hidden;
-  margin-bottom:10px;
-  border:1px solid #26334a;
-  border-radius:19px;
-  background:#0b111d;
+  background:#111827;
+  border:1px solid #27345b;
+  position:relative;
 }
-
-.game-frame{
+.game iframe{
   width:100%;
   height:100%;
   border:0;
-  display:block;
-  background:#070b12;
 }
-
-.game-overlay{
+.open{
   position:absolute;
-  left:8px;
-  right:8px;
-  bottom:8px;
-  display:flex;
-  justify-content:flex-end;
-  pointer-events:none;
-}
-
-.open-game{
-  pointer-events:auto;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  min-width:110px;
-  height:38px;
-  padding:0 13px;
-  border-radius:10px;
-  background:#1688ff;
+  right:10px;
+  top:10px;
+  z-index:3;
+  background:#182442;
   color:#fff;
+  border:1px solid #405486;
+  padding:8px 11px;
+  border-radius:10px;
   text-decoration:none;
-  font-size:11px;
-  font-weight:900;
-  box-shadow:0 8px 20px rgba(0,0,0,.35);
+  font-size:12px;
 }
-
-/* =========================
-   COMMON CARD
-========================= */
-
 .card{
-  margin-bottom:10px;
-  border:1px solid #202d42;
+  margin-top:12px;
+  background:#0e1528;
+  border:1px solid #26345b;
   border-radius:18px;
-  background:#101827;
-  overflow:hidden;
-}
-
-.card-head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:13px 15px;
-  border-bottom:1px solid #202c3f;
-}
-
-.card-title{
-  font-size:13px;
-  font-weight:950;
-}
-
-.badge{
-  padding:5px 8px;
-  border-radius:8px;
-  background:#17243a;
-  color:#8ea2bf;
-  font-size:9px;
-  font-weight:900;
-}
-
-/* =========================
-   TARGET
-========================= */
-
-.target{
   padding:15px;
 }
-
-.target-row{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-}
-
 .label{
-  color:#7d899d;
-  font-size:9px;
+  color:#8996b8;
+  font-size:11px;
   text-transform:uppercase;
-  letter-spacing:.8px;
+  letter-spacing:1px;
 }
-
 .issue{
-  margin-top:4px;
-  font-size:17px;
-  font-weight:950;
+  margin-top:6px;
+  font-size:18px;
+  font-weight:800;
   word-break:break-all;
 }
-
-.live{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  color:#4ce28a;
-  font-size:10px;
+.timer{
+  margin-top:10px;
+  text-align:center;
+  font-size:32px;
   font-weight:900;
 }
-
-.dot{
-  width:8px;
-  height:8px;
+.analysis{
+  text-align:center;
+  padding:22px 10px;
+}
+.spinner{
+  width:35px;
+  height:35px;
+  margin:auto;
+  border:4px solid #26345b;
+  border-top-color:#fff;
   border-radius:50%;
-  background:#4ce28a;
-  box-shadow:0 0 12px #4ce28a;
+  animation:spin .8s linear infinite;
 }
-
-.timer{
-  margin-top:15px;
-  text-align:center;
-  font-size:31px;
-  line-height:1;
-  font-weight:950;
-  letter-spacing:1px;
-}
-
-.timer-label{
-  margin-top:6px;
-  text-align:center;
-  color:#68758a;
-  font-size:9px;
-}
-
-/* =========================
-   NEXT ROUND
-========================= */
-
-.next-box{
-  padding:20px 15px 22px;
-  text-align:center;
-}
-
-.next-status{
-  font-size:28px;
-  font-weight:950;
-  letter-spacing:.5px;
-}
-
-.waiting{
-  color:#8794aa;
-}
-
-.next-issue{
-  margin-top:8px;
-  color:#7e8ba0;
-  font-size:11px;
-  word-break:break-all;
-}
-
-.next-info{
+@keyframes spin{to{transform:rotate(360deg)}}
+.analysis-text{
   margin-top:12px;
-  color:#68758a;
-  font-size:10px;
-  line-height:1.5;
+  color:#aeb9d4;
+  font-size:13px;
 }
-
-/* =========================
-   LATEST RESULT
-========================= */
-
-.latest{
-  padding:22px 15px;
+.pred{
+  display:none;
   text-align:center;
 }
-
-.latest-side{
-  font-size:40px;
-  font-weight:950;
-  letter-spacing:1px;
+.pred-value{
+  margin-top:8px;
+  font-size:42px;
+  font-weight:1000;
+  letter-spacing:2px;
 }
-
-.big{
-  color:#ff6376;
+.conf{
+  margin-top:6px;
+  font-size:13px;
+  color:#aeb9d4;
 }
-
-.small{
-  color:#3e9dff;
-}
-
-.latest-period{
-  margin-top:7px;
-  color:#8490a5;
-  font-size:11px;
-  word-break:break-all;
-}
-
-.latest-number{
-  margin-top:4px;
-  color:#707e93;
+.reason{
+  margin-top:10px;
+  padding:9px;
+  border-radius:10px;
+  background:#080d1b;
+  color:#8996b8;
   font-size:11px;
 }
-
-/* =========================
-   TABLE
-========================= */
-
-.table-wrap{
-  width:100%;
-  overflow-x:auto;
+.status{
+  margin-top:10px;
+  text-align:center;
+  font-size:11px;
+  color:#7482a5;
 }
-
 table{
   width:100%;
-  min-width:440px;
   border-collapse:collapse;
+  margin-top:10px;
+  font-size:11px;
 }
-
 th{
-  padding:10px;
-  color:#69768a;
-  text-align:left;
-  font-size:9px;
-  text-transform:uppercase;
-  white-space:nowrap;
+  color:#7180a4;
+  font-weight:700;
+  padding:9px 4px;
+  border-bottom:1px solid #26345b;
 }
-
 td{
-  padding:11px 10px;
-  border-top:1px solid #1b2637;
-  font-size:10px;
-  white-space:nowrap;
-}
-
-.side-pill{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  min-width:62px;
-  padding:6px 9px;
-  border-radius:8px;
-  font-size:9px;
-  font-weight:950;
-}
-
-.side-pill.big{
-  background:rgba(255,99,118,.12);
-  color:#ff687a;
-}
-
-.side-pill.small{
-  background:rgba(62,157,255,.12);
-  color:#4da5ff;
-}
-
-.status-pill{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  min-width:58px;
-  padding:6px 8px;
-  border-radius:8px;
-  font-size:9px;
-  font-weight:950;
-}
-
-.status-win{
-  background:rgba(70,222,135,.12);
-  color:#4de18b;
-}
-
-.status-loss{
-  background:rgba(255,85,104,.12);
-  color:#ff6577;
-}
-
-.status-pending{
-  background:rgba(145,158,180,.12);
-  color:#96a3b7;
-}
-
-/* =========================
-   FOOTER
-========================= */
-
-.footer{
-  padding:8px 15px 20px;
+  padding:9px 4px;
   text-align:center;
-  color:#56647a;
-  font-size:9px;
-  line-height:1.6;
+  border-bottom:1px solid #18233f;
 }
-
-/* =========================
-   MOBILE
-========================= */
-
-@media(max-width:600px){
-
-  .app{
-    padding:8px;
-  }
-
-  .game-card{
-    height:360px;
-  }
-
-  .brand-title{
-    font-size:15px;
-  }
-
-  .brand-sub{
-    font-size:8px;
-  }
+.win{color:#55e39b;font-weight:800}
+.loss{color:#ff657c;font-weight:800}
+.pending{color:#8996b8;font-weight:700}
+.big{color:#ffb45d;font-weight:900}
+.small{color:#71a7ff;font-weight:900}
+.footer{
+  text-align:center;
+  color:#56627f;
+  font-size:10px;
+  padding:16px 0;
 }
-
-@media(max-width:390px){
-
-  .game-card{
-    height:315px;
-  }
-
-  .brand-icon{
-    width:41px;
-    height:41px;
-    border-radius:12px;
-  }
-
-  .brand-title{
-    font-size:13px;
-  }
-
-  .icon-btn{
-    width:39px;
-    height:39px;
-  }
-
-  .latest-side{
-    font-size:35px;
-  }
-
-  .next-status{
-    font-size:25px;
-  }
+.music{
+  position:fixed;
+  bottom:15px;
+  right:15px;
+  width:45px;
+  height:45px;
+  border-radius:50%;
+  border:1px solid #405486;
+  background:#111b35;
+  color:white;
+  font-size:18px;
 }
 </style>
 </head>
 
 <body>
 
-<!-- =========================
-     LOGIN
-========================= -->
+<div class="wrap">
 
-<div id="loginScreen" class="login-screen">
+  <div class="header">
+    <div class="logo">DY AI WINGO 30S</div>
+    <div class="sub">Live AI Analysis • Smooth Updates</div>
+  </div>
 
-  <div class="login-card">
+  <div class="game">
+    <a
+      class="open"
+      href="https://www.shreewin38.com/#/register?invitationCode=88523152383"
+      target="_blank"
+    >OPEN GAME</a>
 
-    <div class="logo">
-      DY
+    <iframe
+      src="https://www.shreewin38.com/#/register?invitationCode=88523152383"
+      allow="fullscreen"
+    ></iframe>
+  </div>
+
+  <div class="card">
+
+    <div class="label">Target Period</div>
+    <div class="issue" id="targetIssue">Loading...</div>
+
+    <div class="timer" id="timer">30</div>
+
+    <div class="analysis" id="analysisBox">
+      <div class="spinner"></div>
+      <div class="analysis-text" id="analysisText">
+        Waiting for live data...
+      </div>
     </div>
 
-    <h1>
-      DY AI Wingo 30S
-    </h1>
+    <div class="pred" id="predictionBox">
 
-    <p>
-      Enter your access key to continue
-    </p>
+      <div class="label">AI RESULT</div>
 
-    <input
-      id="keyInput"
-      class="input"
-      type="text"
-      autocomplete="off"
-      placeholder="Enter access key"
-    >
+      <div class="pred-value" id="prediction">
+        —
+      </div>
 
-    <button
-      id="loginBtn"
-      class="btn"
-      type="button"
-    >
-      LOGIN
-    </button>
+      <div class="conf">
+        Confidence: <b id="confidence">0%</b>
+      </div>
 
-    <div
-      id="loginError"
-      class="error"
-    ></div>
+      <div class="reason" id="reason">
+        —
+      </div>
 
+      <div class="status" id="modelStatus">
+        AI synchronized
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="card">
+
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div class="label">Prediction History</div>
+        <div style="font-size:18px;font-weight:900;margin-top:4px">
+          LAST 30
+        </div>
+      </div>
+
+      <div id="recordStats" style="font-size:11px;color:#8290b2">
+        —
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>PERIOD</th>
+          <th>PRED</th>
+          <th>RESULT</th>
+          <th>W/L</th>
+        </tr>
+      </thead>
+
+      <tbody id="historyBody">
+        <tr>
+          <td colspan="4">Loading...</td>
+        </tr>
+      </tbody>
+    </table>
+
+  </div>
+
+  <div class="footer">
+    DY AI • Live Wingo 30S
   </div>
 
 </div>
 
-
-<!-- =========================
-     APP
-========================= -->
-
-<main
-  id="app"
-  class="app hidden"
->
-
-  <!-- HEADER -->
-
-  <header class="header">
-
-    <div class="brand">
-
-      <div class="brand-icon">
-        DY
-      </div>
-
-      <div>
-
-        <div class="brand-title">
-          DY AI Wingo 30S
-        </div>
-
-        <div class="brand-sub">
-          LIVE RESULT TRACKER
-        </div>
-
-      </div>
-
-    </div>
-
-
-    <div class="header-actions">
-
-      <button
-        id="musicBtn"
-        class="icon-btn"
-        type="button"
-      >
-        🔊
-      </button>
-
-      <button
-        id="refreshBtn"
-        class="icon-btn"
-        type="button"
-      >
-        ↻
-      </button>
-
-    </div>
-
-  </header>
-
-
-  <!-- GAME -->
-
-  <section class="game-card">
-
-    <iframe
-      id="gameFrame"
-      class="game-frame"
-      title="ShreeWin Game"
-      src="https://www.shreewin38.com/#/register?invitationCode=88523152383"
-      allow="fullscreen"
-    ></iframe>
-
-    <div class="game-overlay">
-
-      <a
-        class="open-game"
-        href="https://www.shreewin38.com/#/register?invitationCode=88523152383"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        OPEN GAME
-      </a>
-
-    </div>
-
-  </section>
-
-
-  <!-- TARGET PERIOD -->
-
-  <section class="card">
-
-    <div class="target">
-
-      <div class="target-row">
-
-        <div>
-
-          <div class="label">
-            Target Period
-          </div>
-
-          <div
-            id="targetIssue"
-            class="issue"
-          >
-            —
-          </div>
-
-        </div>
-
-        <div class="live">
-
-          <span class="dot"></span>
-
-          LIVE
-
-        </div>
-
-      </div>
-
-
-      <div
-        id="timer"
-        class="timer"
-      >
-        00:30
-      </div>
-
-      <div class="timer-label">
-        estimated provider synchronization
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- NEXT ROUND -->
-
-  <section class="card">
-
-    <div class="card-head">
-
-      <div class="card-title">
-        Next Round
-      </div>
-
-      <div class="badge">
-        TARGET
-      </div>
-
-    </div>
-
-
-    <div class="next-box">
-
-      <div
-        id="nextStatus"
-        class="next-status waiting"
-      >
-        WAITING
-      </div>
-
-      <div
-        id="nextIssue"
-        class="next-issue"
-      >
-        Target: —
-      </div>
-
-      <div class="next-info">
-        Waiting for the actual result of this period.
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- LATEST RESULT -->
-
-  <section class="card">
-
-    <div class="card-head">
-
-      <div class="card-title">
-        Latest Result
-      </div>
-
-      <div class="badge">
-        LIVE
-      </div>
-
-    </div>
-
-
-    <div class="latest">
-
-      <div
-        id="latestSide"
-        class="latest-side waiting"
-      >
-        WAITING
-      </div>
-
-      <div
-        id="latestPeriod"
-        class="latest-period"
-      >
-        Period: —
-      </div>
-
-      <div
-        id="latestNumber"
-        class="latest-number"
-      >
-        Number: —
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- RESULT HISTORY -->
-
-  <section class="card">
-
-    <div class="card-head">
-
-      <div class="card-title">
-        Result History
-      </div>
-
-      <div class="badge">
-        LAST 30
-      </div>
-
-    </div>
-
-
-    <div class="table-wrap">
-
-      <table>
-
-        <thead>
-
-          <tr>
-            <th>Period</th>
-            <th>Result</th>
-            <th>Number</th>
-          </tr>
-
-        </thead>
-
-        <tbody id="resultBody">
-
-          <tr>
-            <td colspan="3">
-              Loading...
-            </td>
-          </tr>
-
-        </tbody>
-
-      </table>
-
-    </div>
-
-  </section>
-
-
-  <!-- TRACKING HISTORY -->
-
-  <section class="card">
-
-    <div class="card-head">
-
-      <div class="card-title">
-        Win / Loss History
-      </div>
-
-      <div class="badge">
-        LAST 30
-      </div>
-
-    </div>
-
-
-    <div class="table-wrap">
-
-      <table>
-
-        <thead>
-
-          <tr>
-            <th>Period</th>
-            <th>Prediction</th>
-            <th>Actual</th>
-            <th>Status</th>
-          </tr>
-
-        </thead>
-
-        <tbody id="trackingBody">
-
-          <tr>
-            <td colspan="4">
-              Loading...
-            </td>
-          </tr>
-
-        </tbody>
-
-      </table>
-
-    </div>
-
-  </section>
-
-
-  <div class="footer">
-    DY AI Wingo 30S<br>
-    Live provider result tracking • Exact-period settlement
-  </div>
-
-</main>
-
-
-<!-- MUSIC -->
-
-<audio
-  id="music"
-  src="/music.mp3"
-  loop
-  preload="none"
-></audio>
-
+<button class="music" id="musicBtn">♫</button>
+
+<audio id="music" loop>
+  <source src="/music.mp3" type="audio/mpeg">
+</audio>
 
 <script>
-"use strict";
-
-/* =========================
-   CONFIG
-========================= */
 
 const GAME_URL =
   "https://www.shreewin38.com/#/register?invitationCode=88523152383";
 
-const KEY_STORAGE =
-  "dy_access_key";
-
-const DEVICE_STORAGE =
-  "dy_device_id";
-
-
-let started = false;
-let state = null;
-let timerInterval = null;
-let pollInterval = null;
-let musicPlaying = false;
+let lastTarget = "";
+let lastPrediction = "";
+let analysisTimer = null;
+let providerUpdated = 0;
+let timerValue = 30;
 
 
-/* =========================
-   HELPERS
-========================= */
+/* -----------------------------
+   BASIC HELPERS
+----------------------------- */
 
-function escapeHtml(value){
-
-  return String(value)
+function esc(v){
+  return String(v ?? "")
     .replaceAll("&","&amp;")
     .replaceAll("<","&lt;")
     .replaceAll(">","&gt;")
@@ -977,796 +311,404 @@ function escapeHtml(value){
     .replaceAll("'","&#039;");
 }
 
+function getClass(value){
 
-function randomId(){
+  if(!value) return "";
 
-  if(
-    window.crypto &&
-    typeof crypto.randomUUID === "function"
-  ){
-    return crypto.randomUUID();
-  }
+  const x = String(value).toUpperCase();
 
-  return Math.random()
-    .toString(36)
-    .slice(2) +
-    Date.now().toString(36);
+  if(x === "BIG") return "big";
+  if(x === "SMALL") return "small";
+  if(x === "WIN") return "win";
+  if(x === "LOSS") return "loss";
+  if(x === "PENDING") return "pending";
+
+  return "";
 }
 
 
-function getDeviceId(){
-
-  let id =
-    localStorage.getItem(
-      DEVICE_STORAGE
-    );
-
-  if(!id){
-
-    id =
-      "dy-" +
-      randomId();
-
-    localStorage.setItem(
-      DEVICE_STORAGE,
-      id
-    );
-  }
-
-  return id;
-}
-
-
-/* =========================
-   LOGIN ELEMENTS
-========================= */
-
-const loginScreen =
-  document.getElementById(
-    "loginScreen"
-  );
-
-const app =
-  document.getElementById(
-    "app"
-  );
-
-const keyInput =
-  document.getElementById(
-    "keyInput"
-  );
-
-const loginBtn =
-  document.getElementById(
-    "loginBtn"
-  );
-
-const loginError =
-  document.getElementById(
-    "loginError"
-  );
-
-
-/* =========================
-   LOGIN
-========================= */
-
-async function login(key){
-
-  key =
-    String(key || "").trim();
-
-  if(!key){
-
-    loginError.textContent =
-      "Access key डालो.";
-
-    return;
-  }
-
-  loginBtn.disabled = true;
-  loginBtn.textContent =
-    "CHECKING...";
-
-  loginError.textContent = "";
-
-  try{
-
-    const response =
-      await fetch(
-        "/api/key/check",
-        {
-          method:"POST",
-          headers:{
-            "Content-Type":
-              "application/json"
-          },
-          body:JSON.stringify({
-            key:key,
-            deviceId:getDeviceId()
-          })
-        }
-      );
-
-    const data =
-      await response.json();
-
-    if(!data.ok){
-
-      throw new Error(
-        data.error ||
-        "Invalid access key"
-      );
-    }
-
-    localStorage.setItem(
-      KEY_STORAGE,
-      key
-    );
-
-    showApp();
-
-  }catch(error){
-
-    loginError.textContent =
-      error.message ||
-      "Login failed.";
-
-  }finally{
-
-    loginBtn.disabled = false;
-
-    loginBtn.textContent =
-      "LOGIN";
-  }
-}
-
-
-function showApp(){
-
-  loginScreen.classList.add(
-    "hidden"
-  );
-
-  app.classList.remove(
-    "hidden"
-  );
-
-  startApp();
-}
-
-
-loginBtn.addEventListener(
-  "click",
-  () => login(keyInput.value)
-);
-
-
-keyInput.addEventListener(
-  "keydown",
-  event => {
-
-    if(event.key === "Enter"){
-      login(keyInput.value);
-    }
-
-  }
-);
-
-
-/* =========================
-   AUTO LOGIN
-========================= */
-
-const savedKey =
-  localStorage.getItem(
-    KEY_STORAGE
-  );
-
-if(savedKey){
-  login(savedKey);
-}
-
-
-/* =========================
-   GAME
-========================= */
-
-document
-  .getElementById("gameFrame")
-  .src = GAME_URL;
-
-
-/* =========================
-   STATE
-========================= */
-
-async function getState(){
-
-  const response =
-    await fetch(
-      "/api/state?t=" +
-      Date.now(),
-      {
-        cache:"no-store"
-      }
-    );
-
-  if(!response.ok){
-    throw new Error(
-      "State request failed"
-    );
-  }
-
-  return response.json();
-}
-
-
-async function getTracking(){
-
-  const response =
-    await fetch(
-      "/api/history?t=" +
-      Date.now(),
-      {
-        cache:"no-store"
-      }
-    );
-
-  if(!response.ok){
-    throw new Error(
-      "History request failed"
-    );
-  }
-
-  return response.json();
-}
-
-
-/* =========================
-   RENDER STATE
-========================= */
-
-function renderState(data){
-
-  state = data;
-
-  const target =
-    data.targetIssue || "—";
-
-  document
-    .getElementById("targetIssue")
-    .textContent = target;
-
-  document
-    .getElementById("nextIssue")
-    .textContent =
-      "Target: " + target;
-
-  renderLatest(
-    data.history || []
-  );
-
-  renderResults(
-    data.history || []
-  );
-
-  updateTimer();
-}
-
-
-/* =========================
-   LATEST RESULT
-========================= */
-
-function renderLatest(history){
-
-  const sideElement =
-    document.getElementById(
-      "latestSide"
-    );
-
-  const periodElement =
-    document.getElementById(
-      "latestPeriod"
-    );
-
-  const numberElement =
-    document.getElementById(
-      "latestNumber"
-    );
-
-  if(!history.length){
-
-    sideElement.textContent =
-      "WAITING";
-
-    sideElement.className =
-      "latest-side waiting";
-
-    periodElement.textContent =
-      "Period: —";
-
-    numberElement.textContent =
-      "Number: —";
-
-    return;
-  }
-
-  const latest =
-    history[0];
-
-  const side =
-    latest.side || null;
-
-  sideElement.textContent =
-    side || "WAITING";
-
-  sideElement.className =
-    "latest-side " +
-    (
-      side === "BIG"
-        ? "big"
-        : side === "SMALL"
-          ? "small"
-          : "waiting"
-    );
-
-  periodElement.textContent =
-    "Period: " +
-    (
-      latest.issueNumber || "—"
-    );
-
-  numberElement.textContent =
-    "Number: " +
-    (
-      latest.number === null ||
-      latest.number === undefined
-        ? "—"
-        : latest.number
-    );
-}
-
-
-/* =========================
-   RESULT HISTORY
-========================= */
-
-function renderResults(history){
-
-  const body =
-    document.getElementById(
-      "resultBody"
-    );
-
-  if(!history.length){
-
-    body.innerHTML = `
-      <tr>
-        <td colspan="3">
-          No results available
-        </td>
-      </tr>
-    `;
-
-    return;
-  }
-
-  body.innerHTML =
-    history
-      .slice(0,30)
-      .map(row => {
-
-        const side =
-          row.side || "—";
-
-        const sideClass =
-          side === "BIG"
-            ? "big"
-            : side === "SMALL"
-              ? "small"
-              : "";
-
-        const number =
-          row.number === null ||
-          row.number === undefined
-            ? "—"
-            : row.number;
-
-        return `
-          <tr>
-
-            <td>
-              ${escapeHtml(
-                row.issueNumber || "—"
-              )}
-            </td>
-
-            <td>
-
-              <span class="
-                side-pill
-                ${sideClass}
-              ">
-                ${escapeHtml(side)}
-              </span>
-
-            </td>
-
-            <td>
-              ${escapeHtml(
-                String(number)
-              )}
-            </td>
-
-          </tr>
-        `;
-
-      })
-      .join("");
-}
-
-
-/* =========================
-   TRACKING
-========================= */
-
-async function renderTracking(){
-
-  const body =
-    document.getElementById(
-      "trackingBody"
-    );
-
-  try{
-
-    const data =
-      await getTracking();
-
-    const rows =
-      Array.isArray(data.history)
-        ? data.history
-        : [];
-
-    if(!rows.length){
-
-      body.innerHTML = `
-        <tr>
-          <td colspan="4">
-            No tracking records
-          </td>
-        </tr>
-      `;
-
-      return;
-    }
-
-    body.innerHTML =
-      rows
-        .slice(0,30)
-        .map(row => {
-
-          const prediction =
-            row.prediction || "—";
-
-          const actual =
-            row.actual || "—";
-
-          const status =
-            row.status || "PENDING";
-
-          const predictionClass =
-            prediction === "BIG"
-              ? "big"
-              : prediction === "SMALL"
-                ? "small"
-                : "";
-
-          let statusClass =
-            "status-pending";
-
-          if(status === "WIN"){
-            statusClass =
-              "status-win";
-          }
-
-          if(status === "LOSS"){
-            statusClass =
-              "status-loss";
-          }
-
-          return `
-            <tr>
-
-              <td>
-                ${escapeHtml(
-                  row.targetIssue || "—"
-                )}
-              </td>
-
-              <td>
-
-                ${
-                  prediction === "—"
-                    ? "—"
-                    : `
-                      <span class="
-                        side-pill
-                        ${predictionClass}
-                      ">
-                        ${escapeHtml(
-                          prediction
-                        )}
-                      </span>
-                    `
-                }
-
-              </td>
-
-              <td>
-
-                ${
-                  actual === "—"
-                    ? "—"
-                    : `
-                      <span class="
-                        side-pill
-                        ${
-                          actual === "BIG"
-                            ? "big"
-                            : "small"
-                        }
-                      ">
-                        ${escapeHtml(
-                          actual
-                        )}
-                      </span>
-                    `
-                }
-
-              </td>
-
-              <td>
-
-                <span class="
-                  status-pill
-                  ${statusClass}
-                ">
-                  ${escapeHtml(
-                    status
-                  )}
-                </span>
-
-              </td>
-
-            </tr>
-          `;
-
-        })
-        .join("");
-
-  }catch(error){
-
-    body.innerHTML = `
-      <tr>
-        <td colspan="4">
-          Unable to load tracking
-        </td>
-      </tr>
-    `;
-  }
-}
-
-
-/* =========================
+/* -----------------------------
    TIMER
-========================= */
+----------------------------- */
 
 function updateTimer(){
 
-  if(!state){
-    return;
-  }
+  const now = Date.now();
 
-  const updated =
-    Number(
-      state.providerLastUpdated || 0
-    );
+  if(providerUpdated){
 
-  if(!updated){
+    const diff =
+      Math.floor((now - providerUpdated) / 1000);
 
-    document
-      .getElementById("timer")
-      .textContent = "00:30";
+    let sec = 30 - (diff % 30);
 
-    return;
-  }
+    if(sec <= 0 || sec > 30){
+      sec = 30;
+    }
 
-  const elapsed =
-    Math.max(
-      0,
-      Date.now() - updated
-    );
+    timerValue = sec;
 
-  const cycle =
-    30000;
+  }else{
 
-  const remaining =
-    cycle -
-    (
-      elapsed % cycle
-    );
+    timerValue--;
 
-  const seconds =
-    Math.max(
-      0,
-      Math.ceil(
-        remaining / 1000
-      )
-    );
-
-  const mm =
-    String(
-      Math.floor(
-        seconds / 60
-      )
-    ).padStart(2,"0");
-
-  const ss =
-    String(
-      seconds % 60
-    ).padStart(2,"0");
-
-  document
-    .getElementById("timer")
-    .textContent =
-      mm + ":" + ss;
-}
-
-
-/* =========================
-   REFRESH
-========================= */
-
-async function refreshAll(){
-
-  try{
-
-    const data =
-      await getState();
-
-    renderState(data);
-
-    await renderTracking();
-
-  }catch(error){
-
-    console.warn(
-      "Refresh error:",
-      error.message
-    );
-  }
-}
-
-
-/* =========================
-   POLLING
-========================= */
-
-function startPolling(){
-
-  clearInterval(
-    pollInterval
-  );
-
-  pollInterval =
-    setInterval(
-      refreshAll,
-      1000
-    );
-}
-
-
-/* =========================
-   TIMER LOOP
-========================= */
-
-function startTimer(){
-
-  clearInterval(
-    timerInterval
-  );
-
-  timerInterval =
-    setInterval(
-      updateTimer,
-      250
-    );
-}
-
-
-/* =========================
-   MUSIC
-========================= */
-
-const music =
-  document.getElementById(
-    "music"
-  );
-
-const musicBtn =
-  document.getElementById(
-    "musicBtn"
-  );
-
-musicBtn.addEventListener(
-  "click",
-  async () => {
-
-    try{
-
-      if(!musicPlaying){
-
-        await music.play();
-
-        musicPlaying = true;
-
-        musicBtn.textContent =
-          "🔊";
-
-      }else{
-
-        music.pause();
-
-        musicPlaying = false;
-
-        musicBtn.textContent =
-          "🔇";
-      }
-
-    }catch(error){
-
-      musicPlaying = false;
-
-      musicBtn.textContent =
-        "🔇";
+    if(timerValue <= 0){
+      timerValue = 30;
     }
 
   }
-);
+
+  document.getElementById("timer").textContent =
+    String(timerValue).padStart(2,"0");
+}
+
+setInterval(updateTimer,1000);
 
 
-/* =========================
-   MANUAL REFRESH
-========================= */
+/* -----------------------------
+   3 SECOND ANALYSIS
+----------------------------- */
 
-document
-  .getElementById("refreshBtn")
-  .addEventListener(
-    "click",
-    refreshAll
-  );
+function startAnalysis(){
+
+  clearTimeout(analysisTimer);
+
+  const box =
+    document.getElementById("analysisBox");
+
+  const pred =
+    document.getElementById("predictionBox");
+
+  const text =
+    document.getElementById("analysisText");
+
+  box.style.display = "block";
+  pred.style.display = "none";
+
+  let count = 3;
+
+  text.textContent =
+    "Analyzing recent trend... 3";
+
+  const interval = setInterval(()=>{
+
+    count--;
+
+    if(count === 2){
+
+      text.textContent =
+        "Checking sequence & transitions... 2";
+
+    }else if(count === 1){
+
+      text.textContent =
+        "Finalizing AI signal... 1";
+
+    }
+
+    if(count <= 0){
+
+      clearInterval(interval);
+
+      box.style.display = "none";
+      pred.style.display = "block";
+
+    }
+
+  },1000);
+}
 
 
-/* =========================
-   START APP
-========================= */
+/* -----------------------------
+   STATE
+----------------------------- */
 
-async function startApp(){
+async function loadState(){
 
-  if(started){
+  try{
+
+    const r =
+      await fetch("/api/state?ts="+Date.now(),{
+        cache:"no-store"
+      });
+
+    const data = await r.json();
+
+    if(!data.ok){
+      return;
+    }
+
+    const target =
+      data.targetIssue ||
+      data.currentIssue ||
+      "—";
+
+    document.getElementById("targetIssue")
+      .textContent = target;
+
+    if(data.providerLastUpdated){
+
+      providerUpdated =
+        Number(data.providerLastUpdated);
+
+    }
+
+    /*
+      New target = new analysis cycle.
+    */
+
+    if(target !== lastTarget){
+
+      lastTarget = target;
+
+      startAnalysis();
+
+      setTimeout(()=>{
+
+        renderPrediction(data);
+
+      },3000);
+
+    }else{
+
+      /*
+        Same target:
+        keep updating confidence/reason,
+        but don't restart analysis.
+      */
+
+      if(
+        document.getElementById("predictionBox")
+          .style.display === "block"
+      ){
+
+        renderPrediction(data);
+
+      }
+
+    }
+
+    renderHistory(data.history || []);
+
+  }catch(e){
+
+    console.log("STATE ERROR:",e);
+
+  }
+
+}
+
+
+/* -----------------------------
+   PREDICTION
+----------------------------- */
+
+function renderPrediction(data){
+
+  const prediction =
+    String(data.prediction || "—")
+      .toUpperCase();
+
+  document.getElementById("prediction")
+    .textContent = prediction;
+
+  document.getElementById("prediction")
+    .className =
+      "pred-value " + getClass(prediction);
+
+  document.getElementById("confidence")
+    .textContent =
+      Math.max(
+        0,
+        Math.min(
+          100,
+          Number(data.confidence || 0)
+        )
+      ) + "%";
+
+  document.getElementById("reason")
+    .textContent =
+      data.reason ||
+      "AI analysis synchronized.";
+
+  document.getElementById("modelStatus")
+    .textContent =
+      data.regime
+        ? "Regime: " + data.regime
+        : "AI synchronized";
+
+  lastPrediction = prediction;
+
+}
+
+
+/* -----------------------------
+   HISTORY
+----------------------------- */
+
+function renderHistory(rows){
+
+  const body =
+    document.getElementById("historyBody");
+
+  if(!Array.isArray(rows) || rows.length === 0){
+
+    body.innerHTML =
+      `<tr>
+        <td colspan="4">No history yet</td>
+      </tr>`;
+
+    document.getElementById("recordStats")
+      .textContent = "0 records";
+
     return;
   }
 
-  started = true;
+  const list =
+    rows.slice(0,30);
 
-  startTimer();
+  let wins = 0;
+  let losses = 0;
 
-  await refreshAll();
+  body.innerHTML =
+    list.map(row=>{
 
-  startPolling();
+      const period =
+        row.target_issue ??
+        row.issueNumber ??
+        row.period ??
+        "—";
+
+      const pred =
+        String(
+          row.prediction ??
+          row.pred ??
+          "—"
+        ).toUpperCase();
+
+      const actual =
+        String(
+          row.actual_result ??
+          row.result ??
+          ""
+        ).toUpperCase();
+
+      let status =
+        String(
+          row.status ??
+          ""
+        ).toUpperCase();
+
+      /*
+        IMPORTANT:
+        If actual result is missing,
+        it MUST remain PENDING.
+      */
+
+      if(!actual ||
+         actual === "—" ||
+         actual === "NULL" ||
+         actual === "PENDING"){
+
+        status = "PENDING";
+
+      }else{
+
+        if(
+          status !== "WIN" &&
+          status !== "LOSS"
+        ){
+
+          if(pred === actual){
+            status = "WIN";
+          }else{
+            status = "LOSS";
+          }
+
+        }
+
+      }
+
+      if(status === "WIN") wins++;
+      if(status === "LOSS") losses++;
+
+      return `
+        <tr>
+
+          <td>${esc(period)}</td>
+
+          <td class="${getClass(pred)}">
+            ${esc(pred || "—")}
+          </td>
+
+          <td class="${getClass(actual)}">
+            ${esc(actual || "—")}
+          </td>
+
+          <td class="${getClass(status)}">
+            ${esc(status || "PENDING")}
+          </td>
+
+        </tr>
+      `;
+
+    }).join("");
+
+  document.getElementById("recordStats")
+    .textContent =
+      `${wins}W • ${losses}L`;
+
 }
+
+
+/* -----------------------------
+   MUSIC
+----------------------------- */
+
+const music =
+  document.getElementById("music");
+
+const musicBtn =
+  document.getElementById("musicBtn");
+
+let playing = false;
+
+musicBtn.onclick = async ()=>{
+
+  try{
+
+    if(!playing){
+
+      await music.play();
+
+      playing = true;
+      musicBtn.textContent = "🔊";
+
+    }else{
+
+      music.pause();
+
+      playing = false;
+      musicBtn.textContent = "♫";
+
+    }
+
+  }catch(e){
+
+    console.log(e);
+
+  }
+
+};
+
+
+/* -----------------------------
+   START
+----------------------------- */
+
+loadState();
+
+setInterval(loadState,1000);
 
 </script>
 
