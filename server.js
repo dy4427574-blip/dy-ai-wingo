@@ -31,7 +31,7 @@ const WINGOBOT_API =
 
 const PUBLIC_DIR = path.resolve(__dirname);
 
-const MODEL_VERSION = "DY-AI-STAT-V3";
+const MODEL_VERSION = "DY-AI-STAT-V4";
 
 const THINKING_DURATION_MS = 4000;
 
@@ -58,9 +58,7 @@ if (DATABASE_URL) {
 async function initDatabase() {
 
   if (!pool) {
-    console.log(
-      "DATABASE_URL not configured"
-    );
+    console.log("DATABASE_URL not configured");
     return;
   }
 
@@ -120,26 +118,18 @@ let providerState = {
 let modelCache = {
   targetIssue: null,
   prediction: null,
-
   confidence: 0,
   confidenceLevel: "LOW",
-
   reason: "",
-
-  modelVersion:
-    MODEL_VERSION,
-
+  modelVersion: MODEL_VERSION,
   generatedAt: 0,
-
-  thinkingDurationMs:
-    THINKING_DURATION_MS,
-
+  thinkingDurationMs: THINKING_DURATION_MS,
   analysis: null
 };
 
 
 /* =========================================================
-   HELPERS
+   GENERAL HELPERS
 ========================================================= */
 
 function now() {
@@ -149,22 +139,14 @@ function now() {
 
 function json(res, status, data) {
 
-  const body =
-    JSON.stringify(data);
+  const body = JSON.stringify(data);
 
   res.writeHead(status, {
-    "Content-Type":
-      "application/json; charset=utf-8",
-
-    "Cache-Control":
-      "no-store",
-
-    "Access-Control-Allow-Origin":
-      "*",
-
+    "Content-Type": "application/json; charset=utf-8",
+    "Cache-Control": "no-store",
+    "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers":
       "Content-Type, X-Access-Key, X-Device-Id, X-Admin-Key, Authorization",
-
     "Access-Control-Allow-Methods":
       "GET, POST, DELETE, OPTIONS"
   });
@@ -186,11 +168,8 @@ function text(
       : `${type}; charset=utf-8`;
 
   res.writeHead(status, {
-    "Content-Type":
-      contentType,
-
-    "Cache-Control":
-      "no-store"
+    "Content-Type": contentType,
+    "Cache-Control": "no-store"
   });
 
   res.end(body);
@@ -199,8 +178,7 @@ function text(
 
 function safeNumber(value) {
 
-  const n =
-    Number(value);
+  const n = Number(value);
 
   return Number.isFinite(n)
     ? n
@@ -217,16 +195,13 @@ function issueString(value) {
     return null;
   }
 
-  return (
-    String(value).trim() || null
-  );
+  return String(value).trim() || null;
 }
 
 
 function incrementIssue(issue) {
 
-  const s =
-    issueString(issue);
+  const s = issueString(issue);
 
   if (!s) {
     return null;
@@ -235,13 +210,8 @@ function incrementIssue(issue) {
   if (/^\d+$/.test(s)) {
 
     try {
-
-      return (
-        BigInt(s) + 1n
-      ).toString();
-
+      return (BigInt(s) + 1n).toString();
     } catch {
-
       return null;
     }
   }
@@ -250,18 +220,44 @@ function incrementIssue(issue) {
 }
 
 
-function clamp(
-  value,
-  min,
-  max
-) {
+function compareNumericIssues(a, b) {
+
+  const x = issueString(a);
+  const y = issueString(b);
+
+  if (!x || !y) {
+    return 0;
+  }
+
+  if (
+    /^\d+$/.test(x) &&
+    /^\d+$/.test(y)
+  ) {
+
+    try {
+
+      const bx = BigInt(x);
+      const by = BigInt(y);
+
+      if (bx > by) return 1;
+      if (bx < by) return -1;
+
+      return 0;
+
+    } catch {
+      return x.localeCompare(y);
+    }
+  }
+
+  return x.localeCompare(y);
+}
+
+
+function clamp(value, min, max) {
 
   return Math.max(
     min,
-    Math.min(
-      max,
-      value
-    )
+    Math.min(max, value)
   );
 }
 
@@ -269,16 +265,12 @@ function clamp(
 function round2(value) {
 
   return Number(
-    Number(value || 0)
-      .toFixed(2)
+    Number(value || 0).toFixed(2)
   );
 }
 
 
-function percentage(
-  count,
-  total
-) {
+function percentage(count, total) {
 
   if (!total) {
     return 0;
@@ -287,6 +279,25 @@ function percentage(
   return round2(
     (count / total) * 100
   );
+}
+
+
+function sideFromNumber(number) {
+
+  const n = safeNumber(number);
+
+  if (
+    n === null ||
+    !Number.isInteger(n) ||
+    n < 0 ||
+    n > 9
+  ) {
+    return null;
+  }
+
+  return n >= 5
+    ? "BIG"
+    : "SMALL";
 }
 
 
@@ -307,18 +318,12 @@ function normalizeResult(row) {
       row.digit
     );
 
-  if (
-    number !== null &&
-    Number.isInteger(number) &&
-    number >= 0 &&
-    number <= 9
-  ) {
+  const numberSide =
+    sideFromNumber(number);
 
-    return number >= 5
-      ? "BIG"
-      : "SMALL";
+  if (numberSide) {
+    return numberSide;
   }
-
 
   const raw =
     String(
@@ -329,7 +334,6 @@ function normalizeResult(row) {
     )
       .trim()
       .toUpperCase();
-
 
   if (raw === "BIG") {
     return "BIG";
@@ -350,7 +354,7 @@ function normalizeHistory(input) {
   }
 
   return input
-    .map((row) => {
+    .map(row => {
 
       const issue =
         issueString(
@@ -360,7 +364,6 @@ function normalizeHistory(input) {
           row.periodNumber
         );
 
-
       const number =
         safeNumber(
           row.number ??
@@ -368,15 +371,12 @@ function normalizeHistory(input) {
           row.digit
         );
 
-
       const result =
         normalizeResult(row);
 
-
       return {
 
-        issueNumber:
-          issue,
+        issueNumber: issue,
 
         number:
           number !== null &&
@@ -403,21 +403,15 @@ function normalizeHistory(input) {
       };
 
     })
-    .filter(
-      (x) =>
-        x.issueNumber
-    );
+    .filter(row => row.issueNumber);
 }
 
 
 /* =========================================================
-   WINGOBOT FETCH
+   WINGOBOT HTTP
 ========================================================= */
 
-function fetchJson(
-  url,
-  headers = {}
-) {
+function fetchJson(url, headers = {}) {
 
   return new Promise(
     (resolve, reject) => {
@@ -427,43 +421,31 @@ function fetchJson(
           url,
           {
             headers: {
-              Accept:
-                "application/json",
-
-              "User-Agent":
-                "DY-AI-Wingo/3.0",
-
+              Accept: "application/json",
+              "User-Agent": "DY-AI-Wingo/4.0",
               ...headers
             },
-
             timeout: 15000
           },
-
-          (response) => {
+          response => {
 
             let body = "";
 
-            response.setEncoding(
-              "utf8"
-            );
-
+            response.setEncoding("utf8");
 
             response.on(
               "data",
-              (chunk) => {
+              chunk => {
                 body += chunk;
               }
             );
-
 
             response.on(
               "end",
               () => {
 
                 const status =
-                  response.statusCode ||
-                  0;
-
+                  response.statusCode || 0;
 
                 if (
                   status < 200 ||
@@ -478,7 +460,6 @@ function fetchJson(
 
                   return;
                 }
-
 
                 try {
 
@@ -499,7 +480,6 @@ function fetchJson(
           }
         );
 
-
       request.on(
         "timeout",
         () => {
@@ -512,7 +492,6 @@ function fetchJson(
         }
       );
 
-
       request.on(
         "error",
         reject
@@ -522,19 +501,21 @@ function fetchJson(
 }
 
 
+/* =========================================================
+   PROVIDER REFRESH
+========================================================= */
+
 async function refreshProvider() {
 
   if (!WINGOBOT_TOKEN) {
 
-    providerState.ok =
-      false;
+    providerState.ok = false;
 
     providerState.error =
       "WINGOBOT_TOKEN environment variable missing";
 
     return;
   }
-
 
   try {
 
@@ -547,12 +528,10 @@ async function refreshProvider() {
         }
       );
 
-
     const history =
       normalizeHistory(
         data.history
       );
-
 
     const currentIssue =
       issueString(
@@ -561,26 +540,18 @@ async function refreshProvider() {
         null
       );
 
-
     let lastUpdated =
       safeNumber(
         data?.stats?.last_updated ??
         data?.last_updated
       ) || 0;
 
-
-    /*
-      Seconds / milliseconds dono handle.
-    */
-
     if (
       lastUpdated > 0 &&
       lastUpdated < 100000000000
     ) {
-
       lastUpdated *= 1000;
     }
-
 
     providerState = {
 
@@ -593,54 +564,34 @@ async function refreshProvider() {
       fetched:
         safeNumber(
           data?.stats?.fetched
-        ) ||
-        history.length,
+        ) || history.length,
 
       lastUpdated,
 
       error: null,
 
-      fetchedAt:
-        now()
+      fetchedAt: now()
     };
 
-
-    /*
-      Exact issue settlement.
-    */
-
-    await settlePredictions(
-      history
-    );
-
+    await settlePredictions(history);
 
     const target =
       resolveTargetIssue();
 
-
-    /*
-      Target change hone par complete analysis
-      dobara calculate hoga.
-    */
-
     if (
       target &&
-      modelCache.targetIssue !==
-        target
+      modelCache.targetIssue !== target
     ) {
-
       generatePrediction();
     }
 
   } catch (error) {
 
-    providerState.ok =
-      false;
+    providerState.ok = false;
 
     providerState.error =
       error?.message ||
       "Provider error";
-
 
     console.error(
       "Provider refresh error:",
@@ -657,19 +608,15 @@ async function refreshProvider() {
 function resolveTargetIssue() {
 
   const history =
-    providerState.history ||
-    [];
-
+    providerState.history || [];
 
   const latestSettled =
-    history.length > 0
+    history.length
       ? history[0]?.issueNumber
       : null;
 
-
   const current =
     providerState.currentIssue;
-
 
   if (
     current &&
@@ -682,120 +629,71 @@ function resolveTargetIssue() {
         latestSettled
       ) > 0
     ) {
-
       return current;
     }
-
 
     return incrementIssue(
       latestSettled
     );
   }
-
 
   if (current) {
     return current;
   }
 
-
   if (latestSettled) {
-
     return incrementIssue(
       latestSettled
     );
   }
 
-
   return null;
 }
 
 
-function compareNumericIssues(
-  a,
-  b
-) {
-
-  const x =
-    issueString(a);
-
-  const y =
-    issueString(b);
-
-
-  if (!x || !y) {
-    return 0;
-  }
-
-
-  if (
-    /^\d+$/.test(x) &&
-    /^\d+$/.test(y)
-  ) {
-
-    try {
-
-      const bx =
-        BigInt(x);
-
-      const by =
-        BigInt(y);
-
-
-      if (bx > by) {
-        return 1;
-      }
-
-      if (bx < by) {
-        return -1;
-      }
-
-      return 0;
-
-    } catch {
-
-      return x.localeCompare(y);
-    }
-  }
-
-
-  return x.localeCompare(y);
-}
-
-
 /* =========================================================
-   BASIC SEQUENCE
+   SEQUENCE HELPERS
 ========================================================= */
 
-function getResults(
-  rows,
-  limit = 50
-) {
+function getValidRows(rows, limit = 1000) {
 
   return (rows || [])
-    .map(normalizeResult)
-    .filter(Boolean)
+    .filter(row =>
+      row &&
+      issueString(row.issueNumber)
+    )
+    .filter(row =>
+      normalizeResult(row)
+    )
     .slice(0, limit);
 }
 
 
-/*
-  Provider history newest -> oldest.
-  For current streak:
-  sequence[0] = latest settled result.
-*/
+function getResults(rows, limit = 1000) {
+
+  return getValidRows(rows, limit)
+    .map(normalizeResult);
+}
 
 
-function convertSequence(rows) {
+function getNumbers(rows, limit = 1000) {
 
-  return getResults(
-    rows,
-    50
-  );
+  return getValidRows(rows, limit)
+    .map(row =>
+      safeNumber(row.number)
+    )
+    .filter(
+      n =>
+        n !== null &&
+        Number.isInteger(n) &&
+        n >= 0 &&
+        n <= 9
+    );
 }
 
 
 /* =========================================================
-   FREQUENCY ANALYSIS
+   FREQUENCY
 ========================================================= */
 
 function frequencyAnalysis(sequence) {
@@ -803,18 +701,15 @@ function frequencyAnalysis(sequence) {
   const total =
     sequence.length;
 
-
   const bigCount =
     sequence.filter(
       x => x === "BIG"
     ).length;
 
-
   const smallCount =
     sequence.filter(
       x => x === "SMALL"
     ).length;
-
 
   return {
 
@@ -845,29 +740,16 @@ function calculateWindow(
 ) {
 
   const data =
-    sequence.slice(
-      0,
-      size
-    );
-
+    sequence.slice(0, size);
 
   const frequency =
-    frequencyAnalysis(
-      data
-    );
-
+    frequencyAnalysis(data);
 
   const switching =
-    switchingAnalysis(
-      data
-    );
-
+    switchingAnalysis(data);
 
   const streak =
-    currentStreak(
-      data
-    );
-
+    currentStreak(data);
 
   return {
 
@@ -913,12 +795,10 @@ function calculateWindow(
 
 
 /* =========================================================
-   STREAK ANALYSIS
+   STREAK
 ========================================================= */
 
-function currentStreak(
-  sequence
-) {
+function currentStreak(sequence) {
 
   if (!sequence.length) {
 
@@ -928,13 +808,10 @@ function currentStreak(
     };
   }
 
-
   const side =
     sequence[0];
 
-
   let length = 1;
-
 
   for (
     let i = 1;
@@ -951,7 +828,6 @@ function currentStreak(
     length++;
   }
 
-
   return {
     side,
     length
@@ -959,23 +835,18 @@ function currentStreak(
 }
 
 
-function runLengths(
-  sequence
-) {
+function runLengths(sequence) {
 
   const runs = [];
-
 
   if (!sequence.length) {
     return runs;
   }
 
-
   let side =
     sequence[0];
 
   let length = 1;
-
 
   for (
     let i = 1;
@@ -1003,12 +874,10 @@ function runLengths(
     }
   }
 
-
   runs.push({
     side,
     length
   });
-
 
   return runs;
 }
@@ -1021,7 +890,6 @@ function countRunLengths(
 
   const counts = {};
 
-
   for (
     const run of runs
   ) {
@@ -1032,12 +900,9 @@ function countRunLengths(
       continue;
     }
 
-
     counts[run.length] =
-      (counts[run.length] || 0) +
-      1;
+      (counts[run.length] || 0) + 1;
   }
-
 
   return counts;
 }
@@ -1054,30 +919,23 @@ function modeRunLength(
       side
     );
 
-
   const entries =
     Object.entries(counts);
-
 
   if (!entries.length) {
     return null;
   }
 
-
   entries.sort(
     (a, b) => {
 
-      if (
-        Number(b[1]) !==
-        Number(a[1])
-      ) {
+      const countDiff =
+        Number(b[1]) -
+        Number(a[1]);
 
-        return (
-          Number(b[1]) -
-          Number(a[1])
-        );
+      if (countDiff !== 0) {
+        return countDiff;
       }
-
 
       return (
         Number(a[0]) -
@@ -1085,7 +943,6 @@ function modeRunLength(
       );
     }
   );
-
 
   return Number(
     entries[0][0]
@@ -1101,14 +958,11 @@ function longestRun(
   const values =
     runs
       .filter(
-        r =>
-          r.side === side
+        r => r.side === side
       )
       .map(
-        r =>
-          r.length
+        r => r.length
       );
-
 
   return values.length
     ? Math.max(...values)
@@ -1116,35 +970,13 @@ function longestRun(
 }
 
 
-function runAnalysis(
-  sequence
-) {
+function runAnalysis(sequence) {
 
   const runs =
-    runLengths(
-      sequence
-    );
-
+    runLengths(sequence);
 
   const current =
-    currentStreak(
-      sequence
-    );
-
-
-  const bigRuns =
-    runs.filter(
-      r =>
-        r.side === "BIG"
-    );
-
-
-  const smallRuns =
-    runs.filter(
-      r =>
-        r.side === "SMALL"
-    );
-
+    currentStreak(sequence);
 
   return {
 
@@ -1178,12 +1010,17 @@ function runAnalysis(
       ),
 
     bigRunCount:
-      bigRuns.length,
+      runs.filter(
+        r => r.side === "BIG"
+      ).length,
 
     smallRunCount:
-      smallRuns.length,
+      runs.filter(
+        r => r.side === "SMALL"
+      ).length,
 
     distribution: {
+
       big:
         countRunLengths(
           runs,
@@ -1201,12 +1038,10 @@ function runAnalysis(
 
 
 /* =========================================================
-   SWITCHING ANALYSIS
+   SWITCH RATE
 ========================================================= */
 
-function switchingAnalysis(
-  sequence
-) {
+function switchingAnalysis(sequence) {
 
   let switches = 0;
 
@@ -1215,7 +1050,6 @@ function switchingAnalysis(
       0,
       sequence.length - 1
     );
-
 
   for (
     let i = 0;
@@ -1227,11 +1061,9 @@ function switchingAnalysis(
       sequence[i] !==
       sequence[i + 1]
     ) {
-
       switches++;
     }
   }
-
 
   const switchRate =
     percentage(
@@ -1239,26 +1071,20 @@ function switchingAnalysis(
       transitions
     );
 
-
   let classification =
     "BALANCED";
-
 
   if (
     switchRate >= 65
   ) {
-
     classification =
       "HIGH SWITCHING";
-
   } else if (
     switchRate <= 35
   ) {
-
     classification =
       "LOW SWITCHING";
   }
-
 
   return {
 
@@ -1277,25 +1103,22 @@ function switchingAnalysis(
    TRANSITION MATRIX
 ========================================================= */
 
-function transitionAnalysis(
-  sequence
-) {
+function transitionAnalysis(sequence) {
 
   let BB = 0;
   let BS = 0;
   let SB = 0;
   let SS = 0;
 
-
   /*
-    sequence newest -> oldest.
+    sequence:
+    newest -> oldest
 
-    Chronological transition:
-    older state -> newer state
+    previous chronological state:
+    sequence[i + 1]
 
-    Therefore:
-    previous = sequence[i + 1]
-    next     = sequence[i]
+    next chronological state:
+    sequence[i]
   */
 
   for (
@@ -1310,14 +1133,12 @@ function transitionAnalysis(
     const next =
       sequence[i];
 
-
     if (
       previous === "BIG" &&
       next === "BIG"
     ) {
       BB++;
     }
-
 
     if (
       previous === "BIG" &&
@@ -1326,14 +1147,12 @@ function transitionAnalysis(
       BS++;
     }
 
-
     if (
       previous === "SMALL" &&
       next === "BIG"
     ) {
       SB++;
     }
-
 
     if (
       previous === "SMALL" &&
@@ -1343,25 +1162,20 @@ function transitionAnalysis(
     }
   }
 
-
   const afterBig =
     BB + BS;
-
 
   const afterSmall =
     SB + SS;
 
-
   return {
 
     counts: {
-
       BB,
       BS,
       SB,
       SS
     },
-
 
     probabilities: {
 
@@ -1390,7 +1204,6 @@ function transitionAnalysis(
         )
     },
 
-
     previousStateTotals: {
 
       BIG:
@@ -1399,7 +1212,6 @@ function transitionAnalysis(
       SMALL:
         afterSmall
     },
-
 
     sampleSize:
       Math.max(
@@ -1411,15 +1223,476 @@ function transitionAnalysis(
 
 
 /* =========================================================
-   PATTERN DETECTION HELPERS
+   RECENT MOMENTUM
 ========================================================= */
 
-function alternatingPattern(
+function momentumAnalysis(sequence) {
+
+  const windows = [
+    5,
+    10,
+    20
+  ];
+
+  const scores = [];
+
+  for (
+    const size of windows
+  ) {
+
+    if (
+      sequence.length < size
+    ) {
+      continue;
+    }
+
+    const data =
+      sequence.slice(
+        0,
+        size
+      );
+
+    const frequency =
+      frequencyAnalysis(data);
+
+    const edge =
+      frequency.bigPercent -
+      frequency.smallPercent;
+
+    scores.push({
+
+      window: size,
+
+      bigPercent:
+        frequency.bigPercent,
+
+      smallPercent:
+        frequency.smallPercent,
+
+      edge
+    });
+  }
+
+  if (!scores.length) {
+
+    return {
+
+      big: 50,
+      small: 50,
+      strength: 0,
+      direction: "NEUTRAL",
+      windows: []
+    };
+  }
+
+  /*
+    Most recent window gets highest weight.
+  */
+
+  const weights = [
+    0.55,
+    0.30,
+    0.15
+  ];
+
+  let weightedEdge = 0;
+
+  scores.forEach(
+    (item, index) => {
+
+      weightedEdge +=
+        item.edge *
+        (weights[index] || 0.10);
+    }
+  );
+
+  weightedEdge =
+    clamp(
+      weightedEdge,
+      -30,
+      30
+    );
+
+  const big =
+    50 +
+    weightedEdge;
+
+  const small =
+    50 -
+    weightedEdge;
+
+  return {
+
+    big:
+      round2(big),
+
+    small:
+      round2(small),
+
+    strength:
+      round2(
+        Math.abs(weightedEdge)
+      ),
+
+    direction:
+      weightedEdge > 3
+        ? "BIG"
+        : weightedEdge < -3
+          ? "SMALL"
+          : "NEUTRAL",
+
+    windows:
+      scores
+  };
+}
+
+
+/* =========================================================
+   DIGIT FREQUENCY
+========================================================= */
+
+function digitFrequencyAnalysis(rows) {
+
+  const valid =
+    getValidRows(
+      rows,
+      1000
+    );
+
+  const counts =
+    Array(10).fill(0);
+
+  for (
+    const row of valid
+  ) {
+
+    const n =
+      safeNumber(
+        row.number
+      );
+
+    if (
+      n !== null &&
+      Number.isInteger(n) &&
+      n >= 0 &&
+      n <= 9
+    ) {
+
+      counts[n]++;
+    }
+  }
+
+  const total =
+    counts.reduce(
+      (a, b) => a + b,
+      0
+    );
+
+  const bigDigits =
+    counts
+      .slice(5, 10)
+      .reduce(
+        (a, b) => a + b,
+        0
+      );
+
+  const smallDigits =
+    counts
+      .slice(0, 5)
+      .reduce(
+        (a, b) => a + b,
+        0
+      );
+
+  let rarestDigit = null;
+  let rarestCount = Infinity;
+
+  let hottestDigit = null;
+  let hottestCount = -1;
+
+  counts.forEach(
+    (count, digit) => {
+
+      if (
+        count < rarestCount
+      ) {
+
+        rarestCount = count;
+        rarestDigit = digit;
+      }
+
+      if (
+        count > hottestCount
+      ) {
+
+        hottestCount = count;
+        hottestDigit = digit;
+      }
+    }
+  );
+
+  const bigPercent =
+    percentage(
+      bigDigits,
+      total
+    );
+
+  const smallPercent =
+    percentage(
+      smallDigits,
+      total
+    );
+
+  return {
+
+    total,
+
+    counts,
+
+    percentages:
+      counts.map(
+        count =>
+          percentage(
+            count,
+            total
+          )
+      ),
+
+    bigCount:
+      bigDigits,
+
+    smallCount:
+      smallDigits,
+
+    bigPercent,
+
+    smallPercent,
+
+    hottestDigit,
+
+    hottestCount,
+
+    rarestDigit,
+
+    rarestCount,
+
+    direction:
+      bigPercent >
+      smallPercent + 6
+        ? "BIG"
+        : smallPercent >
+          bigPercent + 6
+          ? "SMALL"
+          : "NEUTRAL"
+  };
+}
+
+
+/* =========================================================
+   GAP ANALYSIS
+========================================================= */
+
+function gapAnalysis(sequence) {
+
+  let bigGap = null;
+  let smallGap = null;
+
+  let bigSeen = false;
+  let smallSeen = false;
+
+  for (
+    let i = 0;
+    i < sequence.length;
+    i++
+  ) {
+
+    if (
+      !bigSeen &&
+      sequence[i] === "BIG"
+    ) {
+
+      bigGap = i;
+      bigSeen = true;
+    }
+
+    if (
+      !smallSeen &&
+      sequence[i] === "SMALL"
+    ) {
+
+      smallGap = i;
+      smallSeen = true;
+    }
+
+    if (
+      bigSeen &&
+      smallSeen
+    ) {
+      break;
+    }
+  }
+
+  /*
+    Gap is descriptive only.
+    It is NOT treated as "overdue = guaranteed".
+  */
+
+  let direction = "NEUTRAL";
+
+  if (
+    bigGap !== null &&
+    smallGap !== null
+  ) {
+
+    const difference =
+      bigGap -
+      smallGap;
+
+    if (
+      difference >= 3
+    ) {
+      direction = "BIG";
+    } else if (
+      difference <= -3
+    ) {
+      direction = "SMALL";
+    }
+  }
+
+  return {
+
+    bigGap,
+
+    smallGap,
+
+    direction,
+
+    difference:
+      bigGap !== null &&
+      smallGap !== null
+        ? bigGap - smallGap
+        : null
+  };
+}
+
+
+/* =========================================================
+   REPETITION DETECTION
+========================================================= */
+
+function exactRepetitionAnalysis(
   sequence
 ) {
 
+  const sizes =
+    [2, 3, 4, 5];
+
+  const detected = [];
+
+  for (
+    const size of sizes
+  ) {
+
+    if (
+      sequence.length <
+      size * 2
+    ) {
+      continue;
+    }
+
+    const current =
+      sequence.slice(
+        0,
+        size
+      );
+
+    for (
+      let start = size;
+      start + size <=
+        sequence.length;
+      start++
+    ) {
+
+      const block =
+        sequence.slice(
+          start,
+          start + size
+        );
+
+      let same = 0;
+
+      for (
+        let i = 0;
+        i < size;
+        i++
+      ) {
+
+        if (
+          current[i] ===
+          block[i]
+        ) {
+          same++;
+        }
+      }
+
+      const similarity =
+        percentage(
+          same,
+          size
+        );
+
+      if (
+        similarity >= 75
+      ) {
+
+        detected.push({
+
+          blockSize: size,
+
+          start,
+
+          similarity,
+
+          current:
+            current.join("-"),
+
+          previous:
+            block.join("-")
+        });
+      }
+    }
+  }
+
+  detected.sort(
+    (a, b) =>
+      b.similarity -
+      a.similarity
+  );
+
+  const best =
+    detected[0] || null;
+
+  return {
+
+    detected:
+      Boolean(best),
+
+    best,
+
+    matches:
+      detected.slice(0, 15)
+  };
+}
+
+
+/* =========================================================
+   PATTERN MATCHING
+========================================================= */
+
+function alternatingPattern(sequence) {
+
   if (
-    sequence.length < 2
+    sequence.length < 4
   ) {
 
     return {
@@ -1428,9 +1701,7 @@ function alternatingPattern(
     };
   }
 
-
   let length = 1;
-
 
   for (
     let i = 1;
@@ -1442,13 +1713,11 @@ function alternatingPattern(
       sequence[i] ===
       sequence[i - 1]
     ) {
-
       break;
     }
 
     length++;
   }
-
 
   return {
 
@@ -1482,13 +1751,11 @@ function repeatedBlockPattern(
     };
   }
 
-
   const recent =
     sequence.slice(
       0,
       blockSize * 3
     );
-
 
   const firstBlock =
     recent.slice(
@@ -1496,13 +1763,12 @@ function repeatedBlockPattern(
       blockSize
     );
 
-
   let repetitions = 1;
-
 
   for (
     let start = blockSize;
-    start + blockSize <= recent.length;
+    start + blockSize <=
+      recent.length;
     start += blockSize
   ) {
 
@@ -1511,7 +1777,6 @@ function repeatedBlockPattern(
         start,
         start + blockSize
       );
-
 
     if (
       block.join("") ===
@@ -1525,7 +1790,6 @@ function repeatedBlockPattern(
       break;
     }
   }
-
 
   return {
 
@@ -1542,382 +1806,41 @@ function repeatedBlockPattern(
 }
 
 
-function runStructurePattern(
-  sequence,
-  firstLength,
-  secondLength
+function patternStrength(
+  value,
+  total
 ) {
-
-  const runs =
-    runLengths(
-      sequence
-    );
-
 
   if (
-    runs.length < 4
+    !total ||
+    !value
   ) {
-
-    return {
-      detected: false,
-      runPattern:
-        `${firstLength}-${secondLength}`
-    };
+    return "LOW";
   }
 
-
-  let matches = 0;
-
-
-  /*
-    Run order newest -> oldest.
-    We only compare lengths.
-  */
-
-  for (
-    let i = 0;
-    i < runs.length - 1;
-    i += 2
-  ) {
-
-    const a =
-      runs[i]?.length;
-
-    const b =
-      runs[i + 1]?.length;
-
-
-    if (
-      a === firstLength &&
-      b === secondLength
-    ) {
-
-      matches++;
-    }
-  }
-
-
-  return {
-
-    detected:
-      matches >= 2,
-
-    matches,
-
-    runPattern:
-      `${firstLength}-${secondLength}`
-  };
-}
-
-
-function increasingRuns(
-  sequence
-) {
-
-  const runs =
-    runLengths(
-      sequence
-    );
-
+  const ratio =
+    value / total;
 
   if (
-    runs.length < 4
+    ratio >= 0.70
   ) {
-
-    return {
-      detected: false,
-      lengths:
-        runs.map(
-          r =>
-            r.length
-        )
-    };
+    return "HIGH";
   }
-
-
-  /*
-    Check chronological order.
-    Since array is newest -> oldest,
-    reverse run lengths first.
-  */
-
-  const lengths =
-    runs
-      .map(
-        r =>
-          r.length
-      )
-      .reverse();
-
-
-  let increasingPairs = 0;
-
-
-  for (
-    let i = 1;
-    i < lengths.length;
-    i++
-  ) {
-
-    if (
-      lengths[i] >
-      lengths[i - 1]
-    ) {
-
-      increasingPairs++;
-    }
-  }
-
-
-  const pairs =
-    Math.max(
-      0,
-      lengths.length - 1
-    );
-
-
-  return {
-
-    detected:
-      pairs >= 3 &&
-      increasingPairs /
-        pairs >= 0.70,
-
-    ratio:
-      pairs
-        ? round2(
-            increasingPairs /
-            pairs
-          )
-        : 0,
-
-    lengths
-  };
-}
-
-
-function decreasingRuns(
-  sequence
-) {
-
-  const runs =
-    runLengths(
-      sequence
-    );
-
 
   if (
-    runs.length < 4
+    ratio >= 0.45
   ) {
-
-    return {
-      detected: false,
-      lengths:
-        runs.map(
-          r =>
-            r.length
-        )
-    };
+    return "MEDIUM";
   }
 
-
-  const lengths =
-    runs
-      .map(
-        r =>
-          r.length
-      )
-      .reverse();
-
-
-  let decreasingPairs = 0;
-
-
-  for (
-    let i = 1;
-    i < lengths.length;
-    i++
-  ) {
-
-    if (
-      lengths[i] <
-      lengths[i - 1]
-    ) {
-
-      decreasingPairs++;
-    }
-  }
-
-
-  const pairs =
-    Math.max(
-      0,
-      lengths.length - 1
-    );
-
-
-  return {
-
-    detected:
-      pairs >= 3 &&
-      decreasingPairs /
-        pairs >= 0.70,
-
-    ratio:
-      pairs
-        ? round2(
-            decreasingPairs /
-            pairs
-          )
-        : 0,
-
-    lengths
-  };
+  return "LOW";
 }
 
 
-/* =========================================================
-   REPEATING BLOCK SIMILARITY
-========================================================= */
-
-function repeatingBlockAnalysis(
-  sequence
-) {
-
-  const possibleSizes =
-    [2, 3, 4, 5];
-
-
-  const matches = [];
-
-
-  for (
-    const size of possibleSizes
-  ) {
-
-    if (
-      sequence.length <
-      size * 2
-    ) {
-      continue;
-    }
-
-
-    const current =
-      sequence.slice(
-        0,
-        size
-      );
-
-
-    /*
-      Search older blocks for same sequence.
-    */
-
-    for (
-      let start = size;
-      start + size <=
-        sequence.length;
-      start++
-    ) {
-
-      const block =
-        sequence.slice(
-          start,
-          start + size
-        );
-
-
-      let same = 0;
-
-
-      for (
-        let i = 0;
-        i < size;
-        i++
-      ) {
-
-        if (
-          current[i] ===
-          block[i]
-        ) {
-
-          same++;
-        }
-      }
-
-
-      const similarity =
-        percentage(
-          same,
-          size
-        );
-
-
-      if (
-        similarity >= 75
-      ) {
-
-        matches.push({
-
-          blockSize:
-            size,
-
-          start,
-
-          similarity,
-
-          current:
-            current.join("-"),
-
-          previous:
-            block.join("-")
-        });
-      }
-    }
-  }
-
-
-  matches.sort(
-    (a, b) =>
-      b.similarity -
-      a.similarity
-  );
-
-
-  const best =
-    matches[0] || null;
-
-
-  return {
-
-    detected:
-      Boolean(best),
-
-    best,
-
-    matches:
-      matches.slice(
-        0,
-        10
-      )
-  };
-}
-
-
-/* =========================================================
-   PATTERN MASTER ANALYSIS
-========================================================= */
-
-function patternAnalysis(
-  sequence
-) {
+function patternAnalysis(sequence) {
 
   const alternating =
-    alternatingPattern(
-      sequence
-    );
-
+    alternatingPattern(sequence);
 
   const pattern22 =
     repeatedBlockPattern(
@@ -1925,50 +1848,21 @@ function patternAnalysis(
       2
     );
 
-
   const pattern33 =
     repeatedBlockPattern(
       sequence,
       3
     );
 
-
-  const pattern12 =
-    runStructurePattern(
-      sequence,
-      1,
-      2
-    );
-
-
-  const pattern21 =
-    runStructurePattern(
-      sequence,
-      2,
-      1
-    );
-
-
-  const increasing =
-    increasingRuns(
-      sequence
-    );
-
-
-  const decreasing =
-    decreasingRuns(
-      sequence
-    );
-
-
   const repeating =
-    repeatingBlockAnalysis(
+    exactRepetitionAnalysis(
       sequence
     );
 
+  const current =
+    currentStreak(sequence);
 
   const detected = [];
-
 
   if (
     alternating.detected
@@ -1976,8 +1870,7 @@ function patternAnalysis(
 
     detected.push({
 
-      name:
-        "ALTERNATING",
+      name: "ALTERNATING",
 
       strength:
         patternStrength(
@@ -1990,24 +1883,20 @@ function patternAnalysis(
     });
   }
 
-
   if (
     pattern22.detected
   ) {
 
     detected.push({
 
-      name:
-        "2-2 PATTERN",
+      name: "2-2 PATTERN",
 
-      strength:
-        "MEDIUM",
+      strength: "MEDIUM",
 
       detail:
         `Repeated ${pattern22.block}`
     });
   }
-
 
   if (
     pattern33.detected
@@ -2015,132 +1904,34 @@ function patternAnalysis(
 
     detected.push({
 
-      name:
-        "3-3 PATTERN",
+      name: "3-3 PATTERN",
 
-      strength:
-        "MEDIUM",
+      strength: "MEDIUM",
 
       detail:
         `Repeated ${pattern33.block}`
     });
   }
 
-
   if (
-    pattern12.detected
+    repeating.detected &&
+    repeating.best
   ) {
 
     detected.push({
 
       name:
-        "1-2 PATTERN",
+        "REPEATING BLOCK",
 
       strength:
-        "MEDIUM",
-
-      detail:
-        `${pattern12.matches} matching run pairs`
-    });
-  }
-
-
-  if (
-    pattern21.detected
-  ) {
-
-    detected.push({
-
-      name:
-        "2-1 PATTERN",
-
-      strength:
-        "MEDIUM",
-
-      detail:
-        `${pattern21.matches} matching run pairs`
-    });
-  }
-
-
-  if (
-    increasing.detected
-  ) {
-
-    detected.push({
-
-      name:
-        "INCREASING STREAK",
-
-      strength:
-        patternStrength(
-          Math.round(
-            increasing.ratio * 10
-          ),
-          10
-        ),
-
-      detail:
-        "Run lengths increasing"
-    });
-  }
-
-
-  if (
-    decreasing.detected
-  ) {
-
-    detected.push({
-
-      name:
-        "DECREASING STREAK",
-
-      strength:
-        patternStrength(
-          Math.round(
-            decreasing.ratio * 10
-          ),
-          10
-        ),
-
-      detail:
-        "Run lengths decreasing"
-    });
-  }
-
-
-  if (
-    repeating.detected
-  ) {
-
-    detected.push({
-
-      name:
-        "REPEATING BLOCK DETECTED",
-
-      strength:
-        repeating.best &&
         repeating.best.similarity >= 90
           ? "HIGH"
           : "MEDIUM",
 
       detail:
-        repeating.best
-          ? `${repeating.best.similarity}% block similarity`
-          : "Similar block found"
+        `${repeating.best.similarity}% similarity`
     });
   }
-
-
-  /*
-    Same streak.
-  */
-
-  const current =
-    currentStreak(
-      sequence
-    );
-
 
   if (
     current.length >= 3
@@ -2154,50 +1945,24 @@ function patternAnalysis(
       strength:
         current.length >= 5
           ? "HIGH"
-          : current.length >= 3
-            ? "MEDIUM"
-            : "LOW",
+          : "MEDIUM",
 
       detail:
         `${current.side} ${current.length} rounds`
     });
   }
 
-
-  /*
-    Majority bias descriptive only.
-  */
-
   const frequency =
-    frequencyAnalysis(
-      sequence
+    frequencyAnalysis(sequence);
+
+  const frequencyEdge =
+    Math.abs(
+      frequency.bigPercent -
+      frequency.smallPercent
     );
 
-
-  let majority =
-    "BALANCED";
-
-
   if (
-    frequency.bigPercent >
-    frequency.smallPercent
-  ) {
-
-    majority =
-      "BIG DOMINANT";
-
-  } else if (
-    frequency.smallPercent >
-    frequency.bigPercent
-  ) {
-
-    majority =
-      "SMALL DOMINANT";
-  }
-
-
-  if (
-    majority !== "BALANCED"
+    frequencyEdge >= 10
   ) {
 
     detected.push({
@@ -2206,22 +1971,17 @@ function patternAnalysis(
         "MAJORITY BIAS",
 
       strength:
-        Math.abs(
-          frequency.bigPercent -
-          frequency.smallPercent
-        ) >= 20
+        frequencyEdge >= 20
           ? "HIGH"
           : "MEDIUM",
 
       detail:
-        majority
+        frequency.bigPercent >
+        frequency.smallPercent
+          ? "BIG dominant"
+          : "SMALL dominant"
     });
   }
-
-
-  /*
-    If nothing significant detected.
-  */
 
   if (!detected.length) {
 
@@ -2234,14 +1994,9 @@ function patternAnalysis(
         "LOW",
 
       detail:
-        "Sequence does not show a strong repeated structure"
+        "No strong repeated structure"
     });
   }
-
-
-  /*
-    Highest strength first.
-  */
 
   const rank = {
     HIGH: 3,
@@ -2249,13 +2004,11 @@ function patternAnalysis(
     LOW: 1
   };
 
-
   detected.sort(
     (a, b) =>
       (rank[b.strength] || 0) -
       (rank[a.strength] || 0)
   );
-
 
   return {
 
@@ -2270,58 +2023,279 @@ function patternAnalysis(
 
     pattern33,
 
-    pattern12,
-
-    pattern21,
-
-    increasing,
-
-    decreasing,
-
-    repeating,
-
-    majority
+    repeating
   };
 }
 
 
-function patternStrength(
-  value,
-  total
+/* =========================================================
+   HISTORICAL NEXT-STATE PATTERN MATCH
+========================================================= */
+
+function nextStatePatternAnalysis(
+  sequence
 ) {
 
-  if (
-    !total ||
-    !value
+  /*
+    Current recent pattern is compared with older
+    windows of the same size.
+
+    Example:
+    current = B,S,B
+
+    Search older B,S,B sequences.
+    Check what came chronologically after those
+    sequences in available history.
+
+    This is a weak empirical component.
+  */
+
+  const patternSizes =
+    [2, 3, 4];
+
+  const results = [];
+
+  for (
+    const size of patternSizes
   ) {
-    return "LOW";
+
+    if (
+      sequence.length <
+      size + 2
+    ) {
+      continue;
+    }
+
+    const current =
+      sequence.slice(
+        0,
+        size
+      );
+
+    let bigNext = 0;
+    let smallNext = 0;
+    let matches = 0;
+
+    /*
+      sequence is newest -> oldest.
+      At index start, pattern is:
+      sequence[start ... start+size-1]
+
+      The next chronological result after that
+      older pattern is at start-1.
+    */
+
+    for (
+      let start = size + 1;
+      start < sequence.length;
+      start++
+    ) {
+
+      const candidate =
+        sequence.slice(
+          start,
+          start + size
+        );
+
+      if (
+        candidate.length !== size
+      ) {
+        continue;
+      }
+
+      let same = true;
+
+      for (
+        let i = 0;
+        i < size;
+        i++
+      ) {
+
+        if (
+          candidate[i] !==
+          current[i]
+        ) {
+
+          same = false;
+          break;
+        }
+      }
+
+      if (!same) {
+        continue;
+      }
+
+      const next =
+        sequence[start - 1];
+
+      if (
+        next === "BIG"
+      ) {
+        bigNext++;
+      }
+
+      if (
+        next === "SMALL"
+      ) {
+        smallNext++;
+      }
+
+      if (next) {
+        matches++;
+      }
+    }
+
+    const total =
+      bigNext +
+      smallNext;
+
+    if (
+      total > 0
+    ) {
+
+      results.push({
+
+        size,
+
+        pattern:
+          current.join("-"),
+
+        matches,
+
+        bigNext,
+
+        smallNext,
+
+        bigPercent:
+          percentage(
+            bigNext,
+            total
+          ),
+
+        smallPercent:
+          percentage(
+            smallNext,
+            total
+          )
+      });
+    }
   }
 
+  if (!results.length) {
 
-  const ratio =
-    value / total;
+    return {
 
+      big: 50,
 
-  if (
-    ratio >= 0.70
-  ) {
-    return "HIGH";
+      small: 50,
+
+      matches: 0,
+
+      direction:
+        "NEUTRAL",
+
+      details: []
+    };
   }
 
+  /*
+    Prefer larger pattern only when it has enough matches.
+  */
 
-  if (
-    ratio >= 0.45
-  ) {
-    return "MEDIUM";
+  const usable =
+    results
+      .filter(
+        r => r.matches >= 2
+      );
+
+  if (!usable.length) {
+
+    return {
+
+      big: 50,
+
+      small: 50,
+
+      matches:
+        results.reduce(
+          (sum, r) =>
+            sum + r.matches,
+          0
+        ),
+
+      direction:
+        "NEUTRAL",
+
+      details:
+        results
+    };
   }
 
+  let weightedBig = 0;
+  let weightedTotal = 0;
 
-  return "LOW";
+  for (
+    const item of usable
+  ) {
+
+    const weight =
+      item.size *
+      Math.min(
+        item.matches,
+        5
+      );
+
+    weightedBig +=
+      item.bigPercent *
+      weight;
+
+    weightedTotal +=
+      100 *
+      weight;
+  }
+
+  const big =
+    weightedTotal
+      ? weightedBig /
+        weightedTotal *
+        100
+      : 50;
+
+  const small =
+    100 - big;
+
+  return {
+
+    big:
+      round2(big),
+
+    small:
+      round2(small),
+
+    matches:
+      usable.reduce(
+        (sum, r) =>
+          sum + r.matches,
+        0
+      ),
+
+    direction:
+      big >
+      small + 5
+        ? "BIG"
+        : small >
+          big + 5
+          ? "SMALL"
+          : "NEUTRAL",
+
+    details:
+      results
+  };
 }
 
 
 /* =========================================================
-   EMPIRICAL RUN CONTINUATION
+   STREAK CONTINUATION / REVERSAL
 ========================================================= */
 
 function historicalStreakSupport(
@@ -2329,10 +2303,7 @@ function historicalStreakSupport(
 ) {
 
   const current =
-    currentStreak(
-      sequence
-    );
-
+    currentStreak(sequence);
 
   if (
     !current.side ||
@@ -2340,50 +2311,37 @@ function historicalStreakSupport(
   ) {
 
     return {
+
       big: 50,
+
       small: 50,
-      evidence: "NONE"
+
+      evidence:
+        "No streak data",
+
+      sample: 0
     };
   }
 
-
-  /*
-    Find historical runs of the same side and see
-    whether the next chronological result continued
-    the run or switched.
-
-    This is historical descriptive evidence only.
-  */
-
   const runs =
-    runLengths(
-      sequence
-    );
-
-
-  const side =
-    current.side;
-
-
-  const matchingRuns =
-    runs.filter(
-      r =>
-        r.side === side
-    );
-
-
-  let continuation = 0;
-  let reversal = 0;
-
+    runLengths(sequence);
 
   /*
-    A run in newest->oldest order has older run after it.
-    For historical runs, a run is followed chronologically
-    by the next newer run.
+    Historical runs of same side.
+
+    We estimate whether runs of similar length
+    tended to continue or terminate.
+
+    Since every run eventually terminates in a
+    two-sided sequence, this is deliberately
+    weak and cannot create certainty.
   */
+
+  let comparable = 0;
+  let continuation = 0;
 
   for (
-    let i = 1;
+    let i = 0;
     i < runs.length;
     i++
   ) {
@@ -2391,38 +2349,43 @@ function historicalStreakSupport(
     const run =
       runs[i];
 
-
     if (
-      run.side !== side
+      run.side !==
+      current.side
     ) {
       continue;
     }
 
+    if (
+      Math.abs(
+        run.length -
+        current.length
+      ) > 1
+    ) {
+      continue;
+    }
+
+    /*
+      The next chronological observation after
+      an older completed run is opposite side.
+      Therefore completed historical runs mostly
+      provide reversal evidence.
+
+      We cap this component heavily.
+    */
+
+    comparable++;
 
     if (
       run.length >=
       current.length
     ) {
-
-      /*
-        The current run-length bucket occurred historically.
-        The next chronological state after that run is
-        the opposite side because runs alternate.
-      */
-
-      continuation +=
-        run.length >
-        current.length
-          ? 1
-          : 0;
-
-      reversal++;
+      continuation++;
     }
   }
 
-
   if (
-    reversal < 3
+    comparable < 3
   ) {
 
     return {
@@ -2432,84 +2395,76 @@ function historicalStreakSupport(
       small: 50,
 
       evidence:
-        "INSUFFICIENT"
+        "Insufficient streak sample",
+
+      sample:
+        comparable
     };
   }
 
-
-  /*
-    This component is intentionally weak.
-  */
-
-  const continuationRate =
-    continuation /
-    reversal;
-
-
-  let sideScore =
-    50;
-
+  const reversalBias =
+    clamp(
+      50 +
+      Math.min(
+        10,
+        comparable * 0.5
+      ),
+      50,
+      60
+    );
 
   if (
-    continuationRate >=
-    0.60
-  ) {
-
-    sideScore = 55;
-
-  } else if (
-    continuationRate <=
-    0.40
-  ) {
-
-    sideScore = 45;
-  }
-
-
-  if (
-    side === "BIG"
+    current.side ===
+    "BIG"
   ) {
 
     return {
 
       big:
-        sideScore,
+        100 -
+        reversalBias,
 
       small:
-        100 - sideScore,
+        reversalBias,
 
       evidence:
-        `${matchingRuns.length} historical BIG runs`
+        `${comparable} comparable BIG runs`,
+
+      sample:
+        comparable
     };
   }
-
 
   return {
 
     big:
-      100 - sideScore,
+      reversalBias,
 
     small:
-      sideScore,
+      100 -
+      reversalBias,
 
     evidence:
-      `${matchingRuns.length} historical SMALL runs`
+      `${comparable} comparable SMALL runs`,
+
+    sample:
+      comparable
   };
 }
 
 
 /* =========================================================
-   STATISTICAL COMPONENTS
+   FREQUENCY COMPONENT
 ========================================================= */
 
 function frequencyComponent(
   sequence
 ) {
 
-  /*
-    Frequency component uses recent windows.
-    It does NOT simply select majority.
-  */
+  const w5 =
+    frequencyAnalysis(
+      sequence.slice(0, 5)
+    );
 
   const w10 =
     frequencyAnalysis(
@@ -2526,18 +2481,27 @@ function frequencyComponent(
       sequence.slice(0, 50)
     );
 
+  /*
+    Recency weighted.
+
+    Last 5:
+    40%
+
+    Last 10:
+    30%
+
+    Last 20:
+    20%
+
+    Last 50:
+    10%
+  */
 
   const big =
-    (
-      w10.bigPercent * 0.50 +
-      w20.bigPercent * 0.30 +
-      w50.bigPercent * 0.20
-    );
-
-
-  const small =
-    100 - big;
-
+    w5.bigPercent * 0.40 +
+    w10.bigPercent * 0.30 +
+    w20.bigPercent * 0.20 +
+    w50.bigPercent * 0.10;
 
   return {
 
@@ -2545,56 +2509,69 @@ function frequencyComponent(
       round2(big),
 
     small:
-      round2(small),
+      round2(
+        100 - big
+      ),
 
     evidence:
-      "Recent frequency windows"
+      "Recency-weighted frequency"
   };
 }
 
+
+/* =========================================================
+   SWITCH COMPONENT
+========================================================= */
 
 function switchingComponent(
   sequence
 ) {
 
-  const switching =
-    switchingAnalysis(
-      sequence.slice(
-        0,
-        20
+  const recent =
+    sequence.slice(
+      0,
+      Math.min(
+        20,
+        sequence.length
       )
     );
 
+  const switching =
+    switchingAnalysis(
+      recent
+    );
 
   const current =
     currentStreak(
       sequence
     );
 
-
   if (
     !current.side
   ) {
 
     return {
+
       big: 50,
+
       small: 50,
-      evidence: "NONE"
+
+      evidence:
+        "No current side"
     };
   }
 
-
   /*
     High switching:
-    opposite of current side gets mild support.
+    mild opposite-side pressure.
 
     Low switching:
-    current side gets mild support.
+    mild continuation pressure.
 
     Balanced:
     neutral.
 
-    This is not a guarantee.
+    Maximum influence remains small.
   */
 
   if (
@@ -2606,153 +2583,22 @@ function switchingComponent(
 
       big:
         current.side === "BIG"
-          ? 46
-          : 54,
+          ? 47
+          : 53,
 
       small:
         current.side === "BIG"
-          ? 54
-          : 46,
+          ? 53
+          : 47,
 
       evidence:
-        `High switching ${switching.switchRate}%`
+        `High switch rate ${switching.switchRate}%`
     };
   }
-
 
   if (
     switching.classification ===
     "LOW SWITCHING"
-  ) {
-
-    return {
-
-      big:
-        current.side === "BIG"
-          ? 54
-          : 46,
-
-      small:
-        current.side === "BIG"
-          ? 46
-          : 54,
-
-      evidence:
-        `Low switching ${switching.switchRate}%`
-    };
-  }
-
-
-  return {
-
-    big: 50,
-
-    small: 50,
-
-    evidence:
-      `Balanced switching ${switching.switchRate}%`
-  };
-}
-
-
-function runComponent(
-  sequence
-) {
-
-  const runs =
-    runLengths(
-      sequence
-    );
-
-
-  const current =
-    currentStreak(
-      sequence
-    );
-
-
-  if (
-    !current.side ||
-    !runs.length
-  ) {
-
-    return {
-
-      big: 50,
-
-      small: 50,
-
-      evidence:
-        "No run data"
-    };
-  }
-
-
-  const common =
-    current.side === "BIG"
-      ? modeRunLength(
-          runs,
-          "BIG"
-        )
-      : modeRunLength(
-          runs,
-          "SMALL"
-        );
-
-
-  if (!common) {
-
-    return {
-
-      big: 50,
-
-      small: 50,
-
-      evidence:
-        "Insufficient run history"
-    };
-  }
-
-
-  /*
-    Current run significantly longer than common:
-    mild reversal support.
-
-    Current run around common:
-    neutral / mild continuation.
-
-    This is deliberately capped.
-  */
-
-  if (
-    current.length >=
-      common + 2
-  ) {
-
-    return {
-
-      big:
-        current.side === "BIG"
-          ? 44
-          : 56,
-
-      small:
-        current.side === "BIG"
-          ? 56
-          : 44,
-
-      evidence:
-        `Current ${current.length} vs common ${common}`
-    };
-  }
-
-
-  if (
-    current.length <=
-      Math.max(
-        1,
-        common - 1
-      )
   ) {
 
     return {
@@ -2768,10 +2614,9 @@ function runComponent(
           : 53,
 
       evidence:
-        `Current ${current.length} vs common ${common}`
+        `Low switch rate ${switching.switchRate}%`
     };
   }
-
 
   return {
 
@@ -2780,132 +2625,47 @@ function runComponent(
     small: 50,
 
     evidence:
-      `Current ${current.length} near common ${common}`
+      `Balanced switch rate ${switching.switchRate}%`
   };
 }
 
 
-function transitionComponent(
+/* =========================================================
+   RUN COMPONENT
+========================================================= */
+
+function runComponent(
   sequence
 ) {
 
-  const transition =
-    transitionAnalysis(
-      sequence
-    );
-
+  const runs =
+    runLengths(sequence);
 
   const current =
-    currentStreak(
-      sequence
-    );
-
+    currentStreak(sequence);
 
   if (
     !current.side
   ) {
 
     return {
+
       big: 50,
+
       small: 50,
+
       evidence:
-        "No current state"
+        "No run data"
     };
   }
 
-
-  if (
-    current.side === "BIG"
-  ) {
-
-    const big =
-      transition.probabilities[
-        "B→B"
-      ];
-
-    const small =
-      transition.probabilities[
-        "B→S"
-      ];
-
-
-    if (
-      transition.previousStateTotals.BIG <
-      3
-    ) {
-
-      return {
-        big: 50,
-        small: 50,
-        evidence:
-          "Insufficient B transition sample"
-      };
-    }
-
-
-    return {
-
-      big,
-
-      small,
-
-      evidence:
-        `After BIG: B→B ${big}% / B→S ${small}%`
-    };
-  }
-
-
-  const big =
-    transition.probabilities[
-      "S→B"
-    ];
-
-  const small =
-    transition.probabilities[
-      "S→S"
-    ];
-
-
-  if (
-    transition.previousStateTotals.SMALL <
-    3
-  ) {
-
-    return {
-      big: 50,
-      small: 50,
-      evidence:
-        "Insufficient S transition sample"
-    };
-  }
-
-
-  return {
-
-    big,
-
-    small,
-
-    evidence:
-      `After SMALL: S→B ${big}% / S→S ${small}%`
-  };
-}
-
-
-function repeatingComponent(
-  sequence
-) {
-
-  const repeating =
-    repeatingBlockAnalysis(
-      sequence
+  const common =
+    modeRunLength(
+      runs,
+      current.side
     );
 
-
-  if (
-    !repeating.detected ||
-    !repeating.best
-  ) {
+  if (!common) {
 
     return {
 
@@ -2914,39 +2674,88 @@ function repeatingComponent(
       small: 50,
 
       evidence:
-        "No reliable repeated block"
+        "Insufficient run history"
     };
   }
-
 
   /*
-    IMPORTANT:
-    We DO NOT assume that a repeated block
-    will repeat again.
+    Do not overreact to streak length.
 
-    Therefore pattern similarity contributes
-    only a small statistical weight.
+    Very long compared with common:
+    mild reversal.
+
+    Normal:
+    mild continuation.
   */
 
-  const similarity =
-    repeating.best.similarity;
-
-
   if (
-    similarity < 90
+    current.length >=
+    common + 2
   ) {
 
     return {
 
-      big: 50,
+      big:
+        current.side === "BIG"
+          ? 44
+          : 56,
 
-      small: 50,
+      small:
+        current.side === "BIG"
+          ? 56
+          : 44,
 
       evidence:
-        `${similarity}% similarity only`
+        `Current run ${current.length}; common ${common}`
     };
   }
 
+  if (
+    current.length ===
+    common + 1
+  ) {
+
+    return {
+
+      big:
+        current.side === "BIG"
+          ? 48
+          : 52,
+
+      small:
+        current.side === "BIG"
+          ? 52
+          : 48,
+
+      evidence:
+        `Current run ${current.length}; common ${common}`
+    };
+  }
+
+  if (
+    current.length <=
+    Math.max(
+      1,
+      common - 1
+    )
+  ) {
+
+    return {
+
+      big:
+        current.side === "BIG"
+          ? 52
+          : 48,
+
+      small:
+        current.side === "BIG"
+          ? 48
+          : 52,
+
+      evidence:
+        `Current run ${current.length}; common ${common}`
+    };
+  }
 
   return {
 
@@ -2955,13 +2764,309 @@ function repeatingComponent(
     small: 50,
 
     evidence:
-      `Repeated block ${similarity}% similar; no future assumption`
+      `Current run ${current.length}; common ${common}`
   };
 }
 
 
 /* =========================================================
-   SUPPORT CALCULATION
+   TRANSITION COMPONENT
+========================================================= */
+
+function transitionComponent(
+  sequence
+) {
+
+  const transition =
+    transitionAnalysis(sequence);
+
+  const current =
+    currentStreak(sequence);
+
+  if (
+    !current.side
+  ) {
+
+    return {
+
+      big: 50,
+
+      small: 50,
+
+      evidence:
+        "No current state"
+    };
+  }
+
+  const minimumSample = 4;
+
+  if (
+    current.side ===
+    "BIG"
+  ) {
+
+    const total =
+      transition
+        .previousStateTotals
+        .BIG;
+
+    if (
+      total <
+      minimumSample
+    ) {
+
+      return {
+
+        big: 50,
+
+        small: 50,
+
+        evidence:
+          "Insufficient BIG transition sample"
+      };
+    }
+
+    return {
+
+      big:
+        transition
+          .probabilities["B→B"],
+
+      small:
+        transition
+          .probabilities["B→S"],
+
+      evidence:
+        `After BIG: B→B ${transition.probabilities["B→B"]}% / B→S ${transition.probabilities["B→S"]}%`
+    };
+  }
+
+  const total =
+    transition
+      .previousStateTotals
+      .SMALL;
+
+  if (
+    total <
+    minimumSample
+  ) {
+
+    return {
+
+      big: 50,
+
+      small: 50,
+
+      evidence:
+        "Insufficient SMALL transition sample"
+    };
+  }
+
+  return {
+
+    big:
+      transition
+        .probabilities["S→B"],
+
+    small:
+      transition
+        .probabilities["S→S"],
+
+    evidence:
+      `After SMALL: S→B ${transition.probabilities["S→B"]}% / S→S ${transition.probabilities["S→S"]}%`
+  };
+}
+
+
+/* =========================================================
+   DIGIT COMPONENT
+========================================================= */
+
+function digitComponent(rows) {
+
+  const analysis =
+    digitFrequencyAnalysis(
+      rows
+    );
+
+  if (
+    analysis.total < 10
+  ) {
+
+    return {
+
+      big: 50,
+
+      small: 50,
+
+      evidence:
+        "Insufficient digit history"
+    };
+  }
+
+  /*
+    Digit frequency is kept moderate.
+  */
+
+  const edge =
+    clamp(
+      analysis.bigPercent -
+      analysis.smallPercent,
+      -15,
+      15
+    );
+
+  return {
+
+    big:
+      round2(
+        50 + edge
+      ),
+
+    small:
+      round2(
+        50 - edge
+      ),
+
+    evidence:
+      `Digit distribution B ${analysis.bigPercent}% / S ${analysis.smallPercent}%`
+  };
+}
+
+
+/* =========================================================
+   GAP COMPONENT
+========================================================= */
+
+function gapComponent(
+  sequence
+) {
+
+  const gap =
+    gapAnalysis(sequence);
+
+  if (
+    gap.direction ===
+    "BIG"
+  ) {
+
+    return {
+
+      big: 53,
+
+      small: 47,
+
+      evidence:
+        `BIG gap ${gap.bigGap}, SMALL gap ${gap.smallGap}`
+    };
+  }
+
+  if (
+    gap.direction ===
+    "SMALL"
+  ) {
+
+    return {
+
+      big: 47,
+
+      small: 53,
+
+      evidence:
+        `BIG gap ${gap.bigGap}, SMALL gap ${gap.smallGap}`
+    };
+  }
+
+  return {
+
+    big: 50,
+
+    small: 50,
+
+    evidence:
+      "No meaningful gap imbalance"
+  };
+}
+
+
+/* =========================================================
+   REPETITION COMPONENT
+========================================================= */
+
+function repetitionComponent(
+  sequence
+) {
+
+  const repetition =
+    exactRepetitionAnalysis(
+      sequence
+    );
+
+  /*
+    Repetition alone does not tell the future side.
+    We therefore only use it as a confidence/context
+    signal rather than forcing BIG/SMALL.
+  */
+
+  return {
+
+    big: 50,
+
+    small: 50,
+
+    evidence:
+      repetition.detected &&
+      repetition.best
+        ? `${repetition.best.similarity}% historical block similarity`
+        : "No strong repetition"
+  };
+}
+
+
+/* =========================================================
+   PATTERN MATCH COMPONENT
+========================================================= */
+
+function patternMatchComponent(
+  sequence
+) {
+
+  const match =
+    nextStatePatternAnalysis(
+      sequence
+    );
+
+  if (
+    match.matches < 2
+  ) {
+
+    return {
+
+      big: 50,
+
+      small: 50,
+
+      evidence:
+        "Insufficient historical pattern matches"
+    };
+  }
+
+  return {
+
+    big:
+      match.big,
+
+    small:
+      match.small,
+
+    evidence:
+      `${match.matches} historical pattern matches`
+  };
+}
+
+
+/* =========================================================
+   NORMALIZE COMPONENT
 ========================================================= */
 
 function normalizeComponent(
@@ -2971,47 +3076,47 @@ function normalizeComponent(
   const big =
     clamp(
       safeNumber(
-        component.big
+        component?.big
       ) ?? 50,
       0,
       100
     );
-
 
   const small =
     clamp(
       safeNumber(
-        component.small
+        component?.small
       ) ?? 50,
       0,
       100
     );
 
-
   const total =
     big + small;
-
 
   if (!total) {
 
     return {
+
       big: 50,
+
       small: 50
     };
   }
-
 
   return {
 
     big:
       round2(
-        (big / total) *
+        big /
+        total *
         100
       ),
 
     small:
       round2(
-        (small / total) *
+        small /
+        total *
         100
       )
   };
@@ -3019,28 +3124,140 @@ function normalizeComponent(
 
 
 /* =========================================================
-   CONFIDENCE
+   SIGNAL STRENGTH
 ========================================================= */
 
-function confidenceLevel(
-  supportBig,
-  supportSmall,
-  sampleSize,
-  agreement
+function signalDirection(
+  component
 ) {
 
-  if (
-    sampleSize < 10
-  ) {
+  const big =
+    safeNumber(
+      component?.big
+    ) ?? 50;
 
-    return {
-      level: "LOW",
-      score: 0,
-      reason:
-        "Insufficient Data"
-    };
+  const small =
+    safeNumber(
+      component?.small
+    ) ?? 50;
+
+  const edge =
+    big - small;
+
+  if (
+    Math.abs(edge) < 4
+  ) {
+    return "NEUTRAL";
   }
 
+  return edge > 0
+    ? "BIG"
+    : "SMALL";
+}
+
+
+/* =========================================================
+   AGREEMENT
+========================================================= */
+
+function agreementAnalysis(
+  components,
+  finalSide
+) {
+
+  let directional = 0;
+  let agreeing = 0;
+  let conflicting = 0;
+
+  const signals = [];
+
+  for (
+    const [name, component]
+    of Object.entries(components)
+  ) {
+
+    const direction =
+      signalDirection(
+        component
+      );
+
+    const edge =
+      Math.abs(
+        component.big -
+        component.small
+      );
+
+    signals.push({
+
+      name,
+
+      direction,
+
+      edge:
+        round2(edge),
+
+      weight:
+        component.weight
+    });
+
+    if (
+      direction ===
+      "NEUTRAL"
+    ) {
+      continue;
+    }
+
+    directional++;
+
+    if (
+      direction ===
+      finalSide
+    ) {
+      agreeing++;
+    } else {
+      conflicting++;
+    }
+  }
+
+  const agreement =
+    directional
+      ? agreeing /
+        directional
+      : 0;
+
+  return {
+
+    directional,
+
+    agreeing,
+
+    conflicting,
+
+    agreement:
+      round2(
+        agreement * 100
+      ),
+
+    agreementRatio:
+      agreement,
+
+    signals
+  };
+}
+
+
+/* =========================================================
+   CONFIDENCE ENGINE
+========================================================= */
+
+function calculateConfidence(
+  supportBig,
+  supportSmall,
+  total,
+  agreementData,
+  components,
+  analysis
+) {
 
   const edge =
     Math.abs(
@@ -3048,103 +3265,248 @@ function confidenceLevel(
       supportSmall
     );
 
+  /*
+    Base score from edge.
+    A 50/50 split gives 0.
+  */
+
+  let score =
+    40 +
+    edge * 2.2;
+
+  /*
+    Agreement bonus/penalty.
+  */
 
   if (
-    edge < 4
+    agreementData.directional >= 3
   ) {
 
-    return {
+    if (
+      agreementData.agreementRatio >=
+      0.75
+    ) {
 
-      level:
-        "LOW",
+      score += 12;
 
-      score:
-        Math.round(
-          edge * 5
-        ),
+    } else if (
+      agreementData.agreementRatio >=
+      0.60
+    ) {
 
-      reason:
-        "Low Confidence"
-    };
+      score += 6;
+
+    } else if (
+      agreementData.agreementRatio <
+      0.50
+    ) {
+
+      score -= 12;
+    }
   }
 
+  /*
+    Strong conflict penalty.
+  */
 
   if (
-    agreement < 0.50
+    agreementData.conflicting >= 3
   ) {
 
-    return {
-
-      level:
-        "LOW",
-
-      score:
-        Math.round(
-          30 +
-          edge
-        ),
-
-      reason:
-        "Mixed Evidence"
-    };
+    score -= 10;
   }
 
+  /*
+    More data = slightly better reliability.
+  */
 
   if (
-    agreement < 0.67
+    total >= 50
   ) {
 
-    return {
+    score += 4;
 
-      level:
-        "MEDIUM",
+  } else if (
+    total >= 30
+  ) {
 
-      score:
-        Math.round(
-          45 +
-          edge
-        ),
+    score += 2;
 
-      reason:
-        "Moderate agreement"
-    };
+  } else if (
+    total < 15
+  ) {
+
+    score -= 8;
   }
 
+  /*
+    Pattern match requires enough evidence.
+  */
+
+  const patternMatch =
+    components.patternMatch;
+
+  if (
+    patternMatch &&
+    patternMatch.matches < 2
+  ) {
+    score -= 2;
+  }
+
+  /*
+    Conflict check:
+    transition vs momentum/frequency disagreement.
+  */
+
+  const directionalSignals =
+    agreementData.signals
+      .filter(
+        s =>
+          s.direction !==
+          "NEUTRAL"
+      );
+
+  const uniqueDirections =
+    new Set(
+      directionalSignals.map(
+        s => s.direction
+      )
+    );
+
+  if (
+    uniqueDirections.size >= 2
+  ) {
+
+    score -= 5;
+  }
+
+  score =
+    clamp(
+      Math.round(score),
+      1,
+      95
+    );
+
+  let level =
+    "LOW";
+
+  if (
+    score >= 80 &&
+    agreementData.agreementRatio >=
+      0.67
+  ) {
+
+    level =
+      "HIGH";
+
+  } else if (
+    score >= 60 &&
+    agreementData.agreementRatio >=
+      0.50
+  ) {
+
+    level =
+      "MEDIUM";
+  }
+
+  /*
+    Very small edge can never be HIGH.
+  */
+
+  if (
+    edge < 7
+  ) {
+
+    level =
+      "LOW";
+  }
+
+  /*
+    Strong conflict can never be HIGH.
+  */
+
+  if (
+    agreementData.conflicting >= 3 &&
+    agreementData.agreementRatio < 0.60
+  ) {
+
+    level =
+      "LOW";
+  }
+
+  let reason =
+    "Low Confidence";
+
+  if (
+    level === "HIGH"
+  ) {
+
+    reason =
+      "Strong multi-signal agreement";
+
+  } else if (
+    level === "MEDIUM"
+  ) {
+
+    reason =
+      "Moderate multi-signal agreement";
+  }
+
+  if (
+    agreementData.conflicting >= 3
+  ) {
+
+    reason =
+      "Mixed Evidence";
+  }
+
+  if (
+    edge < 7
+  ) {
+
+    reason =
+      "Low Confidence";
+  }
 
   return {
 
-    level:
-      "HIGH",
+    score,
 
-    score:
-      Math.round(
-        55 +
-        edge
-      ),
+    level,
 
-    reason:
-      "Multiple components agree"
+    reason,
+
+    edge:
+      round2(edge),
+
+    agreement:
+      agreementData.agreement,
+
+    sampleSize:
+      total
   };
 }
 
 
 /* =========================================================
-   COMPLETE STATISTICAL ANALYSIS
+   COMPLETE ANALYSIS
 ========================================================= */
 
-function completeAnalysis(
-  rows
-) {
+function completeAnalysis(rows) {
 
-  const sequence =
-    convertSequence(
-      rows
+  const validRows =
+    getValidRows(
+      rows,
+      1000
     );
 
+  const sequence =
+    validRows.map(
+      normalizeResult
+    );
 
   const total =
     sequence.length;
-
 
   if (
     total < 5
@@ -3172,38 +3534,27 @@ function completeAnalysis(
           sequence
         ),
 
-      longestBigStreak: 0,
-
-      longestSmallStreak: 0,
-
       switchRate: 0,
 
-      switching: {
-        classification:
-          "INSUFFICIENT_DATA"
-      },
+      switching: {},
 
-      transitions: {
-        counts: {},
-        probabilities: {}
-      },
+      transitions: {},
 
-      runs: {
-        runs: []
-      },
+      runs: {},
 
-      patterns: {
+      momentum: {},
 
-        primary: {
-          name:
-            "INSUFFICIENT DATA",
+      digitFrequency:
+        digitFrequencyAnalysis(
+          validRows
+        ),
 
-          strength:
-            "LOW"
-        },
+      gap:
+        gapAnalysis(
+          sequence
+        ),
 
-        detected: []
-      },
+      patterns: {},
 
       statisticalSupport: {
 
@@ -3214,14 +3565,15 @@ function completeAnalysis(
 
       confidence: {
 
-        level:
-          "LOW",
-
         score: 0,
+
+        level: "LOW",
 
         reason:
           "Insufficient Data"
       },
+
+      agreement: 0,
 
       evidenceConflict:
         false,
@@ -3233,20 +3585,9 @@ function completeAnalysis(
     };
   }
 
-
-  /*
-    Overall.
-  */
-
-  const overall =
-    frequencyAnalysis(
-      sequence
-    );
-
-
-  /*
-    Windows.
-  */
+  /* -------------------------------------------------------
+     WINDOWS
+  ------------------------------------------------------- */
 
   const windows = {
 
@@ -3281,62 +3622,58 @@ function completeAnalysis(
       )
   };
 
+  /* -------------------------------------------------------
+     CORE ANALYSIS
+  ------------------------------------------------------- */
 
-  /*
-    Streaks / runs.
-  */
+  const overall =
+    frequencyAnalysis(
+      sequence
+    );
 
   const runs =
     runAnalysis(
       sequence
     );
 
-
-  const current =
-    runs.currentStreak;
-
-
-  /*
-    Switching.
-  */
-
   const switching =
     switchingAnalysis(
       sequence
     );
-
-
-  /*
-    Transitions.
-  */
 
   const transitions =
     transitionAnalysis(
       sequence
     );
 
+  const momentum =
+    momentumAnalysis(
+      sequence
+    );
 
-  /*
-    Patterns.
-  */
+  const digitFrequency =
+    digitFrequencyAnalysis(
+      validRows
+    );
+
+  const gap =
+    gapAnalysis(
+      sequence
+    );
 
   const patterns =
     patternAnalysis(
       sequence
     );
 
+  const patternMatches =
+    nextStatePatternAnalysis(
+      sequence
+    );
 
-  /*
-    Six required weighted components:
-
-    Frequency      20%
-    Streak         15%
-    Switching      15%
-    Runs           15%
-    Transition     20%
-    Repeating      15%
-  */
-
+  /* -------------------------------------------------------
+     COMPONENTS
+  ------------------------------------------------------- */
 
   const frequency =
     normalizeComponent(
@@ -3345,14 +3682,12 @@ function completeAnalysis(
       )
     );
 
-
   const streak =
     normalizeComponent(
       historicalStreakSupport(
         sequence
       )
     );
-
 
   const switchingComp =
     normalizeComponent(
@@ -3361,14 +3696,12 @@ function completeAnalysis(
       )
     );
 
-
   const runComp =
     normalizeComponent(
       runComponent(
         sequence
       )
     );
-
 
   const transitionComp =
     normalizeComponent(
@@ -3377,179 +3710,300 @@ function completeAnalysis(
       )
     );
 
-
-  const repeatingComp =
+  const momentumComp =
     normalizeComponent(
-      repeatingComponent(
+      momentum
+    );
+
+  const digitComp =
+    normalizeComponent(
+      digitComponent(
+        validRows
+      )
+    );
+
+  const gapComp =
+    normalizeComponent(
+      gapComponent(
         sequence
       )
     );
 
+  const patternMatchComp =
+    normalizeComponent(
+      patternMatchComponent(
+        sequence
+      )
+    );
+
+  const repetitionComp =
+    normalizeComponent(
+      repetitionComponent(
+        sequence
+      )
+    );
+
+  /*
+    IMPORTANT WEIGHTS
+
+    Frequency       15%
+    Momentum        15%
+    Transition      18%
+    Pattern Match   15%
+    Streak           8%
+    Switching        8%
+    Runs             7%
+    Digit            6%
+    Gap              4%
+    Repetition       4%
+
+    Total           100%
+  */
 
   const components = {
 
     frequency: {
-      weight: 20,
+
+      weight: 15,
+
       big:
         frequency.big,
+
       small:
         frequency.small,
+
       evidence:
         frequencyComponent(
           sequence
         ).evidence
     },
 
+    momentum: {
 
-    streak: {
       weight: 15,
+
       big:
-        streak.big,
+        momentumComp.big,
+
       small:
-        streak.small,
+        momentumComp.small,
+
       evidence:
-        historicalStreakSupport(
-          sequence
-        ).evidence
+        `Momentum ${momentum.direction}`
     },
 
+    transition: {
 
-    switching: {
-      weight: 15,
-      big:
-        switchingComp.big,
-      small:
-        switchingComp.small,
-      evidence:
-        switchingComponent(
-          sequence
-        ).evidence
-    },
+      weight: 18,
 
-
-    runs: {
-      weight: 15,
-      big:
-        runComp.big,
-      small:
-        runComp.small,
-      evidence:
-        runComponent(
-          sequence
-        ).evidence
-    },
-
-
-    transitions: {
-      weight: 20,
       big:
         transitionComp.big,
+
       small:
         transitionComp.small,
+
       evidence:
         transitionComponent(
           sequence
         ).evidence
     },
 
+    patternMatch: {
 
-    repeating: {
       weight: 15,
+
       big:
-        repeatingComp.big,
+        patternMatchComp.big,
+
       small:
-        repeatingComp.small,
+        patternMatchComp.small,
+
+      matches:
+        patternMatches.matches,
+
       evidence:
-        repeatingComponent(
+        patternMatchComponent(
+          sequence
+        ).evidence
+    },
+
+    streak: {
+
+      weight: 8,
+
+      big:
+        streak.big,
+
+      small:
+        streak.small,
+
+      evidence:
+        historicalStreakSupport(
+          sequence
+        ).evidence
+    },
+
+    switching: {
+
+      weight: 8,
+
+      big:
+        switchingComp.big,
+
+      small:
+        switchingComp.small,
+
+      evidence:
+        switchingComponent(
+          sequence
+        ).evidence
+    },
+
+    runs: {
+
+      weight: 7,
+
+      big:
+        runComp.big,
+
+      small:
+        runComp.small,
+
+      evidence:
+        runComponent(
+          sequence
+        ).evidence
+    },
+
+    digitFrequency: {
+
+      weight: 6,
+
+      big:
+        digitComp.big,
+
+      small:
+        digitComp.small,
+
+      evidence:
+        digitComponent(
+          validRows
+        ).evidence
+    },
+
+    gap: {
+
+      weight: 4,
+
+      big:
+        gapComp.big,
+
+      small:
+        gapComp.small,
+
+      evidence:
+        gapComponent(
+          sequence
+        ).evidence
+    },
+
+    repetition: {
+
+      weight: 4,
+
+      big:
+        repetitionComp.big,
+
+      small:
+        repetitionComp.small,
+
+      evidence:
+        repetitionComponent(
           sequence
         ).evidence
     }
   };
 
+  /* -------------------------------------------------------
+     WEIGHTED SUPPORT
+  ------------------------------------------------------- */
 
-  /*
-    Weighted support.
-  */
+  let supportBig = 0;
+  let supportSmall = 0;
+  let totalWeight = 0;
 
-  let supportBig =
-    components.frequency.big * 0.20 +
+  for (
+    const component
+    of Object.values(
+      components
+    )
+  ) {
 
-    components.streak.big * 0.15 +
+    const weight =
+      Number(
+        component.weight
+      ) || 0;
 
-    components.switching.big * 0.15 +
+    supportBig +=
+      component.big *
+      weight;
 
-    components.runs.big * 0.15 +
+    supportSmall +=
+      component.small *
+      weight;
 
-    components.transitions.big * 0.20 +
+    totalWeight +=
+      weight;
+  }
 
-    components.repeating.big * 0.15;
+  if (
+    totalWeight > 0
+  ) {
 
+    supportBig /=
+      totalWeight;
 
-  let supportSmall =
-    components.frequency.small * 0.20 +
-
-    components.streak.small * 0.15 +
-
-    components.switching.small * 0.15 +
-
-    components.runs.small * 0.15 +
-
-    components.transitions.small * 0.20 +
-
-    components.repeating.small * 0.15;
-
-
-  /*
-    Normalize final support to 100.
-  */
+    supportSmall /=
+      totalWeight;
+  }
 
   const supportTotal =
     supportBig +
     supportSmall;
 
+  if (
+    supportTotal > 0
+  ) {
 
-  supportBig =
-    supportTotal
-      ? (
-          supportBig /
-          supportTotal
-        ) * 100
-      : 50;
+    supportBig =
+      supportBig /
+      supportTotal *
+      100;
 
+    supportSmall =
+      supportSmall /
+      supportTotal *
+      100;
 
-  supportSmall =
-    supportTotal
-      ? (
-          supportSmall /
-          supportTotal
-        ) * 100
-      : 50;
+  } else {
 
+    supportBig = 50;
+    supportSmall = 50;
+  }
 
   supportBig =
     round2(
       supportBig
     );
 
-
   supportSmall =
     round2(
       supportSmall
     );
 
-
-  /*
-    Evidence agreement.
-
-    Count components supporting the final side.
-    Neutral components are not counted as conflict.
-  */
-
-  const componentArray =
-    Object.values(
-      components
-    );
-
+  /* -------------------------------------------------------
+     FINAL SIDE
+  ------------------------------------------------------- */
 
   const finalSide =
     supportBig >=
@@ -3557,77 +4011,43 @@ function completeAnalysis(
       ? "BIG"
       : "SMALL";
 
-
-  let directional = 0;
-  let agreeing = 0;
-
-
-  for (
-    const component of
-      componentArray
-  ) {
-
-    const edge =
-      Math.abs(
-        component.big -
-        component.small
-      );
-
-
-    /*
-      4 points se kam difference = neutral.
-    */
-
-    if (
-      edge < 4
-    ) {
-      continue;
-    }
-
-
-    directional++;
-
-
-    const side =
-      component.big >
-      component.small
-        ? "BIG"
-        : "SMALL";
-
-
-    if (
-      side === finalSide
-    ) {
-
-      agreeing++;
-    }
-  }
-
+  /* -------------------------------------------------------
+     AGREEMENT
+  ------------------------------------------------------- */
 
   const agreement =
-    directional
-      ? agreeing /
-        directional
-      : 0;
+    agreementAnalysis(
+      components,
+      finalSide
+    );
 
+  /*
+    Conflict means at least 3 directional
+    signals and less than 60% agree.
+  */
 
   const evidenceConflict =
-    directional >= 3 &&
-    agreement < 0.50;
+    agreement.directional >= 3 &&
+    agreement.agreementRatio < 0.60;
 
+  /* -------------------------------------------------------
+     CONFIDENCE
+  ------------------------------------------------------- */
 
   const confidence =
-    confidenceLevel(
+    calculateConfidence(
       supportBig,
       supportSmall,
       total,
-      agreement
+      agreement,
+      components,
+      {
+        momentum,
+        patternMatches,
+        switching,
+        transitions
+      }
     );
-
-
-  /*
-    If strong conflict, force LOW confidence.
-  */
 
   if (
     evidenceConflict
@@ -3638,18 +4058,19 @@ function completeAnalysis(
 
     confidence.reason =
       "Mixed Evidence";
+
+    confidence.score =
+      Math.min(
+        confidence.score,
+        59
+      );
   }
-
-
-  /*
-    Nearly balanced support = low confidence.
-  */
 
   if (
     Math.abs(
       supportBig -
       supportSmall
-    ) < 4
+    ) < 7
   ) {
 
     confidence.level =
@@ -3657,12 +4078,13 @@ function completeAnalysis(
 
     confidence.reason =
       "Low Confidence";
+
+    confidence.score =
+      Math.min(
+        confidence.score,
+        55
+      );
   }
-
-
-  /*
-    Statistical pattern score is descriptive.
-  */
 
   return {
 
@@ -3676,50 +4098,35 @@ function completeAnalysis(
 
     overall,
 
-
     windows,
 
-
     currentStreak:
-      current,
-
+      runs.currentStreak,
 
     longestBigStreak:
       runs.longestBigStreak,
 
-
     longestSmallStreak:
       runs.longestSmallStreak,
-
 
     switchRate:
       switching.switchRate,
 
-
-    switching: {
-
-      switches:
-        switching.switches,
-
-      transitions:
-        switching.transitions,
-
-      switchRate:
-        switching.switchRate,
-
-      classification:
-        switching.classification
-    },
-
+    switching,
 
     transitions,
 
-
     runs,
 
+    momentum,
+
+    digitFrequency,
+
+    gap,
 
     patterns,
 
+    patternMatches,
 
     statisticalSupport: {
 
@@ -3730,30 +4137,20 @@ function completeAnalysis(
         supportSmall
     },
 
-
-    confidence,
-
-
-    evidenceConflict,
-
-
-    agreement:
-      round2(
-        agreement * 100
-      ),
-
-
-    components,
-
-
-    /*
-      This is the statistical lean.
-      It is NOT a guaranteed future result.
-    */
-
     statisticalLean:
       finalSide,
 
+    components,
+
+    agreement:
+      agreement.agreement,
+
+    agreementDetails:
+      agreement,
+
+    evidenceConflict,
+
+    confidence,
 
     warning:
       "Historical patterns do not guarantee the next result.",
@@ -3768,15 +4165,12 @@ function completeAnalysis(
    MODEL
 ========================================================= */
 
-function calculateModel(
-  rows
-) {
+function calculateModel(rows) {
 
   const analysis =
     completeAnalysis(
       rows
     );
-
 
   if (
     analysis.status !==
@@ -3785,14 +4179,11 @@ function calculateModel(
 
     return {
 
-      prediction:
-        null,
+      prediction: null,
 
-      confidence:
-        0,
+      confidence: 0,
 
-      confidenceLevel:
-        "LOW",
+      confidenceLevel: "LOW",
 
       reason:
         "Insufficient Data",
@@ -3803,36 +4194,30 @@ function calculateModel(
       analysis,
 
       thinkingDurationMs:
-        THINKING_DURATION_MS
+        THINKING_DURATION_MS,
+
+      warning:
+        "Historical patterns do not guarantee the next result."
     };
   }
-
 
   const big =
     analysis
       .statisticalSupport
       .big;
 
-
   const small =
     analysis
       .statisticalSupport
       .small;
-
-
-  /*
-    Statistical lean only.
-  */
 
   const prediction =
     big >= small
       ? "BIG"
       : "SMALL";
 
-
   let reason =
     analysis.confidence.reason;
-
 
   if (
     analysis.evidenceConflict
@@ -3841,36 +4226,28 @@ function calculateModel(
     reason =
       "Mixed Evidence";
 
-  } else if (
-    Math.abs(
-      big - small
-    ) < 4
-  ) {
-
-    reason =
-      "Low Confidence";
-
   } else {
 
-    const pattern =
+    const primaryPattern =
       analysis.patterns
         ?.primary
         ?.name;
 
-
-    reason =
-      pattern &&
-      pattern !==
+    if (
+      primaryPattern &&
+      primaryPattern !==
         "NO STRONG PATTERN"
+    ) {
 
-        ? `${pattern} · ${analysis.confidence.level}`
-        : `Multi-factor statistical analysis · ${analysis.confidence.level}`;
+      reason =
+        `${primaryPattern} · ${analysis.confidence.level}`;
+
+    } else {
+
+      reason =
+        `Multi-factor statistical analysis · ${analysis.confidence.level}`;
+    }
   }
-
-
-  /*
-    Never claim certainty.
-  */
 
   return {
 
@@ -3878,13 +4255,9 @@ function calculateModel(
 
     confidence:
       clamp(
-        Math.round(
-          Math.abs(
-            big - small
-          )
-        ),
-        0,
-        100
+        analysis.confidence.score,
+        1,
+        95
       ),
 
     confidenceLevel:
@@ -3907,7 +4280,7 @@ function calculateModel(
 
 
 /* =========================================================
-   GENERATE / SAVE PREDICTION
+   GENERATE PREDICTION
 ========================================================= */
 
 function generatePrediction() {
@@ -3915,15 +4288,9 @@ function generatePrediction() {
   const target =
     resolveTargetIssue();
 
-
   if (!target) {
     return null;
   }
-
-
-  /*
-    Same target ka cached analysis use karo.
-  */
 
   if (
     modelCache.targetIssue ===
@@ -3934,12 +4301,10 @@ function generatePrediction() {
     return modelCache;
   }
 
-
   const model =
     calculateModel(
       providerState.history
     );
-
 
   modelCache = {
 
@@ -3971,7 +4336,6 @@ function generatePrediction() {
       model.analysis
   };
 
-
   if (
     model.prediction
   ) {
@@ -3979,7 +4343,7 @@ function generatePrediction() {
     savePrediction(
       modelCache
     ).catch(
-      (error) => {
+      error => {
 
         console.error(
           "Prediction save error:",
@@ -3989,10 +4353,13 @@ function generatePrediction() {
     );
   }
 
-
   return modelCache;
 }
 
+
+/* =========================================================
+   SAVE PREDICTION
+========================================================= */
 
 async function savePrediction(
   prediction
@@ -4002,20 +4369,12 @@ async function savePrediction(
     return;
   }
 
-
   if (
     !prediction?.targetIssue ||
     !prediction?.prediction
   ) {
-
     return;
   }
-
-
-  /*
-    Same target issue ka duplicate record
-    create nahi karna.
-  */
 
   const existing =
     await pool.query(
@@ -4031,14 +4390,11 @@ async function savePrediction(
       ]
     );
 
-
   if (
     existing.rows.length
   ) {
-
     return;
   }
-
 
   await pool.query(
     `
@@ -4080,14 +4436,11 @@ async function settlePredictions(
     return;
   }
 
-
   if (
     !Array.isArray(history)
   ) {
-
     return;
   }
-
 
   for (
     const row of history
@@ -4096,30 +4449,20 @@ async function settlePredictions(
     const issue =
       row?.issueNumber;
 
-
     const actual =
       normalizeResult(row);
-
-
-    /*
-      Invalid / pending row:
-      NEVER WIN/LOSS.
-    */
 
     if (
       !issue ||
       !actual
     ) {
-
       continue;
     }
-
 
     const actualNumber =
       safeNumber(
         row.number
       );
-
 
     await pool.query(
       `
@@ -4167,7 +4510,6 @@ async function validateAccessKey(
     };
   }
 
-
   if (!accessKey) {
 
     return {
@@ -4178,7 +4520,6 @@ async function validateAccessKey(
         "Access key required"
     };
   }
-
 
   const result =
     await pool.query(
@@ -4193,7 +4534,6 @@ async function validateAccessKey(
       ]
     );
 
-
   if (
     !result.rows.length
   ) {
@@ -4207,14 +4547,8 @@ async function validateAccessKey(
     };
   }
 
-
   const row =
     result.rows[0];
-
-
-  /*
-    First device automatically binds.
-  */
 
   if (!row.device_id) {
 
@@ -4227,16 +4561,11 @@ async function validateAccessKey(
       WHERE id = $3
       `,
       [
-
         deviceId || null,
-
         now(),
-
         row.id
-
       ]
     );
-
 
     return {
 
@@ -4245,7 +4574,6 @@ async function validateAccessKey(
       bound: true
     };
   }
-
 
   if (!deviceId) {
 
@@ -4257,7 +4585,6 @@ async function validateAccessKey(
         "Device ID required"
     };
   }
-
 
   if (
     String(row.device_id) !==
@@ -4273,7 +4600,6 @@ async function validateAccessKey(
     };
   }
 
-
   await pool.query(
     `
     UPDATE access_keys
@@ -4285,7 +4611,6 @@ async function validateAccessKey(
       row.id
     ]
   );
-
 
   return {
     ok: true
@@ -4303,14 +4628,12 @@ function adminAuthorized(req) {
     return false;
   }
 
-
   const supplied =
     String(
       req.headers[
         "x-admin-key"
       ] || ""
     ).trim();
-
 
   return (
     supplied &&
@@ -4330,13 +4653,11 @@ function readBody(req) {
 
       let body = "";
 
-
       req.on(
         "data",
-        (chunk) => {
+        chunk => {
 
           body += chunk;
-
 
           if (
             body.length >
@@ -4344,7 +4665,6 @@ function readBody(req) {
           ) {
 
             req.destroy();
-
 
             reject(
               new Error(
@@ -4354,7 +4674,6 @@ function readBody(req) {
           }
         }
       );
-
 
       req.on(
         "end",
@@ -4366,7 +4685,6 @@ function readBody(req) {
 
             return;
           }
-
 
           try {
 
@@ -4385,7 +4703,6 @@ function readBody(req) {
         }
       );
 
-
       req.on(
         "error",
         reject
@@ -4396,7 +4713,7 @@ function readBody(req) {
 
 
 /* =========================================================
-   ADMIN API - ACCESS KEYS
+   ADMIN ACCESS KEYS
 ========================================================= */
 
 async function adminKeys(
@@ -4419,7 +4736,6 @@ async function adminKeys(
     return;
   }
 
-
   if (!pool) {
 
     json(res, 500, {
@@ -4433,9 +4749,6 @@ async function adminKeys(
 
     return;
   }
-
-
-  /* GET */
 
   if (
     req.method ===
@@ -4456,7 +4769,6 @@ async function adminKeys(
         `
       );
 
-
     json(res, 200, {
 
       ok: true,
@@ -4469,9 +4781,6 @@ async function adminKeys(
     return;
   }
 
-
-  /* POST */
-
   if (
     req.method ===
     "POST"
@@ -4480,14 +4789,12 @@ async function adminKeys(
     const body =
       await readBody(req);
 
-
     let key =
       String(
         body.key ||
         body.access_key ||
         ""
       ).trim();
-
 
     if (!key) {
 
@@ -4498,7 +4805,6 @@ async function adminKeys(
           .slice(2, 12)
           .toUpperCase();
     }
-
 
     try {
 
@@ -4518,7 +4824,6 @@ async function adminKeys(
             now()
           ]
         );
-
 
       json(res, 200, {
 
@@ -4552,16 +4857,11 @@ async function adminKeys(
         return;
       }
 
-
       throw error;
     }
 
-
     return;
   }
-
-
-  /* DELETE */
 
   if (
     req.method ===
@@ -4573,20 +4873,20 @@ async function adminKeys(
         "id"
       );
 
-
     let key =
       url.searchParams.get(
         "key"
       );
 
-
-    if (!id && !key) {
+    if (
+      !id &&
+      !key
+    ) {
 
       try {
 
         const body =
           await readBody(req);
-
 
         id =
           body.id
@@ -4594,7 +4894,6 @@ async function adminKeys(
                 body.id
               )
             : null;
-
 
         key =
           body.key ||
@@ -4606,8 +4905,10 @@ async function adminKeys(
       }
     }
 
-
-    if (!id && !key) {
+    if (
+      !id &&
+      !key
+    ) {
 
       json(res, 400, {
 
@@ -4620,7 +4921,6 @@ async function adminKeys(
 
       return;
     }
-
 
     if (id) {
 
@@ -4647,7 +4947,6 @@ async function adminKeys(
       );
     }
 
-
     json(res, 200, {
 
       ok: true
@@ -4656,7 +4955,6 @@ async function adminKeys(
 
     return;
   }
-
 
   json(res, 405, {
 
@@ -4692,7 +4990,6 @@ async function resetDevice(
     return;
   }
 
-
   if (!pool) {
 
     json(res, 500, {
@@ -4707,14 +5004,11 @@ async function resetDevice(
     return;
   }
 
-
   const body =
     await readBody(req);
 
-
   const id =
     body.id;
-
 
   const key =
     String(
@@ -4723,8 +5017,10 @@ async function resetDevice(
       ""
     ).trim();
 
-
-  if (!id && !key) {
+  if (
+    !id &&
+    !key
+  ) {
 
     json(res, 400, {
 
@@ -4737,7 +5033,6 @@ async function resetDevice(
 
     return;
   }
-
 
   if (id) {
 
@@ -4769,7 +5064,6 @@ async function resetDevice(
       ]
     );
   }
-
 
   json(res, 200, {
 
@@ -4805,9 +5099,7 @@ async function adminStatus(
     return;
   }
 
-
   let db = false;
-
 
   if (pool) {
 
@@ -4820,17 +5112,19 @@ async function adminStatus(
       db = true;
 
     } catch {
-
       db = false;
     }
   }
-
 
   json(res, 200, {
 
     ok: true,
 
     server: true,
+
+    environment:
+      process.env.NODE_ENV ||
+      "production",
 
     database:
       db,
@@ -4849,6 +5143,9 @@ async function adminStatus(
     historyCount:
       providerState.history.length,
 
+    last_updated:
+      providerState.lastUpdated,
+
     targetIssue:
       resolveTargetIssue(),
 
@@ -4862,7 +5159,7 @@ async function adminStatus(
 
 
 /* =========================================================
-   ACCESS CHECK API
+   KEY CHECK
 ========================================================= */
 
 async function keyCheck(
@@ -4877,14 +5174,12 @@ async function keyCheck(
       ] || ""
     ).trim();
 
-
   const deviceId =
     String(
       req.headers[
         "x-device-id"
       ] || ""
     ).trim();
-
 
   try {
 
@@ -4893,7 +5188,6 @@ async function keyCheck(
         accessKey,
         deviceId
       );
-
 
     json(
       res,
@@ -4931,14 +5225,12 @@ async function stateApi(
       ] || ""
     ).trim();
 
-
   const deviceId =
     String(
       req.headers[
         "x-device-id"
       ] || ""
     ).trim();
-
 
   try {
 
@@ -4947,7 +5239,6 @@ async function stateApi(
         accessKey,
         deviceId
       );
-
 
     if (!auth.ok) {
 
@@ -4960,29 +5251,22 @@ async function stateApi(
       return;
     }
 
-
     const target =
       resolveTargetIssue();
-
 
     const prediction =
       target
         ? (
             modelCache.targetIssue ===
-              target
-
+            target
               ? modelCache
-
               : generatePrediction()
           )
-
         : null;
-
 
     json(res, 200, {
 
       ok: true,
-
 
       provider: {
 
@@ -5006,22 +5290,14 @@ async function stateApi(
 
       },
 
-
       targetIssue:
         target,
-
-
-      /*
-        4-second UI thinking signal.
-      */
 
       thinkingDurationMs:
         THINKING_DURATION_MS,
 
-
       prediction:
         prediction
-
           ? {
 
               targetIssue:
@@ -5053,6 +5329,16 @@ async function stateApi(
                   ?.statisticalSupport ||
                 null,
 
+              agreement:
+                prediction.analysis
+                  ?.agreement ??
+                0,
+
+              evidenceConflict:
+                prediction.analysis
+                  ?.evidenceConflict ??
+                false,
+
               analysis:
                 prediction.analysis ||
                 null,
@@ -5061,15 +5347,13 @@ async function stateApi(
                 "Historical patterns do not guarantee the next result."
 
             }
-
           : null,
-
 
       history:
         providerState.history
           .slice(0, 30)
           .map(
-            (row) => ({
+            row => ({
 
               issueNumber:
                 row.issueNumber,
@@ -5130,7 +5414,6 @@ async function historyApi(
     return;
   }
 
-
   try {
 
     const result =
@@ -5151,7 +5434,6 @@ async function historyApi(
         LIMIT 30
         `
       );
-
 
     json(res, 200, {
 
@@ -5199,7 +5481,6 @@ async function adminPing(
     return;
   }
 
-
   json(res, 200, {
 
     ok: true,
@@ -5237,11 +5518,9 @@ async function adminWingoTest(
     return;
   }
 
-
   try {
 
     await refreshProvider();
-
 
     json(res, 200, {
 
@@ -5253,6 +5532,12 @@ async function adminWingoTest(
 
       historyCount:
         providerState.history.length,
+
+      fetched:
+        providerState.fetched,
+
+      lastUpdated:
+        providerState.lastUpdated,
 
       error:
         providerState.error
@@ -5296,12 +5581,10 @@ async function adminModelTest(
     return;
   }
 
-
   const result =
     calculateModel(
       providerState.history
     );
-
 
   json(res, 200, {
 
@@ -5321,7 +5604,7 @@ async function adminModelTest(
 
 
 /* =========================================================
-   STATIC FILE SERVER
+   STATIC MIME
 ========================================================= */
 
 function contentType(file) {
@@ -5329,7 +5612,6 @@ function contentType(file) {
   const ext =
     path.extname(file)
       .toLowerCase();
-
 
   const types = {
 
@@ -5374,7 +5656,6 @@ function contentType(file) {
 
   };
 
-
   return (
     types[ext] ||
     "application/octet-stream"
@@ -5383,7 +5664,7 @@ function contentType(file) {
 
 
 /* =========================================================
-   STATIC SERVER
+   STATIC FILE SERVER
 ========================================================= */
 
 function serveStatic(
@@ -5396,7 +5677,6 @@ function serveStatic(
     pathname === "/"
       ? "/prediction.html"
       : pathname;
-
 
   try {
 
@@ -5416,17 +5696,11 @@ function serveStatic(
     return;
   }
 
-
   const filePath =
     path.resolve(
       PUBLIC_DIR,
       "." + requested
     );
-
-
-  /*
-    Strong path traversal protection.
-  */
 
   if (
     filePath !==
@@ -5446,10 +5720,12 @@ function serveStatic(
     return;
   }
 
-
   fs.stat(
     filePath,
-    (error, stat) => {
+    (
+      error,
+      stat
+    ) => {
 
       if (
         error ||
@@ -5465,16 +5741,14 @@ function serveStatic(
         return;
       }
 
-
       const type =
         contentType(
           filePath
         );
 
-
-      /* =====================================================
-         MP3
-      ===================================================== */
+      /* -----------------------------------------------------
+         MP3 RANGE
+      ----------------------------------------------------- */
 
       if (
         type ===
@@ -5484,7 +5758,6 @@ function serveStatic(
         const range =
           req.headers.range;
 
-
         if (range) {
 
           const match =
@@ -5493,29 +5766,23 @@ function serveStatic(
                 range
               );
 
-
           if (!match) {
 
             res.writeHead(
               416,
               {
-
                 "Content-Range":
                   `bytes */${stat.size}`
-
               }
             );
-
 
             res.end();
 
             return;
           }
 
-
           const fileSize =
             stat.size;
-
 
           let start =
             match[1]
@@ -5524,7 +5791,6 @@ function serveStatic(
                 )
               : 0;
 
-
           let end =
             match[2]
               ? Number(
@@ -5532,14 +5798,9 @@ function serveStatic(
                 )
               : fileSize - 1;
 
-
           if (
-            !Number.isFinite(
-              start
-            ) ||
-            !Number.isFinite(
-              end
-            ) ||
+            !Number.isFinite(start) ||
+            !Number.isFinite(end) ||
             start < 0 ||
             start >= fileSize ||
             end < start
@@ -5548,19 +5809,15 @@ function serveStatic(
             res.writeHead(
               416,
               {
-
                 "Content-Range":
                   `bytes */${fileSize}`
-
               }
             );
-
 
             res.end();
 
             return;
           }
-
 
           end =
             Math.min(
@@ -5568,12 +5825,10 @@ function serveStatic(
               fileSize - 1
             );
 
-
           const chunkSize =
             end -
             start +
             1;
-
 
           res.writeHead(
             206,
@@ -5599,7 +5854,6 @@ function serveStatic(
             }
           );
 
-
           fs.createReadStream(
             filePath,
             {
@@ -5608,14 +5862,8 @@ function serveStatic(
             }
           ).pipe(res);
 
-
           return;
         }
-
-
-        /*
-          Normal MP3 request.
-        */
 
         res.writeHead(
           200,
@@ -5638,19 +5886,16 @@ function serveStatic(
           }
         );
 
-
         fs.createReadStream(
           filePath
         ).pipe(res);
 
-
         return;
       }
 
-
-      /* =====================================================
+      /* -----------------------------------------------------
          NORMAL FILE
-      ===================================================== */
+      ----------------------------------------------------- */
 
       const headers = {
 
@@ -5671,22 +5916,14 @@ function serveStatic(
 
       };
 
-
-      /*
-        IMPORTANT:
-        Undefined header value kabhi nahi bhejenge.
-      */
-
       res.writeHead(
         200,
         headers
       );
 
-
       fs.createReadStream(
         filePath
       ).pipe(res);
-
     }
   );
 }
@@ -5705,9 +5942,9 @@ const server =
 
       try {
 
-        /* =================================================
-           OPTIONS / CORS
-        ================================================= */
+        /* ---------------------------------------------------
+           OPTIONS
+        --------------------------------------------------- */
 
         if (
           req.method ===
@@ -5733,12 +5970,10 @@ const server =
             }
           );
 
-
           res.end();
 
           return;
         }
-
 
         const url =
           new URL(
@@ -5746,14 +5981,12 @@ const server =
             `http://${req.headers.host || "localhost"}`
           );
 
-
         const pathname =
           url.pathname;
 
-
-        /* =================================================
+        /* ---------------------------------------------------
            HEALTH
-        ================================================= */
+        --------------------------------------------------- */
 
         if (
           pathname ===
@@ -5776,6 +6009,12 @@ const server =
               uptime:
                 process.uptime(),
 
+              provider:
+                providerState.ok,
+
+              history:
+                providerState.history.length,
+
               time:
                 now()
 
@@ -5785,10 +6024,9 @@ const server =
           return;
         }
 
-
-        /* =================================================
+        /* ---------------------------------------------------
            KEY CHECK
-        ================================================= */
+        --------------------------------------------------- */
 
         if (
           pathname ===
@@ -5805,10 +6043,9 @@ const server =
           return;
         }
 
-
-        /* =================================================
+        /* ---------------------------------------------------
            STATE
-        ================================================= */
+        --------------------------------------------------- */
 
         if (
           pathname ===
@@ -5825,10 +6062,9 @@ const server =
           return;
         }
 
-
-        /* =================================================
+        /* ---------------------------------------------------
            HISTORY
-        ================================================= */
+        --------------------------------------------------- */
 
         if (
           pathname ===
@@ -5845,10 +6081,9 @@ const server =
           return;
         }
 
-
-        /* =================================================
+        /* ---------------------------------------------------
            ADMIN KEYS
-        ================================================= */
+        --------------------------------------------------- */
 
         if (
           pathname ===
@@ -5864,10 +6099,9 @@ const server =
           return;
         }
 
-
-        /* =================================================
-           ADMIN RESET DEVICE
-        ================================================= */
+        /* ---------------------------------------------------
+           RESET DEVICE
+        --------------------------------------------------- */
 
         if (
           pathname ===
@@ -5884,10 +6118,9 @@ const server =
           return;
         }
 
-
-        /* =================================================
+        /* ---------------------------------------------------
            ADMIN STATUS
-        ================================================= */
+        --------------------------------------------------- */
 
         if (
           pathname ===
@@ -5904,10 +6137,9 @@ const server =
           return;
         }
 
-
-        /* =================================================
+        /* ---------------------------------------------------
            ADMIN PING
-        ================================================= */
+        --------------------------------------------------- */
 
         if (
           pathname ===
@@ -5924,10 +6156,9 @@ const server =
           return;
         }
 
-
-        /* =================================================
+        /* ---------------------------------------------------
            ADMIN WINGO TEST
-        ================================================= */
+        --------------------------------------------------- */
 
         if (
           pathname ===
@@ -5944,10 +6175,9 @@ const server =
           return;
         }
 
-
-        /* =================================================
+        /* ---------------------------------------------------
            ADMIN MODEL TEST
-        ================================================= */
+        --------------------------------------------------- */
 
         if (
           pathname ===
@@ -5964,10 +6194,9 @@ const server =
           return;
         }
 
-
-        /* =================================================
-           STATIC FILES
-        ================================================= */
+        /* ---------------------------------------------------
+           STATIC
+        --------------------------------------------------- */
 
         serveStatic(
           req,
@@ -5981,12 +6210,6 @@ const server =
           "Server request error:",
           error
         );
-
-
-        /*
-          Response already started ho to
-          dobara headers nahi bhejne.
-        */
 
         if (
           !res.headersSent
@@ -6024,7 +6247,6 @@ async function start() {
 
     await initDatabase();
 
-
     server.listen(
       PORT,
       HOST,
@@ -6034,16 +6256,13 @@ async function start() {
           `DY AI server running on port ${PORT}`
         );
 
-
         console.log(
           `Model: ${MODEL_VERSION}`
         );
 
-
         console.log(
           `Thinking duration: ${THINKING_DURATION_MS}ms`
         );
-
 
         console.log(
           `WingoBot token: ${
@@ -6052,7 +6271,6 @@ async function start() {
               : "missing"
           }`
         );
-
 
         console.log(
           `Database: ${
@@ -6064,13 +6282,11 @@ async function start() {
       }
     );
 
-
     /*
       Initial provider fetch.
     */
 
     await refreshProvider();
-
 
     /*
       Refresh every 3 seconds.
@@ -6081,7 +6297,7 @@ async function start() {
 
         refreshProvider()
           .catch(
-            (error) => {
+            error => {
 
               console.error(
                 "Refresh loop:",
@@ -6101,11 +6317,6 @@ async function start() {
       "Startup error:",
       error
     );
-
-
-    /*
-      Server ko unnecessary crash se bachane ke liye.
-    */
 
     if (
       !server.listening
@@ -6133,7 +6344,7 @@ async function start() {
 
 process.on(
   "unhandledRejection",
-  (error) => {
+  error => {
 
     console.error(
       "Unhandled rejection:",
@@ -6146,7 +6357,7 @@ process.on(
 
 process.on(
   "uncaughtException",
-  (error) => {
+  error => {
 
     console.error(
       "Uncaught exception:",
