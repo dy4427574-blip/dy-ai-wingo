@@ -1,867 +1,467 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-
-<title>DY AI WinGo 30S</title>
-
-<style>
-*{
-  box-sizing:border-box;
-  -webkit-tap-highlight-color:transparent;
-}
-
-html,body{
-  margin:0;
-  min-height:100%;
-  background:#070b16;
-  color:#fff;
-  font-family:Arial,Helvetica,sans-serif;
-}
-
-body{
-  padding:12px;
-}
-
-.app{
-  width:min(620px,100%);
-  margin:auto;
-}
-
-/* ================= HEADER ================= */
-
-.header{
-  height:64px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 5px;
-}
-
-.menu{
-  width:40px;
-  height:40px;
-  border:1px solid #202943;
-  border-radius:13px;
-  background:#101629;
-  color:#fff;
-  font-size:20px;
-}
-
-.brand{
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
-
-.brand-ai{
-  font-size:25px;
-  font-weight:1000;
-  color:#20e58b;
-  font-style:italic;
-}
-
-.brand-name{
-  font-size:20px;
-  font-weight:1000;
-  font-style:italic;
-}
-
-.brand-name span{
-  color:#ff7517;
-}
-
-.avatar{
-  width:40px;
-  height:40px;
-  display:grid;
-  place-items:center;
-  border-radius:14px;
-  background:linear-gradient(135deg,#5648ff,#00bfff);
-  font-weight:1000;
-}
-
-/* ================= LOGIN ================= */
-
-#loginScreen{
-  padding:20px 5px;
-}
-
-.login-card{
-  margin-top:50px;
-  padding:25px 20px;
-  border-radius:27px;
-  background:
-    radial-gradient(
-      circle at 50% 0%,
-      rgba(104,73,255,.20),
-      transparent 38%
-    ),
-    #0e1424;
-  border:1px solid #252e49;
-  box-shadow:0 25px 70px rgba(0,0,0,.35);
-}
-
-.robot{
-  width:74px;
-  height:74px;
-  margin:auto;
-  display:grid;
-  place-items:center;
-  border-radius:24px;
-  background:linear-gradient(135deg,#5946ff,#bd42ff);
-  box-shadow:0 0 45px rgba(102,68,255,.3);
-  font-size:34px;
-}
-
-.login-card h1{
-  margin:18px 0 7px;
-  text-align:center;
-  font-size:25px;
-}
-
-.login-card p{
-  margin:0 0 22px;
-  text-align:center;
-  color:#8590a9;
-  font-size:12px;
-  line-height:1.6;
-}
-
-.input{
-  width:100%;
-  border:1px solid #29334e;
-  border-radius:14px;
-  background:#080d19;
-  color:#fff;
-  padding:15px;
-  outline:none;
-  font-size:14px;
-}
-
-.input:focus{
-  border-color:#6956ff;
-  box-shadow:0 0 0 3px rgba(105,86,255,.12);
-}
-
-.connect{
-  width:100%;
-  margin-top:11px;
-  border:0;
-  border-radius:14px;
-  padding:15px;
-  color:#fff;
-  font-size:13px;
-  font-weight:1000;
-  background:linear-gradient(90deg,#5544ff,#9f43ff);
-}
-
-/* ================= MAIN ================= */
-
-.hidden{
-  display:none!important;
-}
-
-main{
-  padding-bottom:25px;
-}
-
-/* ================= HERO ================= */
-
-.hero{
-  padding:22px 18px;
-  border-radius:28px;
-  border:1px solid #29304a;
-  background:
-    radial-gradient(
-      circle at 100% 0%,
-      rgba(255,91,43,.15),
-      transparent 35%
-    ),
-    radial-gradient(
-      circle at 0% 100%,
-      rgba(89,65,255,.16),
-      transparent 35%
-    ),
-    #0d1322;
-  box-shadow:0 20px 55px rgba(0,0,0,.25);
-}
-
-.pill{
-  display:inline-flex;
-  align-items:center;
-  gap:7px;
-  padding:9px 13px;
-  border-radius:30px;
-  background:linear-gradient(90deg,#ff9700,#ff174f);
-  font-size:10px;
-  font-weight:1000;
-}
-
-.hero h1{
-  margin:16px 0 7px;
-  font-size:28px;
-  line-height:1.13;
-}
-
-.hero h1 span{
-  color:#ff6d1a;
-}
-
-.hero p{
-  margin:0;
-  color:#8791a9;
-  font-size:12px;
-  line-height:1.55;
-}
-
-.mode-tabs{
-  display:flex;
-  gap:5px;
-  margin-top:18px;
-  padding:5px;
-  border-radius:17px;
-  background:#080d19;
-  border:1px solid #202943;
-}
-
-.mode{
-  flex:1;
-  text-align:center;
-  padding:11px 6px;
-  border-radius:12px;
-  color:#77829a;
-  font-size:11px;
-  font-weight:900;
-}
-
-.mode.active{
-  color:#fff;
-  background:linear-gradient(90deg,#ff9700,#ff174f);
-}
-
-/* ================= PERIOD ================= */
-
-.period-card{
-  margin-top:15px;
-  padding:19px;
-  border-radius:28px;
-  border:1px solid #343a4e;
-  background:#111827;
-}
-
-.period-head{
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-}
-
-.label{
-  color:#77839d;
-  font-size:10px;
-  text-transform:uppercase;
-  letter-spacing:1px;
-  font-weight:800;
-}
-
-.period{
-  margin-top:7px;
-  font-size:18px;
-  font-weight:1000;
-  font-family:monospace;
-  word-break:break-all;
-}
-
-.live{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  color:#2ee68f;
-  font-size:10px;
-  font-weight:1000;
-}
-
-.live-dot{
-  width:7px;
-  height:7px;
-  border-radius:50%;
-  background:#2ee68f;
-  box-shadow:0 0 12px #2ee68f;
-}
-
-/* ================= TIMER ================= */
-
-.timer-row{
-  display:flex;
-  align-items:center;
-  gap:9px;
-  margin-top:17px;
-}
-
-.timer{
-  flex:1;
-  height:48px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:9px;
-  border-radius:15px;
-  background:#080d18;
-  border:1px solid #252d43;
-  font-size:18px;
-  font-weight:1000;
-  font-family:monospace;
-}
-
-.timer small{
-  color:#7d879c;
-  font-family:Arial;
-  font-size:9px;
-}
-
-.icon-btn{
-  width:48px;
-  height:48px;
-  border:1px solid #293249;
-  border-radius:15px;
-  background:#151c2d;
-  color:#fff;
-  font-size:18px;
-}
-
-.progress-info{
-  display:flex;
-  justify-content:space-between;
-  margin-top:14px;
-  color:#6f7b94;
-  font-size:9px;
-  font-weight:900;
-}
-
-.progress{
-  height:7px;
-  margin-top:7px;
-  overflow:hidden;
-  border-radius:20px;
-  background:#20283c;
-}
-
-.progress-bar{
-  width:0%;
-  height:100%;
-  border-radius:20px;
-  background:linear-gradient(90deg,#ff9b00,#ff1451);
-  transition:width .3s linear;
-}
-
-/* ================= AI PANEL ================= */
-
-.ai-panel{
-  position:relative;
-  overflow:hidden;
-  margin-top:16px;
-  min-height:310px;
-  padding:22px 18px;
-  border-radius:28px;
-  background:
-    radial-gradient(
-      circle at 15% 10%,
-      rgba(255,145,0,.32),
-      transparent 30%
-    ),
-    radial-gradient(
-      circle at 90% 90%,
-      rgba(255,0,80,.23),
-      transparent 34%
-    ),
-    linear-gradient(
-      135deg,
-      #39160f,
-      #4a0716 50%,
-      #1a0812
-    );
-  border:1px solid #663326;
-  box-shadow:0 20px 60px rgba(70,10,10,.25);
-}
-
-.ai-grid{
-  position:absolute;
-  inset:0;
-  opacity:.08;
-  background-image:
-    linear-gradient(#fff 1px,transparent 1px),
-    linear-gradient(90deg,#fff 1px,transparent 1px);
-  background-size:25px 25px;
-}
-
-.ai-content{
-  position:relative;
-  z-index:2;
-  text-align:center;
-}
-
-.ai-badge{
-  display:inline-block;
-  padding:8px 15px;
-  border-radius:30px;
-  background:rgba(0,0,0,.2);
-  border:1px solid rgba(255,255,255,.17);
-  color:#ffd7bf;
-  font-size:10px;
-  font-weight:1000;
-  letter-spacing:.7px;
-}
-
-.signal{
-  margin:28px 0 9px;
-  font-size:56px;
-  line-height:1;
-  font-weight:1000;
-  letter-spacing:1px;
-}
-
-.signal.big{
-  color:#38e39b;
-  text-shadow:0 0 35px rgba(56,227,155,.3);
-}
-
-.signal.small{
-  color:#ff6689;
-  text-shadow:0 0 35px rgba(255,102,137,.3);
-}
-
-.signal.wait{
-  color:#fff;
-  font-size:34px;
-}
-
-.analysis-status{
-  color:#f0bfa9;
-  font-size:11px;
-  min-height:18px;
-}
-
-.confidence{
-  margin-top:15px;
-  display:inline-block;
-  padding:8px 13px;
-  border-radius:30px;
-  background:rgba(0,0,0,.18);
-  color:#ffd9c9;
-  font-size:10px;
-  font-weight:900;
-}
-
-.scan{
-  animation:scanPulse 1s infinite;
-}
-
-@keyframes scanPulse{
-  0%,100%{
-    opacity:.35;
-  }
-  50%{
-    opacity:1;
-  }
-}
-
-/* ================= ACTIONS ================= */
-
-.actions{
-  display:grid;
-  grid-template-columns:1.4fr 1fr 1fr;
-  gap:8px;
-  margin-top:14px;
-}
-
-.action{
-  min-height:45px;
-  border-radius:14px;
-  border:1px solid #30394f;
-  background:#151c2d;
-  color:#dce2ef;
-  font-size:10px;
-  font-weight:1000;
-}
-
-.action.primary{
-  border:0;
-  background:linear-gradient(90deg,#ff9700,#ff174f);
-  color:#fff;
-}
-
-/* ================= HISTORY ================= */
-
-.history-card{
-  margin-top:16px;
-  padding:18px;
-  border-radius:28px;
-  border:1px solid #293249;
-  background:#101725;
-}
-
-.history-head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding-bottom:14px;
-  border-bottom:1px solid #20283a;
-}
-
-.history-head h2{
-  margin:0;
-  font-size:16px;
-}
-
-.last30{
-  padding:8px 11px;
-  border-radius:20px;
-  color:#ffd58e;
-  background:#2b2111;
-  border:1px solid #58401b;
-  font-size:9px;
-  font-weight:1000;
-}
-
-.history{
-  margin-top:5px;
-}
-
-.history-row{
-  display:grid;
-  grid-template-columns:1.35fr .7fr .65fr .65fr;
-  align-items:center;
-  min-height:47px;
-  gap:5px;
-  border-bottom:1px solid #1d2536;
-  font-size:10px;
-}
-
-.history-row:last-child{
-  border-bottom:0;
-}
-
-.issue{
-  color:#dbe1ec;
-  font-family:monospace;
-  font-weight:900;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-
-.side{
-  justify-self:center;
-  padding:6px 9px;
-  border-radius:9px;
-  font-size:9px;
-  font-weight:1000;
-}
-
-.side.big{
-  color:#27d998;
-  background:#092b22;
-}
-
-.side.small{
-  color:#ff6d8b;
-  background:#30111b;
-}
-
-.side.pending{
-  color:#8a94a7;
-  background:#202638;
-}
-
-.number{
-  text-align:center;
-  color:#d6dbea;
-  font-weight:1000;
-}
-
-.outcome{
-  text-align:right;
-  font-weight:1000;
-}
-
-.outcome.win{
-  color:#26d991;
-}
-
-.outcome.loss{
-  color:#ff607c;
-}
-
-.outcome.pending{
-  color:#717b90;
-}
-
-/* ================= FOOTER ================= */
-
-.footer{
-  display:flex;
-  justify-content:space-between;
-  padding:13px 3px 0;
-  color:#59657d;
-  font-size:9px;
-}
-
-/* ================= TOAST ================= */
-
-#toast{
-  position:fixed;
-  left:50%;
-  bottom:20px;
-  transform:translate(-50%,25px);
-  opacity:0;
-  pointer-events:none;
-  z-index:100;
-  padding:12px 16px;
-  max-width:90%;
-  border-radius:13px;
-  background:#1a2235;
-  border:1px solid #303b58;
-  color:#fff;
-  font-size:11px;
-  text-align:center;
-  transition:.25s;
-}
-
-#toast.show{
-  opacity:1;
-  transform:translate(-50%,0);
-}
-
-@media(max-width:420px){
-
-  body{
-    padding:8px;
-  }
-
-  .hero h1{
-    font-size:25px;
-  }
-
-  .signal{
-    font-size:50px;
-  }
-
-  .history-row{
-    grid-template-columns:1.25fr .75fr .55fr .65fr;
-  }
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+  <title>DY AI WinGo 30S</title>
+
+  <style>
+    *{
+      box-sizing:border-box;
+      margin:0;
+      padding:0;
+      -webkit-tap-highlight-color:transparent;
+    }
+
+    body{
+      font-family:Arial,Helvetica,sans-serif;
+      background:
+        radial-gradient(circle at top,#172554 0,#070b16 42%,#03050a 100%);
+      color:#fff;
+      min-height:100vh;
+      padding:14px;
+    }
+
+    .app{
+      width:100%;
+      max-width:520px;
+      margin:auto;
+    }
+
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:8px 2px 15px;
+    }
+
+    .brand{
+      font-size:21px;
+      font-weight:900;
+      letter-spacing:.5px;
+    }
+
+    .brand span{
+      color:#38bdf8;
+    }
+
+    .status{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      font-size:11px;
+      color:#9ca3af;
+    }
+
+    .dot{
+      width:8px;
+      height:8px;
+      border-radius:50%;
+      background:#22c55e;
+      box-shadow:0 0 10px #22c55e;
+    }
+
+    .card{
+      background:rgba(15,23,42,.82);
+      border:1px solid rgba(148,163,184,.15);
+      border-radius:20px;
+      padding:16px;
+      margin-bottom:13px;
+      box-shadow:0 15px 45px rgba(0,0,0,.28);
+      backdrop-filter:blur(12px);
+    }
+
+    .login{
+      margin-top:50px;
+    }
+
+    .title{
+      font-size:24px;
+      font-weight:900;
+      margin-bottom:7px;
+    }
+
+    .sub{
+      color:#94a3b8;
+      font-size:13px;
+      line-height:1.5;
+      margin-bottom:18px;
+    }
+
+    input{
+      width:100%;
+      border:1px solid #334155;
+      background:#020617;
+      color:#fff;
+      border-radius:13px;
+      padding:14px;
+      outline:none;
+      font-size:14px;
+      margin-bottom:11px;
+    }
+
+    input:focus{
+      border-color:#38bdf8;
+    }
+
+    button{
+      width:100%;
+      border:0;
+      border-radius:13px;
+      padding:14px;
+      font-weight:800;
+      font-size:14px;
+      cursor:pointer;
+      background:linear-gradient(135deg,#38bdf8,#2563eb);
+      color:#fff;
+    }
+
+    button:active{
+      transform:scale(.98);
+    }
+
+    .error{
+      color:#f87171;
+      font-size:12px;
+      margin-top:10px;
+      display:none;
+    }
+
+    #dashboard{
+      display:none;
+    }
+
+    .hero{
+      text-align:center;
+      padding:19px 14px 20px;
+    }
+
+    .label{
+      color:#94a3b8;
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:1.5px;
+      margin-bottom:8px;
+    }
+
+    .issue{
+      font-size:15px;
+      font-weight:800;
+      color:#cbd5e1;
+      margin-bottom:17px;
+      word-break:break-all;
+    }
+
+    .thinking{
+      min-height:115px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+    }
+
+    .brain{
+      width:50px;
+      height:50px;
+      border:3px solid rgba(56,189,248,.18);
+      border-top-color:#38bdf8;
+      border-right-color:#60a5fa;
+      border-radius:50%;
+      animation:spin 1s linear infinite;
+      margin-bottom:12px;
+      position:relative;
+    }
+
+    .brain:after{
+      content:"";
+      position:absolute;
+      inset:9px;
+      border:2px dotted #60a5fa;
+      border-radius:50%;
+      animation:spin 1.5s linear reverse infinite;
+    }
+
+    @keyframes spin{
+      to{transform:rotate(360deg)}
+    }
+
+    .thinkingText{
+      font-size:14px;
+      font-weight:900;
+      letter-spacing:1px;
+      color:#e0f2fe;
+    }
+
+    .count{
+      color:#64748b;
+      font-size:11px;
+      margin-top:5px;
+    }
+
+    .result{
+      display:none;
+    }
+
+    .prediction{
+      font-size:52px;
+      line-height:1;
+      font-weight:1000;
+      margin:8px 0 12px;
+      letter-spacing:1px;
+    }
+
+    .big{
+      color:#fb7185;
+      text-shadow:0 0 25px rgba(251,113,133,.35);
+    }
+
+    .small{
+      color:#38bdf8;
+      text-shadow:0 0 25px rgba(56,189,248,.35);
+    }
+
+    .confidence{
+      display:inline-flex;
+      padding:7px 12px;
+      border-radius:30px;
+      background:#020617;
+      border:1px solid #1e293b;
+      color:#cbd5e1;
+      font-size:12px;
+      font-weight:800;
+    }
+
+    .model{
+      margin-top:13px;
+      color:#64748b;
+      font-size:10px;
+    }
+
+    .timerBox{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+    }
+
+    .timerTitle{
+      font-size:12px;
+      color:#94a3b8;
+    }
+
+    .timer{
+      font-size:28px;
+      font-weight:900;
+      color:#fff;
+      min-width:65px;
+      text-align:right;
+    }
+
+    .progress{
+      height:5px;
+      background:#020617;
+      border-radius:10px;
+      overflow:hidden;
+      margin-top:10px;
+    }
+
+    .progressBar{
+      height:100%;
+      width:100%;
+      background:#38bdf8;
+      transition:width .3s linear;
+    }
+
+    .sectionTitle{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:12px;
+    }
+
+    .sectionTitle h3{
+      font-size:14px;
+    }
+
+    .badge{
+      font-size:9px;
+      padding:5px 8px;
+      border-radius:20px;
+      background:#172033;
+      color:#94a3b8;
+      font-weight:900;
+    }
+
+    .tableWrap{
+      overflow-x:auto;
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:11px;
+      min-width:400px;
+    }
+
+    th{
+      color:#64748b;
+      font-size:9px;
+      text-transform:uppercase;
+      padding:8px 5px;
+      border-bottom:1px solid #1e293b;
+    }
+
+    td{
+      padding:10px 5px;
+      border-bottom:1px solid rgba(30,41,59,.65);
+      text-align:center;
+    }
+
+    td:first-child,
+    th:first-child{
+      text-align:left;
+    }
+
+    .typeBig{
+      color:#fb7185;
+      font-weight:900;
+    }
+
+    .typeSmall{
+      color:#38bdf8;
+      font-weight:900;
+    }
+
+    .win{
+      color:#4ade80;
+      font-weight:900;
+    }
+
+    .loss{
+      color:#f87171;
+      font-weight:900;
+    }
+
+    .pending{
+      color:#facc15;
+      font-weight:800;
+    }
+
+    .footer{
+      text-align:center;
+      color:#475569;
+      font-size:9px;
+      padding:8px 0 20px;
+      line-height:1.5;
+    }
+
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:22px;
+      transform:translateX(-50%) translateY(20px);
+      background:#0f172a;
+      border:1px solid #334155;
+      padding:11px 16px;
+      border-radius:12px;
+      font-size:12px;
+      opacity:0;
+      pointer-events:none;
+      transition:.25s;
+      z-index:99;
+      white-space:nowrap;
+    }
+
+    .toast.show{
+      opacity:1;
+      transform:translateX(-50%) translateY(0);
+    }
+
+    @media(max-width:380px){
+      body{padding:10px}
+      .prediction{font-size:45px}
+      .card{border-radius:17px;padding:13px}
+    }
+  </style>
 </head>
 
 <body>
 
 <div class="app">
 
-<header class="header">
-
-  <button
-    class="menu"
-    type="button">
-    ☰
-  </button>
-
-  <div class="brand">
-    <div class="brand-ai">AI</div>
-    <div class="brand-name">
-      WinGo<span>Signals</span>
+  <!-- LOGIN -->
+  <div id="loginScreen" class="card login">
+    <div class="title">DY AI <span>WinGo 30S</span></div>
+    <div class="sub">
+      Enter your access key to open the AI analysis dashboard.
     </div>
-  </div>
-
-  <div class="avatar">
-    D
-  </div>
-
-</header>
-
-
-<!-- ================= LOGIN ================= -->
-
-<section id="loginScreen">
-
-  <div class="login-card">
-
-    <div class="robot">
-      🤖
-    </div>
-
-    <h1>
-      DY AI WinGo
-    </h1>
-
-    <p>
-      Connect your authorized access key
-      to start live 30-second sequence analysis.
-    </p>
 
     <input
       id="accessKey"
-      class="input"
-      type="password"
+      type="text"
+      placeholder="Enter access key"
       autocomplete="off"
-      placeholder="Enter access key">
+    >
 
-    <button
-      class="connect"
-      onclick="connect()">
-      CONNECT AI ENGINE →
-    </button>
+    <button id="loginBtn">ACCESS DASHBOARD</button>
 
+    <div id="loginError" class="error">
+      Invalid or unauthorized access key.
+    </div>
   </div>
 
-</section>
 
+  <!-- DASHBOARD -->
+  <div id="dashboard">
 
-<!-- ================= APP ================= -->
+    <div class="topbar">
+      <div class="brand">DY <span>AI</span> WinGo</div>
 
-<main
-  id="mainApp"
-  class="hidden">
-
-  <section class="hero">
-
-    <div class="pill">
-      ⚡ LIVE 30 SEC ANALYZER
-    </div>
-
-    <h1>
-      WinGo 30 Sec
-      <span>AI Pattern</span>
-    </h1>
-
-    <p>
-      Real-time sequence analysis with
-      recent-window, transition and trend signals.
-    </p>
-
-    <div class="mode-tabs">
-
-      <div class="mode active">
-        ⚡ WinGo 30 Sec
-      </div>
-
-      <div class="mode">
-        ◷ WinGo 1 Min
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- ================= PERIOD ================= -->
-
-  <section class="period-card">
-
-    <div class="period-head">
-
-      <div>
-
-        <div class="label">
-          DRAW PERIOD
-        </div>
-
-        <div
-          id="period"
-          class="period">
-          —
-        </div>
-
-      </div>
-
-      <div class="live">
-        <span class="live-dot"></span>
-        LIVE
-      </div>
-
-    </div>
-
-
-    <div class="timer-row">
-
-      <div class="timer">
-
-        <span>◷</span>
-
-        <span id="timer">
-          00:30
-        </span>
-
-        <small>
-          30 SEC
-        </small>
-
-      </div>
-
-      <button
-        class="icon-btn"
-        onclick="manualRefresh()">
-        ↻
-      </button>
-
-      <button
-        id="soundButton"
-        class="icon-btn"
-        onclick="toggleSound()">
-        🔊
-      </button>
-
-    </div>
-
-
-    <div class="progress-info">
-
-      <span>
-        LIVE COUNTDOWN
-      </span>
-
-      <span id="remaining">
-        30S
-      </span>
-
-    </div>
-
-    <div class="progress">
-      <div
-        id="progressBar"
-        class="progress-bar">
+      <div class="status">
+        <span class="dot" id="statusDot"></span>
+        <span id="statusText">ONLINE</span>
       </div>
     </div>
 
 
-    <!-- ================= AI ================= -->
+    <!-- MAIN PREDICTION -->
+    <div class="card hero">
 
-    <div class="ai-panel">
+      <div class="label">CURRENT TARGET ISSUE</div>
 
-      <div class="ai-grid"></div>
+      <div class="issue" id="targetIssue">Loading...</div>
 
-      <div class="ai-content">
+      <!-- 3 SECOND THINKING -->
+      <div id="thinkingBox" class="thinking">
 
-        <div class="ai-badge">
-          ∿ DY AI ANALYSIS ENGINE
-        </div>
+        <div class="brain"></div>
 
-        <div
-          id="signal"
-          class="signal wait scan">
+        <div class="thinkingText" id="thinkingText">
           ANALYZING
         </div>
 
-        <div
-          id="analysisStatus"
-          class="analysis-status">
-          Synchronizing live sequence...
+        <div class="count" id="thinkingCount">
+          AI is checking recent patterns...
         </div>
 
-        <div
-          id="confidence"
-          class="confidence">
-          WAITING FOR DATA
+      </div>
+
+
+      <!-- RESULT -->
+      <div id="resultBox" class="result">
+
+        <div class="label">AI HISTORICAL LEAN</div>
+
+        <div id="predictionText" class="prediction">
+          —
+        </div>
+
+        <div id="confidence" class="confidence">
+          Confidence —
+        </div>
+
+        <div id="modelVersion" class="model">
+          DY AI HUMAN LOGIC
         </div>
 
       </div>
@@ -869,1032 +469,899 @@ main{
     </div>
 
 
-    <!-- ================= ACTIONS ================= -->
+    <!-- TIMER -->
+    <div class="card">
 
-    <div class="actions">
+      <div class="timerBox">
 
-      <button
-        class="action primary"
-        onclick="reanalyze()">
-        ⚡ RE-ANALYZE
-      </button>
+        <div>
+          <div class="timerTitle">
+            NEXT RESULT ESTIMATE
+          </div>
 
-      <button
-        class="action"
-        onclick="sharePage()">
-        ⤴ SHARE
-      </button>
+          <div style="font-size:10px;color:#475569;margin-top:4px">
+            Client-side 30 sec cycle
+          </div>
+        </div>
 
-      <button
-        class="action"
-        onclick="logout()">
-        EXIT
-      </button>
+        <div class="timer" id="timer">
+          30
+        </div>
 
-    </div>
+      </div>
 
-  </section>
-
-
-  <!-- ================= HISTORY ================= -->
-
-  <section class="history-card">
-
-    <div class="history-head">
-
-      <h2>
-        Recent History
-      </h2>
-
-      <div class="last30">
-        LAST 30
+      <div class="progress">
+        <div class="progressBar" id="progressBar"></div>
       </div>
 
     </div>
 
 
-    <div
-      id="history"
-      class="history">
+    <!-- LIVE HISTORY -->
+    <div class="card">
 
-      <div
-        style="
-        padding:28px;
-        text-align:center;
-        color:#707b91;
-        font-size:11px;">
-        Loading history...
+      <div class="sectionTitle">
+        <h3>Live Results</h3>
+        <span class="badge">LAST 30</span>
+      </div>
+
+      <div class="tableWrap">
+
+        <table>
+
+          <thead>
+            <tr>
+              <th>Issue</th>
+              <th>Actual</th>
+              <th>AI</th>
+              <th>Result</th>
+            </tr>
+          </thead>
+
+          <tbody id="historyBody">
+            <tr>
+              <td colspan="4" style="color:#64748b">
+                Loading history...
+              </td>
+            </tr>
+          </tbody>
+
+        </table>
+
       </div>
 
     </div>
 
 
     <div class="footer">
-
-      <span>
-        ● LIVE SYNC
-      </span>
-
-      <span>
-        DY AI ENGINE
-      </span>
-
+      DY AI uses historical pattern analysis only.<br>
+      No outcome is guaranteed.
     </div>
 
-  </section>
-
-</main>
+  </div>
 
 </div>
 
-
-<div id="toast"></div>
+<div id="toast" class="toast"></div>
 
 
 <script>
-"use strict";
 
-/* =========================================================
-   CONFIG
-========================================================= */
+  /* =========================================================
+     CONFIG
+  ========================================================= */
 
-const KEY_STORAGE =
-  "dy_wingo_access_key";
+  const API_REFRESH = 3000;
+  const THINKING_TIME = 3000;
 
-const DEVICE_STORAGE =
-  "dy_wingo_device_id";
-
-
-let accessKey =
-  localStorage.getItem(
-    KEY_STORAGE
-  ) || "";
+  let accessKey = "";
+  let deviceId = "";
+  let lastTargetIssue = "";
+  let lastPrediction = "";
+  let thinkingRunning = false;
+  let stateTimer = null;
+  let countdownTimer = null;
 
 
-let deviceId =
-  localStorage.getItem(
-    DEVICE_STORAGE
-  );
+  /* =========================================================
+     DEVICE ID
+  ========================================================= */
 
+  function getDeviceId(){
 
-if(!deviceId){
+    let id = localStorage.getItem("dy_ai_device_id");
 
-  deviceId =
-    (
-      window.crypto &&
-      crypto.randomUUID
-    )
-      ? crypto.randomUUID()
-      : (
+    if(!id){
+
+      id =
+        "dy-" +
         Date.now().toString(36) +
-        Math.random()
-          .toString(36)
-          .slice(2)
-      );
+        "-" +
+        Math.random().toString(36).substring(2,12);
 
-  localStorage.setItem(
-    DEVICE_STORAGE,
-    deviceId
-  );
-}
+      localStorage.setItem("dy_ai_device_id", id);
+    }
+
+    return id;
+  }
 
 
-/* =========================================================
-   DOM
-========================================================= */
+  /* =========================================================
+     HELPERS
+  ========================================================= */
 
-const $ =
-  id =>
-  document.getElementById(id);
-
-
-/* =========================================================
-   TOAST
-========================================================= */
-
-function toast(message){
-
-  const el =
-    $("toast");
-
-  el.textContent =
-    message;
-
-  el.classList.add(
-    "show"
-  );
-
-  clearTimeout(
-    window.__toast
-  );
-
-  window.__toast =
-    setTimeout(
-      () =>
-        el.classList.remove(
-          "show"
-        ),
-      2300
-    );
-}
+  function $(id){
+    return document.getElementById(id);
+  }
 
 
-/* =========================================================
-   API
-========================================================= */
+  function escapeHtml(value){
 
-async function api(
-  endpoint,
-  options={}
-){
+    return String(value ?? "")
+      .replace(/&/g,"&amp;")
+      .replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;")
+      .replace(/'/g,"&#039;");
+  }
 
-  const response =
-    await fetch(
-      endpoint,
-      {
-        ...options,
 
+  function showToast(message){
+
+    const toast = $("toast");
+
+    toast.textContent = message;
+    toast.classList.add("show");
+
+    setTimeout(()=>{
+      toast.classList.remove("show");
+    },2200);
+  }
+
+
+  function headers(){
+
+    return {
+      "X-Access-Key": accessKey,
+      "X-Device-Id": deviceId
+    };
+  }
+
+
+  /* =========================================================
+     LOGIN
+  ========================================================= */
+
+  async function checkKey(){
+
+    const key = $("accessKey").value.trim();
+
+    if(!key){
+      $("loginError").textContent = "Please enter access key.";
+      $("loginError").style.display = "block";
+      return;
+    }
+
+    $("loginBtn").textContent = "CHECKING...";
+    $("loginBtn").disabled = true;
+
+    try{
+
+      const response = await fetch("/api/key/check",{
+        method:"GET",
         headers:{
-          "Accept":
-            "application/json",
-
-          "Content-Type":
-            "application/json",
-
-          "X-Access-Key":
-            accessKey,
-
-          "X-Device-Id":
-            deviceId,
-
-          ...(options.headers || {})
+          "X-Access-Key":key,
+          "X-Device-Id":deviceId
         },
-
         cache:"no-store"
-      }
-    );
-
-
-  let data = {};
-
-  try{
-    data =
-      await response.json();
-  }catch{}
-
-
-  if(!response.ok){
-
-    throw new Error(
-      data.error ||
-      `HTTP ${response.status}`
-    );
-  }
-
-
-  return data;
-}
-
-
-/* =========================================================
-   CONNECT
-========================================================= */
-
-async function connect(){
-
-  const value =
-    $("accessKey")
-      .value
-      .trim();
-
-
-  if(!value){
-
-    toast(
-      "Access key enter karo"
-    );
-
-    return;
-  }
-
-
-  accessKey =
-    value;
-
-
-  try{
-
-    /*
-      Current server expects X-Access-Key
-      and X-Device-Id.
-    */
-
-    const result =
-      await api(
-        "/api/key/check",
-        {
-          method:"GET"
-        }
-      );
-
-
-    if(result.ok === false){
-
-      throw new Error(
-        result.error ||
-        "Access denied"
-      );
-    }
-
-
-    localStorage.setItem(
-      KEY_STORAGE,
-      accessKey
-    );
-
-
-    $("loginScreen")
-      .classList.add(
-        "hidden"
-      );
-
-    $("mainApp")
-      .classList.remove(
-        "hidden"
-      );
-
-
-    toast(
-      "AI engine connected"
-    );
-
-
-    refresh();
-
-  }catch(error){
-
-    accessKey = "";
-
-    toast(
-      "Connection failed: " +
-      error.message
-    );
-  }
-}
-
-
-/* =========================================================
-   LOGOUT
-========================================================= */
-
-function logout(){
-
-  localStorage.removeItem(
-    KEY_STORAGE
-  );
-
-  accessKey = "";
-
-  $("mainApp")
-    .classList.add(
-      "hidden"
-    );
-
-  $("loginScreen")
-    .classList.remove(
-      "hidden"
-    );
-
-  $("accessKey").value = "";
-
-  toast(
-    "Disconnected"
-  );
-}
-
-
-/* =========================================================
-   TIMER
-========================================================= */
-
-let secondsLeft = 30;
-
-function tick(){
-
-  secondsLeft--;
-
-  if(secondsLeft <= 0){
-
-    secondsLeft = 30;
-
-    /*
-      New period ke liye fresh data.
-    */
-    refresh();
-  }
-
-
-  $("timer")
-    .textContent =
-      "00:" +
-      String(
-        secondsLeft
-      ).padStart(2,"0");
-
-
-  $("remaining")
-    .textContent =
-      secondsLeft +
-      "S";
-
-
-  const percent =
-    ((30 - secondsLeft) / 30) * 100;
-
-
-  $("progressBar")
-    .style.width =
-      Math.max(
-        0,
-        Math.min(
-          100,
-          percent
-        )
-      ) + "%";
-}
-
-
-setInterval(
-  tick,
-  1000
-);
-
-
-/* =========================================================
-   DISPLAY SIGNAL
-========================================================= */
-
-function showAnalyzing(){
-
-  $("signal")
-    .textContent =
-    "ANALYZING";
-
-  $("signal")
-    .className =
-    "signal wait scan";
-
-  $("analysisStatus")
-    .textContent =
-    "Scanning recent sequence...";
-
-  $("confidence")
-    .textContent =
-    "AI ENGINE ACTIVE";
-}
-
-
-function showPrediction(
-  prediction,
-  confidence,
-  reason
-){
-
-  const p =
-    String(
-      prediction || ""
-    ).toUpperCase();
-
-
-  if(
-    p !== "BIG" &&
-    p !== "SMALL"
-  ){
-
-    showAnalyzing();
-    return;
-  }
-
-
-  $("signal")
-    .textContent =
-    p;
-
-  $("signal")
-    .className =
-    "signal " +
-    (
-      p === "BIG"
-        ? "big"
-        : "small"
-    );
-
-
-  $("analysisStatus")
-    .textContent =
-    reason ||
-    "Multi-window sequence analysis complete";
-
-
-  if(
-    confidence !== undefined &&
-    confidence !== null
-  ){
-
-    $("confidence")
-      .textContent =
-      "MODEL CONFIDENCE " +
-      confidence +
-      "%";
-
-  }else{
-
-    $("confidence")
-      .textContent =
-      "MODEL ANALYSIS COMPLETE";
-  }
-}
-
-
-/* =========================================================
-   HISTORY RENDER
-========================================================= */
-
-function resultFromRow(row){
-
-  if(!row)
-    return null;
-
-
-  const raw =
-    String(
-      row.result ||
-      row.bigSmall ||
-      row.size ||
-      ""
-    ).toUpperCase();
-
-
-  if(
-    raw === "BIG" ||
-    raw === "SMALL"
-  ){
-    return raw;
-  }
-
-
-  const n =
-    Number(
-      row.number
-    );
-
-
-  if(
-    Number.isInteger(n) &&
-    n >= 0 &&
-    n <= 9
-  ){
-
-    return n >= 5
-      ? "BIG"
-      : "SMALL";
-  }
-
-
-  return null;
-}
-
-
-function renderHistory(
-  rows
-){
-
-  const box =
-    $("history");
-
-
-  if(
-    !Array.isArray(rows) ||
-    !rows.length
-  ){
-
-    box.innerHTML =
-      `
-      <div style="
-        padding:28px;
-        text-align:center;
-        color:#707b91;
-        font-size:11px;">
-        No history available
-      </div>
-      `;
-
-    return;
-  }
-
-
-  let html = "";
-
-
-  for(
-    const row of rows.slice(0,30)
-  ){
-
-    const issue =
-      row.issueNumber ??
-      row.issue ??
-      "—";
-
-
-    const result =
-      resultFromRow(row);
-
-
-    const number =
-      Number.isInteger(
-        Number(row.number)
-      )
-        ? Number(row.number)
-        : "—";
-
-
-    /*
-      Prediction settlement, agar server
-      record ke saath data available ho.
-    */
-
-    let outcome =
-      String(
-        row.actualResult ??
-        row.outcome ??
-        ""
-      ).toUpperCase();
-
-
-    const prediction =
-      String(
-        row.prediction ??
-        ""
-      ).toUpperCase();
-
-
-    /*
-      IMPORTANT:
-      Actual result absent hai to WIN/LOSS
-      nahi banega.
-    */
-
-    if(
-      !outcome &&
-      result &&
-      (
-        prediction === "BIG" ||
-        prediction === "SMALL"
-      )
-    ){
-
-      outcome =
-        result === prediction
-          ? "WIN"
-          : "LOSS";
-    }
-
-
-    let sideClass =
-      "pending";
-
-
-    if(result === "BIG")
-      sideClass = "big";
-
-    if(result === "SMALL")
-      sideClass = "small";
-
-
-    let outcomeHTML =
-      `<span class="outcome pending">PENDING</span>`;
-
-
-    if(outcome === "WIN"){
-
-      outcomeHTML =
-        `<span class="outcome win">WIN</span>`;
-
-    }else if(outcome === "LOSS"){
-
-      outcomeHTML =
-        `<span class="outcome loss">LOSS</span>`;
-    }
-
-
-    html +=
-      `
-      <div class="history-row">
-
-        <div class="issue">
-          #${escapeHTML(issue)}
-        </div>
-
-        <div
-          class="side ${sideClass}">
-          ${result || "PENDING"}
-        </div>
-
-        <div class="number">
-          ${escapeHTML(number)}
-        </div>
-
-        <div>
-          ${outcomeHTML}
-        </div>
-
-      </div>
-      `;
-  }
-
-
-  box.innerHTML =
-    html;
-}
-
-
-/* =========================================================
-   ESCAPE
-========================================================= */
-
-function escapeHTML(value){
-
-  return String(
-    value ?? ""
-  )
-  .replaceAll(
-    "&",
-    "&amp;"
-  )
-  .replaceAll(
-    "<",
-    "&lt;"
-  )
-  .replaceAll(
-    ">",
-    "&gt;"
-  )
-  .replaceAll(
-    '"',
-    "&quot;"
-  )
-  .replaceAll(
-    "'",
-    "&#039;"
-  );
-}
-
-
-/* =========================================================
-   REFRESH
-========================================================= */
-
-let lastTarget =
-  "";
-
-async function refresh(){
-
-  if(!accessKey)
-    return;
-
-
-  try{
-
-    const data =
-      await api(
-        "/api/state"
-      );
-
-
-    if(!data.ok){
-
-      throw new Error(
-        data.error ||
-        "State unavailable"
-      );
-    }
-
-
-    const target =
-      data.targetIssue ||
-      "—";
-
-
-    $("period")
-      .textContent =
-      "#" + target;
-
-
-    /*
-      Server target change detect.
-    */
-
-    if(
-      target !== lastTarget
-    ){
-
-      lastTarget =
-        target;
-
-      secondsLeft = 30;
-
-      showAnalyzing();
-    }
-
-
-    const prediction =
-      data.prediction;
-
-
-    if(
-      prediction &&
-      prediction.prediction
-    ){
-
-      showPrediction(
-        prediction.prediction,
-        prediction.confidence,
-        prediction.reason
-      );
-
-    }else{
-
-      showAnalyzing();
-    }
-
-
-    renderHistory(
-      data.history || []
-    );
-
-
-  }catch(error){
-
-    $("signal")
-      .textContent =
-      "OFFLINE";
-
-    $("signal")
-      .className =
-      "signal wait";
-
-
-    $("analysisStatus")
-      .textContent =
-      error.message;
-
-
-    $("confidence")
-      .textContent =
-      "WAITING FOR SERVER";
-
-
-    if(
-      /access|key|device|unauthorized/i
-        .test(
-          error.message
-        )
-    ){
-
-      toast(
-        "Access key check failed"
-      );
-    }
-  }
-}
-
-
-/* =========================================================
-   MANUAL REFRESH
-========================================================= */
-
-async function manualRefresh(){
-
-  await refresh();
-
-  toast(
-    "Live data refreshed"
-  );
-}
-
-
-/* =========================================================
-   RE-ANALYZE
-========================================================= */
-
-async function reanalyze(){
-
-  showAnalyzing();
-
-  await refresh();
-
-  toast(
-    "Sequence analyzed"
-  );
-}
-
-
-/* =========================================================
-   SHARE
-========================================================= */
-
-async function sharePage(){
-
-  try{
-
-    if(
-      navigator.share
-    ){
-
-      await navigator.share({
-        title:
-          "DY AI WinGo Analyzer",
-        text:
-          "DY AI WinGo 30 Sec Analyzer",
-        url:
-          location.href
       });
 
-    }else{
+      const data = await response.json();
 
-      await navigator.clipboard.writeText(
-        location.href
-      );
-
-      toast(
-        "Link copied"
-      );
-    }
-
-  }catch{}
-}
-
-
-/* =========================================================
-   SOUND
-========================================================= */
-
-let sound =
-  true;
-
-
-function toggleSound(){
-
-  sound =
-    !sound;
-
-
-  $("soundButton")
-    .textContent =
-    sound
-      ? "🔊"
-      : "🔇";
-
-
-  toast(
-    sound
-      ? "Sound ON"
-      : "Sound OFF"
-  );
-}
-
-
-/* =========================================================
-   AUTO LOGIN
-========================================================= */
-
-if(accessKey){
-
-  $("accessKey")
-    .value =
-    accessKey;
-
-
-  api(
-    "/api/key/check",
-    {
-      method:"GET"
-    }
-  )
-  .then(
-    result => {
-
-      if(!result.ok){
+      if(!response.ok || !data.ok){
 
         throw new Error(
-          result.error ||
+          data.message ||
+          data.error ||
           "Access denied"
         );
       }
 
+      accessKey = key;
 
-      $("loginScreen")
-        .classList.add(
-          "hidden"
-        );
-
-      $("mainApp")
-        .classList.remove(
-          "hidden"
-        );
-
-
-      refresh();
-
-    }
-  )
-  .catch(
-    () => {
-
-      localStorage.removeItem(
-        KEY_STORAGE
+      localStorage.setItem(
+        "dy_ai_access_key",
+        accessKey
       );
 
-      accessKey = "";
+      $("loginScreen").style.display = "none";
+      $("dashboard").style.display = "block";
 
+      $("loginError").style.display = "none";
+
+      showToast("Access granted");
+
+      startDashboard();
+
+    }catch(error){
+
+      $("loginError").textContent =
+        error.message || "Invalid access key.";
+
+      $("loginError").style.display = "block";
+
+    }finally{
+
+      $("loginBtn").textContent =
+        "ACCESS DASHBOARD";
+
+      $("loginBtn").disabled = false;
+    }
+  }
+
+
+  $("loginBtn").addEventListener(
+    "click",
+    checkKey
+  );
+
+
+  $("accessKey").addEventListener(
+    "keydown",
+    e=>{
+      if(e.key === "Enter"){
+        checkKey();
+      }
     }
   );
-}
 
 
-/* =========================================================
-   LIVE POLLING
-========================================================= */
+  /* =========================================================
+     AUTO LOGIN
+  ========================================================= */
 
-setInterval(
-  () => {
+  async function autoLogin(){
 
-    if(accessKey){
-      refresh();
+    deviceId = getDeviceId();
+
+    const saved =
+      localStorage.getItem("dy_ai_access_key");
+
+    if(!saved){
+      return;
     }
 
-  },
-  3000
-);
+    $("accessKey").value = saved;
 
+    try{
 
-/* =========================================================
-   ENTER KEY
-========================================================= */
+      const response = await fetch(
+        "/api/key/check",
+        {
+          headers:{
+            "X-Access-Key":saved,
+            "X-Device-Id":deviceId
+          },
+          cache:"no-store"
+        }
+      );
 
-$("accessKey")
-  .addEventListener(
-    "keydown",
-    event => {
+      const data = await response.json();
 
-      if(
-        event.key === "Enter"
-      ){
-        connect();
+      if(response.ok && data.ok){
+
+        accessKey = saved;
+
+        $("loginScreen").style.display = "none";
+        $("dashboard").style.display = "block";
+
+        startDashboard();
       }
 
+    }catch(error){
+      console.log("Auto login failed");
     }
-  );
+  }
+
+
+  /* =========================================================
+     3 SECOND AI THINKING
+  ========================================================= */
+
+  function startThinking(issue, prediction, confidence, model){
+
+    thinkingRunning = true;
+
+    $("thinkingBox").style.display = "flex";
+    $("resultBox").style.display = "none";
+
+    $("thinkingText").textContent =
+      "ANALYZING";
+
+    let remaining = 3;
+
+    $("thinkingCount").textContent =
+      "AI checking patterns... 3s";
+
+    const start = Date.now();
+
+    clearInterval(countdownTimer);
+
+    countdownTimer = setInterval(()=>{
+
+      const elapsed =
+        Date.now() - start;
+
+      const left =
+        Math.max(
+          0,
+          THINKING_TIME - elapsed
+        );
+
+      const seconds =
+        Math.ceil(left / 1000);
+
+      if(seconds > 0){
+
+        $("thinkingText").textContent =
+          seconds === 3
+            ? "ANALYZING"
+            : seconds === 2
+              ? "COMPARING PATTERNS"
+              : "FINALIZING SIGNAL";
+
+        $("thinkingCount").textContent =
+          "AI analysis " +
+          seconds +
+          "s";
+
+      }else{
+
+        clearInterval(countdownTimer);
+
+        thinkingRunning = false;
+
+        revealPrediction(
+          prediction,
+          confidence,
+          model
+        );
+      }
+
+    },100);
+  }
+
+
+  function revealPrediction(
+    prediction,
+    confidence,
+    model
+  ){
+
+    $("thinkingBox").style.display = "none";
+    $("resultBox").style.display = "block";
+
+    const text =
+      String(prediction || "").toUpperCase();
+
+    const predictionElement =
+      $("predictionText");
+
+    predictionElement.textContent =
+      text || "NO CLEAR SIGNAL";
+
+    predictionElement.className =
+      "prediction";
+
+    if(text === "BIG"){
+      predictionElement.classList.add("big");
+    }
+
+    if(text === "SMALL"){
+      predictionElement.classList.add("small");
+    }
+
+    $("confidence").textContent =
+      "Confidence " +
+      (
+        confidence !== undefined &&
+        confidence !== null
+          ? confidence + "%"
+          : "—"
+      );
+
+    $("modelVersion").textContent =
+      model ||
+      "DY AI HUMAN LOGIC";
+  }
+
+
+  /* =========================================================
+     STATE
+  ========================================================= */
+
+  async function loadState(){
+
+    if(!accessKey){
+      return;
+    }
+
+    try{
+
+      const response = await fetch(
+        "/api/state",
+        {
+          headers:headers(),
+          cache:"no-store"
+        }
+      );
+
+      if(response.status === 401 ||
+         response.status === 403){
+
+        logoutLocal();
+
+        return;
+      }
+
+      if(!response.ok){
+        throw new Error("State request failed");
+      }
+
+      const data =
+        await response.json();
+
+      $("statusDot").style.background =
+        "#22c55e";
+
+      $("statusText").textContent =
+        "LIVE";
+
+
+      /*
+        SERVER STRUCTURE:
+        data.current
+        data.model
+      */
+
+      const current =
+        data.current || {};
+
+      const model =
+        data.model || {};
+
+      const issue =
+        current.issueNumber ||
+        current.issue ||
+        model.targetIssue ||
+        "";
+
+      const prediction =
+        model.prediction ||
+        model.result ||
+        model.label ||
+        "";
+
+      const confidence =
+        model.confidence ??
+        model.score ??
+        0;
+
+      const version =
+        model.modelVersion ||
+        model.version ||
+        "DY AI HUMAN LOGIC";
+
+
+      if(issue){
+
+        $("targetIssue").textContent =
+          issue;
+      }
+
+
+      /*
+        IMPORTANT:
+
+        Thinking starts only when target issue
+        changes or a fresh prediction arrives.
+
+        Old prediction is NOT kept visible
+        during analysis.
+      */
+
+      const isNewPrediction =
+        issue &&
+        (
+          issue !== lastTargetIssue ||
+          prediction !== lastPrediction
+        );
+
+
+      if(isNewPrediction && prediction){
+
+        lastTargetIssue = issue;
+        lastPrediction = prediction;
+
+        startThinking(
+          issue,
+          prediction,
+          confidence,
+          version
+        );
+      }
+
+
+      /*
+        If server has no prediction,
+        keep analyzing state.
+      */
+
+      if(!prediction){
+
+        $("thinkingBox").style.display =
+          "flex";
+
+        $("resultBox").style.display =
+          "none";
+      }
+
+
+      await loadHistory();
+
+    }catch(error){
+
+      $("statusDot").style.background =
+        "#f59e0b";
+
+      $("statusText").textContent =
+        "RECONNECTING";
+
+      console.log(error);
+    }
+  }
+
+
+  /* =========================================================
+     HISTORY
+  ========================================================= */
+
+  async function loadHistory(){
+
+    try{
+
+      const response = await fetch(
+        "/api/history?limit=30",
+        {
+          headers:headers(),
+          cache:"no-store"
+        }
+      );
+
+      if(!response.ok){
+        return;
+      }
+
+      const data =
+        await response.json();
+
+      const records =
+        Array.isArray(data)
+          ? data
+          : (
+              data.records ||
+              data.history ||
+              []
+            );
+
+
+      /*
+        Fetch provider history also so the table
+        can show actual numbers.
+      */
+
+      let provider = [];
+
+      try{
+
+        const stateResponse =
+          await fetch(
+            "/api/state",
+            {
+              headers:headers(),
+              cache:"no-store"
+            }
+          );
+
+        if(stateResponse.ok){
+
+          const state =
+            await stateResponse.json();
+
+          provider =
+            state.history ||
+            state.results ||
+            [];
+        }
+
+      }catch(e){}
+
+
+      const predictionMap =
+        new Map();
+
+      records.forEach(row=>{
+
+        const issue =
+          row.target_issue ||
+          row.issueNumber ||
+          row.issue;
+
+        if(issue){
+          predictionMap.set(
+            String(issue),
+            row
+          );
+        }
+      });
+
+
+      /*
+        If provider history isn't available,
+        display prediction records.
+      */
+
+      let rows =
+        provider.length
+          ? provider
+          : records;
+
+
+      rows = rows.slice(0,30);
+
+
+      if(!rows.length){
+
+        $("historyBody").innerHTML = `
+          <tr>
+            <td colspan="4" style="color:#64748b">
+              No history available
+            </td>
+          </tr>
+        `;
+
+        return;
+      }
+
+
+      $("historyBody").innerHTML =
+        rows.map(row=>{
+
+          const issue =
+            row.issueNumber ||
+            row.target_issue ||
+            row.issue ||
+            "—";
+
+          const actual =
+            row.number ??
+            row.actual_number ??
+            "—";
+
+          const actualType =
+            row.type ||
+            row.label ||
+            (
+              actual !== "—"
+                ? (
+                    Number(actual) >= 5
+                      ? "BIG"
+                      : "SMALL"
+                  )
+                : ""
+            );
+
+
+          const saved =
+            predictionMap.get(
+              String(issue)
+            );
+
+
+          const ai =
+            saved?.prediction ||
+            row.prediction ||
+            "—";
+
+
+          let result =
+            saved?.actual_result ||
+            row.actual_result ||
+            "";
+
+
+          if(!result &&
+             ai !== "—" &&
+             actualType){
+
+            const normalizedAI =
+              String(ai).toUpperCase();
+
+            const normalizedActual =
+              String(actualType).toUpperCase();
+
+            if(
+              normalizedAI === normalizedActual
+            ){
+              result = "WIN";
+            }else{
+              result = "LOSS";
+            }
+          }
+
+
+          let resultClass =
+            "pending";
+
+          if(result === "WIN"){
+            resultClass = "win";
+          }
+
+          if(result === "LOSS"){
+            resultClass = "loss";
+          }
+
+
+          const typeClass =
+            String(actualType).toUpperCase()
+              === "BIG"
+                ? "typeBig"
+                : "typeSmall";
+
+
+          return `
+            <tr>
+
+              <td>
+                ${escapeHtml(issue)}
+              </td>
+
+              <td>
+                ${
+                  actual === "—"
+                    ? "—"
+                    : escapeHtml(actual)
+                }
+              </td>
+
+              <td class="${
+                String(ai).toUpperCase()
+                  === "BIG"
+                    ? "typeBig"
+                    : "typeSmall"
+              }">
+                ${escapeHtml(ai)}
+              </td>
+
+              <td class="${resultClass}">
+                ${
+                  result ||
+                  "PENDING"
+                }
+              </td>
+
+            </tr>
+          `;
+
+        }).join("");
+
+    }catch(error){
+
+      console.log(
+        "History error:",
+        error
+      );
+    }
+  }
+
+
+  /* =========================================================
+     TIMER
+  ========================================================= */
+
+  function updateTimer(){
+
+    const now =
+      Date.now();
+
+    const cycle =
+      30000;
+
+    const remaining =
+      cycle -
+      (now % cycle);
+
+    const seconds =
+      Math.ceil(
+        remaining / 1000
+      );
+
+    $("timer").textContent =
+      String(seconds)
+        .padStart(2,"0");
+
+
+    const percentage =
+      (remaining / cycle) * 100;
+
+    $("progressBar").style.width =
+      percentage + "%";
+  }
+
+
+  /* =========================================================
+     DASHBOARD START
+  ========================================================= */
+
+  function startDashboard(){
+
+    if(stateTimer){
+      clearInterval(stateTimer);
+    }
+
+    loadState();
+
+    stateTimer =
+      setInterval(
+        loadState,
+        API_REFRESH
+      );
+
+    updateTimer();
+
+    setInterval(
+      updateTimer,
+      250
+    );
+  }
+
+
+  /* =========================================================
+     LOCAL LOGOUT
+  ========================================================= */
+
+  function logoutLocal(){
+
+    accessKey = "";
+
+    localStorage.removeItem(
+      "dy_ai_access_key"
+    );
+
+    clearInterval(stateTimer);
+    clearInterval(countdownTimer);
+
+    $("dashboard").style.display =
+      "none";
+
+    $("loginScreen").style.display =
+      "block";
+
+    $("loginError").textContent =
+      "Session expired. Please login again.";
+
+    $("loginError").style.display =
+      "block";
+  }
+
+
+  /* =========================================================
+     START
+  ========================================================= */
+
+  deviceId = getDeviceId();
+
+  autoLogin();
 
 </script>
 
