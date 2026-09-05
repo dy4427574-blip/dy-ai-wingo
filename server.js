@@ -16,25 +16,19 @@ const PORT =
   Number(process.env.PORT || 10000);
 
 const ADMIN_KEY =
-  String(
-    process.env.ADMIN_KEY || ""
-  ).trim();
+  String(process.env.ADMIN_KEY || "").trim();
 
 const WINGOBOT_TOKEN =
-  String(
-    process.env.WINGOBOT_TOKEN || ""
-  ).trim();
+  String(process.env.WINGOBOT_TOKEN || "").trim();
 
 const DATABASE_URL =
-  String(
-    process.env.DATABASE_URL || ""
-  ).trim();
+  String(process.env.DATABASE_URL || "").trim();
 
 const WINGOBOT_API =
   "https://api.wingobot.com/v2/30-sec-game-history";
 
 const MODEL_VERSION =
-  "DY-AI-CHART-PATTERN-V1";
+  "DY-AI-25-CHART-RULE-V2";
 
 const THINKING_DURATION_MS =
   3000;
@@ -49,44 +43,31 @@ let pool = null;
 
 
 // ============================================================
-// DATABASE CONNECTION
+// DATABASE
 // ============================================================
 
 if (DATABASE_URL) {
 
   pool = new Pool({
-    connectionString:
-      DATABASE_URL,
+    connectionString: DATABASE_URL,
 
     ssl:
-      DATABASE_URL.includes(
-        "localhost"
-      )
+      DATABASE_URL.includes("localhost")
         ? false
         : {
-            rejectUnauthorized:
-              false
+            rejectUnauthorized: false
           }
   });
 
 }
 
 
-// ============================================================
-// DATABASE INITIALIZATION
-// ============================================================
-
 async function initDatabase() {
 
   if (!pool) {
-
-    console.log(
-      "[DB] DATABASE_URL missing"
-    );
-
+    console.log("[DB] DATABASE_URL missing");
     return;
   }
-
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS access_keys (
@@ -97,7 +78,6 @@ async function initDatabase() {
       last_seen BIGINT DEFAULT 0
     );
   `);
-
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS prediction_records (
@@ -113,22 +93,17 @@ async function initDatabase() {
     );
   `);
 
-
   await pool.query(`
     CREATE INDEX IF NOT EXISTS idx_prediction_issue
     ON prediction_records(target_issue);
   `);
-
 
   await pool.query(`
     CREATE INDEX IF NOT EXISTS idx_prediction_created
     ON prediction_records(created_at DESC);
   `);
 
-
-  console.log(
-    "[DB] Ready"
-  );
+  console.log("[DB] Ready");
 }
 
 
@@ -137,61 +112,29 @@ async function initDatabase() {
 // ============================================================
 
 let providerState = {
-
   ok: false,
-
   currentIssue: null,
-
   history: [],
-
   fetched: 0,
-
   lastUpdated: 0,
-
   error: null
-
 };
-
 
 let modelCache = {
-
   targetIssue: null,
-
   prediction: null,
-
   generatedAt: 0
-
 };
 
-
-let refreshInProgress =
-  false;
+let refreshInProgress = false;
 
 
 // ============================================================
-// BASIC HELPERS
+// HELPERS
 // ============================================================
 
 function now() {
   return Date.now();
-}
-
-
-function percentage(
-  part,
-  total
-) {
-
-  if (!total) {
-    return 0;
-  }
-
-  return Number(
-    (
-      (part / total) *
-      100
-    ).toFixed(2)
-  );
 }
 
 
@@ -204,15 +147,13 @@ function randomKey() {
       .toString("hex")
       .toUpperCase()
   );
+
 }
 
 
-function numberToType(
-  number
-) {
+function numberToType(number) {
 
-  const n =
-    Number(number);
+  const n = Number(number);
 
   if (
     !Number.isInteger(n) ||
@@ -222,9 +163,7 @@ function numberToType(
     return null;
   }
 
-  return n >= 5
-    ? "B"
-    : "S";
+  return n >= 5 ? "B" : "A";
 }
 
 
@@ -234,7 +173,7 @@ function typeLabel(type) {
     return "BIG";
   }
 
-  if (type === "S") {
+  if (type === "A") {
     return "SMALL";
   }
 
@@ -242,9 +181,17 @@ function typeLabel(type) {
 }
 
 
-function incrementIssue(
-  issue
-) {
+function predictionFromType(type) {
+
+  return type === "B"
+    ? "BIG"
+    : type === "A"
+    ? "SMALL"
+    : null;
+}
+
+
+function incrementIssue(issue) {
 
   if (
     issue === null ||
@@ -253,17 +200,11 @@ function incrementIssue(
     return null;
   }
 
+  const value = String(issue);
 
-  const value =
-    String(issue);
-
-
-  if (
-    !/^\d+$/.test(value)
-  ) {
+  if (!/^\d+$/.test(value)) {
     return null;
   }
-
 
   try {
 
@@ -271,45 +212,32 @@ function incrementIssue(
       BigInt(value) + 1n
     )
       .toString()
-      .padStart(
-        value.length,
-        "0"
-      );
+      .padStart(value.length, "0");
 
   } catch {
 
     return null;
+
   }
 }
 
 
-function compareIssue(
-  a,
-  b
-) {
+function compareIssue(a, b) {
 
   try {
 
-    const aa =
-      BigInt(String(a));
+    const aa = BigInt(String(a));
+    const bb = BigInt(String(b));
 
-    const bb =
-      BigInt(String(b));
-
-
-    if (aa > bb) {
-      return 1;
-    }
-
-    if (aa < bb) {
-      return -1;
-    }
+    if (aa > bb) return 1;
+    if (aa < bb) return -1;
 
     return 0;
 
   } catch {
 
     return 0;
+
   }
 }
 
@@ -318,15 +246,10 @@ function compareIssue(
 // JSON RESPONSE
 // ============================================================
 
-function json(
-  res,
-  status,
-  data
-) {
+function json(res, status, data) {
 
   const body =
     JSON.stringify(data);
-
 
   res.writeHead(
     status,
@@ -347,7 +270,6 @@ function json(
         "GET, POST, DELETE, OPTIONS"
     }
   );
-
 
   res.end(body);
 }
@@ -372,7 +294,6 @@ function text(
     }
   );
 
-
   res.end(body);
 }
 
@@ -384,20 +305,15 @@ function text(
 function readBody(req) {
 
   return new Promise(
-    (
-      resolve,
-      reject
-    ) => {
+    (resolve, reject) => {
 
       let data = "";
-
 
       req.on(
         "data",
         chunk => {
 
           data += chunk;
-
 
           if (
             data.length >
@@ -410,24 +326,21 @@ function readBody(req) {
               )
             );
 
-
             req.destroy();
+
           }
+
         }
       );
-
 
       req.on(
         "end",
         () => {
 
           if (!data) {
-
             resolve({});
-
             return;
           }
-
 
           try {
 
@@ -438,10 +351,11 @@ function readBody(req) {
           } catch {
 
             resolve({});
+
           }
+
         }
       );
-
 
       req.on(
         "error",
@@ -454,16 +368,13 @@ function readBody(req) {
 
 
 // ============================================================
-// WINGOBOT API
+// WINGOBOT
 // ============================================================
 
 function fetchWingoBot() {
 
   return new Promise(
-    (
-      resolve,
-      reject
-    ) => {
+    (resolve, reject) => {
 
       if (!WINGOBOT_TOKEN) {
 
@@ -475,7 +386,6 @@ function fetchWingoBot() {
 
         return;
       }
-
 
       const request =
         https.request(
@@ -495,15 +405,14 @@ function fetchWingoBot() {
                 "application/json",
 
               "User-Agent":
-                "DY-AI-Wingo/3.0"
+                "DY-AI-Wingo/4.0"
+
             }
           },
-
 
           response => {
 
             let body = "";
-
 
             response.on(
               "data",
@@ -511,7 +420,6 @@ function fetchWingoBot() {
                 body += chunk;
               }
             );
-
 
             response.on(
               "end",
@@ -533,7 +441,6 @@ function fetchWingoBot() {
                   return;
                 }
 
-
                 try {
 
                   resolve(
@@ -547,6 +454,7 @@ function fetchWingoBot() {
                       "Invalid WingoBot JSON"
                     )
                   );
+
                 }
 
               }
@@ -554,7 +462,6 @@ function fetchWingoBot() {
 
           }
         );
-
 
       request.on(
         "timeout",
@@ -569,12 +476,10 @@ function fetchWingoBot() {
         }
       );
 
-
       request.on(
         "error",
         reject
       );
-
 
       request.end();
 
@@ -584,34 +489,21 @@ function fetchWingoBot() {
 
 
 // ============================================================
-// NORMALIZE WINGOBOT HISTORY
+// NORMALIZE HISTORY
 // ============================================================
 
-function normalizeHistory(
-  payload
-) {
+function normalizeHistory(payload) {
 
   const raw =
-    Array.isArray(
-      payload?.history
-    )
+    Array.isArray(payload?.history)
       ? payload.history
-
-      : Array.isArray(
-          payload?.data
-        )
+      : Array.isArray(payload?.data)
       ? payload.data
-
-      : Array.isArray(
-          payload?.results
-        )
+      : Array.isArray(payload?.results)
       ? payload.results
-
       : [];
 
-
   const result = [];
-
 
   for (
     const item of raw
@@ -623,17 +515,14 @@ function normalizeHistory(
       item?.period ??
       item?.periodNumber;
 
-
     const number =
       item?.number ??
       item?.result ??
       item?.openNumber ??
       item?.digit;
 
-
     const n =
       Number(number);
-
 
     if (
       issue !== undefined &&
@@ -647,8 +536,7 @@ function normalizeHistory(
         issueNumber:
           String(issue),
 
-        number:
-          n,
+        number: n,
 
         colour:
           item?.colour ??
@@ -669,48 +557,29 @@ function normalizeHistory(
 
   }
 
-
   return result;
 }
 
 
 // ============================================================
-// PROVIDER CURRENT ISSUE
+// CURRENT ISSUE
 // ============================================================
 
-function providerCurrentIssue(
-  payload
-) {
+function providerCurrentIssue(payload) {
 
   return (
-
-    payload?.current
-      ?.issueNumber
-
-    ??
-
-    payload?.currentIssue
-
-    ??
-
-    payload?.current
-      ?.issue
-
-    ??
-
-    payload?.current
-      ?.period
-
-    ??
-
+    payload?.current?.issueNumber ??
+    payload?.currentIssue ??
+    payload?.current?.issue ??
+    payload?.current?.period ??
     null
-
   );
+
 }
 
 
 // ============================================================
-// REFRESH PROVIDER
+// PROVIDER REFRESH
 // ============================================================
 
 async function refreshProvider() {
@@ -719,28 +588,18 @@ async function refreshProvider() {
     return providerState;
   }
 
-
-  refreshInProgress =
-    true;
-
+  refreshInProgress = true;
 
   try {
 
     const payload =
       await fetchWingoBot();
 
-
     const history =
-      normalizeHistory(
-        payload
-      );
-
+      normalizeHistory(payload);
 
     const currentIssue =
-      providerCurrentIssue(
-        payload
-      );
-
+      providerCurrentIssue(payload);
 
     providerState = {
 
@@ -749,30 +608,26 @@ async function refreshProvider() {
       currentIssue:
         currentIssue !== null
           ? String(currentIssue)
-          : history[0]
-              ?.issueNumber ||
+          : history[0]?.issueNumber ||
             null,
 
       history,
 
       fetched:
         Number(
-          payload?.stats
-            ?.fetched
+          payload?.stats?.fetched
         ) ||
         history.length,
 
       lastUpdated:
         Number(
-          payload?.stats
-            ?.last_updated
+          payload?.stats?.last_updated
         ) ||
         now(),
 
       error: null
 
     };
-
 
     return providerState;
 
@@ -790,13 +645,11 @@ async function refreshProvider() {
 
     };
 
-
     return providerState;
 
   } finally {
 
-    refreshInProgress =
-      false;
+    refreshInProgress = false;
 
   }
 
@@ -804,32 +657,458 @@ async function refreshProvider() {
 
 
 // ============================================================
-// CHART PATTERN ENGINE
+// 25 CHART RULES
 // ============================================================
 //
-// ONLY THESE PATTERNS DECIDE THE PREDICTION:
+// A = SMALL
+// B = BIG
 //
-// 1. SINGLE TREND
-// 2. DOUBLE TREND
-// 3. TRIPLE TREND
-// 4. QUADRA TREND
-// 5. THREE IN ONE
-// 6. TWO IN ONE
-// 7. THREE IN TWO
-// 8. FOUR IN ONE
-// 9. FOUR IN TWO
-// 10. LONG TREND
-//
-// Number:
-// 0-4 = SMALL
-// 5-9 = BIG
-//
-// Latest result = last item
-//
-// No forced alternation.
-// No random prediction.
-// No frequency-based prediction.
-// No momentum-based prediction.
+// These are chart structures.
+// Direction is derived from the next part
+// of the repeating structure.
+// ============================================================
+
+const CHART_RULES = [
+
+  {
+    id: 1,
+    name: "SINGLE TREND",
+    type: "ALTERNATING",
+    sequence: "ABABABABAB",
+    next: "A",
+    confidence: 72
+  },
+
+  {
+    id: 2,
+    name: "DOUBLE TREND",
+    type: "DOUBLE",
+    sequence: "AABBAABB",
+    next: "A",
+    confidence: 74
+  },
+
+  {
+    id: 3,
+    name: "TRIPLE TREND",
+    type: "TRIPLE",
+    sequence: "AAABBBAAABBB",
+    next: "A",
+    confidence: 76
+  },
+
+  {
+    id: 4,
+    name: "QUADRA TREND",
+    type: "QUADRA",
+    sequence: "AAAABBBBAAAABBBB",
+    next: "A",
+    confidence: 78
+  },
+
+  {
+    id: 5,
+    name: "THREE IN ONE",
+    type: "3-1",
+    sequence: "AABAABAAB",
+    next: "A",
+    confidence: 78
+  },
+
+  {
+    id: 6,
+    name: "LONG TREND",
+    type: "LONG",
+    sequence: "AAAAAAAAABBBBBBBBB",
+    next: "A",
+    confidence: 79
+  },
+
+  {
+    id: 7,
+    name: "TWO IN ONE",
+    type: "2-1",
+    sequence: "ABBABBABB",
+    next: "A",
+    confidence: 78
+  },
+
+  {
+    id: 8,
+    name: "THREE IN TWO",
+    type: "3-2",
+    sequence: "AAABAAABAAAB",
+    next: "A",
+    confidence: 80
+  },
+
+  {
+    id: 9,
+    name: "FOUR IN ONE",
+    type: "4-1",
+    sequence: "AAABBAAABB",
+    next: "A",
+    confidence: 80
+  },
+
+  {
+    id: 10,
+    name: "CENTER BREAK",
+    type: "4-2-1",
+    sequence: "AAAABBABBAAAA",
+    next: "B",
+    confidence: 82
+  },
+
+  {
+    id: 11,
+    name: "ONE IN THREE",
+    type: "1-3",
+    sequence: "ABBBABBBABBB",
+    next: "A",
+    confidence: 81
+  },
+
+  {
+    id: 12,
+    name: "EXPANDING TREND",
+    type: "1-2-3",
+    sequence: "ABAABBABBB",
+    next: "A",
+    confidence: 82
+  },
+
+  {
+    id: 13,
+    name: "EXPANDING BLOCK",
+    type: "2-3-4",
+    sequence: "AABBAAABBBAAAABBBB",
+    next: "A",
+    confidence: 84
+  },
+
+  {
+    id: 14,
+    name: "EXPANDING BLOCK",
+    type: "1-2-3-4",
+    sequence: "ABBAAABBBB",
+    next: "A",
+    confidence: 82
+  },
+
+  {
+    id: 15,
+    name: "SHRINKING BLOCK",
+    type: "4-3-2-1",
+    sequence: "AAAABBBAAB",
+    next: "A",
+    confidence: 82
+  },
+
+  {
+    id: 16,
+    name: "EXPANDING BLOCK",
+    type: "1-2-3",
+    sequence: "ABAABBAAABBB",
+    next: "A",
+    confidence: 84
+  },
+
+  {
+    id: 17,
+    name: "CENTER REVERSAL",
+    type: "2-3-1-3-2",
+    sequence: "AABBBABBBAA",
+    next: "B",
+    confidence: 84
+  },
+
+  {
+    id: 18,
+    name: "LONG EXPANSION",
+    type: "1-2-4-8",
+    sequence: "ABBAAAABBBBBBBB",
+    next: "A",
+    confidence: 85
+  },
+
+  {
+    id: 19,
+    name: "FOUR IN ONE",
+    type: "1-4-3",
+    sequence: "ABBBBABBB",
+    next: "A",
+    confidence: 83
+  },
+
+  {
+    id: 20,
+    name: "THREE IN TWO",
+    type: "3-2",
+    sequence: "AABBBAABBB",
+    next: "A",
+    confidence: 84
+  },
+
+  {
+    id: 21,
+    name: "EXPANDING ALTERNATION",
+    type: "1-2-3",
+    sequence: "ABAABAAAB",
+    next: "A",
+    confidence: 84
+  },
+
+  {
+    id: 22,
+    name: "PROGRESSIVE BLOCK",
+    type: "2-2-3",
+    sequence: "AABAABBAABBB",
+    next: "A",
+    confidence: 85
+  },
+
+  {
+    id: 23,
+    name: "FIVE IN ONE",
+    type: "5-1",
+    sequence: "AAAAABAAAAAB",
+    next: "A",
+    confidence: 86
+  },
+
+  {
+    id: 24,
+    name: "FIVE IN TWO",
+    type: "5-2",
+    sequence: "AAAAABBAAAAABB",
+    next: "A",
+    confidence: 87
+  },
+
+  {
+    id: 25,
+    name: "FIVE IN THREE",
+    type: "5-3",
+    sequence: "AAAAABBBAAAAABBB",
+    next: "A",
+    confidence: 88
+  }
+
+];
+
+
+// ============================================================
+// PATTERN MATCH HELPERS
+// ============================================================
+
+function suffixMatchLength(
+  source,
+  pattern
+) {
+
+  const max =
+    Math.min(
+      source.length,
+      pattern.length
+    );
+
+  for (
+    let length = max;
+    length >= 3;
+    length--
+  ) {
+
+    if (
+      source.slice(-length) ===
+      pattern.slice(-length)
+    ) {
+
+      return length;
+
+    }
+
+  }
+
+  return 0;
+}
+
+
+function getCurrentRun(sequence) {
+
+  if (!sequence.length) {
+    return {
+      type: null,
+      length: 0
+    };
+  }
+
+  const latest =
+    sequence[sequence.length - 1];
+
+  let length = 1;
+
+  for (
+    let i =
+      sequence.length - 2;
+
+    i >= 0;
+
+    i--
+  ) {
+
+    if (
+      sequence[i] !==
+      latest
+    ) {
+
+      break;
+
+    }
+
+    length++;
+
+  }
+
+  return {
+    type: latest,
+    length
+  };
+
+}
+
+
+// ============================================================
+// LONG TREND
+// ============================================================
+
+function getLongTrend(sequence) {
+
+  const run =
+    getCurrentRun(sequence);
+
+  if (
+    run.length < 8
+  ) {
+
+    return null;
+
+  }
+
+  return {
+
+    id: 0,
+
+    name: "LONG TREND",
+
+    type: "LONG TREND",
+
+    sequence:
+      sequence.slice(
+        -run.length
+      ),
+
+    next:
+      run.type,
+
+    confidence:
+      run.length >= 12
+        ? 78
+        : run.length >= 10
+        ? 75
+        : 70
+
+  };
+
+}
+
+
+// ============================================================
+// HISTORICAL PATTERN VALIDATION
+// ============================================================
+
+function historicalValidation(
+  sequence,
+  rule
+) {
+
+  if (!rule) {
+
+    return {
+      matches: 0,
+      correct: 0,
+      rate: null
+    };
+
+  }
+
+  const pattern =
+    rule.sequence;
+
+  const expected =
+    rule.next;
+
+  const length =
+    pattern.length;
+
+  let matches = 0;
+  let correct = 0;
+
+  for (
+    let i = length;
+    i < sequence.length - 1;
+    i++
+  ) {
+
+    const previous =
+      sequence.slice(
+        i - length,
+        i
+      );
+
+    if (
+      previous === pattern
+    ) {
+
+      matches++;
+
+      if (
+        sequence[i] ===
+        expected
+      ) {
+
+        correct++;
+
+      }
+
+    }
+
+  }
+
+  return {
+
+    matches,
+
+    correct,
+
+    rate:
+      matches
+        ? Number(
+            (
+              correct /
+              matches *
+              100
+            ).toFixed(2)
+          )
+        : null
+
+  };
+
+}
+
+
+// ============================================================
+// PURE CHART ENGINE
 // ============================================================
 
 function humanBigSmallLogic(
@@ -837,11 +1116,10 @@ function humanBigSmallLogic(
 ) {
 
   // ----------------------------------------------------------
-  // CLEAN NUMBERS
+  // CLEAN
   // ----------------------------------------------------------
 
-  const clean = [];
-
+  const numbers = [];
 
   for (
     const value of
@@ -851,7 +1129,6 @@ function humanBigSmallLogic(
   ) {
 
     let n;
-
 
     if (
       typeof value ===
@@ -868,11 +1145,9 @@ function humanBigSmallLogic(
 
     } else {
 
-      n =
-        Number(value);
+      n = Number(value);
 
     }
-
 
     if (
       Number.isInteger(n) &&
@@ -880,30 +1155,34 @@ function humanBigSmallLogic(
       n <= 9
     ) {
 
-      clean.push(n);
+      numbers.push(n);
 
     }
 
   }
 
 
-  const sequence =
-    clean.map(
+  // ----------------------------------------------------------
+  // A/B
+  // ----------------------------------------------------------
+
+  const sequenceArray =
+    numbers.map(
       n =>
-        numberToType(n)
+        n >= 5
+          ? "B"
+          : "A"
     );
 
-
-  const sequenceString =
-    sequence.join("");
-
+  const sequence =
+    sequenceArray.join("");
 
   const dataSize =
     sequence.length;
 
 
   // ----------------------------------------------------------
-  // MINIMUM DATA
+  // MIN DATA
   // ----------------------------------------------------------
 
   if (
@@ -936,10 +1215,15 @@ function humanBigSmallLogic(
       matchedSequence:
         null,
 
-      sequence:
-        sequenceString,
+      matchType:
+        "NONE",
+
+      sequence,
 
       dataSize,
+
+      current:
+        null,
 
       historicalMatches:
         0,
@@ -951,7 +1235,10 @@ function humanBigSmallLogic(
         null,
 
       reason:
-        "At least 5 valid results are required."
+        "At least 5 results required.",
+
+      engine:
+        "DY-AI-25-RULE-CHART"
 
     };
 
@@ -959,439 +1246,144 @@ function humanBigSmallLogic(
 
 
   // ----------------------------------------------------------
-  // CHART PATTERNS
+  // EXACT MATCH
   // ----------------------------------------------------------
 
-  const patterns = [
+  const exactMatches = [];
 
-    // ========================================================
-    // 1. SINGLE TREND
-    // ========================================================
+  for (
+    const rule of CHART_RULES
+  ) {
 
-    {
-      name:
-        "SINGLE TREND",
+    if (
+      sequence.endsWith(
+        rule.sequence
+      )
+    ) {
 
-      sequence:
-        "BSBSB",
+      exactMatches.push(rule);
 
-      next:
-        "S",
-
-      confidence:
-        72
-    },
-
-    {
-      name:
-        "SINGLE TREND",
-
-      sequence:
-        "SBSBS",
-
-      next:
-        "B",
-
-      confidence:
-        72
-    },
-
-
-    // ========================================================
-    // 2. DOUBLE TREND
-    // ========================================================
-
-    {
-      name:
-        "DOUBLE TREND",
-
-      sequence:
-        "SSBBSS",
-
-      next:
-        "B",
-
-      confidence:
-        75
-    },
-
-    {
-      name:
-        "DOUBLE TREND",
-
-      sequence:
-        "BBSSBB",
-
-      next:
-        "S",
-
-      confidence:
-        75
-    },
-
-
-    // ========================================================
-    // 3. TRIPLE TREND
-    // ========================================================
-
-    {
-      name:
-        "TRIPLE TREND",
-
-      sequence:
-        "BBBSSS",
-
-      next:
-        "B",
-
-      confidence:
-        77
-    },
-
-    {
-      name:
-        "TRIPLE TREND",
-
-      sequence:
-        "SSSBBB",
-
-      next:
-        "S",
-
-      confidence:
-        77
-    },
-
-
-    // ========================================================
-    // 4. QUADRA TREND
-    // ========================================================
-
-    {
-      name:
-        "QUADRA TREND",
-
-      sequence:
-        "SSSSBBBB",
-
-      next:
-        "S",
-
-      confidence:
-        80
-    },
-
-    {
-      name:
-        "QUADRA TREND",
-
-      sequence:
-        "BBBBSSSS",
-
-      next:
-        "B",
-
-      confidence:
-        80
-    },
-
-
-    // ========================================================
-    // 5. THREE IN ONE
-    // ========================================================
-
-    {
-      name:
-        "THREE IN ONE",
-
-      sequence:
-        "BBBSBBB",
-
-      next:
-        "S",
-
-      confidence:
-        82
-    },
-
-    {
-      name:
-        "THREE IN ONE",
-
-      sequence:
-        "SSSBSSS",
-
-      next:
-        "B",
-
-      confidence:
-        82
-    },
-
-
-    // ========================================================
-    // 6. TWO IN ONE
-    // ========================================================
-
-    {
-      name:
-        "TWO IN ONE",
-
-      sequence:
-        "SSBSSBSS",
-
-      next:
-        "B",
-
-      confidence:
-        83
-    },
-
-    {
-      name:
-        "TWO IN ONE",
-
-      sequence:
-        "BBSBBSBB",
-
-      next:
-        "S",
-
-      confidence:
-        83
-    },
-
-
-    // ========================================================
-    // 7. THREE IN TWO
-    // ========================================================
-
-    {
-      name:
-        "THREE IN TWO",
-
-      sequence:
-        "BBBSSBBB",
-
-      next:
-        "S",
-
-      confidence:
-        84
-    },
-
-    {
-      name:
-        "THREE IN TWO",
-
-      sequence:
-        "SSSBBSSS",
-
-      next:
-        "B",
-
-      confidence:
-        84
-    },
-
-
-    // ========================================================
-    // 8. FOUR IN ONE
-    // ========================================================
-
-    {
-      name:
-        "FOUR IN ONE",
-
-      sequence:
-        "SSSSBSSSS",
-
-      next:
-        "B",
-
-      confidence:
-        86
-    },
-
-    {
-      name:
-        "FOUR IN ONE",
-
-      sequence:
-        "BBBBSBBBB",
-
-      next:
-        "S",
-
-      confidence:
-        86
-    },
-
-
-    // ========================================================
-    // 9. FOUR IN TWO
-    // ========================================================
-
-    {
-      name:
-        "FOUR IN TWO",
-
-      sequence:
-        "BBBBSSBBBB",
-
-      next:
-        "S",
-
-      confidence:
-        88
-    },
-
-    {
-      name:
-        "FOUR IN TWO",
-
-      sequence:
-        "SSSSBBSSSS",
-
-      next:
-        "B",
-
-      confidence:
-        88
     }
 
-  ];
+  }
 
 
-  // ----------------------------------------------------------
-  // LONGEST PATTERN FIRST
-  // ----------------------------------------------------------
-
-  patterns.sort(
-    (
-      a,
-      b
-    ) =>
+  exactMatches.sort(
+    (a, b) =>
       b.sequence.length -
       a.sequence.length
   );
 
 
   // ----------------------------------------------------------
-  // EXACT SUFFIX MATCH
+  // PARTIAL MATCH
   // ----------------------------------------------------------
 
-  let matched =
-    null;
-
+  let bestPartial = null;
+  let bestPartialLength = 0;
 
   for (
-    const pattern of patterns
+    const rule of CHART_RULES
   ) {
 
+    const length =
+      suffixMatchLength(
+        sequence,
+        rule.sequence
+      );
+
     if (
-      sequenceString.endsWith(
-        pattern.sequence
-      )
+      length >= 3 &&
+      length >
+        bestPartialLength
     ) {
 
-      matched =
-        pattern;
+      bestPartial =
+        rule;
 
-      break;
+      bestPartialLength =
+        length;
 
     }
 
   }
+
+
+  // ----------------------------------------------------------
+  // SELECT
+  // ----------------------------------------------------------
+
+  let selectedRule = null;
+  let matchType = "NONE";
+  let matchedLength = 0;
+
+  if (
+    exactMatches.length
+  ) {
+
+    selectedRule =
+      exactMatches[0];
+
+    matchType =
+      "EXACT";
+
+    matchedLength =
+      selectedRule.sequence.length;
+
+  } else if (
+    bestPartial
+  ) {
+
+    selectedRule =
+      bestPartial;
+
+    matchType =
+      "PARTIAL";
+
+    matchedLength =
+      bestPartialLength;
+
+  }
+
+
+  // ----------------------------------------------------------
+  // CURRENT RUN
+  // ----------------------------------------------------------
+
+  const current =
+    getCurrentRun(
+      sequence
+    );
 
 
   // ----------------------------------------------------------
   // LONG TREND
   // ----------------------------------------------------------
 
-  const latest =
-    sequence[
-      sequence.length - 1
-    ];
-
-
-  let currentRun =
-    1;
-
-
-  for (
-    let i =
-      sequence.length - 2;
-
-    i >= 0;
-
-    i--
-  ) {
-
-    if (
-      sequence[i] !==
-      latest
-    ) {
-      break;
-    }
-
-    currentRun++;
-
-  }
-
-
-  let longTrend =
-    null;
-
-
-  if (
-    currentRun >= 8
-  ) {
-
-    /*
-      Image shows LONG TREND as a
-      sustained one-side trend.
-
-      Therefore LONG TREND follows
-      the existing trend instead of
-      forcing an opposite prediction.
-    */
-
-    longTrend = {
-
-      name:
-        "LONG TREND",
-
-      current:
-        latest,
-
-      runLength:
-        currentRun,
-
-      next:
-        latest,
-
-      confidence:
-        currentRun >= 12
-          ? 78
-          : currentRun >= 10
-          ? 74
-          : 68
-
-    };
-
-  }
+  const longTrend =
+    getLongTrend(
+      sequence
+    );
 
 
   // ----------------------------------------------------------
-  // FINAL PATTERN
+  // HISTORICAL
   // ----------------------------------------------------------
 
-  let prediction =
-    null;
+  const history =
+    historicalValidation(
+      sequence,
+      selectedRule
+    );
 
-  let confidence =
-    0;
+
+  // ----------------------------------------------------------
+  // FINAL
+  // ----------------------------------------------------------
+
+  let prediction = null;
+
+  let confidence = 0;
 
   let patternName =
     "NONE";
@@ -1407,43 +1399,93 @@ function humanBigSmallLogic(
 
 
   // ----------------------------------------------------------
-  // EXACT PATTERN HAS PRIORITY
+  // EXACT
   // ----------------------------------------------------------
 
-  if (matched) {
+  if (
+    selectedRule &&
+    matchType === "EXACT"
+  ) {
 
     prediction =
-      matched.next === "B"
-        ? "BIG"
-        : "SMALL";
-
+      predictionFromType(
+        selectedRule.next
+      );
 
     confidence =
-      matched.confidence;
-
+      selectedRule.confidence;
 
     patternName =
-      matched.name;
-
+      selectedRule.name;
 
     matchedSequence =
-      matched.sequence;
-
+      selectedRule.sequence;
 
     classification =
-      "PATTERN MATCH";
-
+      "EXACT PATTERN MATCH";
 
     reason =
-      `${matched.name} ` +
-      `${matched.sequence} -> ` +
-      `${matched.next}`;
+      `${selectedRule.name} | ` +
+      `${selectedRule.sequence} -> ` +
+      `${selectedRule.next}`;
 
   }
 
 
   // ----------------------------------------------------------
-  // LONG TREND FALLBACK
+  // PARTIAL
+  // ----------------------------------------------------------
+
+  else if (
+    selectedRule &&
+    matchType === "PARTIAL"
+  ) {
+
+    prediction =
+      predictionFromType(
+        selectedRule.next
+      );
+
+    const ratio =
+      matchedLength /
+      selectedRule.sequence.length;
+
+    confidence =
+      Math.round(
+        50 +
+        ratio * 32
+      );
+
+    confidence =
+      Math.max(
+        52,
+        Math.min(
+          82,
+          confidence
+        )
+      );
+
+    patternName =
+      selectedRule.name;
+
+    matchedSequence =
+      sequence.slice(
+        -matchedLength
+      );
+
+    classification =
+      "PARTIAL PATTERN MATCH";
+
+    reason =
+      `${selectedRule.name} | ` +
+      `${matchedLength}/` +
+      `${selectedRule.sequence.length} matched`;
+
+  }
+
+
+  // ----------------------------------------------------------
+  // LONG TREND
   // ----------------------------------------------------------
 
   else if (
@@ -1451,149 +1493,219 @@ function humanBigSmallLogic(
   ) {
 
     prediction =
-      longTrend.next === "B"
-        ? "BIG"
-        : "SMALL";
-
+      predictionFromType(
+        longTrend.next
+      );
 
     confidence =
       longTrend.confidence;
 
-
     patternName =
       "LONG TREND";
 
-
     matchedSequence =
-      sequence
-        .slice(
-          -currentRun
-        )
-        .join("");
-
+      longTrend.sequence;
 
     classification =
       "LONG TREND";
 
-
     reason =
-      `LONG TREND ${latest}` +
-      ` x${currentRun}`;
+      `LONG TREND ${longTrend.next} ` +
+      `x${current.length}`;
 
   }
 
 
   // ----------------------------------------------------------
-  // HISTORICAL MATCH CHECK
+  // FALLBACK CHART STRUCTURE
   // ----------------------------------------------------------
   //
-  // This remains inside the same chart-pattern system.
+  // IMPORTANT:
+  // Prediction blank nahi rahegi jab enough data ho.
   //
-  // It asks:
+  // Is fallback me latest chart ke run structure
+  // ko identify kiya jata hai.
   //
-  // "When exactly this chart sequence appeared before,
-  // what happened next?"
-  //
-  // It DOES NOT introduce frequency/momentum logic.
+  // Ye frequency/momentum prediction nahi hai.
   // ----------------------------------------------------------
 
-  let historicalMatches =
-    0;
+  if (
+    !prediction &&
+    dataSize >= 5
+  ) {
 
-  let historicalCorrect =
-    0;
+    const recent =
+      sequence.slice(-8);
 
+    const last =
+      recent[recent.length - 1];
 
-  if (matched) {
+    const before =
+      recent.slice(
+        0,
+        -1
+      );
 
-    const patternString =
-      matched.sequence;
-
-    const expected =
-      matched.next;
-
-    const length =
-      patternString.length;
-
+    let transitions = 0;
 
     for (
-      let i = length;
-      i <
-        sequence.length - 1;
+      let i = 1;
+      i < before.length;
       i++
     ) {
 
-      const previous =
-        sequence
-          .slice(
-            i - length,
-            i
-          )
-          .join("");
-
-
       if (
-        previous ===
-        patternString
+        before[i] !==
+        before[i - 1]
       ) {
 
-        historicalMatches++;
-
-
-        if (
-          sequence[i] ===
-          expected
-        ) {
-
-          historicalCorrect++;
-
-        }
+        transitions++;
 
       }
+
+    }
+
+
+    // Alternating chart
+    if (
+      before.length >= 4 &&
+      transitions >=
+        before.length - 2
+    ) {
+
+      prediction =
+        last === "B"
+          ? "SMALL"
+          : "BIG";
+
+      confidence = 58;
+
+      patternName =
+        "SINGLE TREND";
+
+      matchedSequence =
+        recent;
+
+      classification =
+        "CHART FALLBACK";
+
+      reason =
+        "Recent alternating chart structure.";
+
+    }
+
+
+    // Repeated pairs
+    else if (
+      before.length >= 4
+    ) {
+
+      const lastFour =
+        before.slice(-4);
+
+      if (
+        lastFour[0] ===
+          lastFour[1] &&
+        lastFour[2] ===
+          lastFour[3]
+      ) {
+
+        prediction =
+          last === "B"
+            ? "BIG"
+            : "SMALL";
+
+        confidence = 56;
+
+        patternName =
+          "DOUBLE TREND";
+
+        matchedSequence =
+          lastFour.join("") +
+          last;
+
+        classification =
+          "CHART FALLBACK";
+
+        reason =
+          "Recent double-block chart structure.";
+
+      }
+
+    }
+
+
+    // Repeated triple
+    if (
+      !prediction &&
+      current.length >= 3
+    ) {
+
+      prediction =
+        current.type === "B"
+          ? "SMALL"
+          : "BIG";
+
+      confidence = 54;
+
+      patternName =
+        "TRIPLE TREND";
+
+      matchedSequence =
+        sequence.slice(
+          -current.length
+        );
+
+      classification =
+        "CHART FALLBACK";
+
+      reason =
+        "Recent triple-run chart structure.";
+
+    }
+
+
+    // Final chart-only fallback
+    if (
+      !prediction
+    ) {
+
+      prediction =
+        last === "B"
+          ? "SMALL"
+          : "BIG";
+
+      confidence = 51;
+
+      patternName =
+        "CHART CONTINUATION";
+
+      matchedSequence =
+        recent;
+
+      classification =
+        "CHART FALLBACK";
+
+      reason =
+        "No named rule matched; latest chart structure used.";
 
     }
 
   }
 
 
-  let historicalRate =
-    null;
-
-
-  if (
-    historicalMatches > 0
-  ) {
-
-    historicalRate =
-      Number(
-        (
-          (
-            historicalCorrect /
-            historicalMatches
-          ) * 100
-        ).toFixed(2)
-      );
-
-  }
-
-
   // ----------------------------------------------------------
-  // HISTORICAL PATTERN CONFIRMATION
-  // ----------------------------------------------------------
-  //
-  // Side NEVER changes here.
-  //
-  // Only confidence is adjusted.
+  // HISTORICAL CONFIRMATION
   // ----------------------------------------------------------
 
   if (
-    matched &&
-    historicalMatches >= 2 &&
-    historicalRate !== null
+    selectedRule &&
+    history.matches >= 2 &&
+    history.rate !== null
   ) {
 
     if (
-      historicalRate >= 70
+      history.rate >= 70
     ) {
 
       confidence =
@@ -1603,13 +1715,23 @@ function humanBigSmallLogic(
         );
 
     } else if (
-      historicalRate < 40
+      history.rate >= 55
+    ) {
+
+      confidence =
+        Math.min(
+          93,
+          confidence + 1
+        );
+
+    } else if (
+      history.rate < 40
     ) {
 
       confidence =
         Math.max(
-          50,
-          confidence - 8
+          45,
+          confidence - 7
         );
 
     }
@@ -1618,7 +1740,7 @@ function humanBigSmallLogic(
 
 
   // ----------------------------------------------------------
-  // PATTERN STRENGTH
+  // CONFIDENCE LEVEL
   // ----------------------------------------------------------
 
   let confidenceLevel =
@@ -1655,6 +1777,37 @@ function humanBigSmallLogic(
 
 
   // ----------------------------------------------------------
+  // SUPPORT
+  // ----------------------------------------------------------
+
+  let bigSupport = 50;
+  let smallSupport = 50;
+
+
+  if (
+    prediction === "BIG"
+  ) {
+
+    bigSupport =
+      confidence;
+
+    smallSupport =
+      100 - confidence;
+
+  } else if (
+    prediction === "SMALL"
+  ) {
+
+    smallSupport =
+      confidence;
+
+    bigSupport =
+      100 - confidence;
+
+  }
+
+
+  // ----------------------------------------------------------
   // RETURN
   // ----------------------------------------------------------
 
@@ -1679,55 +1832,96 @@ function humanBigSmallLogic(
 
     matchedSequence,
 
-    sequence:
-      sequenceString,
+    matchType,
+
+    matchedLength,
+
+    sequence,
 
     dataSize,
 
     current: {
 
       type:
-        latest,
+        current.type,
 
       label:
-        typeLabel(latest),
+        typeLabel(
+          current.type
+        ),
 
       streak:
-        currentRun
+        current.length
 
     },
 
-    historicalMatches,
+    historicalMatches:
+      history.matches,
 
-    historicalCorrect,
+    historicalCorrect:
+      history.correct,
 
-    historicalRate,
+    historicalRate:
+      history.rate,
+
+    support: {
+
+      BIG:
+        Number(
+          bigSupport.toFixed(2)
+        ),
+
+      SMALL:
+        Number(
+          smallSupport.toFixed(2)
+        )
+
+    },
 
     reason,
 
-    supportedPatterns: [
+    engine:
+      "DY-AI-25-RULE-CHART",
 
-      "SINGLE TREND",
+    mapping: {
 
-      "DOUBLE TREND",
+      A:
+        "SMALL",
 
-      "TRIPLE TREND",
+      B:
+        "BIG"
 
-      "QUADRA TREND",
+    },
 
-      "THREE IN ONE",
+    rulesCount:
+      CHART_RULES.length,
 
-      "TWO IN ONE",
+    supportedRules:
+      CHART_RULES.map(
+        rule => ({
 
-      "THREE IN TWO",
+          id:
+            rule.id,
 
-      "FOUR IN ONE",
+          name:
+            rule.name,
 
-      "FOUR IN TWO",
+          type:
+            rule.type,
 
-      "LONG TREND"
+          sequence:
+            rule.sequence,
 
-    ],
+          next:
+            rule.next,
+
+          prediction:
+            predictionFromType(
+              rule.next
+            )
+
+        })
+      ),
 
     analyzedAt:
       now()
@@ -1746,34 +1940,15 @@ function resolveTargetIssue() {
   const history =
     providerState.history;
 
-
-  if (
-    !history.length
-  ) {
+  if (!history.length) {
     return null;
   }
-
-
-  /*
-    WingoBot normally returns
-    newest -> oldest.
-
-    history[0] = latest settled.
-  */
 
   const latest =
     history[0]?.issueNumber;
 
-
   const current =
     providerState.currentIssue;
-
-
-  /*
-    If provider current issue is
-    genuinely ahead of latest settled,
-    use it.
-  */
 
   if (
     current &&
@@ -1788,15 +1963,10 @@ function resolveTargetIssue() {
 
   }
 
-
-  /*
-    Otherwise target =
-    latest settled + 1.
-  */
-
   return incrementIssue(
     latest
   );
+
 }
 
 
@@ -1808,15 +1978,6 @@ async function generateModel() {
 
   const history =
     providerState.history;
-
-
-  /*
-    WingoBot:
-    newest -> oldest
-
-    Engine:
-    oldest -> newest
-  */
 
   const numbers =
     history
@@ -1832,20 +1993,16 @@ async function generateModel() {
       )
       .reverse();
 
-
   const analysis =
     humanBigSmallLogic(
       numbers
     );
 
-
   const targetIssue =
     resolveTargetIssue();
 
-
   const generatedAt =
     now();
-
 
   const prediction =
     analysis.prediction ||
@@ -1872,19 +2029,28 @@ async function generateModel() {
         "LOW",
 
       classification:
-        analysis.classification,
+        analysis.classification ||
+        "NO CLEAR SIGNAL",
 
       pattern:
-        analysis.pattern,
+        analysis.pattern ||
+        "NONE",
 
       matchedPattern:
-        analysis.matchedPattern,
+        analysis.matchedPattern ||
+        null,
 
       matchedSequence:
-        analysis.matchedSequence,
+        analysis.matchedSequence ||
+        null,
+
+      matchType:
+        analysis.matchType ||
+        "NONE",
 
       reason:
-        analysis.reason,
+        analysis.reason ||
+        "",
 
       modelVersion:
         MODEL_VERSION,
@@ -1907,6 +2073,7 @@ async function generateModel() {
 
 
   return modelCache;
+
 }
 
 
@@ -1923,21 +2090,16 @@ async function savePrediction(
     return;
   }
 
-
   if (
     !targetIssue ||
     !analysis?.prediction
   ) {
+
     return;
+
   }
 
-
   try {
-
-    /*
-      Don't duplicate prediction
-      for the same target issue.
-    */
 
     const existing =
       await pool.query(
@@ -1948,9 +2110,7 @@ async function savePrediction(
         LIMIT 1
         `,
         [
-          String(
-            targetIssue
-          )
+          String(targetIssue)
         ]
       );
 
@@ -1978,9 +2138,7 @@ async function savePrediction(
       `,
       [
 
-        String(
-          targetIssue
-        ),
+        String(targetIssue),
 
         String(
           analysis.prediction
@@ -1997,11 +2155,10 @@ async function savePrediction(
       ]
     );
 
-
   } catch (error) {
 
     console.error(
-      "[DB] save prediction:",
+      "[DB] save:",
       error.message
     );
 
@@ -2011,7 +2168,7 @@ async function savePrediction(
 
 
 // ============================================================
-// SETTLE PREDICTIONS
+// SETTLE
 // ============================================================
 
 async function settlePredictions() {
@@ -2019,7 +2176,6 @@ async function settlePredictions() {
   if (!pool) {
     return;
   }
-
 
   for (
     const row of
@@ -2032,31 +2188,14 @@ async function settlePredictions() {
     const number =
       Number(row.number);
 
-
     const actualType =
-      numberToType(
-        number
-      );
-
+      numberToType(number);
 
     if (!actualType) {
       continue;
     }
 
-
     try {
-
-      /*
-        IMPORTANT FIX:
-
-        Prediction = BIG / SMALL
-
-        Actual = BIG / SMALL
-
-        Save actual_result as
-        WIN / LOSS
-        instead of B / S.
-      */
 
       const result =
         await pool.query(
@@ -2080,7 +2219,9 @@ async function settlePredictions() {
       if (
         !result.rows.length
       ) {
+
         continue;
+
       }
 
 
@@ -2091,7 +2232,9 @@ async function settlePredictions() {
       if (
         record.actual_result
       ) {
+
         continue;
+
       }
 
 
@@ -2103,9 +2246,9 @@ async function settlePredictions() {
 
 
       const actualLabel =
-        actualType === "B"
-          ? "BIG"
-          : "SMALL";
+        predictionFromType(
+          actualType
+        );
 
 
       const actualResult =
@@ -2137,7 +2280,6 @@ async function settlePredictions() {
         ]
       );
 
-
     } catch (error) {
 
       console.error(
@@ -2153,7 +2295,7 @@ async function settlePredictions() {
 
 
 // ============================================================
-// ACCESS AUTH
+// ACCESS KEY
 // ============================================================
 
 function getAccessKey(req) {
@@ -2189,21 +2331,13 @@ function getAdminKey(req) {
 }
 
 
-// ============================================================
-// VALIDATE ACCESS KEY
-// ============================================================
-
-async function validateAccess(
-  req
-) {
+async function validateAccess(req) {
 
   const key =
     getAccessKey(req);
 
-
   const device =
     getDeviceId(req);
-
 
   if (
     !key ||
@@ -2211,12 +2345,9 @@ async function validateAccess(
   ) {
 
     return {
-
       ok: false,
-
       error:
         "ACCESS_KEY_OR_DEVICE_MISSING"
-
     };
 
   }
@@ -2225,12 +2356,9 @@ async function validateAccess(
   if (!pool) {
 
     return {
-
       ok: false,
-
       error:
         "DATABASE_DISABLED"
-
     };
 
   }
@@ -2253,12 +2381,9 @@ async function validateAccess(
   ) {
 
     return {
-
       ok: false,
-
       error:
         "INVALID_ACCESS_KEY"
-
     };
 
   }
@@ -2268,23 +2393,15 @@ async function validateAccess(
     result.rows[0];
 
 
-  /*
-    One access key =
-    one browser device.
-  */
-
   if (
     row.device_id &&
     row.device_id !== device
   ) {
 
     return {
-
       ok: false,
-
       error:
         "KEY_ALREADY_BOUND"
-
     };
 
   }
@@ -2301,13 +2418,9 @@ async function validateAccess(
       WHERE id = $3
       `,
       [
-
         device,
-
         now(),
-
         row.id
-
       ]
     );
 
@@ -2320,11 +2433,8 @@ async function validateAccess(
       WHERE id = $2
       `,
       [
-
         now(),
-
         row.id
-
       ]
     );
 
@@ -2345,10 +2455,6 @@ async function validateAccess(
 
 }
 
-
-// ============================================================
-// ADMIN AUTH
-// ============================================================
 
 function requireAdmin(req) {
 
@@ -2371,9 +2477,7 @@ async function stateApi(
 ) {
 
   const auth =
-    await validateAccess(
-      req
-    );
+    await validateAccess(req);
 
 
   if (!auth.ok) {
@@ -2385,11 +2489,11 @@ async function stateApi(
     );
 
     return;
+
   }
 
 
   await refreshProvider();
-
 
   await settlePredictions();
 
@@ -2397,10 +2501,6 @@ async function stateApi(
   const targetIssue =
     resolveTargetIssue();
 
-
-  /*
-    Generate only when target changes.
-  */
 
   if (
     !modelCache.prediction ||
@@ -2413,61 +2513,91 @@ async function stateApi(
   }
 
 
-  /*
-    Provider history.
-  */
+  const prediction =
+    modelCache.prediction;
+
+
+  const records =
+    await getPredictionRecords();
+
 
   const history =
     providerState.history
-      .slice(
-        0,
-        30
-      )
+      .slice(0, 30)
       .map(
         row => {
 
           const number =
-            Number(
-              row.number
-            );
-
+            Number(row.number);
 
           const type =
-            numberToType(
-              number
+            numberToType(number);
+
+          const issue =
+            String(
+              row.issueNumber
             );
+
+
+          const record =
+            records.find(
+              item =>
+                String(
+                  item.target_issue
+                ) === issue
+            );
+
+
+          let result =
+            "PENDING";
+
+
+          if (
+            record?.actual_result
+          ) {
+
+            result =
+              record.actual_result;
+
+          } else if (
+            record?.prediction
+          ) {
+
+            result =
+              "PENDING";
+
+          }
 
 
           return {
 
-            issue:
-              row.issueNumber,
+            issue,
 
             issueNumber:
-              row.issueNumber,
+              issue,
 
             number,
 
             type,
 
             label:
-              typeLabel(type)
+              typeLabel(type),
+
+            prediction:
+              record?.prediction ||
+              null,
+
+            confidence:
+              record?.confidence ||
+              0,
+
+            result
 
           };
 
         }
       );
 
-
-  const model =
-    modelCache.prediction;
-
-
-  /*
-    Return multiple compatible aliases
-    so current prediction.html and
-    admin.html both work.
-  */
 
   json(
     res,
@@ -2499,61 +2629,61 @@ async function stateApi(
       model: {
 
         targetIssue:
-          model?.targetIssue ||
+          prediction?.targetIssue ||
           targetIssue,
 
         prediction:
-          model?.prediction ||
+          prediction?.prediction ||
           null,
 
         confidence:
-          model?.confidence ||
+          prediction?.confidence ||
           0,
 
         confidenceLevel:
-          model?.confidenceLevel ||
+          prediction?.confidenceLevel ||
           "LOW",
 
         classification:
-          model?.classification ||
+          prediction?.classification ||
           "NO CLEAR SIGNAL",
 
         pattern:
-          model?.pattern ||
+          prediction?.pattern ||
           "NONE",
 
         matchedPattern:
-          model?.matchedPattern ||
+          prediction?.matchedPattern ||
           null,
 
         matchedSequence:
-          model?.matchedSequence ||
+          prediction?.matchedSequence ||
           null,
 
+        matchType:
+          prediction?.matchType ||
+          "NONE",
+
         reason:
-          model?.reason ||
+          prediction?.reason ||
           "",
 
         modelVersion:
           MODEL_VERSION,
 
         generatedAt:
-          model?.generatedAt ||
+          prediction?.generatedAt ||
           now(),
 
         analysis:
-          model?.analysis ||
+          prediction?.analysis ||
           null
 
       },
 
 
-      /*
-        Backward-compatible direct fields.
-      */
-
       prediction:
-        model?.prediction ||
+        prediction?.prediction ||
         null,
 
 
@@ -2589,6 +2719,48 @@ async function stateApi(
 
 
 // ============================================================
+// PREDICTION RECORDS
+// ============================================================
+
+async function getPredictionRecords() {
+
+  if (!pool) {
+    return [];
+  }
+
+  try {
+
+    const result =
+      await pool.query(
+        `
+        SELECT
+          id,
+          target_issue,
+          prediction,
+          confidence,
+          model_version,
+          actual_number,
+          actual_result,
+          created_at,
+          settled_at
+        FROM prediction_records
+        ORDER BY created_at DESC
+        LIMIT 150
+        `
+      );
+
+    return result.rows;
+
+  } catch {
+
+    return [];
+
+  }
+
+}
+
+
+// ============================================================
 // KEY CHECK
 // ============================================================
 
@@ -2598,9 +2770,7 @@ async function keyCheck(
 ) {
 
   const auth =
-    await validateAccess(
-      req
-    );
+    await validateAccess(req);
 
 
   if (!auth.ok) {
@@ -2612,6 +2782,7 @@ async function keyCheck(
     );
 
     return;
+
   }
 
 
@@ -2640,49 +2811,15 @@ async function keyCheck(
 
 
 // ============================================================
-// PREDICTION HISTORY
+// HISTORY API
 // ============================================================
 
 async function predictionHistory(
   res
 ) {
 
-  if (!pool) {
-
-    json(
-      res,
-      200,
-      {
-
-        ok: true,
-
-        records: []
-
-      }
-    );
-
-    return;
-  }
-
-
-  const result =
-    await pool.query(
-      `
-      SELECT
-        id,
-        target_issue,
-        prediction,
-        confidence,
-        model_version,
-        actual_number,
-        actual_result,
-        created_at,
-        settled_at
-      FROM prediction_records
-      ORDER BY created_at DESC
-      LIMIT 100
-      `
-    );
+  const records =
+    await getPredictionRecords();
 
 
   json(
@@ -2692,8 +2829,7 @@ async function predictionHistory(
 
       ok: true,
 
-      records:
-        result.rows
+      records
 
     }
   );
@@ -2705,9 +2841,7 @@ async function predictionHistory(
 // ADMIN STATUS
 // ============================================================
 
-async function adminStatus(
-  res
-) {
+async function adminStatus(res) {
 
   json(
     res,
@@ -2744,7 +2878,6 @@ async function adminStatus(
 
       },
 
-
       model:
         modelCache
 
@@ -2758,9 +2891,7 @@ async function adminStatus(
 // ADMIN PING
 // ============================================================
 
-function adminPing(
-  res
-) {
+function adminPing(res) {
 
   json(
     res,
@@ -2788,9 +2919,7 @@ function adminPing(
 // ADMIN WINGO TEST
 // ============================================================
 
-async function adminWingoTest(
-  res
-) {
+async function adminWingoTest(res) {
 
   const state =
     await refreshProvider();
@@ -2835,15 +2964,11 @@ async function adminWingoTest(
 // ADMIN MODEL TEST
 // ============================================================
 
-async function adminModelTest(
-  res
-) {
+async function adminModelTest(res) {
 
   await refreshProvider();
 
-
   await settlePredictions();
-
 
   const model =
     await generateModel();
@@ -2890,12 +3015,10 @@ async function adminModelTest(
 
 
 // ============================================================
-// ADMIN KEYS LIST
+// ADMIN KEY LIST
 // ============================================================
 
-async function adminKeysList(
-  res
-) {
+async function adminKeysList(res) {
 
   if (!pool) {
 
@@ -2903,12 +3026,9 @@ async function adminKeysList(
       res,
       500,
       {
-
         ok: false,
-
         error:
           "DATABASE_DISABLED"
-
       }
     );
 
@@ -2948,7 +3068,7 @@ async function adminKeysList(
 
 
 // ============================================================
-// ADMIN CREATE KEY
+// ADMIN KEY CREATE
 // ============================================================
 
 async function adminKeysCreate(
@@ -2962,12 +3082,9 @@ async function adminKeysCreate(
       res,
       500,
       {
-
         ok: false,
-
         error:
           "DATABASE_DISABLED"
-
       }
     );
 
@@ -3007,11 +3124,8 @@ async function adminKeysCreate(
         RETURNING *
         `,
         [
-
           key,
-
           now()
-
         ]
       );
 
@@ -3036,7 +3150,6 @@ async function adminKeysCreate(
 
       }
     );
-
 
   } catch (error) {
 
@@ -3064,7 +3177,7 @@ async function adminKeysCreate(
 
 
 // ============================================================
-// ADMIN DELETE KEY
+// ADMIN KEY DELETE
 // ============================================================
 
 async function adminKeysDelete(
@@ -3079,12 +3192,9 @@ async function adminKeysDelete(
       res,
       500,
       {
-
         ok: false,
-
         error:
           "DATABASE_DISABLED"
-
       }
     );
 
@@ -3097,16 +3207,12 @@ async function adminKeysDelete(
 
 
   const id =
-    url.searchParams.get(
-      "id"
-    ) ||
+    url.searchParams.get("id") ||
     body?.id;
 
 
   const key =
-    url.searchParams.get(
-      "key"
-    ) ||
+    url.searchParams.get("key") ||
     body?.key;
 
 
@@ -3119,12 +3225,9 @@ async function adminKeysDelete(
       res,
       400,
       {
-
         ok: false,
-
         error:
           "ID_OR_KEY_REQUIRED"
-
       }
     );
 
@@ -3198,12 +3301,9 @@ async function adminResetDevice(
       res,
       500,
       {
-
         ok: false,
-
         error:
           "DATABASE_DISABLED"
-
       }
     );
 
@@ -3233,12 +3333,9 @@ async function adminResetDevice(
       res,
       400,
       {
-
         ok: false,
-
         error:
           "ID_OR_KEY_REQUIRED"
-
       }
     );
 
@@ -3303,9 +3400,7 @@ async function adminResetDevice(
 // HEALTH
 // ============================================================
 
-function health(
-  res
-) {
+function health(res) {
 
   json(
     res,
@@ -3327,7 +3422,11 @@ function health(
         providerState.ok,
 
       historyCount:
-        providerState.history.length
+        providerState.history.length,
+
+      prediction:
+        modelCache.prediction?.prediction ||
+        null
 
     }
   );
@@ -3336,18 +3435,14 @@ function health(
 
 
 // ============================================================
-// STATIC CONTENT TYPE
+// STATIC
 // ============================================================
 
-function contentType(
-  filePath
-) {
+function contentType(filePath) {
 
   const ext =
     path
-      .extname(
-        filePath
-      )
+      .extname(filePath)
       .toLowerCase();
 
 
@@ -3390,12 +3485,9 @@ function contentType(
     types[ext] ||
     "application/octet-stream"
   );
+
 }
 
-
-// ============================================================
-// STATIC FILE SERVER
-// ============================================================
 
 function serveStatic(
   req,
@@ -3425,6 +3517,7 @@ function serveStatic(
     );
 
     return;
+
   }
 
 
@@ -3442,9 +3535,7 @@ function serveStatic(
 
 
   if (
-    !filePath.startsWith(
-      root
-    )
+    !filePath.startsWith(root)
   ) {
 
     text(
@@ -3454,6 +3545,7 @@ function serveStatic(
     );
 
     return;
+
   }
 
 
@@ -3476,6 +3568,7 @@ function serveStatic(
         );
 
         return;
+
       }
 
 
@@ -3484,10 +3577,6 @@ function serveStatic(
           filePath
         );
 
-
-      // ------------------------------------------------------
-      // MP3 RANGE SUPPORT
-      // ------------------------------------------------------
 
       if (
         type === "audio/mpeg" &&
@@ -3509,6 +3598,7 @@ function serveStatic(
           );
 
           return;
+
         }
 
 
@@ -3531,15 +3621,19 @@ function serveStatic(
         if (
           start >= size
         ) {
+
           start = 0;
+
         }
 
 
         if (
           end >= size
         ) {
+
           end =
             size - 1;
+
         }
 
 
@@ -3573,12 +3667,9 @@ function serveStatic(
 
 
         return;
+
       }
 
-
-      // ------------------------------------------------------
-      // NORMAL FILE
-      // ------------------------------------------------------
 
       res.writeHead(
         200,
@@ -3600,6 +3691,7 @@ function serveStatic(
 
     }
   );
+
 }
 
 
@@ -3617,7 +3709,7 @@ const server =
       try {
 
         // ----------------------------------------------------
-        // CORS PREFLIGHT
+        // OPTIONS
         // ----------------------------------------------------
 
         if (
@@ -3641,10 +3733,10 @@ const server =
             }
           );
 
-
           res.end();
 
           return;
+
         }
 
 
@@ -3671,11 +3763,12 @@ const server =
           health(res);
 
           return;
+
         }
 
 
         // ----------------------------------------------------
-        // ACCESS KEY CHECK
+        // KEY CHECK
         // ----------------------------------------------------
 
         if (
@@ -3691,6 +3784,7 @@ const server =
           );
 
           return;
+
         }
 
 
@@ -3711,11 +3805,12 @@ const server =
           );
 
           return;
+
         }
 
 
         // ----------------------------------------------------
-        // PREDICTION HISTORY
+        // HISTORY
         // ----------------------------------------------------
 
         if (
@@ -3740,6 +3835,7 @@ const server =
             );
 
             return;
+
           }
 
 
@@ -3748,6 +3844,7 @@ const server =
           );
 
           return;
+
         }
 
 
@@ -3769,16 +3866,14 @@ const server =
               res,
               401,
               {
-
                 ok: false,
-
                 error:
                   "ADMIN_UNAUTHORIZED"
-
               }
             );
 
             return;
+
           }
 
         }
@@ -3800,6 +3895,7 @@ const server =
           );
 
           return;
+
         }
 
 
@@ -3817,11 +3913,12 @@ const server =
           adminPing(res);
 
           return;
+
         }
 
 
         // ----------------------------------------------------
-        // WINGOBOT TEST
+        // WINGO TEST
         // ----------------------------------------------------
 
         if (
@@ -3836,6 +3933,7 @@ const server =
           );
 
           return;
+
         }
 
 
@@ -3855,11 +3953,12 @@ const server =
           );
 
           return;
+
         }
 
 
         // ----------------------------------------------------
-        // ADMIN KEYS GET
+        // KEY LIST
         // ----------------------------------------------------
 
         if (
@@ -3874,11 +3973,12 @@ const server =
           );
 
           return;
+
         }
 
 
         // ----------------------------------------------------
-        // ADMIN KEY CREATE
+        // KEY CREATE
         // ----------------------------------------------------
 
         if (
@@ -3894,11 +3994,12 @@ const server =
           );
 
           return;
+
         }
 
 
         // ----------------------------------------------------
-        // ADMIN KEY DELETE
+        // KEY DELETE
         // ----------------------------------------------------
 
         if (
@@ -3915,6 +4016,7 @@ const server =
           );
 
           return;
+
         }
 
 
@@ -3935,6 +4037,7 @@ const server =
           );
 
           return;
+
         }
 
 
@@ -3996,7 +4099,6 @@ async function backgroundRefresh() {
 
     await refreshProvider();
 
-
     await settlePredictions();
 
 
@@ -4030,7 +4132,7 @@ async function backgroundRefresh() {
 
 
 // ============================================================
-// START SERVER
+// START
 // ============================================================
 
 async function start() {
@@ -4039,12 +4141,9 @@ async function start() {
 
     await initDatabase();
 
-
     await refreshProvider();
 
-
     await settlePredictions();
-
 
     await generateModel();
 
@@ -4058,25 +4157,27 @@ async function start() {
           `DY AI WINGO running on ${PORT}`
         );
 
-
         console.log(
           `MODEL: ${MODEL_VERSION}`
         );
 
-
         console.log(
-          `HISTORY: ${providerState.history.length}`
+          `RULES: ${CHART_RULES.length}`
         );
 
+        console.log(
+          `HISTORY: ${
+            providerState.history.length
+          }`
+        );
 
         console.log(
-          `LATEST ISSUE: ${
+          `LATEST: ${
             providerState.history[0]
               ?.issueNumber ||
             "NONE"
           }`
         );
-
 
         console.log(
           `TARGET: ${
@@ -4085,7 +4186,6 @@ async function start() {
           }`
         );
 
-
         console.log(
           `PATTERN: ${
             modelCache.prediction
@@ -4093,7 +4193,6 @@ async function start() {
             "NONE"
           }`
         );
-
 
         console.log(
           `PREDICTION: ${
@@ -4112,7 +4211,6 @@ async function start() {
       PROVIDER_REFRESH_MS
     );
 
-
   } catch (error) {
 
     console.error(
@@ -4120,8 +4218,8 @@ async function start() {
       error
     );
 
-
     process.exit(1);
+
   }
 
 }
