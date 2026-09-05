@@ -9,6 +9,32 @@ const { URL } = require("url");
 const { Pool } = require("pg");
 
 // ============================================================
+// DY AI WINGO
+// CHART PATTERN ENGINE
+// ============================================================
+//
+// A = SMALL = 0,1,2,3,4
+// B = BIG   = 5,6,7,8,9
+//
+// IMPORTANT:
+//
+// Prediction ONLY when a chart pattern is matched.
+//
+// NO:
+// - frequency fallback
+// - momentum fallback
+// - forced alternation
+// - random prediction
+// - "last was BIG => SMALL"
+// - "last was SMALL => BIG"
+//
+// Pattern not matched:
+// prediction = null
+//
+// ============================================================
+
+
+// ============================================================
 // CONFIG
 // ============================================================
 
@@ -16,19 +42,25 @@ const PORT =
   Number(process.env.PORT || 10000);
 
 const ADMIN_KEY =
-  String(process.env.ADMIN_KEY || "").trim();
+  String(
+    process.env.ADMIN_KEY || ""
+  ).trim();
 
 const WINGOBOT_TOKEN =
-  String(process.env.WINGOBOT_TOKEN || "").trim();
+  String(
+    process.env.WINGOBOT_TOKEN || ""
+  ).trim();
 
 const DATABASE_URL =
-  String(process.env.DATABASE_URL || "").trim();
+  String(
+    process.env.DATABASE_URL || ""
+  ).trim();
 
 const WINGOBOT_API =
   "https://api.wingobot.com/v2/30-sec-game-history";
 
 const MODEL_VERSION =
-  "DY-AI-25-CHART-RULE-V2";
+  "DY-AI-25-CHART-RULE-V3";
 
 const THINKING_DURATION_MS =
   3000;
@@ -39,35 +71,56 @@ const PROVIDER_REFRESH_MS =
 const REQUEST_TIMEOUT_MS =
   12000;
 
-let pool = null;
+const MAX_HISTORY =
+  500;
 
 
 // ============================================================
 // DATABASE
 // ============================================================
 
+let pool = null;
+
 if (DATABASE_URL) {
 
   pool = new Pool({
-    connectionString: DATABASE_URL,
+    connectionString:
+      DATABASE_URL,
 
     ssl:
       DATABASE_URL.includes("localhost")
         ? false
         : {
             rejectUnauthorized: false
-          }
+          },
+
+    max: 5,
+
+    idleTimeoutMillis:
+      30000,
+
+    connectionTimeoutMillis:
+      10000
   });
 
 }
 
 
+// ============================================================
+// DATABASE INITIALIZATION
+// ============================================================
+
 async function initDatabase() {
 
   if (!pool) {
-    console.log("[DB] DATABASE_URL missing");
+
+    console.log(
+      "[DB] DATABASE_URL missing"
+    );
+
     return;
   }
+
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS access_keys (
@@ -78,6 +131,7 @@ async function initDatabase() {
       last_seen BIGINT DEFAULT 0
     );
   `);
+
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS prediction_records (
@@ -93,17 +147,22 @@ async function initDatabase() {
     );
   `);
 
+
   await pool.query(`
     CREATE INDEX IF NOT EXISTS idx_prediction_issue
     ON prediction_records(target_issue);
   `);
+
 
   await pool.query(`
     CREATE INDEX IF NOT EXISTS idx_prediction_created
     ON prediction_records(created_at DESC);
   `);
 
-  console.log("[DB] Ready");
+
+  console.log(
+    "[DB] Ready"
+  );
 }
 
 
@@ -112,21 +171,35 @@ async function initDatabase() {
 // ============================================================
 
 let providerState = {
+
   ok: false,
+
   currentIssue: null,
+
   history: [],
+
   fetched: 0,
+
   lastUpdated: 0,
+
   error: null
+
 };
+
 
 let modelCache = {
+
   targetIssue: null,
+
   prediction: null,
+
   generatedAt: 0
+
 };
 
-let refreshInProgress = false;
+
+let refreshInProgress =
+  false;
 
 
 // ============================================================
@@ -135,6 +208,38 @@ let refreshInProgress = false;
 
 function now() {
   return Date.now();
+}
+
+
+function clamp(
+  value,
+  min,
+  max
+) {
+
+  return Math.max(
+    min,
+    Math.min(max, value)
+  );
+}
+
+
+function percentage(
+  part,
+  total
+) {
+
+  if (!total) {
+    return 0;
+  }
+
+  return Number(
+    (
+      part /
+      total *
+      100
+    ).toFixed(2)
+  );
 }
 
 
@@ -147,27 +252,38 @@ function randomKey() {
       .toString("hex")
       .toUpperCase()
   );
-
 }
 
 
-function numberToType(number) {
+// ============================================================
+// NUMBER -> A/B
+// ============================================================
 
-  const n = Number(number);
+function numberToType(
+  number
+) {
+
+  const n =
+    Number(number);
 
   if (
     !Number.isInteger(n) ||
     n < 0 ||
     n > 9
   ) {
+
     return null;
   }
 
-  return n >= 5 ? "B" : "A";
+  return n >= 5
+    ? "B"
+    : "A";
 }
 
 
-function typeLabel(type) {
+function typeLabel(
+  type
+) {
 
   if (type === "B") {
     return "BIG";
@@ -181,30 +297,50 @@ function typeLabel(type) {
 }
 
 
-function predictionFromType(type) {
+function predictionLabel(
+  type
+) {
 
-  return type === "B"
-    ? "BIG"
-    : type === "A"
-    ? "SMALL"
-    : null;
+  if (type === "B") {
+    return "BIG";
+  }
+
+  if (type === "A") {
+    return "SMALL";
+  }
+
+  return null;
 }
 
 
-function incrementIssue(issue) {
+// ============================================================
+// ISSUE HELPERS
+// ============================================================
+
+function incrementIssue(
+  issue
+) {
 
   if (
     issue === null ||
     issue === undefined
   ) {
+
     return null;
   }
 
-  const value = String(issue);
 
-  if (!/^\d+$/.test(value)) {
+  const value =
+    String(issue);
+
+
+  if (
+    !/^\d+$/.test(value)
+  ) {
+
     return null;
   }
+
 
   try {
 
@@ -212,44 +348,62 @@ function incrementIssue(issue) {
       BigInt(value) + 1n
     )
       .toString()
-      .padStart(value.length, "0");
+      .padStart(
+        value.length,
+        "0"
+      );
 
   } catch {
 
     return null;
-
   }
 }
 
 
-function compareIssue(a, b) {
+function compareIssue(
+  a,
+  b
+) {
 
   try {
 
-    const aa = BigInt(String(a));
-    const bb = BigInt(String(b));
+    const aa =
+      BigInt(String(a));
 
-    if (aa > bb) return 1;
-    if (aa < bb) return -1;
+    const bb =
+      BigInt(String(b));
+
+
+    if (aa > bb) {
+      return 1;
+    }
+
+    if (aa < bb) {
+      return -1;
+    }
 
     return 0;
 
   } catch {
 
     return 0;
-
   }
 }
 
 
 // ============================================================
-// JSON RESPONSE
+// JSON
 // ============================================================
 
-function json(res, status, data) {
+function json(
+  res,
+  status,
+  data
+) {
 
   const body =
     JSON.stringify(data);
+
 
   res.writeHead(
     status,
@@ -270,6 +424,7 @@ function json(res, status, data) {
         "GET, POST, DELETE, OPTIONS"
     }
   );
+
 
   res.end(body);
 }
@@ -294,26 +449,32 @@ function text(
     }
   );
 
+
   res.end(body);
 }
 
 
 // ============================================================
-// REQUEST BODY
+// BODY
 // ============================================================
 
 function readBody(req) {
 
   return new Promise(
-    (resolve, reject) => {
+    (
+      resolve,
+      reject
+    ) => {
 
       let data = "";
+
 
       req.on(
         "data",
         chunk => {
 
           data += chunk;
+
 
           if (
             data.length >
@@ -327,20 +488,22 @@ function readBody(req) {
             );
 
             req.destroy();
-
           }
-
         }
       );
+
 
       req.on(
         "end",
         () => {
 
           if (!data) {
+
             resolve({});
+
             return;
           }
+
 
           try {
 
@@ -351,11 +514,10 @@ function readBody(req) {
           } catch {
 
             resolve({});
-
           }
-
         }
       );
+
 
       req.on(
         "error",
@@ -368,13 +530,16 @@ function readBody(req) {
 
 
 // ============================================================
-// WINGOBOT
+// WINGOBOT API
 // ============================================================
 
 function fetchWingoBot() {
 
   return new Promise(
-    (resolve, reject) => {
+    (
+      resolve,
+      reject
+    ) => {
 
       if (!WINGOBOT_TOKEN) {
 
@@ -386,6 +551,7 @@ function fetchWingoBot() {
 
         return;
       }
+
 
       const request =
         https.request(
@@ -405,7 +571,7 @@ function fetchWingoBot() {
                 "application/json",
 
               "User-Agent":
-                "DY-AI-Wingo/4.0"
+                "DY-AI-Wingo/ChartPattern/3.0"
 
             }
           },
@@ -414,12 +580,14 @@ function fetchWingoBot() {
 
             let body = "";
 
+
             response.on(
               "data",
               chunk => {
                 body += chunk;
               }
             );
+
 
             response.on(
               "end",
@@ -441,6 +609,7 @@ function fetchWingoBot() {
                   return;
                 }
 
+
                 try {
 
                   resolve(
@@ -454,7 +623,6 @@ function fetchWingoBot() {
                       "Invalid WingoBot JSON"
                     )
                   );
-
                 }
 
               }
@@ -462,6 +630,7 @@ function fetchWingoBot() {
 
           }
         );
+
 
       request.on(
         "timeout",
@@ -476,10 +645,12 @@ function fetchWingoBot() {
         }
       );
 
+
       request.on(
         "error",
         reject
       );
+
 
       request.end();
 
@@ -492,18 +663,31 @@ function fetchWingoBot() {
 // NORMALIZE HISTORY
 // ============================================================
 
-function normalizeHistory(payload) {
+function normalizeHistory(
+  payload
+) {
 
   const raw =
-    Array.isArray(payload?.history)
+    Array.isArray(
+      payload?.history
+    )
       ? payload.history
-      : Array.isArray(payload?.data)
+
+      : Array.isArray(
+          payload?.data
+        )
       ? payload.data
-      : Array.isArray(payload?.results)
+
+      : Array.isArray(
+          payload?.results
+        )
       ? payload.results
+
       : [];
 
+
   const result = [];
+
 
   for (
     const item of raw
@@ -515,14 +699,17 @@ function normalizeHistory(payload) {
       item?.period ??
       item?.periodNumber;
 
+
     const number =
       item?.number ??
       item?.result ??
       item?.openNumber ??
       item?.digit;
 
+
     const n =
       Number(number);
+
 
     if (
       issue !== undefined &&
@@ -536,7 +723,8 @@ function normalizeHistory(payload) {
         issueNumber:
           String(issue),
 
-        number: n,
+        number:
+          n,
 
         colour:
           item?.colour ??
@@ -557,7 +745,12 @@ function normalizeHistory(payload) {
 
   }
 
-  return result;
+
+  return result
+    .slice(
+      0,
+      MAX_HISTORY
+    );
 }
 
 
@@ -565,41 +758,70 @@ function normalizeHistory(payload) {
 // CURRENT ISSUE
 // ============================================================
 
-function providerCurrentIssue(payload) {
+function providerCurrentIssue(
+  payload
+) {
 
   return (
-    payload?.current?.issueNumber ??
-    payload?.currentIssue ??
-    payload?.current?.issue ??
-    payload?.current?.period ??
-    null
-  );
 
+    payload?.current
+      ?.issueNumber
+
+    ??
+
+    payload?.currentIssue
+
+    ??
+
+    payload?.current
+      ?.issue
+
+    ??
+
+    payload?.current
+      ?.period
+
+    ??
+
+    null
+
+  );
 }
 
 
 // ============================================================
-// PROVIDER REFRESH
+// REFRESH PROVIDER
 // ============================================================
 
 async function refreshProvider() {
 
   if (refreshInProgress) {
+
     return providerState;
   }
 
-  refreshInProgress = true;
+
+  refreshInProgress =
+    true;
+
 
   try {
 
     const payload =
       await fetchWingoBot();
 
+
     const history =
-      normalizeHistory(payload);
+      normalizeHistory(
+        payload
+      );
+
 
     const currentIssue =
-      providerCurrentIssue(payload);
+      providerCurrentIssue(
+        payload
+      );
+
 
     providerState = {
 
@@ -608,26 +830,30 @@ async function refreshProvider() {
       currentIssue:
         currentIssue !== null
           ? String(currentIssue)
-          : history[0]?.issueNumber ||
+          : history[0]
+              ?.issueNumber ||
             null,
 
       history,
 
       fetched:
         Number(
-          payload?.stats?.fetched
+          payload?.stats
+            ?.fetched
         ) ||
         history.length,
 
       lastUpdated:
         Number(
-          payload?.stats?.last_updated
+          payload?.stats
+            ?.last_updated
         ) ||
         now(),
 
       error: null
 
     };
+
 
     return providerState;
 
@@ -645,63 +871,130 @@ async function refreshProvider() {
 
     };
 
+
     return providerState;
 
   } finally {
 
-    refreshInProgress = false;
+    refreshInProgress =
+      false;
 
   }
-
 }
 
 
 // ============================================================
-// 25 CHART RULES
+// CHART RULE DEFINITIONS
 // ============================================================
 //
 // A = SMALL
 // B = BIG
 //
-// These are chart structures.
-// Direction is derived from the next part
-// of the repeating structure.
+// The engine checks the most recent completed sequence.
+//
+// There is NO fallback prediction.
+//
 // ============================================================
 
 const CHART_RULES = [
 
+  // ----------------------------------------------------------
+  // 1. SINGLE TREND
+  // AB AB AB
+  // ----------------------------------------------------------
+
   {
     id: 1,
     name: "SINGLE TREND",
-    type: "ALTERNATING",
-    sequence: "ABABABABAB",
+    sequence: "ABABAB",
     next: "A",
     confidence: 72
   },
 
   {
+    id: 1,
+    name: "SINGLE TREND",
+    sequence: "BABABA",
+    next: "B",
+    confidence: 72
+  },
+
+
+  // ----------------------------------------------------------
+  // 2. DOUBLE TREND
+  // AA BB AA
+  // ----------------------------------------------------------
+
+  {
     id: 2,
     name: "DOUBLE TREND",
-    type: "DOUBLE",
-    sequence: "AABBAABB",
+    sequence: "AABBAA",
+    next: "B",
+    confidence: 75
+  },
+
+  {
+    id: 2,
+    name: "DOUBLE TREND",
+    sequence: "BBAABB",
     next: "A",
-    confidence: 74
+    confidence: 75
+  },
+
+
+  // ----------------------------------------------------------
+  // 3. TRIPLE TREND
+  // AAA BBB
+  // ----------------------------------------------------------
+
+  {
+    id: 3,
+    name: "TRIPLE TREND",
+    sequence: "AAABBB",
+    next: "A",
+    confidence: 77
   },
 
   {
     id: 3,
     name: "TRIPLE TREND",
-    type: "TRIPLE",
-    sequence: "AAABBBAAABBB",
+    sequence: "BBBAAA",
+    next: "B",
+    confidence: 77
+  },
+
+
+  // ----------------------------------------------------------
+  // 4. QUADRA TREND
+  // AAAA BBBB
+  // ----------------------------------------------------------
+
+  {
+    id: 4,
+    name: "QUADRA TREND",
+    sequence: "AAAABBBB",
     next: "A",
-    confidence: 76
+    confidence: 80
   },
 
   {
     id: 4,
     name: "QUADRA TREND",
-    type: "QUADRA",
-    sequence: "AAAABBBBAAAABBBB",
+    sequence: "BBBBAAAA",
+    next: "B",
+    confidence: 80
+  },
+
+
+  // ----------------------------------------------------------
+  // 5. THREE IN ONE
+  // AAB AAB
+  // ----------------------------------------------------------
+
+  {
+    id: 5,
+    name: "THREE IN ONE",
+    sequence: "AABAAB",
     next: "A",
     confidence: 78
   },
@@ -709,362 +1002,525 @@ const CHART_RULES = [
   {
     id: 5,
     name: "THREE IN ONE",
-    type: "3-1",
-    sequence: "AABAABAAB",
-    next: "A",
+    sequence: "BBABBA",
+    next: "B",
     confidence: 78
+  },
+
+
+  // ----------------------------------------------------------
+  // 6. LONG TREND
+  // sustained same side
+  // ----------------------------------------------------------
+
+  {
+    id: 6,
+    name: "LONG TREND",
+    sequence: "AAAAAAAA",
+    next: "A",
+    confidence: 68
   },
 
   {
     id: 6,
     name: "LONG TREND",
-    type: "LONG",
-    sequence: "AAAAAAAAABBBBBBBBB",
+    sequence: "BBBBBBBB",
+    next: "B",
+    confidence: 68
+  },
+
+
+  // ----------------------------------------------------------
+  // 7. TWO IN ONE
+  // ABB ABB
+  // ----------------------------------------------------------
+
+  {
+    id: 7,
+    name: "TWO IN ONE",
+    sequence: "ABBABB",
     next: "A",
-    confidence: 79
+    confidence: 80
   },
 
   {
     id: 7,
     name: "TWO IN ONE",
-    type: "2-1",
-    sequence: "ABBABBABB",
+    sequence: "BAABAA",
+    next: "B",
+    confidence: 80
+  },
+
+
+  // ----------------------------------------------------------
+  // 8. THREE IN ONE
+  // AAAB AAAB
+  // ----------------------------------------------------------
+
+  {
+    id: 8,
+    name: "THREE IN ONE",
+    sequence: "AAABAAAB",
     next: "A",
-    confidence: 78
+    confidence: 82
   },
 
   {
     id: 8,
-    name: "THREE IN TWO",
-    type: "3-2",
-    sequence: "AAABAAABAAAB",
-    next: "A",
-    confidence: 80
+    name: "THREE IN ONE",
+    sequence: "BBBA BBBA".replace(/ /g, ""),
+    next: "B",
+    confidence: 82
   },
+
+
+  // ----------------------------------------------------------
+  // 9. THREE-TWO
+  // AAABB AAABB
+  // ----------------------------------------------------------
 
   {
     id: 9,
-    name: "FOUR IN ONE",
-    type: "4-1",
+    name: "THREE-TWO TREND",
     sequence: "AAABBAAABB",
-    next: "A",
-    confidence: 80
-  },
-
-  {
-    id: 10,
-    name: "CENTER BREAK",
-    type: "4-2-1",
-    sequence: "AAAABBABBAAAA",
-    next: "B",
-    confidence: 82
-  },
-
-  {
-    id: 11,
-    name: "ONE IN THREE",
-    type: "1-3",
-    sequence: "ABBBABBBABBB",
-    next: "A",
-    confidence: 81
-  },
-
-  {
-    id: 12,
-    name: "EXPANDING TREND",
-    type: "1-2-3",
-    sequence: "ABAABBABBB",
-    next: "A",
-    confidence: 82
-  },
-
-  {
-    id: 13,
-    name: "EXPANDING BLOCK",
-    type: "2-3-4",
-    sequence: "AABBAAABBBAAAABBBB",
-    next: "A",
-    confidence: 84
-  },
-
-  {
-    id: 14,
-    name: "EXPANDING BLOCK",
-    type: "1-2-3-4",
-    sequence: "ABBAAABBBB",
-    next: "A",
-    confidence: 82
-  },
-
-  {
-    id: 15,
-    name: "SHRINKING BLOCK",
-    type: "4-3-2-1",
-    sequence: "AAAABBBAAB",
-    next: "A",
-    confidence: 82
-  },
-
-  {
-    id: 16,
-    name: "EXPANDING BLOCK",
-    type: "1-2-3",
-    sequence: "ABAABBAAABBB",
-    next: "A",
-    confidence: 84
-  },
-
-  {
-    id: 17,
-    name: "CENTER REVERSAL",
-    type: "2-3-1-3-2",
-    sequence: "AABBBABBBAA",
-    next: "B",
-    confidence: 84
-  },
-
-  {
-    id: 18,
-    name: "LONG EXPANSION",
-    type: "1-2-4-8",
-    sequence: "ABBAAAABBBBBBBB",
-    next: "A",
-    confidence: 85
-  },
-
-  {
-    id: 19,
-    name: "FOUR IN ONE",
-    type: "1-4-3",
-    sequence: "ABBBBABBB",
     next: "A",
     confidence: 83
   },
 
   {
-    id: 20,
-    name: "THREE IN TWO",
-    type: "3-2",
-    sequence: "AABBBAABBB",
+    id: 9,
+    name: "THREE-TWO TREND",
+    sequence: "BBBAABBBAA",
+    next: "B",
+    confidence: 83
+  },
+
+
+  // ----------------------------------------------------------
+  // 10. FOUR IN ONE
+  // AAAAB AAAAB
+  // ----------------------------------------------------------
+
+  {
+    id: 10,
+    name: "FOUR IN ONE",
+    sequence: "AAAABAAAAB",
     next: "A",
     confidence: 84
   },
 
   {
-    id: 21,
-    name: "EXPANDING ALTERNATION",
-    type: "1-2-3",
-    sequence: "ABAABAAAB",
+    id: 10,
+    name: "FOUR IN ONE",
+    sequence: "BBBABBBBA",
+    next: "B",
+    confidence: 84
+  },
+
+
+  // ----------------------------------------------------------
+  // 11. ONE IN FOUR
+  // ABBBB ABBBB
+  // ----------------------------------------------------------
+
+  {
+    id: 11,
+    name: "ONE IN FOUR",
+    sequence: "ABBBBABBBB",
     next: "A",
     confidence: 84
   },
 
   {
-    id: 22,
-    name: "PROGRESSIVE BLOCK",
-    type: "2-2-3",
-    sequence: "AABAABBAABBB",
+    id: 11,
+    name: "ONE IN FOUR",
+    sequence: "BAAAABAAAA",
+    next: "B",
+    confidence: 84
+  },
+
+
+  // ----------------------------------------------------------
+  // 12. MIXED TREND
+  // ABBA ABBA
+  // ----------------------------------------------------------
+
+  {
+    id: 12,
+    name: "MIXED TREND",
+    sequence: "ABBAABBA",
     next: "A",
-    confidence: 85
+    confidence: 82
   },
 
   {
-    id: 23,
-    name: "FIVE IN ONE",
-    type: "5-1",
-    sequence: "AAAAABAAAAAB",
+    id: 12,
+    name: "MIXED TREND",
+    sequence: "BAABBAAB",
+    next: "B",
+    confidence: 82
+  },
+
+
+  // ----------------------------------------------------------
+  // 13. EXPANDING BLOCK
+  // AABB AABB
+  // ----------------------------------------------------------
+
+  {
+    id: 13,
+    name: "EXPANDING BLOCK",
+    sequence: "AABBAABB",
+    next: "A",
+    confidence: 83
+  },
+
+  {
+    id: 13,
+    name: "EXPANDING BLOCK",
+    sequence: "BBAABBAA",
+    next: "B",
+    confidence: 83
+  },
+
+
+  // ----------------------------------------------------------
+  // 14. REVERSAL BLOCK
+  // ABB AAAB BBBB
+  // ----------------------------------------------------------
+
+  {
+    id: 14,
+    name: "REVERSAL BLOCK",
+    sequence: "ABBAAABBBB",
     next: "A",
     confidence: 86
   },
 
   {
-    id: 24,
-    name: "FIVE IN TWO",
-    type: "5-2",
-    sequence: "AAAAABBAAAAABB",
+    id: 14,
+    name: "REVERSAL BLOCK",
+    sequence: "BAABBBBAAA",
+    next: "B",
+    confidence: 86
+  },
+
+
+  // ----------------------------------------------------------
+  // 15. FOUR-THREE-TWO
+  // AAAA BBB AA
+  // ----------------------------------------------------------
+
+  {
+    id: 15,
+    name: "FOUR-THREE-TWO",
+    sequence: "AAAABBBAA",
+    next: "B",
+    confidence: 85
+  },
+
+  {
+    id: 15,
+    name: "FOUR-THREE-TWO",
+    sequence: "BBBBAAABB",
+    next: "A",
+    confidence: 85
+  },
+
+
+  // ----------------------------------------------------------
+  // 16. EXPANDING TREND
+  // AB AABB AAABBB
+  // ----------------------------------------------------------
+
+  {
+    id: 16,
+    name: "EXPANDING TREND",
+    sequence: "ABAABBAAABBB",
+    next: "A",
+    confidence: 88
+  },
+
+  {
+    id: 16,
+    name: "EXPANDING TREND",
+    sequence: "BABBAABBBBAAA",
+    next: "B",
+    confidence: 88
+  },
+
+
+  // ----------------------------------------------------------
+  // 17. MIXED REVERSAL
+  // AA BBB A BBB AA
+  // ----------------------------------------------------------
+
+  {
+    id: 17,
+    name: "MIXED REVERSAL",
+    sequence: "AABBBAAABBBAA",
+    next: "B",
+    confidence: 87
+  },
+
+  {
+    id: 17,
+    name: "MIXED REVERSAL",
+    sequence: "BBAAABBBAAABB",
     next: "A",
     confidence: 87
+  },
+
+
+  // ----------------------------------------------------------
+  // 18. LONG EXPANSION
+  // A BB AAAA BBBB
+  // ----------------------------------------------------------
+
+  {
+    id: 18,
+    name: "LONG EXPANSION",
+    sequence: "ABBAAAABBBB",
+    next: "A",
+    confidence: 89
+  },
+
+  {
+    id: 18,
+    name: "LONG EXPANSION",
+    sequence: "BAABBBBBAAA",
+    next: "B",
+    confidence: 89
+  },
+
+
+  // ----------------------------------------------------------
+  // 19. FOUR BLOCK
+  // ABBBB ABBBB
+  // ----------------------------------------------------------
+
+  {
+    id: 19,
+    name: "FOUR BLOCK",
+    sequence: "ABBBBABBBB",
+    next: "A",
+    confidence: 84
+  },
+
+  {
+    id: 19,
+    name: "FOUR BLOCK",
+    sequence: "BAAAABAAAA",
+    next: "B",
+    confidence: 84
+  },
+
+
+  // ----------------------------------------------------------
+  // 20. FIVE-TWO BLOCK
+  // AA BBBBB AA BBBBB
+  // ----------------------------------------------------------
+
+  {
+    id: 20,
+    name: "FIVE-TWO BLOCK",
+    sequence: "AABBBBBAABBBBB",
+    next: "A",
+    confidence: 90
+  },
+
+  {
+    id: 20,
+    name: "FIVE-TWO BLOCK",
+    sequence: "BBAAAAABB AAAAA".replace(/ /g, ""),
+    next: "B",
+    confidence: 90
+  },
+
+
+  // ----------------------------------------------------------
+  // 21. PROGRESSIVE ALTERNATION
+  // AB AAB AAAB
+  // ----------------------------------------------------------
+
+  {
+    id: 21,
+    name: "PROGRESSIVE ALTERNATION",
+    sequence: "ABAABAAAB",
+    next: "A",
+    confidence: 88
+  },
+
+  {
+    id: 21,
+    name: "PROGRESSIVE ALTERNATION",
+    sequence: "BABBA BBBA".replace(/ /g, ""),
+    next: "B",
+    confidence: 88
+  },
+
+
+  // ----------------------------------------------------------
+  // 22. PROGRESSIVE BLOCK
+  // AAB AABB AABBB
+  // ----------------------------------------------------------
+
+  {
+    id: 22,
+    name: "PROGRESSIVE BLOCK",
+    sequence: "AABAABBAABBB",
+    next: "A",
+    confidence: 90
+  },
+
+  {
+    id: 22,
+    name: "PROGRESSIVE BLOCK",
+    sequence: "BBABB AABBBAAA".replace(/ /g, ""),
+    next: "B",
+    confidence: 90
+  },
+
+
+  // ----------------------------------------------------------
+  // 23. FIVE TREND
+  // AAAAA B
+  // ----------------------------------------------------------
+
+  {
+    id: 23,
+    name: "FIVE IN ONE",
+    sequence: "AAAAABAAAAAB",
+    next: "A",
+    confidence: 88
+  },
+
+  {
+    id: 23,
+    name: "FIVE IN ONE",
+    sequence: "BBBBABBBBBAB",
+    next: "B",
+    confidence: 88
+  },
+
+
+  // ----------------------------------------------------------
+  // 24. FIVE IN TWO
+  // AAAAAB B
+  // ----------------------------------------------------------
+
+  {
+    id: 24,
+    name: "FIVE IN TWO",
+    sequence: "AAAAABBAAAAABB",
+    next: "A",
+    confidence: 91
+  },
+
+  {
+    id: 24,
+    name: "FIVE IN TWO",
+    sequence: "BBBBBAABBBBBAA",
+    next: "B",
+    confidence: 91
+  },
+
+
+  // ----------------------------------------------------------
+  // 25. FIVE IN THREE
+  // AAAAA BBB
+  // ----------------------------------------------------------
+
+  {
+    id: 25,
+    name: "FIVE IN THREE",
+    sequence: "AAAAABBBAAAAABBB",
+    next: "A",
+    confidence: 92
   },
 
   {
     id: 25,
     name: "FIVE IN THREE",
-    type: "5-3",
-    sequence: "AAAAABBBAAAAABBB",
-    next: "A",
-    confidence: 88
+    sequence: "BBBBBAAABBBBBAAA",
+    next: "B",
+    confidence: 92
   }
 
 ];
 
 
 // ============================================================
+// REMOVE INVALID RULES
+// ============================================================
+
+const VALID_CHART_RULES =
+  CHART_RULES.filter(
+    rule =>
+      typeof rule.sequence === "string" &&
+      /^[AB]+$/.test(rule.sequence) &&
+      (rule.next === "A" ||
+       rule.next === "B")
+  );
+
+
+// ============================================================
 // PATTERN MATCH HELPERS
 // ============================================================
 
-function suffixMatchLength(
-  source,
+function suffixMatches(
+  sequence,
   pattern
 ) {
 
-  const max =
-    Math.min(
-      source.length,
-      pattern.length
-    );
-
-  for (
-    let length = max;
-    length >= 3;
-    length--
-  ) {
-
-    if (
-      source.slice(-length) ===
-      pattern.slice(-length)
-    ) {
-
-      return length;
-
-    }
-
-  }
-
-  return 0;
-}
-
-
-function getCurrentRun(sequence) {
-
-  if (!sequence.length) {
-    return {
-      type: null,
-      length: 0
-    };
-  }
-
-  const latest =
-    sequence[sequence.length - 1];
-
-  let length = 1;
-
-  for (
-    let i =
-      sequence.length - 2;
-
-    i >= 0;
-
-    i--
-  ) {
-
-    if (
-      sequence[i] !==
-      latest
-    ) {
-
-      break;
-
-    }
-
-    length++;
-
-  }
-
-  return {
-    type: latest,
-    length
-  };
-
-}
-
-
-// ============================================================
-// LONG TREND
-// ============================================================
-
-function getLongTrend(sequence) {
-
-  const run =
-    getCurrentRun(sequence);
-
   if (
-    run.length < 8
+    !sequence ||
+    !pattern
   ) {
-
-    return null;
-
+    return false;
   }
 
-  return {
-
-    id: 0,
-
-    name: "LONG TREND",
-
-    type: "LONG TREND",
-
-    sequence:
-      sequence.slice(
-        -run.length
-      ),
-
-    next:
-      run.type,
-
-    confidence:
-      run.length >= 12
-        ? 78
-        : run.length >= 10
-        ? 75
-        : 70
-
-  };
-
+  return sequence.endsWith(
+    pattern
+  );
 }
 
 
-// ============================================================
-// HISTORICAL PATTERN VALIDATION
-// ============================================================
-
-function historicalValidation(
+function countHistoricalPattern(
   sequence,
-  rule
+  pattern,
+  expected
 ) {
 
-  if (!rule) {
+  let matches = 0;
+  let correct = 0;
+
+
+  if (
+    !pattern ||
+    pattern.length < 1
+  ) {
 
     return {
       matches: 0,
       correct: 0,
       rate: null
     };
-
   }
 
-  const pattern =
-    rule.sequence;
-
-  const expected =
-    rule.next;
-
-  const length =
-    pattern.length;
-
-  let matches = 0;
-  let correct = 0;
 
   for (
-    let i = length;
-    i < sequence.length - 1;
+    let i = pattern.length;
+    i < sequence.length;
     i++
   ) {
 
     const previous =
       sequence.slice(
-        i - length,
+        i - pattern.length,
         i
       );
+
 
     if (
       previous === pattern
@@ -1072,9 +1528,10 @@ function historicalValidation(
 
       matches++;
 
+
       if (
-        sequence[i] ===
-        expected
+        i < sequence.length &&
+        sequence[i] === expected
       ) {
 
         correct++;
@@ -1085,6 +1542,7 @@ function historicalValidation(
 
   }
 
+
   return {
 
     matches,
@@ -1092,7 +1550,7 @@ function historicalValidation(
     correct,
 
     rate:
-      matches
+      matches > 0
         ? Number(
             (
               correct /
@@ -1103,12 +1561,65 @@ function historicalValidation(
         : null
 
   };
-
 }
 
 
 // ============================================================
-// PURE CHART ENGINE
+// CURRENT STREAK
+// ============================================================
+
+function getCurrentRun(
+  sequence
+) {
+
+  if (!sequence.length) {
+
+    return {
+      type: null,
+      length: 0
+    };
+  }
+
+
+  const latest =
+    sequence[
+      sequence.length - 1
+    ];
+
+
+  let length = 1;
+
+
+  for (
+    let i =
+      sequence.length - 2;
+    i >= 0;
+    i--
+  ) {
+
+    if (
+      sequence[i] !== latest
+    ) {
+
+      break;
+    }
+
+    length++;
+  }
+
+
+  return {
+
+    type: latest,
+
+    length
+
+  };
+}
+
+
+// ============================================================
+// EXACT CHART ENGINE
 // ============================================================
 
 function humanBigSmallLogic(
@@ -1116,10 +1627,11 @@ function humanBigSmallLogic(
 ) {
 
   // ----------------------------------------------------------
-  // CLEAN
+  // CLEAN NUMBERS
   // ----------------------------------------------------------
 
   const numbers = [];
+
 
   for (
     const value of
@@ -1129,6 +1641,7 @@ function humanBigSmallLogic(
   ) {
 
     let n;
+
 
     if (
       typeof value ===
@@ -1145,9 +1658,11 @@ function humanBigSmallLogic(
 
     } else {
 
-      n = Number(value);
+      n =
+        Number(value);
 
     }
+
 
     if (
       Number.isInteger(n) &&
@@ -1163,26 +1678,35 @@ function humanBigSmallLogic(
 
 
   // ----------------------------------------------------------
-  // A/B
+  // NUMBER -> A/B
   // ----------------------------------------------------------
 
-  const sequenceArray =
-    numbers.map(
-      n =>
-        n >= 5
-          ? "B"
-          : "A"
-    );
-
   const sequence =
-    sequenceArray.join("");
+    numbers
+      .map(
+        n =>
+          numberToType(n)
+      )
+      .filter(Boolean)
+      .join("");
+
 
   const dataSize =
     sequence.length;
 
 
   // ----------------------------------------------------------
-  // MIN DATA
+  // CURRENT
+  // ----------------------------------------------------------
+
+  const currentRun =
+    getCurrentRun(
+      sequence
+    );
+
+
+  // ----------------------------------------------------------
+  // MINIMUM DATA
   // ----------------------------------------------------------
 
   if (
@@ -1212,531 +1736,371 @@ function humanBigSmallLogic(
       matchedPattern:
         null,
 
+      matchedRule:
+        null,
+
       matchedSequence:
         null,
 
       matchType:
-        "NONE",
+        null,
+
+      nextType:
+        null,
 
       sequence,
 
       dataSize,
 
-      current:
-        null,
+      current: {
 
-      historicalMatches:
-        0,
+        type:
+          currentRun.type,
 
-      historicalCorrect:
-        0,
+        label:
+          typeLabel(
+            currentRun.type
+          ),
 
-      historicalRate:
-        null,
+        streak:
+          currentRun.length
+
+      },
+
+      historicalMatches: 0,
+
+      historicalCorrect: 0,
+
+      historicalRate: null,
+
+      agreeingRules: 0,
 
       reason:
-        "At least 5 results required.",
+        "Minimum 5 valid results required.",
 
       engine:
-        "DY-AI-25-RULE-CHART"
+        "DY-AI-25-CHART-RULE",
+
+      rulesCount:
+        VALID_CHART_RULES.length,
+
+      mapping: {
+
+        A: "SMALL",
+
+        B: "BIG"
+
+      },
+
+      analyzedAt:
+        now()
 
     };
-
   }
 
 
   // ----------------------------------------------------------
-  // EXACT MATCH
+  // MATCH ALL RULES
   // ----------------------------------------------------------
 
-  const exactMatches = [];
+  const matches = [];
+
 
   for (
-    const rule of CHART_RULES
+    const rule of
+      VALID_CHART_RULES
   ) {
 
     if (
-      sequence.endsWith(
+      suffixMatches(
+        sequence,
         rule.sequence
       )
     ) {
 
-      exactMatches.push(rule);
+      matches.push({
+        ...rule
+      });
 
     }
 
   }
-
-
-  exactMatches.sort(
-    (a, b) =>
-      b.sequence.length -
-      a.sequence.length
-  );
-
-
-  // ----------------------------------------------------------
-  // PARTIAL MATCH
-  // ----------------------------------------------------------
-
-  let bestPartial = null;
-  let bestPartialLength = 0;
-
-  for (
-    const rule of CHART_RULES
-  ) {
-
-    const length =
-      suffixMatchLength(
-        sequence,
-        rule.sequence
-      );
-
-    if (
-      length >= 3 &&
-      length >
-        bestPartialLength
-    ) {
-
-      bestPartial =
-        rule;
-
-      bestPartialLength =
-        length;
-
-    }
-
-  }
-
-
-  // ----------------------------------------------------------
-  // SELECT
-  // ----------------------------------------------------------
-
-  let selectedRule = null;
-  let matchType = "NONE";
-  let matchedLength = 0;
-
-  if (
-    exactMatches.length
-  ) {
-
-    selectedRule =
-      exactMatches[0];
-
-    matchType =
-      "EXACT";
-
-    matchedLength =
-      selectedRule.sequence.length;
-
-  } else if (
-    bestPartial
-  ) {
-
-    selectedRule =
-      bestPartial;
-
-    matchType =
-      "PARTIAL";
-
-    matchedLength =
-      bestPartialLength;
-
-  }
-
-
-  // ----------------------------------------------------------
-  // CURRENT RUN
-  // ----------------------------------------------------------
-
-  const current =
-    getCurrentRun(
-      sequence
-    );
 
 
   // ----------------------------------------------------------
   // LONG TREND
-  // ----------------------------------------------------------
-
-  const longTrend =
-    getLongTrend(
-      sequence
-    );
-
-
-  // ----------------------------------------------------------
-  // HISTORICAL
-  // ----------------------------------------------------------
-
-  const history =
-    historicalValidation(
-      sequence,
-      selectedRule
-    );
-
-
-  // ----------------------------------------------------------
-  // FINAL
-  // ----------------------------------------------------------
-
-  let prediction = null;
-
-  let confidence = 0;
-
-  let patternName =
-    "NONE";
-
-  let matchedSequence =
-    null;
-
-  let classification =
-    "NO CLEAR SIGNAL";
-
-  let reason =
-    "No chart pattern matched.";
-
-
-  // ----------------------------------------------------------
-  // EXACT
+  //
+  // ONLY if no exact rule already matched.
   // ----------------------------------------------------------
 
   if (
-    selectedRule &&
-    matchType === "EXACT"
+    !matches.length &&
+    currentRun.length >= 8
   ) {
 
-    prediction =
-      predictionFromType(
-        selectedRule.next
-      );
-
-    confidence =
-      selectedRule.confidence;
-
-    patternName =
-      selectedRule.name;
-
-    matchedSequence =
-      selectedRule.sequence;
-
-    classification =
-      "EXACT PATTERN MATCH";
-
-    reason =
-      `${selectedRule.name} | ` +
-      `${selectedRule.sequence} -> ` +
-      `${selectedRule.next}`;
-
-  }
-
-
-  // ----------------------------------------------------------
-  // PARTIAL
-  // ----------------------------------------------------------
-
-  else if (
-    selectedRule &&
-    matchType === "PARTIAL"
-  ) {
-
-    prediction =
-      predictionFromType(
-        selectedRule.next
-      );
-
-    const ratio =
-      matchedLength /
-      selectedRule.sequence.length;
-
-    confidence =
-      Math.round(
-        50 +
-        ratio * 32
-      );
-
-    confidence =
-      Math.max(
-        52,
+    const longSequence =
+      currentRun.type.repeat(
         Math.min(
-          82,
-          confidence
+          currentRun.length,
+          16
         )
       );
 
-    patternName =
-      selectedRule.name;
 
-    matchedSequence =
-      sequence.slice(
-        -matchedLength
-      );
+    matches.push({
 
-    classification =
-      "PARTIAL PATTERN MATCH";
+      id: 6,
 
-    reason =
-      `${selectedRule.name} | ` +
-      `${matchedLength}/` +
-      `${selectedRule.sequence.length} matched`;
+      name:
+        "LONG TREND",
 
-  }
+      sequence:
+        longSequence,
 
+      next:
+        currentRun.type,
 
-  // ----------------------------------------------------------
-  // LONG TREND
-  // ----------------------------------------------------------
+      confidence:
+        currentRun.length >= 12
+          ? 78
+          : currentRun.length >= 10
+          ? 74
+          : 68
 
-  else if (
-    longTrend
-  ) {
-
-    prediction =
-      predictionFromType(
-        longTrend.next
-      );
-
-    confidence =
-      longTrend.confidence;
-
-    patternName =
-      "LONG TREND";
-
-    matchedSequence =
-      longTrend.sequence;
-
-    classification =
-      "LONG TREND";
-
-    reason =
-      `LONG TREND ${longTrend.next} ` +
-      `x${current.length}`;
+    });
 
   }
 
 
   // ----------------------------------------------------------
-  // FALLBACK CHART STRUCTURE
-  // ----------------------------------------------------------
-  //
-  // IMPORTANT:
-  // Prediction blank nahi rahegi jab enough data ho.
-  //
-  // Is fallback me latest chart ke run structure
-  // ko identify kiya jata hai.
-  //
-  // Ye frequency/momentum prediction nahi hai.
+  // NO MATCH
   // ----------------------------------------------------------
 
   if (
-    !prediction &&
-    dataSize >= 5
+    !matches.length
   ) {
 
-    const recent =
-      sequence.slice(-8);
+    return {
 
-    const last =
-      recent[recent.length - 1];
+      status:
+        "NO_PATTERN",
 
-    const before =
-      recent.slice(
+      prediction:
+        null,
+
+      confidence:
         0,
-        -1
-      );
 
-    let transitions = 0;
+      confidenceLevel:
+        "NONE",
 
-    for (
-      let i = 1;
-      i < before.length;
-      i++
-    ) {
+      classification:
+        "NO CLEAR PATTERN",
 
-      if (
-        before[i] !==
-        before[i - 1]
-      ) {
+      pattern:
+        "NONE",
 
-        transitions++;
+      matchedPattern:
+        null,
 
-      }
+      matchedRule:
+        null,
 
-    }
+      matchedSequence:
+        null,
 
+      matchType:
+        null,
 
-    // Alternating chart
-    if (
-      before.length >= 4 &&
-      transitions >=
-        before.length - 2
-    ) {
+      nextType:
+        null,
 
-      prediction =
-        last === "B"
-          ? "SMALL"
-          : "BIG";
+      sequence,
 
-      confidence = 58;
+      dataSize,
 
-      patternName =
-        "SINGLE TREND";
+      current: {
 
-      matchedSequence =
-        recent;
+        type:
+          currentRun.type,
 
-      classification =
-        "CHART FALLBACK";
+        label:
+          typeLabel(
+            currentRun.type
+          ),
 
-      reason =
-        "Recent alternating chart structure.";
+        streak:
+          currentRun.length
 
-    }
+      },
 
+      historicalMatches: 0,
 
-    // Repeated pairs
-    else if (
-      before.length >= 4
-    ) {
+      historicalCorrect: 0,
 
-      const lastFour =
-        before.slice(-4);
+      historicalRate: null,
 
-      if (
-        lastFour[0] ===
-          lastFour[1] &&
-        lastFour[2] ===
-          lastFour[3]
-      ) {
+      agreeingRules: 0,
 
-        prediction =
-          last === "B"
-            ? "BIG"
-            : "SMALL";
+      reason:
+        "Current A/B sequence me koi exact chart pattern match nahi hua. Forced prediction disabled.",
 
-        confidence = 56;
+      engine:
+        "DY-AI-25-CHART-RULE",
 
-        patternName =
-          "DOUBLE TREND";
+      rulesCount:
+        VALID_CHART_RULES.length,
 
-        matchedSequence =
-          lastFour.join("") +
-          last;
+      mapping: {
 
-        classification =
-          "CHART FALLBACK";
+        A: "SMALL",
 
-        reason =
-          "Recent double-block chart structure.";
+        B: "BIG"
 
-      }
+      },
 
-    }
+      analyzedAt:
+        now()
 
-
-    // Repeated triple
-    if (
-      !prediction &&
-      current.length >= 3
-    ) {
-
-      prediction =
-        current.type === "B"
-          ? "SMALL"
-          : "BIG";
-
-      confidence = 54;
-
-      patternName =
-        "TRIPLE TREND";
-
-      matchedSequence =
-        sequence.slice(
-          -current.length
-        );
-
-      classification =
-        "CHART FALLBACK";
-
-      reason =
-        "Recent triple-run chart structure.";
-
-    }
-
-
-    // Final chart-only fallback
-    if (
-      !prediction
-    ) {
-
-      prediction =
-        last === "B"
-          ? "SMALL"
-          : "BIG";
-
-      confidence = 51;
-
-      patternName =
-        "CHART CONTINUATION";
-
-      matchedSequence =
-        recent;
-
-      classification =
-        "CHART FALLBACK";
-
-      reason =
-        "No named rule matched; latest chart structure used.";
-
-    }
-
+    };
   }
 
 
   // ----------------------------------------------------------
-  // HISTORICAL CONFIRMATION
+  // STRONGEST MATCH
+  //
+  // Longer exact pattern gets priority.
   // ----------------------------------------------------------
 
+  matches.sort(
+    (a, b) => {
+
+      if (
+        b.sequence.length !==
+        a.sequence.length
+      ) {
+
+        return (
+          b.sequence.length -
+          a.sequence.length
+        );
+      }
+
+
+      return (
+        b.confidence -
+        a.confidence
+      );
+
+    }
+  );
+
+
+  const selected =
+    matches[0];
+
+
+  // ----------------------------------------------------------
+  // AGREEMENT
+  // ----------------------------------------------------------
+
+  const agreeingRules =
+    matches.filter(
+      item =>
+        item.next ===
+        selected.next
+    ).length;
+
+
+  // ----------------------------------------------------------
+  // HISTORICAL MATCHES
+  // ----------------------------------------------------------
+
+  const historical =
+    countHistoricalPattern(
+      sequence,
+      selected.sequence,
+      selected.next
+    );
+
+
+  // ----------------------------------------------------------
+  // CONFIDENCE
+  // ----------------------------------------------------------
+
+  let confidence =
+    Number(
+      selected.confidence || 60
+    );
+
+
+  // Longer exact match = stronger evidence.
   if (
-    selectedRule &&
-    history.matches >= 2 &&
-    history.rate !== null
+    selected.sequence.length >= 15
+  ) {
+
+    confidence += 3;
+
+  } else if (
+    selected.sequence.length >= 12
+  ) {
+
+    confidence += 2;
+
+  }
+
+
+  // Multiple rules same direction.
+  if (
+    agreeingRules >= 3
+  ) {
+
+    confidence += 4;
+
+  } else if (
+    agreeingRules >= 2
+  ) {
+
+    confidence += 2;
+
+  }
+
+
+  // Historical confirmation.
+  if (
+    historical.matches >= 2 &&
+    historical.rate !== null
   ) {
 
     if (
-      history.rate >= 70
+      historical.rate >= 70
     ) {
 
-      confidence =
-        Math.min(
-          95,
-          confidence + 4
-        );
+      confidence += 4;
 
     } else if (
-      history.rate >= 55
+      historical.rate >= 55
     ) {
 
-      confidence =
-        Math.min(
-          93,
-          confidence + 1
-        );
+      confidence += 2;
 
     } else if (
-      history.rate < 40
+      historical.rate < 40
     ) {
 
-      confidence =
-        Math.max(
-          45,
-          confidence - 7
-        );
+      confidence -= 5;
 
     }
 
   }
+
+
+  confidence =
+    clamp(
+      Math.round(confidence),
+      50,
+      95
+    );
 
 
   // ----------------------------------------------------------
@@ -1768,47 +2132,42 @@ function humanBigSmallLogic(
     confidenceLevel =
       "LOW-MEDIUM";
 
-  } else {
-
-    confidenceLevel =
-      "LOW";
-
   }
 
 
   // ----------------------------------------------------------
-  // SUPPORT
+  // FINAL PREDICTION
   // ----------------------------------------------------------
 
-  let bigSupport = 50;
-  let smallSupport = 50;
+  const prediction =
+    predictionLabel(
+      selected.next
+    );
+
+
+  // ----------------------------------------------------------
+  // REASON
+  // ----------------------------------------------------------
+
+  let reason =
+    `${selected.name} matched ` +
+    `${selected.sequence} -> ` +
+    `${selected.next} -> ` +
+    `${prediction}`;
 
 
   if (
-    prediction === "BIG"
+    historical.matches > 0
   ) {
 
-    bigSupport =
-      confidence;
-
-    smallSupport =
-      100 - confidence;
-
-  } else if (
-    prediction === "SMALL"
-  ) {
-
-    smallSupport =
-      confidence;
-
-    bigSupport =
-      100 - confidence;
+    reason +=
+      ` | historical ${historical.correct}/${historical.matches}`;
 
   }
 
 
   // ----------------------------------------------------------
-  // RETURN
+  // FINAL
   // ----------------------------------------------------------
 
   return {
@@ -1822,19 +2181,26 @@ function humanBigSmallLogic(
 
     confidenceLevel,
 
-    classification,
+    classification:
+      "PATTERN MATCH",
 
     pattern:
-      patternName,
+      selected.name,
 
     matchedPattern:
-      patternName,
+      selected.name,
 
-    matchedSequence,
+    matchedRule:
+      selected.id,
 
-    matchType,
+    matchedSequence:
+      selected.sequence,
 
-    matchedLength,
+    matchType:
+      "EXACT",
+
+    nextType:
+      selected.next,
 
     sequence,
 
@@ -1843,91 +2209,60 @@ function humanBigSmallLogic(
     current: {
 
       type:
-        current.type,
+        currentRun.type,
 
       label:
         typeLabel(
-          current.type
+          currentRun.type
         ),
 
       streak:
-        current.length
+        currentRun.length
 
     },
 
     historicalMatches:
-      history.matches,
+      historical.matches,
 
     historicalCorrect:
-      history.correct,
+      historical.correct,
 
     historicalRate:
-      history.rate,
+      historical.rate,
 
-    support: {
+    agreeingRules,
 
-      BIG:
-        Number(
-          bigSupport.toFixed(2)
-        ),
-
-      SMALL:
-        Number(
-          smallSupport.toFixed(2)
-        )
-
-    },
+    matchedCandidates:
+      matches.map(
+        item => ({
+          id: item.id,
+          name: item.name,
+          sequence: item.sequence,
+          next: item.next,
+          confidence: item.confidence
+        })
+      ),
 
     reason,
 
     engine:
-      "DY-AI-25-RULE-CHART",
+      "DY-AI-25-CHART-RULE",
+
+    rulesCount:
+      VALID_CHART_RULES.length,
 
     mapping: {
 
-      A:
-        "SMALL",
+      A: "SMALL",
 
-      B:
-        "BIG"
+      B: "BIG"
 
     },
-
-    rulesCount:
-      CHART_RULES.length,
-
-    supportedRules:
-      CHART_RULES.map(
-        rule => ({
-
-          id:
-            rule.id,
-
-          name:
-            rule.name,
-
-          type:
-            rule.type,
-
-          sequence:
-            rule.sequence,
-
-          next:
-            rule.next,
-
-          prediction:
-            predictionFromType(
-              rule.next
-            )
-
-        })
-      ),
 
     analyzedAt:
       now()
 
   };
-
 }
 
 
@@ -1940,16 +2275,24 @@ function resolveTargetIssue() {
   const history =
     providerState.history;
 
-  if (!history.length) {
+
+  if (
+    !history.length
+  ) {
+
     return null;
   }
+
 
   const latest =
     history[0]?.issueNumber;
 
+
   const current =
     providerState.currentIssue;
 
+
+  // Current provider issue is ahead.
   if (
     current &&
     latest &&
@@ -1960,13 +2303,13 @@ function resolveTargetIssue() {
   ) {
 
     return String(current);
-
   }
 
+
+  // Otherwise next issue.
   return incrementIssue(
     latest
   );
-
 }
 
 
@@ -1978,6 +2321,13 @@ async function generateModel() {
 
   const history =
     providerState.history;
+
+
+  // WingoBot:
+  // newest -> oldest
+  //
+  // Engine:
+  // oldest -> newest
 
   const numbers =
     history
@@ -1993,16 +2343,20 @@ async function generateModel() {
       )
       .reverse();
 
+
   const analysis =
     humanBigSmallLogic(
       numbers
     );
 
+
   const targetIssue =
     resolveTargetIssue();
 
+
   const generatedAt =
     now();
+
 
   const prediction =
     analysis.prediction ||
@@ -2026,11 +2380,11 @@ async function generateModel() {
 
       confidenceLevel:
         analysis.confidenceLevel ||
-        "LOW",
+        "NONE",
 
       classification:
         analysis.classification ||
-        "NO CLEAR SIGNAL",
+        "NO CLEAR PATTERN",
 
       pattern:
         analysis.pattern ||
@@ -2040,13 +2394,17 @@ async function generateModel() {
         analysis.matchedPattern ||
         null,
 
+      matchedRule:
+        analysis.matchedRule ||
+        null,
+
       matchedSequence:
         analysis.matchedSequence ||
         null,
 
-      matchType:
-        analysis.matchType ||
-        "NONE",
+      nextType:
+        analysis.nextType ||
+        null,
 
       reason:
         analysis.reason ||
@@ -2066,6 +2424,7 @@ async function generateModel() {
   };
 
 
+  // Save only actual pattern prediction.
   await savePrediction(
     targetIssue,
     analysis
@@ -2073,7 +2432,6 @@ async function generateModel() {
 
 
   return modelCache;
-
 }
 
 
@@ -2090,27 +2448,32 @@ async function savePrediction(
     return;
   }
 
+
   if (
     !targetIssue ||
     !analysis?.prediction
   ) {
 
+    // NO PATTERN -> NO DB PREDICTION
     return;
-
   }
+
 
   try {
 
     const existing =
       await pool.query(
         `
-        SELECT id
+        SELECT
+          id
         FROM prediction_records
         WHERE target_issue = $1
         LIMIT 1
         `,
         [
-          String(targetIssue)
+          String(
+            targetIssue
+          )
         ]
       );
 
@@ -2120,7 +2483,6 @@ async function savePrediction(
     ) {
 
       return;
-
     }
 
 
@@ -2134,11 +2496,14 @@ async function savePrediction(
         model_version,
         created_at
       )
-      VALUES ($1,$2,$3,$4,$5)
+      VALUES
+      ($1,$2,$3,$4,$5)
       `,
       [
 
-        String(targetIssue),
+        String(
+          targetIssue
+        ),
 
         String(
           analysis.prediction
@@ -2155,20 +2520,25 @@ async function savePrediction(
       ]
     );
 
+
+    console.log(
+      `[MODEL] Saved ${targetIssue} -> ${analysis.prediction}`
+    );
+
+
   } catch (error) {
 
     console.error(
-      "[DB] save:",
+      "[DB] save prediction:",
       error.message
     );
 
   }
-
 }
 
 
 // ============================================================
-// SETTLE
+// SETTLE PREDICTIONS
 // ============================================================
 
 async function settlePredictions() {
@@ -2176,6 +2546,7 @@ async function settlePredictions() {
   if (!pool) {
     return;
   }
+
 
   for (
     const row of
@@ -2188,12 +2559,17 @@ async function settlePredictions() {
     const number =
       Number(row.number);
 
+
     const actualType =
-      numberToType(number);
+      numberToType(
+        number
+      );
+
 
     if (!actualType) {
       continue;
     }
+
 
     try {
 
@@ -2221,7 +2597,6 @@ async function settlePredictions() {
       ) {
 
         continue;
-
       }
 
 
@@ -2234,21 +2609,19 @@ async function settlePredictions() {
       ) {
 
         continue;
-
       }
 
 
       const prediction =
         String(
-          record.prediction ||
-          ""
+          record.prediction || ""
         ).toUpperCase();
 
 
       const actualLabel =
-        predictionFromType(
-          actualType
-        );
+        actualType === "B"
+          ? "BIG"
+          : "SMALL";
 
 
       const actualResult =
@@ -2280,6 +2653,12 @@ async function settlePredictions() {
         ]
       );
 
+
+      console.log(
+        `[SETTLE] ${row.issueNumber}: ${prediction} / ${actualLabel} = ${actualResult}`
+      );
+
+
     } catch (error) {
 
       console.error(
@@ -2290,7 +2669,6 @@ async function settlePredictions() {
     }
 
   }
-
 }
 
 
@@ -2305,7 +2683,6 @@ function getAccessKey(req) {
       "x-access-key"
     ] || ""
   ).trim();
-
 }
 
 
@@ -2316,7 +2693,6 @@ function getDeviceId(req) {
       "x-device-id"
     ] || ""
   ).trim();
-
 }
 
 
@@ -2327,17 +2703,24 @@ function getAdminKey(req) {
       "x-admin-key"
     ] || ""
   ).trim();
-
 }
 
 
-async function validateAccess(req) {
+// ============================================================
+// VALIDATE ACCESS
+// ============================================================
+
+async function validateAccess(
+  req
+) {
 
   const key =
     getAccessKey(req);
 
+
   const device =
     getDeviceId(req);
+
 
   if (
     !key ||
@@ -2345,22 +2728,26 @@ async function validateAccess(req) {
   ) {
 
     return {
+
       ok: false,
+
       error:
         "ACCESS_KEY_OR_DEVICE_MISSING"
-    };
 
+    };
   }
 
 
   if (!pool) {
 
     return {
+
       ok: false,
+
       error:
         "DATABASE_DISABLED"
-    };
 
+    };
   }
 
 
@@ -2381,11 +2768,13 @@ async function validateAccess(req) {
   ) {
 
     return {
+
       ok: false,
+
       error:
         "INVALID_ACCESS_KEY"
-    };
 
+    };
   }
 
 
@@ -2399,11 +2788,13 @@ async function validateAccess(req) {
   ) {
 
     return {
+
       ok: false,
+
       error:
         "KEY_ALREADY_BOUND"
-    };
 
+    };
   }
 
 
@@ -2418,9 +2809,13 @@ async function validateAccess(req) {
       WHERE id = $3
       `,
       [
+
         device,
+
         now(),
+
         row.id
+
       ]
     );
 
@@ -2429,12 +2824,16 @@ async function validateAccess(req) {
     await pool.query(
       `
       UPDATE access_keys
-      SET last_seen = $1
+      SET
+        last_seen = $1
       WHERE id = $2
       `,
       [
+
         now(),
+
         row.id
+
       ]
     );
 
@@ -2452,18 +2851,85 @@ async function validateAccess(req) {
       row.id
 
   };
-
 }
 
 
-function requireAdmin(req) {
+// ============================================================
+// ADMIN AUTH
+// ============================================================
+
+function requireAdmin(
+  req
+) {
 
   return (
     ADMIN_KEY &&
     getAdminKey(req) ===
       ADMIN_KEY
   );
+}
 
+
+// ============================================================
+// HISTORY MERGE
+// ============================================================
+
+async function getPredictionMap() {
+
+  const map =
+    new Map();
+
+
+  if (!pool) {
+    return map;
+  }
+
+
+  try {
+
+    const result =
+      await pool.query(
+        `
+        SELECT
+          target_issue,
+          prediction,
+          confidence,
+          actual_number,
+          actual_result,
+          created_at,
+          settled_at
+        FROM prediction_records
+        ORDER BY created_at DESC
+        LIMIT 200
+        `
+      );
+
+
+    for (
+      const row of
+        result.rows
+    ) {
+
+      map.set(
+        String(
+          row.target_issue
+        ),
+        row
+      );
+
+    }
+
+  } catch (error) {
+
+    console.error(
+      "[DB] history map:",
+      error.message
+    );
+
+  }
+
+
+  return map;
 }
 
 
@@ -2477,7 +2943,9 @@ async function stateApi(
 ) {
 
   const auth =
-    await validateAccess(req);
+    await validateAccess(
+      req
+    );
 
 
   if (!auth.ok) {
@@ -2489,11 +2957,11 @@ async function stateApi(
     );
 
     return;
-
   }
 
 
   await refreshProvider();
+
 
   await settlePredictions();
 
@@ -2502,6 +2970,7 @@ async function stateApi(
     resolveTargetIssue();
 
 
+  // Generate when target changes.
   if (
     !modelCache.prediction ||
     modelCache.targetIssue !==
@@ -2513,25 +2982,30 @@ async function stateApi(
   }
 
 
-  const prediction =
-    modelCache.prediction;
-
-
-  const records =
-    await getPredictionRecords();
+  const predictionMap =
+    await getPredictionMap();
 
 
   const history =
     providerState.history
-      .slice(0, 30)
+      .slice(
+        0,
+        30
+      )
       .map(
         row => {
 
           const number =
-            Number(row.number);
+            Number(
+              row.number
+            );
+
 
           const type =
-            numberToType(number);
+            numberToType(
+              number
+            );
+
 
           const issue =
             String(
@@ -2540,31 +3014,47 @@ async function stateApi(
 
 
           const record =
-            records.find(
-              item =>
-                String(
-                  item.target_issue
-                ) === issue
+            predictionMap.get(
+              issue
             );
 
 
+          let ai =
+            record?.prediction ||
+            null;
+
+
           let result =
-            "PENDING";
+            record?.actual_result ||
+            null;
 
 
+          // If DB result missing but actual number
+          // and prediction exist, calculate safely.
           if (
-            record?.actual_result
+            !result &&
+            ai
           ) {
 
-            result =
-              record.actual_result;
+            const actualLabel =
+              type === "B"
+                ? "BIG"
+                : type === "A"
+                ? "SMALL"
+                : null;
 
-          } else if (
-            record?.prediction
-          ) {
 
-            result =
-              "PENDING";
+            if (
+              actualLabel
+            ) {
+
+              result =
+                ai ===
+                actualLabel
+                  ? "WIN"
+                  : "LOSS";
+
+            }
 
           }
 
@@ -2584,19 +3074,31 @@ async function stateApi(
               typeLabel(type),
 
             prediction:
-              record?.prediction ||
-              null,
+              ai,
+
+            ai,
+
+            result:
+
+              result ||
+              (
+                ai
+                  ? "PENDING"
+                  : "PENDING"
+              ),
 
             confidence:
               record?.confidence ||
-              0,
-
-            result
+              null
 
           };
 
         }
       );
+
+
+  const model =
+    modelCache.prediction;
 
 
   json(
@@ -2629,61 +3131,66 @@ async function stateApi(
       model: {
 
         targetIssue:
-          prediction?.targetIssue ||
+          model?.targetIssue ||
           targetIssue,
 
         prediction:
-          prediction?.prediction ||
+          model?.prediction ||
           null,
 
         confidence:
-          prediction?.confidence ||
+          model?.confidence ||
           0,
 
         confidenceLevel:
-          prediction?.confidenceLevel ||
-          "LOW",
+          model?.confidenceLevel ||
+          "NONE",
 
         classification:
-          prediction?.classification ||
-          "NO CLEAR SIGNAL",
+          model?.classification ||
+          "NO CLEAR PATTERN",
 
         pattern:
-          prediction?.pattern ||
+          model?.pattern ||
           "NONE",
 
         matchedPattern:
-          prediction?.matchedPattern ||
+          model?.matchedPattern ||
+          null,
+
+        matchedRule:
+          model?.matchedRule ||
           null,
 
         matchedSequence:
-          prediction?.matchedSequence ||
+          model?.matchedSequence ||
           null,
 
-        matchType:
-          prediction?.matchType ||
-          "NONE",
+        nextType:
+          model?.nextType ||
+          null,
 
         reason:
-          prediction?.reason ||
+          model?.reason ||
           "",
 
         modelVersion:
           MODEL_VERSION,
 
         generatedAt:
-          prediction?.generatedAt ||
+          model?.generatedAt ||
           now(),
 
         analysis:
-          prediction?.analysis ||
+          model?.analysis ||
           null
 
       },
 
 
+      // Backward compatibility.
       prediction:
-        prediction?.prediction ||
+        model?.prediction ||
         null,
 
 
@@ -2714,49 +3221,6 @@ async function stateApi(
 
     }
   );
-
-}
-
-
-// ============================================================
-// PREDICTION RECORDS
-// ============================================================
-
-async function getPredictionRecords() {
-
-  if (!pool) {
-    return [];
-  }
-
-  try {
-
-    const result =
-      await pool.query(
-        `
-        SELECT
-          id,
-          target_issue,
-          prediction,
-          confidence,
-          model_version,
-          actual_number,
-          actual_result,
-          created_at,
-          settled_at
-        FROM prediction_records
-        ORDER BY created_at DESC
-        LIMIT 150
-        `
-      );
-
-    return result.rows;
-
-  } catch {
-
-    return [];
-
-  }
-
 }
 
 
@@ -2770,7 +3234,9 @@ async function keyCheck(
 ) {
 
   const auth =
-    await validateAccess(req);
+    await validateAccess(
+      req
+    );
 
 
   if (!auth.ok) {
@@ -2782,7 +3248,6 @@ async function keyCheck(
     );
 
     return;
-
   }
 
 
@@ -2806,20 +3271,53 @@ async function keyCheck(
 
     }
   );
-
 }
 
 
 // ============================================================
-// HISTORY API
+// PREDICTION HISTORY
 // ============================================================
 
 async function predictionHistory(
   res
 ) {
 
-  const records =
-    await getPredictionRecords();
+  if (!pool) {
+
+    json(
+      res,
+      200,
+      {
+
+        ok: true,
+
+        records: []
+
+      }
+    );
+
+    return;
+  }
+
+
+  const result =
+    await pool.query(
+      `
+      SELECT
+        id,
+        target_issue,
+        prediction,
+        confidence,
+        model_version,
+        actual_number,
+        actual_result,
+        created_at,
+        settled_at
+      FROM prediction_records
+      ORDER BY created_at DESC
+      LIMIT 100
+      `
+    );
 
 
   json(
@@ -2829,11 +3327,11 @@ async function predictionHistory(
 
       ok: true,
 
-      records
+      records:
+        result.rows
 
     }
   );
-
 }
 
 
@@ -2841,7 +3339,9 @@ async function predictionHistory(
 // ADMIN STATUS
 // ============================================================
 
-async function adminStatus(res) {
+async function adminStatus(
+  res
+) {
 
   json(
     res,
@@ -2883,7 +3383,6 @@ async function adminStatus(res) {
 
     }
   );
-
 }
 
 
@@ -2891,7 +3390,9 @@ async function adminStatus(res) {
 // ADMIN PING
 // ============================================================
 
-function adminPing(res) {
+function adminPing(
+  res
+) {
 
   json(
     res,
@@ -2911,7 +3412,6 @@ function adminPing(res) {
 
     }
   );
-
 }
 
 
@@ -2919,7 +3419,9 @@ function adminPing(res) {
 // ADMIN WINGO TEST
 // ============================================================
 
-async function adminWingoTest(res) {
+async function adminWingoTest(
+  res
+) {
 
   const state =
     await refreshProvider();
@@ -2956,7 +3458,6 @@ async function adminWingoTest(res) {
 
     }
   );
-
 }
 
 
@@ -2964,11 +3465,15 @@ async function adminWingoTest(res) {
 // ADMIN MODEL TEST
 // ============================================================
 
-async function adminModelTest(res) {
+async function adminModelTest(
+  res
+) {
 
   await refreshProvider();
 
+
   await settlePredictions();
+
 
   const model =
     await generateModel();
@@ -2992,13 +3497,25 @@ async function adminModelTest(res) {
         model.prediction?.confidence ||
         0,
 
+      confidenceLevel:
+        model.prediction?.confidenceLevel ||
+        "NONE",
+
       pattern:
         model.prediction?.pattern ||
         "NONE",
 
+      matchedRule:
+        model.prediction?.matchedRule ||
+        null,
+
+      matchedSequence:
+        model.prediction?.matchedSequence ||
+        null,
+
       classification:
         model.prediction?.classification ||
-        "NO CLEAR SIGNAL",
+        "NO CLEAR PATTERN",
 
       reason:
         model.prediction?.reason ||
@@ -3010,15 +3527,16 @@ async function adminModelTest(res) {
 
     }
   );
-
 }
 
 
 // ============================================================
-// ADMIN KEY LIST
+// ADMIN KEYS LIST
 // ============================================================
 
-async function adminKeysList(res) {
+async function adminKeysList(
+  res
+) {
 
   if (!pool) {
 
@@ -3026,9 +3544,12 @@ async function adminKeysList(res) {
       res,
       500,
       {
+
         ok: false,
+
         error:
           "DATABASE_DISABLED"
+
       }
     );
 
@@ -3063,12 +3584,11 @@ async function adminKeysList(res) {
 
     }
   );
-
 }
 
 
 // ============================================================
-// ADMIN KEY CREATE
+// ADMIN CREATE KEY
 // ============================================================
 
 async function adminKeysCreate(
@@ -3082,9 +3602,12 @@ async function adminKeysCreate(
       res,
       500,
       {
+
         ok: false,
+
         error:
           "DATABASE_DISABLED"
+
       }
     );
 
@@ -3120,12 +3643,16 @@ async function adminKeysCreate(
           created_at,
           last_seen
         )
-        VALUES ($1,$2,0)
+        VALUES
+        ($1,$2,0)
         RETURNING *
         `,
         [
+
           key,
+
           now()
+
         ]
       );
 
@@ -3151,6 +3678,7 @@ async function adminKeysCreate(
       }
     );
 
+
   } catch (error) {
 
     json(
@@ -3170,14 +3698,12 @@ async function adminKeysCreate(
 
       }
     );
-
   }
-
 }
 
 
 // ============================================================
-// ADMIN KEY DELETE
+// ADMIN DELETE KEY
 // ============================================================
 
 async function adminKeysDelete(
@@ -3192,9 +3718,12 @@ async function adminKeysDelete(
       res,
       500,
       {
+
         ok: false,
+
         error:
           "DATABASE_DISABLED"
+
       }
     );
 
@@ -3207,12 +3736,16 @@ async function adminKeysDelete(
 
 
   const id =
-    url.searchParams.get("id") ||
+    url.searchParams.get(
+      "id"
+    ) ||
     body?.id;
 
 
   const key =
-    url.searchParams.get("key") ||
+    url.searchParams.get(
+      "key"
+    ) ||
     body?.key;
 
 
@@ -3225,9 +3758,12 @@ async function adminKeysDelete(
       res,
       400,
       {
+
         ok: false,
+
         error:
           "ID_OR_KEY_REQUIRED"
+
       }
     );
 
@@ -3282,7 +3818,6 @@ async function adminKeysDelete(
 
     }
   );
-
 }
 
 
@@ -3301,9 +3836,12 @@ async function adminResetDevice(
       res,
       500,
       {
+
         ok: false,
+
         error:
           "DATABASE_DISABLED"
+
       }
     );
 
@@ -3333,9 +3871,12 @@ async function adminResetDevice(
       res,
       400,
       {
+
         ok: false,
+
         error:
           "ID_OR_KEY_REQUIRED"
+
       }
     );
 
@@ -3392,7 +3933,6 @@ async function adminResetDevice(
 
     }
   );
-
 }
 
 
@@ -3400,7 +3940,9 @@ async function adminResetDevice(
 // HEALTH
 // ============================================================
 
-function health(res) {
+function health(
+  res
+) {
 
   json(
     res,
@@ -3415,6 +3957,9 @@ function health(res) {
       modelVersion:
         MODEL_VERSION,
 
+      engine:
+        "DY-AI-25-CHART-RULE",
+
       time:
         now(),
 
@@ -3422,27 +3967,26 @@ function health(res) {
         providerState.ok,
 
       historyCount:
-        providerState.history.length,
-
-      prediction:
-        modelCache.prediction?.prediction ||
-        null
+        providerState.history.length
 
     }
   );
-
 }
 
 
 // ============================================================
-// STATIC
+// STATIC CONTENT TYPE
 // ============================================================
 
-function contentType(filePath) {
+function contentType(
+  filePath
+) {
 
   const ext =
     path
-      .extname(filePath)
+      .extname(
+        filePath
+      )
       .toLowerCase();
 
 
@@ -3485,9 +4029,12 @@ function contentType(filePath) {
     types[ext] ||
     "application/octet-stream"
   );
-
 }
 
+
+// ============================================================
+// STATIC SERVER
+// ============================================================
 
 function serveStatic(
   req,
@@ -3517,7 +4064,6 @@ function serveStatic(
     );
 
     return;
-
   }
 
 
@@ -3535,7 +4081,9 @@ function serveStatic(
 
 
   if (
-    !filePath.startsWith(root)
+    !filePath.startsWith(
+      root
+    )
   ) {
 
     text(
@@ -3545,7 +4093,6 @@ function serveStatic(
     );
 
     return;
-
   }
 
 
@@ -3568,7 +4115,6 @@ function serveStatic(
         );
 
         return;
-
       }
 
 
@@ -3577,6 +4123,10 @@ function serveStatic(
           filePath
         );
 
+
+      // --------------------------------------------------------
+      // MP3 RANGE
+      // --------------------------------------------------------
 
       if (
         type === "audio/mpeg" &&
@@ -3598,7 +4148,6 @@ function serveStatic(
           );
 
           return;
-
         }
 
 
@@ -3667,9 +4216,12 @@ function serveStatic(
 
 
         return;
-
       }
 
+
+      // --------------------------------------------------------
+      // NORMAL
+      // --------------------------------------------------------
 
       res.writeHead(
         200,
@@ -3691,7 +4243,6 @@ function serveStatic(
 
     }
   );
-
 }
 
 
@@ -3708,9 +4259,9 @@ const server =
 
       try {
 
-        // ----------------------------------------------------
+        // ------------------------------------------------------
         // OPTIONS
-        // ----------------------------------------------------
+        // ------------------------------------------------------
 
         if (
           req.method ===
@@ -3733,10 +4284,10 @@ const server =
             }
           );
 
+
           res.end();
 
           return;
-
         }
 
 
@@ -3751,9 +4302,9 @@ const server =
           url.pathname;
 
 
-        // ----------------------------------------------------
+        // ------------------------------------------------------
         // HEALTH
-        // ----------------------------------------------------
+        // ------------------------------------------------------
 
         if (
           pathname ===
@@ -3763,13 +4314,12 @@ const server =
           health(res);
 
           return;
-
         }
 
 
-        // ----------------------------------------------------
+        // ------------------------------------------------------
         // KEY CHECK
-        // ----------------------------------------------------
+        // ------------------------------------------------------
 
         if (
           pathname ===
@@ -3784,13 +4334,12 @@ const server =
           );
 
           return;
-
         }
 
 
-        // ----------------------------------------------------
+        // ------------------------------------------------------
         // STATE
-        // ----------------------------------------------------
+        // ------------------------------------------------------
 
         if (
           pathname ===
@@ -3805,13 +4354,12 @@ const server =
           );
 
           return;
-
         }
 
 
-        // ----------------------------------------------------
+        // ------------------------------------------------------
         // HISTORY
-        // ----------------------------------------------------
+        // ------------------------------------------------------
 
         if (
           pathname ===
@@ -3835,7 +4383,6 @@ const server =
             );
 
             return;
-
           }
 
 
@@ -3844,13 +4391,12 @@ const server =
           );
 
           return;
-
         }
 
 
-        // ----------------------------------------------------
+        // ------------------------------------------------------
         // ADMIN AUTH
-        // ----------------------------------------------------
+        // ------------------------------------------------------
 
         if (
           pathname.startsWith(
@@ -3866,22 +4412,24 @@ const server =
               res,
               401,
               {
+
                 ok: false,
+
                 error:
                   "ADMIN_UNAUTHORIZED"
+
               }
             );
 
             return;
-
           }
 
         }
 
 
-        // ----------------------------------------------------
+        // ------------------------------------------------------
         // ADMIN STATUS
-        // ----------------------------------------------------
+        // ------------------------------------------------------
 
         if (
           pathname ===
@@ -3895,13 +4443,12 @@ const server =
           );
 
           return;
-
         }
 
 
-        // ----------------------------------------------------
+        // ------------------------------------------------------
         // ADMIN PING
-        // ----------------------------------------------------
+        // ------------------------------------------------------
 
         if (
           pathname ===
@@ -3913,13 +4460,12 @@ const server =
           adminPing(res);
 
           return;
-
         }
 
 
-        // ----------------------------------------------------
+        // ------------------------------------------------------
         // WINGO TEST
-        // ----------------------------------------------------
+        // ------------------------------------------------------
 
         if (
           pathname ===
@@ -3933,13 +4479,12 @@ const server =
           );
 
           return;
-
         }
 
 
-        // ----------------------------------------------------
+        // ------------------------------------------------------
         // MODEL TEST
-        // ----------------------------------------------------
+        // ------------------------------------------------------
 
         if (
           pathname ===
@@ -3953,13 +4498,12 @@ const server =
           );
 
           return;
-
         }
 
 
-        // ----------------------------------------------------
-        // KEY LIST
-        // ----------------------------------------------------
+        // ------------------------------------------------------
+        // KEYS GET
+        // ------------------------------------------------------
 
         if (
           pathname ===
@@ -3973,13 +4517,12 @@ const server =
           );
 
           return;
-
         }
 
 
-        // ----------------------------------------------------
-        // KEY CREATE
-        // ----------------------------------------------------
+        // ------------------------------------------------------
+        // KEYS CREATE
+        // ------------------------------------------------------
 
         if (
           pathname ===
@@ -3994,13 +4537,12 @@ const server =
           );
 
           return;
-
         }
 
 
-        // ----------------------------------------------------
-        // KEY DELETE
-        // ----------------------------------------------------
+        // ------------------------------------------------------
+        // KEYS DELETE
+        // ------------------------------------------------------
 
         if (
           pathname ===
@@ -4016,13 +4558,12 @@ const server =
           );
 
           return;
-
         }
 
 
-        // ----------------------------------------------------
+        // ------------------------------------------------------
         // RESET DEVICE
-        // ----------------------------------------------------
+        // ------------------------------------------------------
 
         if (
           pathname ===
@@ -4037,13 +4578,12 @@ const server =
           );
 
           return;
-
         }
 
 
-        // ----------------------------------------------------
+        // ------------------------------------------------------
         // STATIC
-        // ----------------------------------------------------
+        // ------------------------------------------------------
 
         serveStatic(
           req,
@@ -4099,6 +4639,7 @@ async function backgroundRefresh() {
 
     await refreshProvider();
 
+
     await settlePredictions();
 
 
@@ -4127,7 +4668,6 @@ async function backgroundRefresh() {
     );
 
   }
-
 }
 
 
@@ -4141,9 +4681,12 @@ async function start() {
 
     await initDatabase();
 
+
     await refreshProvider();
 
+
     await settlePredictions();
+
 
     await generateModel();
 
@@ -4154,6 +4697,10 @@ async function start() {
       () => {
 
         console.log(
+          "========================================"
+        );
+
+        console.log(
           `DY AI WINGO running on ${PORT}`
         );
 
@@ -4162,13 +4709,15 @@ async function start() {
         );
 
         console.log(
-          `RULES: ${CHART_RULES.length}`
+          `ENGINE: DY-AI-25-CHART-RULE`
         );
 
         console.log(
-          `HISTORY: ${
-            providerState.history.length
-          }`
+          `RULES: ${VALID_CHART_RULES.length}`
+        );
+
+        console.log(
+          `HISTORY: ${providerState.history.length}`
         );
 
         console.log(
@@ -4198,8 +4747,12 @@ async function start() {
           `PREDICTION: ${
             modelCache.prediction
               ?.prediction ||
-            "NO CLEAR SIGNAL"
+            "NO CLEAR PATTERN"
           }`
+        );
+
+        console.log(
+          "========================================"
         );
 
       }
@@ -4218,10 +4771,9 @@ async function start() {
       error
     );
 
+
     process.exit(1);
-
   }
-
 }
 
 
@@ -4236,6 +4788,7 @@ process.on(
     console.error(
       "[UNHANDLED]",
       error
+
     );
 
   }
@@ -4249,6 +4802,7 @@ process.on(
     console.error(
       "[UNCAUGHT]",
       error
+
     );
 
   }
