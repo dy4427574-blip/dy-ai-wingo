@@ -1,30 +1,35 @@
 "use strict";
 
 /*
-===========================================================
+============================================================
 DY AI WINGO
 TASHAN-WIN STYLE 25 RULE PATTERN ENGINE
-===========================================================
+============================================================
 
-A = SMALL
-B = BIG
-
-0,1,2,3,4 = A = SMALL
-5,6,7,8,9 = B = BIG
+A = SMALL  (0-4)
+B = BIG    (5-9)
 
 IMPORTANT:
-- Prediction ONLY from 25 chart rules.
-- No frequency prediction.
-- No momentum prediction.
-- No forced alternation.
-- No random prediction.
-- No "BIG ke baad SMALL" type blind logic.
-- Pattern match nahi hua = NO CLEAR PATTERN.
-- Partial suffix matching is used exactly according
-  to the supplied 25-rule engine.
-- Historical evidence is NOT a guarantee.
-===========================================================
+Prediction tabhi milegi jab 25 chart rules me se
+usable pattern match ho.
+
+NO:
+- frequency prediction
+- momentum prediction
+- forced alternation
+- random prediction
+- "same side continue" prediction
+- pattern ke bina prediction
+
+YES:
+- 25 chart pattern matching
+- strongest/latest pattern priority
+- historical pattern validation
+- conflicting pattern protection
+- WIN / LOSS settlement
+============================================================
 */
+
 
 const http = require("http");
 const https = require("https");
@@ -35,30 +40,33 @@ const { URL } = require("url");
 const { Pool } = require("pg");
 
 
-// ===========================================================
+// ============================================================
 // CONFIG
-// ===========================================================
+// ============================================================
 
 const PORT =
   Number(process.env.PORT || 10000);
 
 const ADMIN_KEY =
-  String(process.env.ADMIN_KEY || "").trim();
+  String(
+    process.env.ADMIN_KEY || ""
+  ).trim();
 
 const WINGOBOT_TOKEN =
-  String(process.env.WINGOBOT_TOKEN || "").trim();
+  String(
+    process.env.WINGOBOT_TOKEN || ""
+  ).trim();
 
 const DATABASE_URL =
-  String(process.env.DATABASE_URL || "").trim();
+  String(
+    process.env.DATABASE_URL || ""
+  ).trim();
 
 const WINGOBOT_API =
   "https://api.wingobot.com/v2/30-sec-game-history";
 
 const MODEL_VERSION =
-  "DY-AI-25-RULE-PATTERN-V4";
-
-const ENGINE_NAME =
-  "TASHAN-WIN-STYLE-25-RULE";
+  "DY-AI-25-CHART-RULE-V3";
 
 const THINKING_DURATION_MS =
   3000;
@@ -69,16 +77,12 @@ const PROVIDER_REFRESH_MS =
 const REQUEST_TIMEOUT_MS =
   12000;
 
-const MAX_HISTORY =
-  500;
 
+// ============================================================
+// DATABASE
+// ============================================================
 
 let pool = null;
-
-
-// ===========================================================
-// DATABASE CONNECTION
-// ===========================================================
 
 if (DATABASE_URL) {
 
@@ -87,27 +91,22 @@ if (DATABASE_URL) {
       DATABASE_URL,
 
     ssl:
-      DATABASE_URL.includes("localhost")
+      DATABASE_URL.includes(
+        "localhost"
+      )
         ? false
         : {
-            rejectUnauthorized: false
-          },
-
-    max: 5,
-
-    idleTimeoutMillis:
-      30000,
-
-    connectionTimeoutMillis:
-      10000
+            rejectUnauthorized:
+              false
+          }
   });
 
 }
 
 
-// ===========================================================
+// ============================================================
 // DATABASE INIT
-// ===========================================================
+// ============================================================
 
 async function initDatabase() {
 
@@ -165,9 +164,9 @@ async function initDatabase() {
 }
 
 
-// ===========================================================
+// ============================================================
 // GLOBAL STATE
-// ===========================================================
+// ============================================================
 
 let providerState = {
 
@@ -201,25 +200,12 @@ let refreshInProgress =
   false;
 
 
-// ===========================================================
-// BASIC HELPERS
-// ===========================================================
+// ============================================================
+// HELPERS
+// ============================================================
 
 function now() {
   return Date.now();
-}
-
-
-function clamp(
-  value,
-  min,
-  max
-) {
-
-  return Math.max(
-    min,
-    Math.min(max, value)
-  );
 }
 
 
@@ -234,10 +220,6 @@ function randomKey() {
   );
 }
 
-
-// ===========================================================
-// NUMBER -> A/B
-// ===========================================================
 
 function numberToAB(number) {
 
@@ -261,31 +243,42 @@ function numberToAB(number) {
 }
 
 
-function typeLabel(
-  type
-) {
+function numberToType(number) {
 
-  if (type === "A") {
-    return "SMALL";
+  const ab =
+    numberToAB(number);
+
+  if (!ab) {
+    return null;
   }
+
+  return ab === "A"
+    ? "S"
+    : "B";
+}
+
+
+function typeLabel(type) {
 
   if (type === "B") {
     return "BIG";
+  }
+
+  if (type === "S") {
+    return "SMALL";
   }
 
   return "UNKNOWN";
 }
 
 
-function predictionLabel(
-  type
-) {
+function abToPrediction(ab) {
 
-  if (type === "A") {
+  if (ab === "A") {
     return "SMALL";
   }
 
-  if (type === "B") {
+  if (ab === "B") {
     return "BIG";
   }
 
@@ -293,13 +286,26 @@ function predictionLabel(
 }
 
 
-// ===========================================================
-// ISSUE HELPERS
-// ===========================================================
+function predictionToAB(prediction) {
 
-function incrementIssue(
-  issue
-) {
+  const value =
+    String(
+      prediction || ""
+    ).toUpperCase();
+
+  if (value === "SMALL") {
+    return "A";
+  }
+
+  if (value === "BIG") {
+    return "B";
+  }
+
+  return null;
+}
+
+
+function incrementIssue(issue) {
 
   if (
     issue === null ||
@@ -340,18 +346,19 @@ function incrementIssue(
 }
 
 
-function compareIssue(
-  a,
-  b
-) {
+function compareIssue(a, b) {
 
   try {
 
     const aa =
-      BigInt(String(a));
+      BigInt(
+        String(a)
+      );
 
     const bb =
-      BigInt(String(b));
+      BigInt(
+        String(b)
+      );
 
 
     if (aa > bb) {
@@ -371,9 +378,9 @@ function compareIssue(
 }
 
 
-// ===========================================================
+// ============================================================
 // JSON RESPONSE
-// ===========================================================
+// ============================================================
 
 function json(
   res,
@@ -438,9 +445,9 @@ function text(
 }
 
 
-// ===========================================================
+// ============================================================
 // REQUEST BODY
-// ===========================================================
+// ============================================================
 
 function readBody(req) {
 
@@ -470,6 +477,7 @@ function readBody(req) {
                 "Body too large"
               )
             );
+
 
             req.destroy();
           }
@@ -515,9 +523,9 @@ function readBody(req) {
 }
 
 
-// ===========================================================
+// ============================================================
 // WINGOBOT API
-// ===========================================================
+// ============================================================
 
 function fetchWingoBot() {
 
@@ -559,11 +567,12 @@ function fetchWingoBot() {
                 "application/json",
 
               "User-Agent":
-                "DY-AI-Wingo/25Rule/4.0"
+                "DY-AI-Wingo/5.0"
 
             }
 
           },
+
 
           response => {
 
@@ -651,9 +660,9 @@ function fetchWingoBot() {
 }
 
 
-// ===========================================================
+// ============================================================
 // NORMALIZE HISTORY
-// ===========================================================
+// ============================================================
 
 function normalizeHistory(
   payload
@@ -738,16 +747,13 @@ function normalizeHistory(
   }
 
 
-  return result.slice(
-    0,
-    MAX_HISTORY
-  );
+  return result;
 }
 
 
-// ===========================================================
+// ============================================================
 // CURRENT ISSUE
-// ===========================================================
+// ============================================================
 
 function providerCurrentIssue(
   payload
@@ -780,9 +786,9 @@ function providerCurrentIssue(
 }
 
 
-// ===========================================================
+// ============================================================
 // PROVIDER REFRESH
-// ===========================================================
+// ============================================================
 
 async function refreshProvider() {
 
@@ -841,7 +847,8 @@ async function refreshProvider() {
         ) ||
         now(),
 
-      error: null
+      error:
+        null
 
     };
 
@@ -854,7 +861,8 @@ async function refreshProvider() {
 
       ...providerState,
 
-      ok: false,
+      ok:
+        false,
 
       error:
         error.message ||
@@ -871,86 +879,100 @@ async function refreshProvider() {
       false;
 
   }
+
 }
 
 
-// ===========================================================
-// 25 BASIC RULES
-// ===========================================================
-//
-// EXACTLY BASED ON USER PROVIDED RULE LIST.
+// ============================================================
+// 25 CHART RULES
+// ============================================================
 //
 // A = SMALL
 // B = BIG
 //
-// ===========================================================
+// IMPORTANT:
+// Pattern strings below are the chart rules supplied.
+// Prediction is NOT generated from simple frequency.
+//
+// ============================================================
 
 const RULES = [
 
-  // LEFT SIDE
+  // ----------------------------------------------------------
+  // LEFT
+  // ----------------------------------------------------------
 
   {
     id: 1,
-    pattern: "ABABABABAB"
+    pattern:
+      "ABABABABAB"
   },
 
   {
     id: 2,
-    pattern: "AABBAABB"
+    pattern:
+      "AABBAABB"
   },
 
   {
     id: 3,
-    pattern: "AAABBBAAABBB"
+    pattern:
+      "AAABBBAAABBB"
   },
 
   {
     id: 4,
-    pattern: "AAAABBBBAAAABBBB"
+    pattern:
+      "AAAABBBBAAAABBBB"
   },
 
   {
     id: 5,
-    pattern: "AABAABAAB"
+    pattern:
+      "AABAABAAB"
   },
 
   {
     id: 6,
     pattern:
-      "AAAAAAAA BBBBBBBB"
-        .replace(/\s/g, "")
+      "AAAAAAAABBBBBBBB"
   },
 
   {
     id: 7,
-    pattern: "ABBABBABB"
+    pattern:
+      "ABBABBABB"
   },
 
   {
     id: 8,
-    pattern: "AAABAAABAAAB"
+    pattern:
+      "AAABAAABAAAB"
   },
 
   {
     id: 9,
-    pattern: "AAABBAAABB"
+    pattern:
+      "AAABBAAABB"
   },
 
   {
     id: 10,
     pattern:
-      "AAAAB B A BB AAAA"
-        .replace(/\s/g, "")
+      "AAAABBABB" +
+      "AAAA"
   },
 
   {
     id: 11,
-    pattern: "ABBBABBBABBB"
+    pattern:
+      "ABBBABBBABBB"
   },
 
   {
     id: 12,
-    pattern: "ABABBABBB"
+    pattern:
+      "ABABBABBB"
   },
 
   {
@@ -960,28 +982,32 @@ const RULES = [
   },
 
 
-  // RIGHT SIDE
+  // ----------------------------------------------------------
+  // RIGHT
+  // ----------------------------------------------------------
 
   {
     id: 14,
-    pattern: "ABBAAABBBB"
+    pattern:
+      "ABBAAABBBB"
   },
 
   {
     id: 15,
-    pattern: "AAAABBBAAB"
+    pattern:
+      "AAAABBBAAB"
   },
 
   {
     id: 16,
-    pattern: "ABAABBAAABBB"
+    pattern:
+      "ABAABBAAABBB"
   },
 
   {
     id: 17,
     pattern:
-      "AABBBABBB AA"
-        .replace(/\s/g, "")
+      "AABBBABBBAA"
   },
 
   {
@@ -992,54 +1018,62 @@ const RULES = [
 
   {
     id: 19,
-    pattern: "ABBBABBB"
+    pattern:
+      "ABBBABBB"
   },
 
   {
     id: 20,
-    pattern: "AABBBAABBB"
+    pattern:
+      "AABBBAABBB"
   },
 
   {
     id: 21,
-    pattern: "ABAABAAAB"
+    pattern:
+      "ABAABAAAB"
   },
 
   {
     id: 22,
-    pattern: "AABAABBAABBB"
+    pattern:
+      "AABAABBAABBB"
   },
 
   {
     id: 23,
     pattern:
-      "AAAABA AA AAB"
-        .replace(/\s/g, "")
+      "AAAABAAAAB"
   },
 
   {
     id: 24,
-    pattern: "AAAABBAAAABB"
+    pattern:
+      "AAAABBAAAABB"
   },
 
   {
     id: 25,
-    pattern: "AAAABBBAAAABBB"
+    pattern:
+      "AAAABBBAAAABBB"
   }
 
 ];
 
 
-// ===========================================================
+// ============================================================
 // CLEAN RULES
-// ===========================================================
+// ============================================================
 
 for (
   const rule of RULES
 ) {
 
   rule.pattern =
-    rule.pattern
+    String(
+      rule.pattern || ""
+    )
+      .toUpperCase()
       .replace(
         /[^AB]/g,
         ""
@@ -1048,59 +1082,675 @@ for (
 }
 
 
-// ===========================================================
-// RULE WEIGHTS
-// ===========================================================
+// ============================================================
+// PATTERN MATCH
+// ============================================================
 //
-// Same calculation as supplied logic.
+// Current history:
 //
-// ===========================================================
+// XXXXXAABB
+//
+// Rule:
+//
+// AABBAABB
+//
+// History suffix = AABB
+// Rule prefix   = AABB
+//
+// Match length = 4
+//
+// Next rule character:
+// AABBAABB
+//     ^
+//     next = A
+//
+// Prediction = SMALL
+//
+// ============================================================
 
-function calculateWeight(
-  match
+function suffixMatch(
+  history,
+  pattern
 ) {
 
-  const length =
-    match.matched;
+  const maxLength =
+    Math.min(
+      history.length,
+      pattern.length
+    );
 
 
-  if (length >= 10) {
-    return 10;
+  let bestMatch =
+    0;
+
+
+  for (
+    let len = 1;
+    len <= maxLength;
+    len++
+  ) {
+
+    const historyPart =
+      history
+        .slice(
+          history.length - len
+        )
+        .join("");
+
+
+    const patternPart =
+      pattern
+        .slice(
+          0,
+          len
+        );
+
+
+    if (
+      historyPart ===
+      patternPart
+    ) {
+
+      bestMatch =
+        len;
+
+    }
+
   }
 
-  if (length >= 8) {
-    return 8;
-  }
 
-  if (length >= 6) {
-    return 6;
-  }
-
-  if (length >= 5) {
-    return 5;
-  }
-
-  if (length >= 4) {
-    return 4;
-  }
-
-  if (length >= 3) {
-    return 3;
-  }
-
-  return 1;
+  return bestMatch;
 }
 
 
-// ===========================================================
-// CONVERT HISTORY
-// ===========================================================
+// ============================================================
+// FIND ALL MATCHES
+// ============================================================
 
-function convertHistory(
+function findRuleMatches(
+  history
+) {
+
+  const matches = [];
+
+
+  for (
+    const rule of RULES
+  ) {
+
+    const matched =
+      suffixMatch(
+        history,
+        rule.pattern
+      );
+
+
+    if (
+      matched < 3
+    ) {
+
+      /*
+        1-2 characters are too common.
+        They are not considered a usable
+        chart pattern.
+      */
+
+      continue;
+    }
+
+
+    const completed =
+      matched >=
+      rule.pattern.length;
+
+
+    let next =
+      null;
+
+
+    if (!completed) {
+
+      next =
+        rule.pattern[
+          matched
+        ];
+
+    }
+
+
+    matches.push({
+
+      rule:
+        rule.id,
+
+      pattern:
+        rule.pattern,
+
+      matched,
+
+      patternLength:
+        rule.pattern.length,
+
+      completed,
+
+      next,
+
+      prediction:
+        abToPrediction(
+          next
+        )
+
+    });
+
+  }
+
+
+  return matches;
+}
+
+
+// ============================================================
+// MATCH SCORE
+// ============================================================
+
+function matchScore(
+  match
+) {
+
+  let score =
+    match.matched * 10;
+
+
+  /*
+    Longer pattern = stronger.
+
+    Exact/near-exact patterns get
+    additional weight.
+  */
+
+  if (
+    match.matched >=
+    match.patternLength - 1
+  ) {
+
+    score += 25;
+
+  }
+
+
+  if (
+    match.matched >= 8
+  ) {
+
+    score += 20;
+
+  }
+
+
+  if (
+    match.matched >= 10
+  ) {
+
+    score += 20;
+
+  }
+
+
+  /*
+    Completed pattern cannot predict
+    next directly, so its score is
+    not used as prediction evidence.
+  */
+
+  if (
+    match.completed
+  ) {
+
+    score -= 1000;
+
+  }
+
+
+  return score;
+}
+
+
+// ============================================================
+// SELECT STRONGEST PREDICTION
+// ============================================================
+//
+// VERY IMPORTANT:
+//
+// Prediction comes ONLY from strongest
+// usable chart pattern.
+//
+// Other weak patterns cannot override it.
+//
+// If two equally strong patterns predict
+// opposite sides -> NO PREDICTION.
+//
+// ============================================================
+
+function selectPatternPrediction(
+  matches
+) {
+
+  const usable =
+    matches.filter(
+      match =>
+        match.next === "A" ||
+        match.next === "B"
+    );
+
+
+  if (!usable.length) {
+
+    return {
+
+      prediction:
+        null,
+
+      status:
+        "NO USABLE PATTERN",
+
+      confidence:
+        0,
+
+      bestMatch:
+        null,
+
+      strongestMatches:
+        [],
+
+      conflict:
+        false
+
+    };
+
+  }
+
+
+  const scored =
+    usable.map(
+      match => ({
+
+        ...match,
+
+        score:
+          matchScore(
+            match
+          )
+
+      })
+    );
+
+
+  scored.sort(
+    (
+      a,
+      b
+    ) => {
+
+      if (
+        b.score !==
+        a.score
+      ) {
+
+        return (
+          b.score -
+          a.score
+        );
+
+      }
+
+
+      if (
+        b.matched !==
+        a.matched
+      ) {
+
+        return (
+          b.matched -
+          a.matched
+        );
+
+      }
+
+
+      /*
+        Lower rule ID first only as
+        deterministic tie breaker.
+      */
+
+      return (
+        a.rule -
+        b.rule
+      );
+
+    }
+  );
+
+
+  const best =
+    scored[0];
+
+
+  /*
+    Find patterns with same
+    top strength.
+  */
+
+  const topScore =
+    best.score;
+
+
+  const topMatches =
+    scored.filter(
+      item =>
+        item.score ===
+        topScore
+    );
+
+
+  const sides =
+    [
+      ...new Set(
+        topMatches.map(
+          item =>
+            item.next
+        )
+      )
+    ];
+
+
+  /*
+    Conflict protection.
+
+    If strongest patterns disagree,
+    do NOT guess.
+  */
+
+  if (
+    sides.length > 1
+  ) {
+
+    return {
+
+      prediction:
+        null,
+
+      status:
+        "PATTERN CONFLICT",
+
+      confidence:
+        0,
+
+      bestMatch:
+        null,
+
+      strongestMatches:
+        topMatches,
+
+      conflict:
+        true
+
+    };
+
+  }
+
+
+  /*
+    Confidence is only a model-strength
+    indicator, not probability of winning.
+  */
+
+  let confidence =
+    55;
+
+
+  if (
+    best.matched >= 4
+  ) {
+
+    confidence += 5;
+
+  }
+
+
+  if (
+    best.matched >= 6
+  ) {
+
+    confidence += 7;
+
+  }
+
+
+  if (
+    best.matched >= 8
+  ) {
+
+    confidence += 8;
+
+  }
+
+
+  if (
+    best.matched >=
+    best.patternLength - 1
+  ) {
+
+    confidence += 8;
+
+  }
+
+
+  confidence =
+    Math.min(
+      90,
+      confidence
+    );
+
+
+  let confidenceLevel =
+    "LOW";
+
+
+  if (
+    confidence >= 80
+  ) {
+
+    confidenceLevel =
+      "HIGH";
+
+  } else if (
+    confidence >= 70
+  ) {
+
+    confidenceLevel =
+      "MEDIUM";
+
+  }
+
+
+  return {
+
+    prediction:
+      abToPrediction(
+        best.next
+      ),
+
+    status:
+      "PATTERN MATCH",
+
+    confidence,
+
+    confidenceLevel,
+
+    bestMatch:
+      best,
+
+    strongestMatches:
+      topMatches,
+
+    conflict:
+      false
+
+  };
+
+}
+
+
+// ============================================================
+// HISTORICAL VALIDATION
+// ============================================================
+//
+// Same exact pattern appeared earlier?
+//
+// If yes, check what came next.
+//
+// This does NOT reverse the prediction.
+// It only changes evidence information.
+//
+// ============================================================
+
+function historicalValidation(
+  sequence,
+  pattern,
+  expectedNext
+) {
+
+  if (
+    !pattern ||
+    !expectedNext
+  ) {
+
+    return {
+
+      matches:
+        0,
+
+      correct:
+        0,
+
+      wrong:
+        0,
+
+      rate:
+        null
+
+    };
+
+  }
+
+
+  const length =
+    pattern.length;
+
+
+  let matches = 0;
+  let correct = 0;
+  let wrong = 0;
+
+
+  for (
+    let i = length;
+    i <
+      sequence.length;
+    i++
+  ) {
+
+    const previous =
+      sequence
+        .slice(
+          i - length,
+          i
+        )
+        .join("");
+
+
+    if (
+      previous !==
+      pattern
+    ) {
+
+      continue;
+    }
+
+
+    /*
+      If i is last current result,
+      there is no next result to verify.
+    */
+
+    if (
+      i >=
+      sequence.length
+    ) {
+
+      continue;
+    }
+
+
+    matches++;
+
+
+    if (
+      sequence[i] ===
+      expectedNext
+    ) {
+
+      correct++;
+
+    } else {
+
+      wrong++;
+
+    }
+
+  }
+
+
+  const rate =
+    matches > 0
+      ? Number(
+          (
+            correct /
+            matches *
+            100
+          ).toFixed(2)
+        )
+      : null;
+
+
+  return {
+
+    matches,
+
+    correct,
+
+    wrong,
+
+    rate
+
+  };
+
+}
+
+
+// ============================================================
+// MAIN PATTERN ENGINE
+// ============================================================
+
+function analyzePattern(
   results
 ) {
 
-  const output = [];
+  /*
+    Clean numbers.
+  */
+
+  const clean = [];
 
 
   for (
@@ -1115,7 +1765,7 @@ function convertHistory(
 
     if (
       typeof value ===
-        "object" &&
+      "object" &&
       value !== null
     ) {
 
@@ -1134,505 +1784,40 @@ function convertHistory(
     }
 
 
-    const type =
-      numberToAB(n);
+    if (
+      Number.isInteger(n) &&
+      n >= 0 &&
+      n <= 9
+    ) {
 
-
-    if (type) {
-
-      output.push(type);
+      clean.push(n);
 
     }
 
   }
 
 
-  return output;
-}
+  /*
+    Chronological:
+    oldest -> newest
+  */
 
-
-// ===========================================================
-// SUFFIX PARTIAL MATCH
-// ===========================================================
-//
-// IMPORTANT:
-//
-// User ke original logic mein:
-//
-// history ke LAST characters
-// rule ke FIRST characters se compare hote hain.
-//
-// Example:
-//
-// Rule:
-// ABABABABAB
-//
-// History ending:
-// ...ABAB
-//
-// matched = 4
-//
-// Agar rule ka complete pattern match ho gaya,
-// to next available nahi hoga.
-// Isliye us rule se prediction nahi banegi.
-//
-// ===========================================================
-
-function suffixMatch(
-  history,
-  pattern
-) {
-
-  const maxLength =
-    Math.min(
-      history.length,
-      pattern.length
+  const sequence =
+    clean.map(
+      numberToAB
     );
 
 
-  let bestMatch = 0;
+  const sequenceString =
+    sequence.join("");
 
 
-  for (
-    let len = 1;
-    len <= maxLength;
-    len++
-  ) {
-
-    const historyPart =
-      history
-        .slice(
-          history.length - len
-        )
-        .join("");
-
-
-    const patternPart =
-      pattern.slice(
-        0,
-        len
-      );
-
-
-    if (
-      historyPart ===
-      patternPart
-    ) {
-
-      bestMatch = len;
-
-    }
-
-  }
-
-
-  return bestMatch;
-}
-
-
-// ===========================================================
-// FIND ALL MATCHING RULES
-// ===========================================================
-
-function findRules(
-  history
-) {
-
-  const matches = [];
-
-
-  for (
-    const rule of RULES
-  ) {
-
-    const matchLength =
-      suffixMatch(
-        history,
-        rule.pattern
-      );
-
-
-    if (
-      matchLength >= 2
-    ) {
-
-      let next = null;
-
-
-      if (
-        matchLength <
-        rule.pattern.length
-      ) {
-
-        next =
-          rule.pattern[
-            matchLength
-          ];
-
-      }
-
-
-      matches.push({
-
-        rule:
-          rule.id,
-
-        pattern:
-          rule.pattern,
-
-        matched:
-          matchLength,
-
-        next
-
-      });
-
-    }
-
-  }
-
-
-  return matches;
-}
-
-
-// ===========================================================
-// SUPPORT CALCULATION
-// ===========================================================
-
-function calculateSupport(
-  matches
-) {
-
-  let A = 0;
-  let B = 0;
-
-
-  const evidence = [];
-
-
-  for (
-    const match of
-      matches
-  ) {
-
-    if (!match.next) {
-      continue;
-    }
-
-
-    const weight =
-      calculateWeight(
-        match
-      );
-
-
-    if (
-      match.next === "A"
-    ) {
-
-      A += weight;
-
-    }
-
-
-    if (
-      match.next === "B"
-    ) {
-
-      B += weight;
-
-    }
-
-
-    evidence.push({
-
-      rule:
-        match.rule,
-
-      pattern:
-        match.pattern,
-
-      matched:
-        match.matched,
-
-      expectedNext:
-        match.next,
-
-      weight
-
-    });
-
-  }
-
-
-  const total =
-    A + B;
-
-
-  let APct = 0;
-  let BPct = 0;
-
-
-  if (total > 0) {
-
-    APct =
-      Number(
-        (
-          A /
-          total *
-          100
-        ).toFixed(2)
-      );
-
-
-    BPct =
-      Number(
-        (
-          B /
-          total *
-          100
-        ).toFixed(2)
-      );
-
-  }
-
-
-  return {
-
-    A,
-
-    B,
-
-    APct,
-
-    BPct,
-
-    total,
-
-    evidence
-
-  };
-}
-
-
-// ===========================================================
-// REVERSAL ANALYSIS
-// ===========================================================
-//
-// Reversal here means:
-//
-// Current A + stronger B support
-// OR
-// Current B + stronger A support
-//
-// It is only a WATCH flag.
-// It is NOT guaranteed.
-//
-// ===========================================================
-
-function reversalAnalysis(
-  history,
-  support
-) {
-
-  const current =
-    history[
-      history.length - 1
-    ] || null;
-
-
-  let reversal =
-    false;
-
-
-  let reason =
-    "";
+  const dataSize =
+    sequence.length;
 
 
   if (
-    current === "A" &&
-    support.B > support.A
-  ) {
-
-    reversal = true;
-
-
-    reason =
-      "Current A side ke baad B-side pattern support stronger.";
-
-  }
-
-
-  if (
-    current === "B" &&
-    support.A > support.B
-  ) {
-
-    reversal = true;
-
-
-    reason =
-      "Current B side ke baad A-side pattern support stronger.";
-
-  }
-
-
-  return {
-
-    current,
-
-    currentLabel:
-      typeLabel(current),
-
-    reversalWatch:
-      reversal,
-
-    reason
-
-  };
-}
-
-
-// ===========================================================
-// DECISION
-// ===========================================================
-
-function decide(
-  history,
-  support
-) {
-
-  if (
-    support.A === 0 &&
-    support.B === 0
-  ) {
-
-    return {
-
-      signal:
-        "NO MATCH",
-
-      prediction:
-        null,
-
-      confidence:
-        "LOW",
-
-      difference:
-        0
-
-    };
-
-  }
-
-
-  const difference =
-    Math.abs(
-      support.A -
-      support.B
-    );
-
-
-  const total =
-    support.A +
-    support.B;
-
-
-  const percentage =
-    total === 0
-      ? 0
-      : difference /
-        total *
-        100;
-
-
-  let confidence =
-    "LOW";
-
-
-  if (
-    percentage >= 60
-  ) {
-
-    confidence =
-      "HIGH";
-
-  } else if (
-    percentage >= 30
-  ) {
-
-    confidence =
-      "MEDIUM";
-
-  }
-
-
-  let signal =
-    "CONFLICT";
-
-
-  if (
-    support.A >
-    support.B
-  ) {
-
-    signal =
-      "A";
-
-  } else if (
-    support.B >
-    support.A
-  ) {
-
-    signal =
-      "B";
-
-  }
-
-
-  return {
-
-    signal,
-
-    prediction:
-      signal === "A"
-        ? "SMALL"
-        : signal === "B"
-        ? "BIG"
-        : null,
-
-    confidence,
-
-    difference:
-      Number(
-        percentage.toFixed(2)
-      )
-
-  };
-}
-
-
-// ===========================================================
-// MAIN 25 RULE ENGINE
-// ===========================================================
-
-function analyze(
-  results
-) {
-
-  const history =
-    convertHistory(
-      results
-    );
-
-
-  // ---------------------------------------------------------
-  // DATA CHECK
-  // ---------------------------------------------------------
-
-  if (
-    history.length < 3
+    dataSize < 3
   ) {
 
     return {
@@ -1652,322 +1837,143 @@ function analyze(
       classification:
         "INSUFFICIENT DATA",
 
-      engine:
-        ENGINE_NAME,
+      pattern:
+        "NONE",
 
-      rulesCount:
-        RULES.length,
+      matchedPattern:
+        null,
 
-      rawResults:
-        Array.isArray(results)
-          ? results
-          : [],
+      matchedSequence:
+        null,
 
-      ABHistory:
-        history.join(""),
+      sequence:
+        sequenceString,
 
-      dataSize:
-        history.length,
+      dataSize,
 
-      matchedRules: [],
+      current:
+        null,
 
-      support: {
+      matchedRules:
+        [],
 
-        A: 0,
-
-        B: 0,
-
-        APercent: 0,
-
-        BPercent: 0
-
-      },
-
-      reversal: {
-
-        current:
-          history[
-            history.length - 1
-          ] || null,
-
-        reversalWatch:
-          false,
-
-        reason:
-          ""
-
-      },
-
-      decision: {
-
-        signal:
-          "NO MATCH",
-
-        prediction:
-          null,
-
-        confidence:
-          "LOW",
-
-        difference:
-          0
-
-      },
-
-      message:
-        "At least 3 valid results required."
+      reason:
+        "Not enough valid results."
 
     };
+
   }
 
 
-  // ---------------------------------------------------------
-  // FIND PATTERNS
-  // ---------------------------------------------------------
+  /*
+    Find chart matches.
+  */
 
   const matches =
-    findRules(
-      history
+    findRuleMatches(
+      sequence
     );
 
 
-  // ---------------------------------------------------------
-  // SUPPORT
-  // ---------------------------------------------------------
+  /*
+    Select strongest usable pattern.
+  */
 
-  const support =
-    calculateSupport(
+  const selected =
+    selectPatternPrediction(
       matches
     );
 
 
-  // ---------------------------------------------------------
-  // REVERSAL
-  // ---------------------------------------------------------
+  let historical =
+    {
 
-  const reversal =
-    reversalAnalysis(
-      history,
-      support
-    );
+      matches:
+        0,
 
+      correct:
+        0,
 
-  // ---------------------------------------------------------
-  // DECISION
-  // ---------------------------------------------------------
+      wrong:
+        0,
 
-  const decision =
-    decide(
-      history,
-      support
-    );
+      rate:
+        null
 
-
-  // ---------------------------------------------------------
-  // BEST MATCH
-  // ---------------------------------------------------------
-
-  let bestMatch =
-    null;
+    };
 
 
   if (
-    matches.length
+    selected.bestMatch
   ) {
 
-    const usable =
-      matches
-        .filter(
-          item =>
-            Boolean(
-              item.next
-            )
-        );
-
-
-    usable.sort(
-      (a, b) => {
-
-        if (
-          b.matched !==
-          a.matched
-        ) {
-
-          return (
-            b.matched -
-            a.matched
-          );
-
-        }
-
-
-        return (
-          calculateWeight(b) -
-          calculateWeight(a)
-        );
-
-      }
-    );
-
-
-    bestMatch =
-      usable[0] ||
-      null;
-
-  }
-
-
-  // ---------------------------------------------------------
-  // FINAL PREDICTION
-  // ---------------------------------------------------------
-  //
-  // IMPORTANT:
-  //
-  // Decision signal must have
-  // actual pattern evidence.
-  //
-  // If support is tied:
-  // no prediction.
-  //
-  // If no usable match:
-  // no prediction.
-  //
-  // ---------------------------------------------------------
-
-  let prediction =
-    null;
-
-
-  if (
-    bestMatch &&
-    (
-      support.A !==
-      support.B
-    )
-  ) {
-
-    prediction =
-      decision.prediction;
-
-  }
-
-
-  // ---------------------------------------------------------
-  // CONFIDENCE
-  // ---------------------------------------------------------
-
-  let confidence =
-    0;
-
-
-  if (
-    prediction
-  ) {
-
-    confidence =
-      clamp(
-        Math.round(
-          bestMatch.matched /
-          bestMatch.pattern.length *
-          100
-        ),
-        50,
-        95
+    historical =
+      historicalValidation(
+        sequence,
+        selected.bestMatch.pattern,
+        selected.bestMatch.next
       );
 
+  }
 
-    // Support dominance bonus.
+
+  /*
+    Current streak is informational only.
+    It does NOT create a prediction.
+  */
+
+  const current =
+    sequence[
+      sequence.length - 1
+    ];
+
+
+  let streak = 1;
+
+
+  for (
+    let i =
+      sequence.length - 2;
+    i >= 0;
+    i--
+  ) {
+
     if (
-      decision.difference >= 60
+      sequence[i] ===
+      current
     ) {
 
-      confidence += 8;
+      streak++;
 
-    } else if (
-      decision.difference >= 30
-    ) {
+    } else {
 
-      confidence += 4;
+      break;
 
     }
 
-
-    confidence =
-      clamp(
-        confidence,
-        50,
-        95
-      );
-
   }
 
 
-  let confidenceLevel =
-    "NONE";
-
-
-  if (
-    confidence >= 85
-  ) {
-
-    confidenceLevel =
-      "HIGH";
-
-  } else if (
-    confidence >= 75
-  ) {
-
-    confidenceLevel =
-      "MEDIUM";
-
-  } else if (
-    confidence >= 60
-  ) {
-
-    confidenceLevel =
-      "LOW-MEDIUM";
-
-  } else if (
-    confidence > 0
-  ) {
-
-    confidenceLevel =
-      "LOW";
-
-  }
-
-
-  // ---------------------------------------------------------
-  // CLASSIFICATION
-  // ---------------------------------------------------------
+  /*
+    Classification.
+  */
 
   let classification =
     "NO CLEAR PATTERN";
 
 
   if (
-    !bestMatch
+    selected.status ===
+    "PATTERN CONFLICT"
   ) {
 
     classification =
-      "NO CLEAR PATTERN";
+      "PATTERN CONFLICT";
 
   } else if (
-    support.A ===
-    support.B
+    selected.status ===
+    "PATTERN MATCH"
   ) {
-
-    classification =
-      "MIXED / CONFLICTING";
-
-  } else if (
-    reversal.reversalWatch
-  ) {
-
-    classification =
-      "REVERSAL WATCH";
-
-  } else {
 
     classification =
       "PATTERN MATCH";
@@ -1975,217 +1981,138 @@ function analyze(
   }
 
 
-  // ---------------------------------------------------------
-  // BEST PATTERN
-  // ---------------------------------------------------------
-
-  const patternName =
-    bestMatch
-      ? `RULE ${bestMatch.rule}`
-      : "NONE";
-
-
-  const matchedSequence =
-    bestMatch
-      ? bestMatch.pattern
-          .slice(
-            0,
-            bestMatch.matched
-          )
-      : null;
-
-
-  // ---------------------------------------------------------
-  // REASON
-  // ---------------------------------------------------------
+  /*
+    Reason.
+  */
 
   let reason =
-    "";
-
+    "No usable chart pattern matched.";
 
   if (
-    bestMatch &&
-    prediction
+    selected.status ===
+    "PATTERN CONFLICT"
   ) {
 
     reason =
-      `Rule ${bestMatch.rule} ` +
-      `matched ${matchedSequence} ` +
-      `(${bestMatch.matched}/${bestMatch.pattern.length})` +
-      ` -> ${prediction}.`;
+      "Strong chart patterns matched but their next sides conflict. Prediction withheld.";
 
   } else if (
-    matches.length
+    selected.bestMatch
   ) {
 
     reason =
-      "Rules matched, but no clear next-side support.";
-
-  } else {
-
-    reason =
-      "Current sequence me 25 rules ka usable pattern match nahi hua.";
+      `RULE ${selected.bestMatch.rule}: ` +
+      `${selected.bestMatch.pattern} ` +
+      `matched ${selected.bestMatch.matched}/${selected.bestMatch.patternLength} ` +
+      `-> ${selected.bestMatch.next}`;
 
   }
 
 
-  // ---------------------------------------------------------
-  // RESULT
-  // ---------------------------------------------------------
+  /*
+    Historical note.
+  */
+
+  if (
+    selected.bestMatch &&
+    historical.matches > 0
+  ) {
+
+    reason +=
+      ` • Historical ${historical.correct}/${historical.matches}`;
+
+  }
+
 
   return {
 
     status:
-      prediction
-        ? "OK"
-        : "NO_PATTERN",
+      "OK",
 
-    prediction,
+    prediction:
+      selected.prediction,
 
-    confidence,
+    confidence:
+      selected.confidence,
 
-    confidenceLevel,
+    confidenceLevel:
+      selected.confidenceLevel ||
+      "LOW",
 
     classification,
 
     pattern:
-      patternName,
+      selected.bestMatch
+        ? `RULE ${selected.bestMatch.rule}`
+        : "NONE",
 
     matchedPattern:
-      bestMatch
-        ? bestMatch.pattern
+      selected.bestMatch
+        ?.pattern ||
+      null,
+
+    matchedSequence:
+      selected.bestMatch
+        ? sequenceString.slice(
+            -selected.bestMatch.matched
+          )
         : null,
 
-    matchedSequence,
+    sequence:
+      sequenceString,
 
-    matchedRule:
-      bestMatch
-        ? bestMatch.rule
-        : null,
+    dataSize,
 
-    matchLength:
-      bestMatch
-        ? bestMatch.matched
-        : 0,
+    current: {
 
-    patternLength:
-      bestMatch
-        ? bestMatch.pattern.length
-        : 0,
+      type:
+        current,
 
-    nextType:
-      bestMatch
-        ? bestMatch.next
-        : null,
+      label:
+        current === "A"
+          ? "SMALL"
+          : "BIG",
 
-    rawResults:
-      Array.isArray(results)
-        ? results
-        : [],
+      streak
 
-    ABHistory:
-      history.join(""),
-
-    current:
-      history[
-        history.length - 1
-      ],
-
-    currentLabel:
-      typeLabel(
-        history[
-          history.length - 1
-        ]
-      ),
-
-    dataSize:
-      history.length,
+    },
 
     matchedRules:
       matches,
 
-    support: {
+    strongestMatches:
+      selected.strongestMatches,
 
-      A:
-        support.A,
+    selectedMatch:
+      selected.bestMatch,
 
-      B:
-        support.B,
+    patternStatus:
+      selected.status,
 
-      APercent:
-        support.APct,
+    conflict:
+      selected.conflict,
 
-      BPercent:
-        support.BPct,
+    historical,
 
-      total:
-        support.total,
+    reason,
 
-      evidence:
-        support.evidence
-
-    },
-
-    reversal,
-
-    decision,
-
-    bestMatch:
-      bestMatch
-        ? {
-
-            rule:
-              bestMatch.rule,
-
-            pattern:
-              bestMatch.pattern,
-
-            matched:
-              bestMatch.matched,
-
-            next:
-              bestMatch.next,
-
-            weight:
-              calculateWeight(
-                bestMatch
-              )
-
-          }
-        : null,
-
-    message:
-      "Pattern match is historical evidence only, not a guaranteed next result.",
-
-    engine:
-      ENGINE_NAME,
-
-    modelVersion:
-      MODEL_VERSION,
-
-    rulesCount:
-      RULES.length,
-
-    mapping: {
-
-      A:
-        "SMALL",
-
-      B:
-        "BIG"
-
-    },
+    supportedPatterns:
+      RULES.map(
+        rule =>
+          `RULE ${rule.id}`
+      ),
 
     analyzedAt:
       now()
 
   };
+
 }
 
 
-// ===========================================================
+// ============================================================
 // TARGET ISSUE
-// ===========================================================
+// ============================================================
 
 function resolveTargetIssue() {
 
@@ -2202,7 +2129,8 @@ function resolveTargetIssue() {
 
 
   const latest =
-    history[0]?.issueNumber;
+    history[0]
+      ?.issueNumber;
 
 
   const current =
@@ -2218,7 +2146,9 @@ function resolveTargetIssue() {
     ) > 0
   ) {
 
-    return String(current);
+    return String(
+      current
+    );
 
   }
 
@@ -2229,9 +2159,9 @@ function resolveTargetIssue() {
 }
 
 
-// ===========================================================
+// ============================================================
 // GENERATE MODEL
-// ===========================================================
+// ============================================================
 
 async function generateModel() {
 
@@ -2240,11 +2170,11 @@ async function generateModel() {
 
 
   /*
-  WingoBot:
-  newest -> oldest
+    Provider:
+    newest -> oldest
 
-  Engine:
-  oldest -> newest
+    Engine:
+    oldest -> newest
   */
 
   const numbers =
@@ -2265,7 +2195,7 @@ async function generateModel() {
 
 
   const analysis =
-    analyze(
+    analyzePattern(
       numbers
     );
 
@@ -2295,54 +2225,46 @@ async function generateModel() {
 
       confidence:
         Number(
-          analysis.confidence || 0
+          analysis.confidence ||
+          0
         ),
 
       confidenceLevel:
         analysis.confidenceLevel ||
-        "NONE",
+        "LOW",
 
       classification:
-        analysis.classification ||
-        "NO CLEAR PATTERN",
+        analysis.classification,
 
       pattern:
-        analysis.pattern ||
-        "NONE",
+        analysis.pattern,
 
       matchedPattern:
-        analysis.matchedPattern ||
-        null,
-
-      matchedRule:
-        analysis.matchedRule ||
-        null,
+        analysis.matchedPattern,
 
       matchedSequence:
-        analysis.matchedSequence ||
-        null,
+        analysis.matchedSequence,
 
-      matchLength:
-        analysis.matchLength ||
-        0,
+      patternStatus:
+        analysis.patternStatus,
 
-      patternLength:
-        analysis.patternLength ||
-        0,
-
-      nextType:
-        analysis.nextType ||
-        null,
+      conflict:
+        analysis.conflict,
 
       reason:
-        analysis.reason ||
-        "",
+        analysis.reason,
+
+      historical:
+        analysis.historical,
+
+      selectedMatch:
+        analysis.selectedMatch,
+
+      strongestMatches:
+        analysis.strongestMatches,
 
       modelVersion:
         MODEL_VERSION,
-
-      engine:
-        ENGINE_NAME,
 
       generatedAt,
 
@@ -2356,25 +2278,30 @@ async function generateModel() {
 
 
   /*
-  IMPORTANT:
+    IMPORTANT:
 
-  If no pattern matched,
-  nothing is saved as a prediction.
+    No pattern = no database prediction.
   */
 
-  await savePrediction(
-    targetIssue,
-    analysis
-  );
+  if (
+    prediction
+  ) {
+
+    await savePrediction(
+      targetIssue,
+      analysis
+    );
+
+  }
 
 
   return modelCache;
 }
 
 
-// ===========================================================
+// ============================================================
 // SAVE PREDICTION
-// ===========================================================
+// ============================================================
 
 async function savePrediction(
   targetIssue,
@@ -2397,10 +2324,15 @@ async function savePrediction(
 
   try {
 
+    /*
+      Existing prediction for same issue?
+    */
+
     const existing =
       await pool.query(
         `
-        SELECT id
+        SELECT
+          id
         FROM prediction_records
         WHERE target_issue = $1
         LIMIT 1
@@ -2431,8 +2363,7 @@ async function savePrediction(
         model_version,
         created_at
       )
-      VALUES
-      ($1,$2,$3,$4,$5)
+      VALUES ($1,$2,$3,$4,$5)
       `,
       [
 
@@ -2445,7 +2376,8 @@ async function savePrediction(
         ),
 
         Number(
-          analysis.confidence || 0
+          analysis.confidence ||
+          0
         ),
 
         MODEL_VERSION,
@@ -2457,8 +2389,9 @@ async function savePrediction(
 
 
     console.log(
-      `[MODEL] ${targetIssue} -> ${analysis.prediction} | ${analysis.pattern}`
+      `[PREDICTION SAVED] ${targetIssue} -> ${analysis.prediction}`
     );
+
 
   } catch (error) {
 
@@ -2468,12 +2401,13 @@ async function savePrediction(
     );
 
   }
+
 }
 
 
-// ===========================================================
+// ============================================================
 // SETTLE PREDICTIONS
-// ===========================================================
+// ============================================================
 
 async function settlePredictions() {
 
@@ -2497,7 +2431,7 @@ async function settlePredictions() {
 
 
     const actualType =
-      numberToAB(
+      numberToType(
         number
       );
 
@@ -2556,9 +2490,9 @@ async function settlePredictions() {
 
 
       const actualLabel =
-        actualType === "A"
-          ? "SMALL"
-          : "BIG";
+        actualType === "B"
+          ? "BIG"
+          : "SMALL";
 
 
       const actualResult =
@@ -2592,8 +2526,9 @@ async function settlePredictions() {
 
 
       console.log(
-        `[SETTLE] ${row.issueNumber} | ${prediction} | ${actualLabel} | ${actualResult}`
+        `[SETTLED] ${row.issueNumber} ${prediction} -> ${actualLabel} = ${actualResult}`
       );
+
 
     } catch (error) {
 
@@ -2605,67 +2540,61 @@ async function settlePredictions() {
     }
 
   }
+
 }
 
 
-// ===========================================================
-// ACCESS KEY HELPERS
-// ===========================================================
+// ============================================================
+// ACCESS KEY
+// ============================================================
 
-function getAccessKey(
-  req
-) {
+function getAccessKey(req) {
 
   return String(
     req.headers[
       "x-access-key"
     ] || ""
   ).trim();
+
 }
 
 
-function getDeviceId(
-  req
-) {
+function getDeviceId(req) {
 
   return String(
     req.headers[
       "x-device-id"
     ] || ""
   ).trim();
+
 }
 
 
-function getAdminKey(
-  req
-) {
+function getAdminKey(req) {
 
   return String(
     req.headers[
       "x-admin-key"
     ] || ""
   ).trim();
+
 }
 
 
-// ===========================================================
+// ============================================================
 // VALIDATE ACCESS
-// ===========================================================
+// ============================================================
 
 async function validateAccess(
   req
 ) {
 
   const key =
-    getAccessKey(
-      req
-    );
+    getAccessKey(req);
 
 
   const device =
-    getDeviceId(
-      req
-    );
+    getDeviceId(req);
 
 
   if (
@@ -2681,6 +2610,7 @@ async function validateAccess(
         "ACCESS_KEY_OR_DEVICE_MISSING"
 
     };
+
   }
 
 
@@ -2694,6 +2624,7 @@ async function validateAccess(
         "DATABASE_DISABLED"
 
     };
+
   }
 
 
@@ -2723,6 +2654,7 @@ async function validateAccess(
         "INVALID_ACCESS_KEY"
 
     };
+
   }
 
 
@@ -2743,10 +2675,13 @@ async function validateAccess(
         "KEY_ALREADY_BOUND"
 
     };
+
   }
 
 
-  if (!row.device_id) {
+  if (
+    !row.device_id
+  ) {
 
     await pool.query(
       `
@@ -2799,91 +2734,28 @@ async function validateAccess(
       row.id
 
   };
+
 }
 
 
-// ===========================================================
+// ============================================================
 // ADMIN AUTH
-// ===========================================================
+// ============================================================
 
-function requireAdmin(
-  req
-) {
+function requireAdmin(req) {
 
   return (
     ADMIN_KEY &&
     getAdminKey(req) ===
       ADMIN_KEY
   );
+
 }
 
 
-// ===========================================================
-// PREDICTION MAP
-// ===========================================================
-
-async function getPredictionMap() {
-
-  const map =
-    new Map();
-
-
-  if (!pool) {
-    return map;
-  }
-
-
-  try {
-
-    const result =
-      await pool.query(
-        `
-        SELECT
-          target_issue,
-          prediction,
-          confidence,
-          actual_number,
-          actual_result,
-          created_at,
-          settled_at
-        FROM prediction_records
-        ORDER BY created_at DESC
-        LIMIT 200
-        `
-      );
-
-
-    for (
-      const row of
-        result.rows
-    ) {
-
-      map.set(
-        String(
-          row.target_issue
-        ),
-        row
-      );
-
-    }
-
-  } catch (error) {
-
-    console.error(
-      "[DB] prediction map:",
-      error.message
-    );
-
-  }
-
-
-  return map;
-}
-
-
-// ===========================================================
+// ============================================================
 // STATE API
-// ===========================================================
+// ============================================================
 
 async function stateApi(
   req,
@@ -2919,7 +2791,12 @@ async function stateApi(
 
 
   /*
-  Only regenerate when target issue changes.
+    New target issue =
+    generate new analysis.
+
+    IMPORTANT:
+    Model can legitimately have
+    prediction = null when no pattern.
   */
 
   if (
@@ -2933,9 +2810,9 @@ async function stateApi(
   }
 
 
-  const predictionMap =
-    await getPredictionMap();
-
+  /*
+    Live history.
+  */
 
   const history =
     providerState.history
@@ -2946,12 +2823,6 @@ async function stateApi(
       .map(
         row => {
 
-          const issue =
-            String(
-              row.issueNumber
-            );
-
-
           const number =
             Number(
               row.number
@@ -2959,83 +2830,25 @@ async function stateApi(
 
 
           const type =
-            numberToAB(
+            numberToType(
               number
             );
 
 
-          const record =
-            predictionMap.get(
-              issue
-            );
-
-
-          let result =
-            record?.actual_result ||
-            null;
-
-
-          const ai =
-            record?.prediction ||
-            null;
-
-
-          if (
-            !result &&
-            ai
-          ) {
-
-            const actualLabel =
-              type === "A"
-                ? "SMALL"
-                : type === "B"
-                ? "BIG"
-                : null;
-
-
-            if (
-              actualLabel
-            ) {
-
-              result =
-                ai ===
-                actualLabel
-                  ? "WIN"
-                  : "LOSS";
-
-            }
-
-          }
-
-
           return {
 
-            issue,
+            issue:
+              row.issueNumber,
 
             issueNumber:
-              issue,
+              row.issueNumber,
 
             number,
 
             type,
 
             label:
-              typeLabel(
-                type
-              ),
-
-            prediction:
-              ai,
-
-            ai,
-
-            result:
-              result ||
-              "PENDING",
-
-            confidence:
-              record?.confidence ||
-              null
+              typeLabel(type)
 
           };
 
@@ -3061,24 +2874,6 @@ async function stateApi(
 
       thinkingDurationMs:
         THINKING_DURATION_MS,
-
-
-      engine:
-        ENGINE_NAME,
-
-      modelVersion:
-        MODEL_VERSION,
-
-
-      mapping: {
-
-        A:
-          "SMALL",
-
-        B:
-          "BIG"
-
-      },
 
 
       current: {
@@ -3108,7 +2903,7 @@ async function stateApi(
 
         confidenceLevel:
           model?.confidenceLevel ||
-          "NONE",
+          "LOW",
 
         classification:
           model?.classification ||
@@ -3122,35 +2917,36 @@ async function stateApi(
           model?.matchedPattern ||
           null,
 
-        matchedRule:
-          model?.matchedRule ||
-          null,
-
         matchedSequence:
           model?.matchedSequence ||
           null,
 
-        matchLength:
-          model?.matchLength ||
-          0,
+        patternStatus:
+          model?.patternStatus ||
+          "NO USABLE PATTERN",
 
-        patternLength:
-          model?.patternLength ||
-          0,
-
-        nextType:
-          model?.nextType ||
-          null,
+        conflict:
+          model?.conflict ||
+          false,
 
         reason:
           model?.reason ||
-          "",
+          "Waiting for a usable chart pattern.",
+
+        historical:
+          model?.historical ||
+          null,
+
+        selectedMatch:
+          model?.selectedMatch ||
+          null,
+
+        strongestMatches:
+          model?.strongestMatches ||
+          [],
 
         modelVersion:
           MODEL_VERSION,
-
-        engine:
-          ENGINE_NAME,
 
         generatedAt:
           model?.generatedAt ||
@@ -3162,6 +2958,10 @@ async function stateApi(
 
       },
 
+
+      /*
+        Direct compatibility field.
+      */
 
       prediction:
         model?.prediction ||
@@ -3195,12 +2995,13 @@ async function stateApi(
 
     }
   );
+
 }
 
 
-// ===========================================================
+// ============================================================
 // KEY CHECK
-// ===========================================================
+// ============================================================
 
 async function keyCheck(
   req,
@@ -3241,19 +3042,17 @@ async function keyCheck(
         auth.id,
 
       modelVersion:
-        MODEL_VERSION,
-
-      engine:
-        ENGINE_NAME
+        MODEL_VERSION
 
     }
   );
+
 }
 
 
-// ===========================================================
+// ============================================================
 // PREDICTION HISTORY
-// ===========================================================
+// ============================================================
 
 async function predictionHistory(
   res
@@ -3309,12 +3108,13 @@ async function predictionHistory(
 
     }
   );
+
 }
 
 
-// ===========================================================
+// ============================================================
 // ADMIN STATUS
-// ===========================================================
+// ============================================================
 
 async function adminStatus(
   res
@@ -3332,12 +3132,6 @@ async function adminStatus(
 
       modelVersion:
         MODEL_VERSION,
-
-      engine:
-        ENGINE_NAME,
-
-      rulesCount:
-        RULES.length,
 
       provider: {
 
@@ -3366,12 +3160,13 @@ async function adminStatus(
 
     }
   );
+
 }
 
 
-// ===========================================================
+// ============================================================
 // ADMIN PING
-// ===========================================================
+// ============================================================
 
 function adminPing(
   res
@@ -3391,19 +3186,17 @@ function adminPing(
         now(),
 
       modelVersion:
-        MODEL_VERSION,
-
-      engine:
-        ENGINE_NAME
+        MODEL_VERSION
 
     }
   );
+
 }
 
 
-// ===========================================================
+// ============================================================
 // ADMIN WINGO TEST
-// ===========================================================
+// ============================================================
 
 async function adminWingoTest(
   res
@@ -3444,12 +3237,13 @@ async function adminWingoTest(
 
     }
   );
+
 }
 
 
-// ===========================================================
+// ============================================================
 // ADMIN MODEL TEST
-// ===========================================================
+// ============================================================
 
 async function adminModelTest(
   res
@@ -3472,70 +3266,78 @@ async function adminModelTest(
 
       ok: true,
 
-      engine:
-        ENGINE_NAME,
-
-      modelVersion:
-        MODEL_VERSION,
-
-      rulesCount:
-        RULES.length,
-
       targetIssue:
         model.targetIssue,
 
       prediction:
-        model.prediction?.prediction ||
+        model.prediction
+          ?.prediction ||
         null,
 
       confidence:
-        model.prediction?.confidence ||
+        model.prediction
+          ?.confidence ||
         0,
 
       confidenceLevel:
-        model.prediction?.confidenceLevel ||
-        "NONE",
+        model.prediction
+          ?.confidenceLevel ||
+        "LOW",
 
       pattern:
-        model.prediction?.pattern ||
+        model.prediction
+          ?.pattern ||
         "NONE",
 
-      matchedRule:
-        model.prediction?.matchedRule ||
+      matchedPattern:
+        model.prediction
+          ?.matchedPattern ||
         null,
 
       matchedSequence:
-        model.prediction?.matchedSequence ||
+        model.prediction
+          ?.matchedSequence ||
         null,
 
-      matchLength:
-        model.prediction?.matchLength ||
-        0,
-
-      patternLength:
-        model.prediction?.patternLength ||
-        0,
-
       classification:
-        model.prediction?.classification ||
+        model.prediction
+          ?.classification ||
         "NO CLEAR PATTERN",
 
+      patternStatus:
+        model.prediction
+          ?.patternStatus ||
+        "NO USABLE PATTERN",
+
+      conflict:
+        model.prediction
+          ?.conflict ||
+        false,
+
       reason:
-        model.prediction?.reason ||
+        model.prediction
+          ?.reason ||
         "",
 
+      historical:
+        model.prediction
+          ?.historical ||
+        null,
+
       analysis:
-        model.prediction?.analysis ||
+        model.prediction
+          ?.analysis ||
         null
 
     }
   );
+
 }
 
 
-// ===========================================================
-// ADMIN KEYS LIST
-// ===========================================================
+// ============================================================
+// ADMIN KEY LIST
+// ============================================================
 
 async function adminKeysList(
   res
@@ -3587,12 +3389,13 @@ async function adminKeysList(
 
     }
   );
+
 }
 
 
-// ===========================================================
-// ADMIN CREATE KEY
-// ===========================================================
+// ============================================================
+// ADMIN KEY CREATE
+// ============================================================
 
 async function adminKeysCreate(
   req,
@@ -3646,8 +3449,7 @@ async function adminKeysCreate(
           created_at,
           last_seen
         )
-        VALUES
-        ($1,$2,0)
+        VALUES ($1,$2,0)
         RETURNING *
         `,
         [
@@ -3681,6 +3483,7 @@ async function adminKeysCreate(
       }
     );
 
+
   } catch (error) {
 
     json(
@@ -3700,13 +3503,15 @@ async function adminKeysCreate(
 
       }
     );
+
   }
+
 }
 
 
-// ===========================================================
-// ADMIN DELETE KEY
-// ===========================================================
+// ============================================================
+// ADMIN KEY DELETE
+// ============================================================
 
 async function adminKeysDelete(
   req,
@@ -3820,12 +3625,13 @@ async function adminKeysDelete(
 
     }
   );
+
 }
 
 
-// ===========================================================
-// ADMIN RESET DEVICE
-// ===========================================================
+// ============================================================
+// RESET DEVICE
+// ============================================================
 
 async function adminResetDevice(
   req,
@@ -3935,12 +3741,13 @@ async function adminResetDevice(
 
     }
   );
+
 }
 
 
-// ===========================================================
+// ============================================================
 // HEALTH
-// ===========================================================
+// ============================================================
 
 function health(
   res
@@ -3959,12 +3766,6 @@ function health(
       modelVersion:
         MODEL_VERSION,
 
-      engine:
-        ENGINE_NAME,
-
-      rulesCount:
-        RULES.length,
-
       time:
         now(),
 
@@ -3972,16 +3773,20 @@ function health(
         providerState.ok,
 
       historyCount:
-        providerState.history.length
+        providerState.history.length,
+
+      patternEngine:
+        "25 RULE CHART MATCH"
 
     }
   );
+
 }
 
 
-// ===========================================================
-// CONTENT TYPE
-// ===========================================================
+// ============================================================
+// STATIC CONTENT TYPE
+// ============================================================
 
 function contentType(
   filePath
@@ -4037,9 +3842,9 @@ function contentType(
 }
 
 
-// ===========================================================
-// STATIC SERVER
-// ===========================================================
+// ============================================================
+// STATIC FILE SERVER
+// ============================================================
 
 function serveStatic(
   req,
@@ -4086,9 +3891,8 @@ function serveStatic(
 
 
   if (
-    filePath !== root &&
     !filePath.startsWith(
-      root + path.sep
+      root
     )
   ) {
 
@@ -4130,12 +3934,13 @@ function serveStatic(
         );
 
 
-      // -------------------------------------------------------
+      // ------------------------------------------------------
       // MP3 RANGE
-      // -------------------------------------------------------
+      // ------------------------------------------------------
 
       if (
-        type === "audio/mpeg" &&
+        type ===
+          "audio/mpeg" &&
         req.headers.range
       ) {
 
@@ -4163,13 +3968,17 @@ function serveStatic(
 
         let start =
           match[1]
-            ? Number(match[1])
+            ? Number(
+                match[1]
+              )
             : 0;
 
 
         let end =
           match[2]
-            ? Number(match[2])
+            ? Number(
+                match[2]
+              )
             : size - 1;
 
 
@@ -4225,9 +4034,9 @@ function serveStatic(
       }
 
 
-      // -------------------------------------------------------
+      // ------------------------------------------------------
       // NORMAL FILE
-      // -------------------------------------------------------
+      // ------------------------------------------------------
 
       res.writeHead(
         200,
@@ -4252,9 +4061,9 @@ function serveStatic(
 }
 
 
-// ===========================================================
+// ============================================================
 // ROUTER
-// ===========================================================
+// ============================================================
 
 const server =
   http.createServer(
@@ -4265,9 +4074,9 @@ const server =
 
       try {
 
-        // -----------------------------------------------------
-        // CORS
-        // -----------------------------------------------------
+        // ----------------------------------------------------
+        // OPTIONS
+        // ----------------------------------------------------
 
         if (
           req.method ===
@@ -4308,9 +4117,9 @@ const server =
           url.pathname;
 
 
-        // -----------------------------------------------------
+        // ----------------------------------------------------
         // HEALTH
-        // -----------------------------------------------------
+        // ----------------------------------------------------
 
         if (
           pathname ===
@@ -4323,9 +4132,9 @@ const server =
         }
 
 
-        // -----------------------------------------------------
+        // ----------------------------------------------------
         // KEY CHECK
-        // -----------------------------------------------------
+        // ----------------------------------------------------
 
         if (
           pathname ===
@@ -4343,9 +4152,9 @@ const server =
         }
 
 
-        // -----------------------------------------------------
+        // ----------------------------------------------------
         // STATE
-        // -----------------------------------------------------
+        // ----------------------------------------------------
 
         if (
           pathname ===
@@ -4363,9 +4172,9 @@ const server =
         }
 
 
-        // -----------------------------------------------------
+        // ----------------------------------------------------
         // HISTORY
-        // -----------------------------------------------------
+        // ----------------------------------------------------
 
         if (
           pathname ===
@@ -4400,9 +4209,9 @@ const server =
         }
 
 
-        // -----------------------------------------------------
+        // ----------------------------------------------------
         // ADMIN AUTH
-        // -----------------------------------------------------
+        // ----------------------------------------------------
 
         if (
           pathname.startsWith(
@@ -4411,9 +4220,7 @@ const server =
         ) {
 
           if (
-            !requireAdmin(
-              req
-            )
+            !requireAdmin(req)
           ) {
 
             json(
@@ -4435,9 +4242,9 @@ const server =
         }
 
 
-        // -----------------------------------------------------
+        // ----------------------------------------------------
         // ADMIN STATUS
-        // -----------------------------------------------------
+        // ----------------------------------------------------
 
         if (
           pathname ===
@@ -4454,9 +4261,9 @@ const server =
         }
 
 
-        // -----------------------------------------------------
+        // ----------------------------------------------------
         // ADMIN PING
-        // -----------------------------------------------------
+        // ----------------------------------------------------
 
         if (
           pathname ===
@@ -4473,9 +4280,9 @@ const server =
         }
 
 
-        // -----------------------------------------------------
+        // ----------------------------------------------------
         // WINGO TEST
-        // -----------------------------------------------------
+        // ----------------------------------------------------
 
         if (
           pathname ===
@@ -4492,9 +4299,9 @@ const server =
         }
 
 
-        // -----------------------------------------------------
+        // ----------------------------------------------------
         // MODEL TEST
-        // -----------------------------------------------------
+        // ----------------------------------------------------
 
         if (
           pathname ===
@@ -4511,9 +4318,9 @@ const server =
         }
 
 
-        // -----------------------------------------------------
-        // ADMIN KEYS GET
-        // -----------------------------------------------------
+        // ----------------------------------------------------
+        // KEYS GET
+        // ----------------------------------------------------
 
         if (
           pathname ===
@@ -4530,9 +4337,9 @@ const server =
         }
 
 
-        // -----------------------------------------------------
-        // ADMIN KEYS CREATE
-        // -----------------------------------------------------
+        // ----------------------------------------------------
+        // KEYS CREATE
+        // ----------------------------------------------------
 
         if (
           pathname ===
@@ -4550,9 +4357,9 @@ const server =
         }
 
 
-        // -----------------------------------------------------
-        // ADMIN KEYS DELETE
-        // -----------------------------------------------------
+        // ----------------------------------------------------
+        // KEYS DELETE
+        // ----------------------------------------------------
 
         if (
           pathname ===
@@ -4571,9 +4378,9 @@ const server =
         }
 
 
-        // -----------------------------------------------------
+        // ----------------------------------------------------
         // RESET DEVICE
-        // -----------------------------------------------------
+        // ----------------------------------------------------
 
         if (
           pathname ===
@@ -4591,9 +4398,9 @@ const server =
         }
 
 
-        // -----------------------------------------------------
+        // ----------------------------------------------------
         // STATIC
-        // -----------------------------------------------------
+        // ----------------------------------------------------
 
         serveStatic(
           req,
@@ -4639,9 +4446,9 @@ const server =
   );
 
 
-// ===========================================================
+// ============================================================
 // BACKGROUND REFRESH
-// ===========================================================
+// ============================================================
 
 async function backgroundRefresh() {
 
@@ -4678,12 +4485,13 @@ async function backgroundRefresh() {
     );
 
   }
+
 }
 
 
-// ===========================================================
-// START SERVER
-// ===========================================================
+// ============================================================
+// START
+// ============================================================
 
 async function start() {
 
@@ -4707,7 +4515,7 @@ async function start() {
       () => {
 
         console.log(
-          "=============================================="
+          "========================================"
         );
 
         console.log(
@@ -4719,15 +4527,15 @@ async function start() {
         );
 
         console.log(
-          `ENGINE: ${ENGINE_NAME}`
+          "ENGINE: 25 RULE CHART PATTERN"
         );
 
         console.log(
-          `RULES: ${RULES.length}`
+          "A = SMALL (0-4)"
         );
 
         console.log(
-          "A = SMALL | B = BIG"
+          "B = BIG (5-9)"
         );
 
         console.log(
@@ -4758,14 +4566,6 @@ async function start() {
         );
 
         console.log(
-          `MATCH: ${
-            modelCache.prediction
-              ?.matchedSequence ||
-            "NONE"
-          }`
-        );
-
-        console.log(
           `PREDICTION: ${
             modelCache.prediction
               ?.prediction ||
@@ -4774,7 +4574,7 @@ async function start() {
         );
 
         console.log(
-          "=============================================="
+          "========================================"
         );
 
       }
@@ -4786,6 +4586,7 @@ async function start() {
       PROVIDER_REFRESH_MS
     );
 
+
   } catch (error) {
 
     console.error(
@@ -4796,12 +4597,13 @@ async function start() {
 
     process.exit(1);
   }
+
 }
 
 
-// ===========================================================
+// ============================================================
 // ERROR HANDLERS
-// ===========================================================
+// ============================================================
 
 process.on(
   "unhandledRejection",
@@ -4829,8 +4631,8 @@ process.on(
 );
 
 
-// ===========================================================
+// ============================================================
 // BOOT
-// ===========================================================
+// ============================================================
 
 start();
