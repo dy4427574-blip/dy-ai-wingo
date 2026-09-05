@@ -1,544 +1,588 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-  <title>DY AI WinGo 30S</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>DY AI WinGo 30S</title>
 
-  <style>
-    *{
-      box-sizing:border-box;
-      margin:0;
-      padding:0;
-      -webkit-tap-highlight-color:transparent;
-    }
+<style>
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+  -webkit-tap-highlight-color:transparent;
+}
 
-    body{
-      font-family:Arial,Helvetica,sans-serif;
-      background:
-        radial-gradient(circle at top,#172554 0,#070b16 42%,#03050a 100%);
-      color:#fff;
-      min-height:100vh;
-      padding:14px;
-    }
+body{
+  font-family:Arial,Helvetica,sans-serif;
+  background:
+    radial-gradient(circle at top,#172554 0,#070b16 42%,#03050a 100%);
+  color:#fff;
+  min-height:100vh;
+  padding:14px;
+}
 
-    .app{
-      width:100%;
-      max-width:520px;
-      margin:auto;
-    }
+.app{
+  width:100%;
+  max-width:520px;
+  margin:auto;
+}
 
-    .topbar{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      padding:8px 2px 15px;
-    }
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:8px 2px 15px;
+}
 
-    .brand{
-      font-size:21px;
-      font-weight:900;
-      letter-spacing:.5px;
-    }
+.brand{
+  font-size:21px;
+  font-weight:900;
+}
 
-    .brand span{
-      color:#38bdf8;
-    }
+.brand span{
+  color:#38bdf8;
+}
 
-    .status{
-      display:flex;
-      align-items:center;
-      gap:6px;
-      font-size:11px;
-      color:#9ca3af;
-    }
+.status{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:11px;
+  color:#9ca3af;
+}
 
-    .dot{
-      width:8px;
-      height:8px;
-      border-radius:50%;
-      background:#22c55e;
-      box-shadow:0 0 10px #22c55e;
-    }
+.dot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#22c55e;
+  box-shadow:0 0 10px #22c55e;
+}
 
-    .card{
-      background:rgba(15,23,42,.82);
-      border:1px solid rgba(148,163,184,.15);
-      border-radius:20px;
-      padding:16px;
-      margin-bottom:13px;
-      box-shadow:0 15px 45px rgba(0,0,0,.28);
-      backdrop-filter:blur(12px);
-    }
+.card{
+  background:rgba(15,23,42,.86);
+  border:1px solid rgba(148,163,184,.15);
+  border-radius:20px;
+  padding:16px;
+  margin-bottom:13px;
+  box-shadow:0 15px 45px rgba(0,0,0,.28);
+  backdrop-filter:blur(12px);
+}
 
-    .login{
-      margin-top:50px;
-    }
+.login{
+  margin-top:50px;
+}
 
-    .title{
-      font-size:24px;
-      font-weight:900;
-      margin-bottom:7px;
-    }
+.title{
+  font-size:24px;
+  font-weight:900;
+  margin-bottom:7px;
+}
 
-    .sub{
-      color:#94a3b8;
-      font-size:13px;
-      line-height:1.5;
-      margin-bottom:18px;
-    }
+.sub{
+  color:#94a3b8;
+  font-size:13px;
+  line-height:1.5;
+  margin-bottom:18px;
+}
 
-    input{
-      width:100%;
-      border:1px solid #334155;
-      background:#020617;
-      color:#fff;
-      border-radius:13px;
-      padding:14px;
-      outline:none;
-      font-size:14px;
-      margin-bottom:11px;
-    }
+input{
+  width:100%;
+  border:1px solid #334155;
+  background:#020617;
+  color:#fff;
+  border-radius:13px;
+  padding:14px;
+  outline:none;
+  font-size:14px;
+  margin-bottom:11px;
+}
 
-    input:focus{
-      border-color:#38bdf8;
-    }
+button{
+  width:100%;
+  border:0;
+  border-radius:13px;
+  padding:14px;
+  font-weight:800;
+  font-size:14px;
+  cursor:pointer;
+  background:linear-gradient(135deg,#38bdf8,#2563eb);
+  color:#fff;
+}
 
-    button{
-      width:100%;
-      border:0;
-      border-radius:13px;
-      padding:14px;
-      font-weight:800;
-      font-size:14px;
-      cursor:pointer;
-      background:linear-gradient(135deg,#38bdf8,#2563eb);
-      color:#fff;
-    }
+button:disabled{
+  opacity:.6;
+}
 
-    button:active{
-      transform:scale(.98);
-    }
+.error{
+  color:#f87171;
+  font-size:12px;
+  margin-top:10px;
+  display:none;
+}
 
-    .error{
-      color:#f87171;
-      font-size:12px;
-      margin-top:10px;
-      display:none;
-    }
+#dashboard{
+  display:none;
+}
 
-    #dashboard{
-      display:none;
-    }
+.hero{
+  text-align:center;
+  padding:19px 14px 20px;
+}
 
-    .hero{
-      text-align:center;
-      padding:19px 14px 20px;
-    }
+.label{
+  color:#94a3b8;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:1.5px;
+  margin-bottom:8px;
+}
 
-    .label{
-      color:#94a3b8;
-      font-size:11px;
-      text-transform:uppercase;
-      letter-spacing:1.5px;
-      margin-bottom:8px;
-    }
+.issue{
+  font-size:17px;
+  font-weight:900;
+  color:#e2e8f0;
+  margin-bottom:17px;
+  letter-spacing:1px;
+}
 
-    .issue{
-      font-size:15px;
-      font-weight:800;
-      color:#cbd5e1;
-      margin-bottom:17px;
-      word-break:break-all;
-    }
+.thinking{
+  min-height:115px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+}
 
-    .thinking{
-      min-height:115px;
-      display:flex;
-      flex-direction:column;
-      justify-content:center;
-      align-items:center;
-    }
+.brain{
+  width:50px;
+  height:50px;
+  border:3px solid rgba(56,189,248,.18);
+  border-top-color:#38bdf8;
+  border-right-color:#60a5fa;
+  border-radius:50%;
+  animation:spin 1s linear infinite;
+  margin-bottom:12px;
+  position:relative;
+}
 
-    .brain{
-      width:50px;
-      height:50px;
-      border:3px solid rgba(56,189,248,.18);
-      border-top-color:#38bdf8;
-      border-right-color:#60a5fa;
-      border-radius:50%;
-      animation:spin 1s linear infinite;
-      margin-bottom:12px;
-      position:relative;
-    }
+.brain:after{
+  content:"";
+  position:absolute;
+  inset:9px;
+  border:2px dotted #60a5fa;
+  border-radius:50%;
+  animation:spin 1.5s linear reverse infinite;
+}
 
-    .brain:after{
-      content:"";
-      position:absolute;
-      inset:9px;
-      border:2px dotted #60a5fa;
-      border-radius:50%;
-      animation:spin 1.5s linear reverse infinite;
-    }
+@keyframes spin{
+  to{transform:rotate(360deg)}
+}
 
-    @keyframes spin{
-      to{transform:rotate(360deg)}
-    }
+.thinkingText{
+  font-size:14px;
+  font-weight:900;
+  letter-spacing:1px;
+  color:#e0f2fe;
+}
 
-    .thinkingText{
-      font-size:14px;
-      font-weight:900;
-      letter-spacing:1px;
-      color:#e0f2fe;
-    }
+.count{
+  color:#64748b;
+  font-size:11px;
+  margin-top:5px;
+}
 
-    .count{
-      color:#64748b;
-      font-size:11px;
-      margin-top:5px;
-    }
+.result{
+  display:none;
+}
 
-    .result{
-      display:none;
-    }
+.prediction{
+  font-size:52px;
+  line-height:1;
+  font-weight:1000;
+  margin:8px 0 12px;
+}
 
-    .prediction{
-      font-size:52px;
-      line-height:1;
-      font-weight:1000;
-      margin:8px 0 12px;
-      letter-spacing:1px;
-    }
+.big{
+  color:#fb7185;
+  text-shadow:0 0 25px rgba(251,113,133,.35);
+}
 
-    .big{
-      color:#fb7185;
-      text-shadow:0 0 25px rgba(251,113,133,.35);
-    }
+.small{
+  color:#38bdf8;
+  text-shadow:0 0 25px rgba(56,189,248,.35);
+}
 
-    .small{
-      color:#38bdf8;
-      text-shadow:0 0 25px rgba(56,189,248,.35);
-    }
+.confidence{
+  display:inline-flex;
+  padding:7px 12px;
+  border-radius:30px;
+  background:#020617;
+  border:1px solid #1e293b;
+  color:#cbd5e1;
+  font-size:12px;
+  font-weight:800;
+}
 
-    .confidence{
-      display:inline-flex;
-      padding:7px 12px;
-      border-radius:30px;
-      background:#020617;
-      border:1px solid #1e293b;
-      color:#cbd5e1;
-      font-size:12px;
-      font-weight:800;
-    }
+.model{
+  margin-top:13px;
+  color:#64748b;
+  font-size:10px;
+}
 
-    .model{
-      margin-top:13px;
-      color:#64748b;
-      font-size:10px;
-    }
+.timerBox{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+}
 
-    .timerBox{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:12px;
-    }
+.timerTitle{
+  font-size:12px;
+  color:#94a3b8;
+}
 
-    .timerTitle{
-      font-size:12px;
-      color:#94a3b8;
-    }
+.timer{
+  font-size:28px;
+  font-weight:900;
+  min-width:65px;
+  text-align:right;
+}
 
-    .timer{
-      font-size:28px;
-      font-weight:900;
-      color:#fff;
-      min-width:65px;
-      text-align:right;
-    }
+.progress{
+  height:5px;
+  background:#020617;
+  border-radius:10px;
+  overflow:hidden;
+  margin-top:10px;
+}
 
-    .progress{
-      height:5px;
-      background:#020617;
-      border-radius:10px;
-      overflow:hidden;
-      margin-top:10px;
-    }
+.progressBar{
+  height:100%;
+  width:100%;
+  background:#38bdf8;
+  transition:width .25s linear;
+}
 
-    .progressBar{
-      height:100%;
-      width:100%;
-      background:#38bdf8;
-      transition:width .3s linear;
-    }
+.sectionTitle{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:12px;
+}
 
-    .sectionTitle{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      margin-bottom:12px;
-    }
+.sectionTitle h3{
+  font-size:14px;
+}
 
-    .sectionTitle h3{
-      font-size:14px;
-    }
+.badge{
+  font-size:9px;
+  padding:5px 8px;
+  border-radius:20px;
+  background:#172033;
+  color:#94a3b8;
+  font-weight:900;
+}
 
-    .badge{
-      font-size:9px;
-      padding:5px 8px;
-      border-radius:20px;
-      background:#172033;
-      color:#94a3b8;
-      font-weight:900;
-    }
+.tableWrap{
+  overflow-x:auto;
+}
 
-    .tableWrap{
-      overflow-x:auto;
-    }
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:11px;
+  min-width:400px;
+}
 
-    table{
-      width:100%;
-      border-collapse:collapse;
-      font-size:11px;
-      min-width:400px;
-    }
+th{
+  color:#64748b;
+  font-size:9px;
+  text-transform:uppercase;
+  padding:8px 5px;
+  border-bottom:1px solid #1e293b;
+}
 
-    th{
-      color:#64748b;
-      font-size:9px;
-      text-transform:uppercase;
-      padding:8px 5px;
-      border-bottom:1px solid #1e293b;
-    }
+td{
+  padding:10px 5px;
+  border-bottom:1px solid rgba(30,41,59,.65);
+  text-align:center;
+}
 
-    td{
-      padding:10px 5px;
-      border-bottom:1px solid rgba(30,41,59,.65);
-      text-align:center;
-    }
+td:first-child,
+th:first-child{
+  text-align:left;
+}
 
-    td:first-child,
-    th:first-child{
-      text-align:left;
-    }
+.typeBig{
+  color:#fb7185;
+  font-weight:900;
+}
 
-    .typeBig{
-      color:#fb7185;
-      font-weight:900;
-    }
+.typeSmall{
+  color:#38bdf8;
+  font-weight:900;
+}
 
-    .typeSmall{
-      color:#38bdf8;
-      font-weight:900;
-    }
+.win{
+  color:#4ade80 !important;
+  font-weight:900;
+}
 
-    .win{
-      color:#4ade80;
-      font-weight:900;
-    }
+.loss{
+  color:#f87171 !important;
+  font-weight:900;
+}
 
-    .loss{
-      color:#f87171;
-      font-weight:900;
-    }
+.pending{
+  color:#facc15 !important;
+  font-weight:800;
+}
 
-    .pending{
-      color:#facc15;
-      font-weight:800;
-    }
+.footer{
+  text-align:center;
+  color:#475569;
+  font-size:9px;
+  padding:8px 0 20px;
+  line-height:1.5;
+}
 
-    .footer{
-      text-align:center;
-      color:#475569;
-      font-size:9px;
-      padding:8px 0 20px;
-      line-height:1.5;
-    }
+.toast{
+  position:fixed;
+  left:50%;
+  bottom:22px;
+  transform:translateX(-50%) translateY(20px);
+  background:#0f172a;
+  border:1px solid #334155;
+  padding:11px 16px;
+  border-radius:12px;
+  font-size:12px;
+  opacity:0;
+  pointer-events:none;
+  transition:.25s;
+  z-index:99;
+  white-space:nowrap;
+}
 
-    .toast{
-      position:fixed;
-      left:50%;
-      bottom:22px;
-      transform:translateX(-50%) translateY(20px);
-      background:#0f172a;
-      border:1px solid #334155;
-      padding:11px 16px;
-      border-radius:12px;
-      font-size:12px;
-      opacity:0;
-      pointer-events:none;
-      transition:.25s;
-      z-index:99;
-      white-space:nowrap;
-    }
+.toast.show{
+  opacity:1;
+  transform:translateX(-50%) translateY(0);
+}
 
-    .toast.show{
-      opacity:1;
-      transform:translateX(-50%) translateY(0);
-    }
-
-    @media(max-width:380px){
-      body{padding:10px}
-      .prediction{font-size:45px}
-      .card{border-radius:17px;padding:13px}
-    }
-  </style>
+@media(max-width:380px){
+  body{padding:10px}
+  .prediction{font-size:45px}
+  .card{border-radius:17px;padding:13px}
+}
+</style>
 </head>
 
 <body>
 
 <div class="app">
 
-  <!-- LOGIN -->
-  <div id="loginScreen" class="card login">
-    <div class="title">DY AI <span>WinGo 30S</span></div>
-    <div class="sub">
-      Enter your access key to open the AI analysis dashboard.
+<!-- LOGIN -->
+<div id="loginScreen" class="card login">
+
+  <div class="title">
+    DY AI <span>WinGo 30S</span>
+  </div>
+
+  <div class="sub">
+    Enter your access key to open the AI analysis dashboard.
+  </div>
+
+  <input
+    id="accessKey"
+    type="text"
+    placeholder="Enter access key"
+    autocomplete="off"
+  >
+
+  <button id="loginBtn">
+    ACCESS DASHBOARD
+  </button>
+
+  <div id="loginError" class="error">
+    Invalid or unauthorized access key.
+  </div>
+
+</div>
+
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+
+  <div class="topbar">
+
+    <div class="brand">
+      DY <span>AI</span> WinGo
     </div>
 
-    <input
-      id="accessKey"
-      type="text"
-      placeholder="Enter access key"
-      autocomplete="off"
-    >
-
-    <button id="loginBtn">ACCESS DASHBOARD</button>
-
-    <div id="loginError" class="error">
-      Invalid or unauthorized access key.
+    <div class="status">
+      <span class="dot" id="statusDot"></span>
+      <span id="statusText">LIVE</span>
     </div>
+
   </div>
 
 
-  <!-- DASHBOARD -->
-  <div id="dashboard">
+  <!-- PREDICTION -->
+  <div class="card hero">
 
-    <div class="topbar">
-      <div class="brand">DY <span>AI</span> WinGo</div>
+    <div class="label">
+      CURRENT TARGET ISSUE
+    </div>
 
-      <div class="status">
-        <span class="dot" id="statusDot"></span>
-        <span id="statusText">ONLINE</span>
-      </div>
+    <div class="issue" id="targetIssue">
+      —
     </div>
 
 
-    <!-- MAIN PREDICTION -->
-    <div class="card hero">
+    <!-- THINKING -->
+    <div id="thinkingBox" class="thinking">
 
-      <div class="label">CURRENT TARGET ISSUE</div>
+      <div class="brain"></div>
 
-      <div class="issue" id="targetIssue">Loading...</div>
-
-      <!-- 3 SECOND THINKING -->
-      <div id="thinkingBox" class="thinking">
-
-        <div class="brain"></div>
-
-        <div class="thinkingText" id="thinkingText">
-          ANALYZING
-        </div>
-
-        <div class="count" id="thinkingCount">
-          AI is checking recent patterns...
-        </div>
-
+      <div
+        class="thinkingText"
+        id="thinkingText"
+      >
+        ANALYZING
       </div>
 
-
-      <!-- RESULT -->
-      <div id="resultBox" class="result">
-
-        <div class="label">AI HISTORICAL LEAN</div>
-
-        <div id="predictionText" class="prediction">
-          —
-        </div>
-
-        <div id="confidence" class="confidence">
-          Confidence —
-        </div>
-
-        <div id="modelVersion" class="model">
-          DY AI HUMAN LOGIC
-        </div>
-
+      <div
+        class="count"
+        id="thinkingCount"
+      >
+        AI is checking recent patterns...
       </div>
 
     </div>
 
 
-    <!-- TIMER -->
-    <div class="card">
+    <!-- RESULT -->
+    <div id="resultBox" class="result">
 
-      <div class="timerBox">
-
-        <div>
-          <div class="timerTitle">
-            NEXT RESULT ESTIMATE
-          </div>
-
-          <div style="font-size:10px;color:#475569;margin-top:4px">
-            Client-side 30 sec cycle
-          </div>
-        </div>
-
-        <div class="timer" id="timer">
-          30
-        </div>
-
+      <div class="label">
+        AI HISTORICAL LEAN
       </div>
 
-      <div class="progress">
-        <div class="progressBar" id="progressBar"></div>
+      <div
+        id="predictionText"
+        class="prediction"
+      >
+        —
       </div>
 
-    </div>
-
-
-    <!-- LIVE HISTORY -->
-    <div class="card">
-
-      <div class="sectionTitle">
-        <h3>Live Results</h3>
-        <span class="badge">LAST 30</span>
+      <div
+        id="confidence"
+        class="confidence"
+      >
+        Confidence —
       </div>
 
-      <div class="tableWrap">
-
-        <table>
-
-          <thead>
-            <tr>
-              <th>Issue</th>
-              <th>Actual</th>
-              <th>AI</th>
-              <th>Result</th>
-            </tr>
-          </thead>
-
-          <tbody id="historyBody">
-            <tr>
-              <td colspan="4" style="color:#64748b">
-                Loading history...
-              </td>
-            </tr>
-          </tbody>
-
-        </table>
-
+      <div
+        id="modelVersion"
+        class="model"
+      >
+        DY AI HUMAN LOGIC
       </div>
 
-    </div>
-
-
-    <div class="footer">
-      DY AI uses historical pattern analysis only.<br>
-      No outcome is guaranteed.
     </div>
 
   </div>
+
+
+  <!-- TIMER -->
+  <div class="card">
+
+    <div class="timerBox">
+
+      <div>
+        <div class="timerTitle">
+          NEXT RESULT ESTIMATE
+        </div>
+
+        <div style="font-size:10px;color:#475569;margin-top:4px">
+          Client-side 30 sec cycle
+        </div>
+      </div>
+
+      <div
+        class="timer"
+        id="timer"
+      >
+        30
+      </div>
+
+    </div>
+
+    <div class="progress">
+      <div
+        class="progressBar"
+        id="progressBar"
+      ></div>
+    </div>
+
+  </div>
+
+
+  <!-- HISTORY -->
+  <div class="card">
+
+    <div class="sectionTitle">
+
+      <h3>
+        Live Results
+      </h3>
+
+      <span class="badge">
+        LAST 30
+      </span>
+
+    </div>
+
+    <div class="tableWrap">
+
+      <table>
+
+        <thead>
+          <tr>
+            <th>Issue</th>
+            <th>Actual</th>
+            <th>AI</th>
+            <th>Result</th>
+          </tr>
+        </thead>
+
+        <tbody id="historyBody">
+
+          <tr>
+            <td
+              colspan="4"
+              style="color:#64748b"
+            >
+              Loading history...
+            </td>
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+
+
+  <div class="footer">
+    DY AI uses historical pattern analysis only.<br>
+    No outcome is guaranteed.
+  </div>
+
+</div>
 
 </div>
 
@@ -547,195 +591,410 @@
 
 <script>
 
-  /* =========================================================
-     CONFIG
-  ========================================================= */
+/* =========================================================
+   CONFIG
+========================================================= */
 
-  const API_REFRESH = 3000;
-  const THINKING_TIME = 3000;
+const API_REFRESH = 3000;
+const THINKING_TIME = 3000;
 
-  let accessKey = "";
-  let deviceId = "";
-  let lastTargetIssue = "";
-  let lastPrediction = "";
-  let thinkingRunning = false;
-  let stateTimer = null;
-  let countdownTimer = null;
+let accessKey = "";
+let deviceId = "";
+
+let lastTargetIssue = "";
+let lastPrediction = "";
+
+let stateTimer = null;
+let historyTimer = null;
+let countdownTimer = null;
 
 
-  /* =========================================================
-     DEVICE ID
-  ========================================================= */
+/* =========================================================
+   HELPERS
+========================================================= */
 
-  function getDeviceId(){
+function $(id){
+  return document.getElementById(id);
+}
 
-    let id = localStorage.getItem("dy_ai_device_id");
 
-    if(!id){
+function getDeviceId(){
 
-      id =
-        "dy-" +
-        Date.now().toString(36) +
-        "-" +
-        Math.random().toString(36).substring(2,12);
+  let id =
+    localStorage.getItem("dy_ai_device_id");
 
-      localStorage.setItem("dy_ai_device_id", id);
+  if(!id){
+
+    id =
+      "dy-" +
+      Date.now().toString(36) +
+      "-" +
+      Math.random()
+        .toString(36)
+        .substring(2,12);
+
+    localStorage.setItem(
+      "dy_ai_device_id",
+      id
+    );
+  }
+
+  return id;
+}
+
+
+function escapeHtml(value){
+
+  return String(value ?? "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+}
+
+
+function headers(){
+
+  return {
+    "X-Access-Key":accessKey,
+    "X-Device-Id":deviceId
+  };
+}
+
+
+function showToast(message){
+
+  const toast = $("toast");
+
+  toast.textContent = message;
+  toast.classList.add("show");
+
+  setTimeout(()=>{
+    toast.classList.remove("show");
+  },2200);
+}
+
+
+/* =========================================================
+   ISSUE NORMALIZER
+========================================================= */
+
+function getIssue(obj){
+
+  if(!obj){
+    return "";
+  }
+
+  const possible = [
+    obj.issueNumber,
+    obj.issue_number,
+    obj.targetIssue,
+    obj.target_issue,
+    obj.currentIssue,
+    obj.current_issue,
+    obj.issue,
+    obj.period,
+    obj.periodNumber
+  ];
+
+  for(const x of possible){
+
+    if(
+      x !== undefined &&
+      x !== null &&
+      String(x).trim() !== ""
+    ){
+      return String(x);
     }
+  }
 
-    return id;
+  return "";
+}
+
+
+/*
+  Latest settled issue se next target issue
+  generate karta hai.
+
+  Example:
+  0050305 -> 0050306
+*/
+
+function nextIssue(issue){
+
+  if(!issue){
+    return "";
+  }
+
+  const s = String(issue);
+
+  const match =
+    s.match(/^(.*?)(\d+)$/);
+
+  if(!match){
+    return "";
+  }
+
+  const prefix = match[1];
+  const digits = match[2];
+
+  const next =
+    String(
+      BigInt(digits) + 1n
+    ).padStart(
+      digits.length,
+      "0"
+    );
+
+  return prefix + next;
+}
+
+
+/* =========================================================
+   PREDICTION NORMALIZER
+========================================================= */
+
+function normalizePrediction(value){
+
+  if(
+    value === undefined ||
+    value === null
+  ){
+    return "";
+  }
+
+  const x =
+    String(value)
+      .trim()
+      .toUpperCase();
+
+  if(
+    x === "BIG" ||
+    x === "B"
+  ){
+    return "BIG";
+  }
+
+  if(
+    x === "SMALL" ||
+    x === "S"
+  ){
+    return "SMALL";
+  }
+
+  return x;
+}
+
+
+/* =========================================================
+   ACTUAL TYPE
+========================================================= */
+
+function getActualType(row){
+
+  if(!row){
+    return "";
+  }
+
+  const direct =
+    row.type ||
+    row.label ||
+    row.actual_result ||
+    row.actualResult ||
+    row.colour ||
+    row.result;
+
+
+  const normalized =
+    normalizePrediction(direct);
+
+  if(
+    normalized === "BIG" ||
+    normalized === "SMALL"
+  ){
+    return normalized;
   }
 
 
-  /* =========================================================
-     HELPERS
-  ========================================================= */
-
-  function $(id){
-    return document.getElementById(id);
-  }
+  const number =
+    row.number ??
+    row.actual_number ??
+    row.actualNumber;
 
 
-  function escapeHtml(value){
+  if(
+    number !== undefined &&
+    number !== null &&
+    String(number) !== ""
+  ){
 
-    return String(value ?? "")
-      .replace(/&/g,"&amp;")
-      .replace(/</g,"&lt;")
-      .replace(/>/g,"&gt;")
-      .replace(/"/g,"&quot;")
-      .replace(/'/g,"&#039;");
-  }
+    const n =
+      Number(number);
 
+    if(
+      Number.isInteger(n) &&
+      n >= 0 &&
+      n <= 9
+    ){
 
-  function showToast(message){
-
-    const toast = $("toast");
-
-    toast.textContent = message;
-    toast.classList.add("show");
-
-    setTimeout(()=>{
-      toast.classList.remove("show");
-    },2200);
-  }
-
-
-  function headers(){
-
-    return {
-      "X-Access-Key": accessKey,
-      "X-Device-Id": deviceId
-    };
-  }
-
-
-  /* =========================================================
-     LOGIN
-  ========================================================= */
-
-  async function checkKey(){
-
-    const key = $("accessKey").value.trim();
-
-    if(!key){
-      $("loginError").textContent = "Please enter access key.";
-      $("loginError").style.display = "block";
-      return;
+      return n >= 5
+        ? "BIG"
+        : "SMALL";
     }
+  }
 
-    $("loginBtn").textContent = "CHECKING...";
-    $("loginBtn").disabled = true;
+  return "";
+}
 
-    try{
 
-      const response = await fetch("/api/key/check",{
-        method:"GET",
-        headers:{
-          "X-Access-Key":key,
-          "X-Device-Id":deviceId
-        },
-        cache:"no-store"
-      });
+/* =========================================================
+   LOGIN
+========================================================= */
 
-      const data = await response.json();
+async function checkKey(){
 
-      if(!response.ok || !data.ok){
+  const key =
+    $("accessKey")
+      .value
+      .trim();
 
-        throw new Error(
-          data.message ||
-          data.error ||
-          "Access denied"
-        );
-      }
+  if(!key){
 
-      accessKey = key;
+    $("loginError").textContent =
+      "Please enter access key.";
 
-      localStorage.setItem(
-        "dy_ai_access_key",
-        accessKey
+    $("loginError").style.display =
+      "block";
+
+    return;
+  }
+
+
+  $("loginBtn").textContent =
+    "CHECKING...";
+
+  $("loginBtn").disabled = true;
+
+
+  try{
+
+    const response =
+      await fetch(
+        "/api/key/check",
+        {
+          headers:{
+            "X-Access-Key":key,
+            "X-Device-Id":deviceId
+          },
+          cache:"no-store"
+        }
       );
 
-      $("loginScreen").style.display = "none";
-      $("dashboard").style.display = "block";
 
-      $("loginError").style.display = "none";
+    const data =
+      await response.json();
 
-      showToast("Access granted");
 
-      startDashboard();
+    if(
+      !response.ok ||
+      !data.ok
+    ){
 
-    }catch(error){
-
-      $("loginError").textContent =
-        error.message || "Invalid access key.";
-
-      $("loginError").style.display = "block";
-
-    }finally{
-
-      $("loginBtn").textContent =
-        "ACCESS DASHBOARD";
-
-      $("loginBtn").disabled = false;
+      throw new Error(
+        data.message ||
+        data.error ||
+        "Access denied"
+      );
     }
+
+
+    accessKey = key;
+
+    localStorage.setItem(
+      "dy_ai_access_key",
+      accessKey
+    );
+
+
+    $("loginScreen").style.display =
+      "none";
+
+    $("dashboard").style.display =
+      "block";
+
+    $("loginError").style.display =
+      "none";
+
+
+    showToast("Access granted");
+
+    startDashboard();
+
+  }catch(error){
+
+    $("loginError").textContent =
+      error.message ||
+      "Invalid access key.";
+
+    $("loginError").style.display =
+      "block";
+
+  }finally{
+
+    $("loginBtn").textContent =
+      "ACCESS DASHBOARD";
+
+    $("loginBtn").disabled = false;
+  }
+}
+
+
+$("loginBtn").addEventListener(
+  "click",
+  checkKey
+);
+
+
+$("accessKey").addEventListener(
+  "keydown",
+  e=>{
+    if(e.key === "Enter"){
+      checkKey();
+    }
+  }
+);
+
+
+/* =========================================================
+   AUTO LOGIN
+========================================================= */
+
+async function autoLogin(){
+
+  deviceId =
+    getDeviceId();
+
+
+  const saved =
+    localStorage.getItem(
+      "dy_ai_access_key"
+    );
+
+
+  if(!saved){
+    return;
   }
 
 
-  $("loginBtn").addEventListener(
-    "click",
-    checkKey
-  );
+  $("accessKey").value =
+    saved;
 
 
-  $("accessKey").addEventListener(
-    "keydown",
-    e=>{
-      if(e.key === "Enter"){
-        checkKey();
-      }
-    }
-  );
+  try{
 
-
-  /* =========================================================
-     AUTO LOGIN
-  ========================================================= */
-
-  async function autoLogin(){
-
-    deviceId = getDeviceId();
-
-    const saved =
-      localStorage.getItem("dy_ai_access_key");
-
-    if(!saved){
-      return;
-    }
-
-    $("accessKey").value = saved;
-
-    try{
-
-      const response = await fetch(
+    const response =
+      await fetch(
         "/api/key/check",
         {
           headers:{
@@ -746,149 +1005,218 @@
         }
       );
 
-      const data = await response.json();
 
-      if(response.ok && data.ok){
+    const data =
+      await response.json();
 
-        accessKey = saved;
 
-        $("loginScreen").style.display = "none";
-        $("dashboard").style.display = "block";
+    if(
+      response.ok &&
+      data.ok
+    ){
 
-        startDashboard();
-      }
+      accessKey =
+        saved;
 
-    }catch(error){
-      console.log("Auto login failed");
+      $("loginScreen").style.display =
+        "none";
+
+      $("dashboard").style.display =
+        "block";
+
+      startDashboard();
     }
+
+  }catch(error){
+
+    console.log(
+      "Auto login failed",
+      error
+    );
+  }
+}
+
+
+/* =========================================================
+   3 SECOND THINKING
+========================================================= */
+
+function startThinking(
+  prediction,
+  confidence,
+  model
+){
+
+  clearInterval(
+    countdownTimer
+  );
+
+
+  $("thinkingBox").style.display =
+    "flex";
+
+  $("resultBox").style.display =
+    "none";
+
+
+  const started =
+    Date.now();
+
+
+  function update(){
+
+    const elapsed =
+      Date.now() - started;
+
+
+    const remaining =
+      Math.max(
+        0,
+        THINKING_TIME - elapsed
+      );
+
+
+    const seconds =
+      Math.ceil(
+        remaining / 1000
+      );
+
+
+    if(seconds >= 3){
+
+      $("thinkingText").textContent =
+        "ANALYZING";
+
+      $("thinkingCount").textContent =
+        "AI checking recent patterns... 3s";
+
+    }else if(seconds === 2){
+
+      $("thinkingText").textContent =
+        "COMPARING PATTERNS";
+
+      $("thinkingCount").textContent =
+        "AI checking frequency & streaks... 2s";
+
+    }else if(seconds === 1){
+
+      $("thinkingText").textContent =
+        "FINALIZING SIGNAL";
+
+      $("thinkingCount").textContent =
+        "AI completing analysis... 1s";
+
+    }else{
+
+      clearInterval(
+        countdownTimer
+      );
+
+      revealPrediction(
+        prediction,
+        confidence,
+        model
+      );
+    }
+
   }
 
 
-  /* =========================================================
-     3 SECOND AI THINKING
-  ========================================================= */
+  update();
 
-  function startThinking(issue, prediction, confidence, model){
+  countdownTimer =
+    setInterval(
+      update,
+      100
+    );
+}
 
-    thinkingRunning = true;
 
-    $("thinkingBox").style.display = "flex";
-    $("resultBox").style.display = "none";
+/* =========================================================
+   REVEAL
+========================================================= */
 
-    $("thinkingText").textContent =
-      "ANALYZING";
+function revealPrediction(
+  prediction,
+  confidence,
+  model
+){
 
-    let remaining = 3;
+  const p =
+    normalizePrediction(
+      prediction
+    );
 
-    $("thinkingCount").textContent =
-      "AI checking patterns... 3s";
 
-    const start = Date.now();
+  $("thinkingBox").style.display =
+    "none";
 
-    clearInterval(countdownTimer);
+  $("resultBox").style.display =
+    "block";
 
-    countdownTimer = setInterval(()=>{
 
-      const elapsed =
-        Date.now() - start;
+  $("predictionText").textContent =
+    p || "NO CLEAR SIGNAL";
 
-      const left =
-        Math.max(
-          0,
-          THINKING_TIME - elapsed
-        );
 
-      const seconds =
-        Math.ceil(left / 1000);
+  $("predictionText").className =
+    "prediction";
 
-      if(seconds > 0){
 
-        $("thinkingText").textContent =
-          seconds === 3
-            ? "ANALYZING"
-            : seconds === 2
-              ? "COMPARING PATTERNS"
-              : "FINALIZING SIGNAL";
+  if(p === "BIG"){
 
-        $("thinkingCount").textContent =
-          "AI analysis " +
-          seconds +
-          "s";
+    $("predictionText")
+      .classList
+      .add("big");
 
-      }else{
+  }else if(p === "SMALL"){
 
-        clearInterval(countdownTimer);
-
-        thinkingRunning = false;
-
-        revealPrediction(
-          prediction,
-          confidence,
-          model
-        );
-      }
-
-    },100);
+    $("predictionText")
+      .classList
+      .add("small");
   }
 
 
-  function revealPrediction(
-    prediction,
-    confidence,
-    model
+  if(
+    confidence !== undefined &&
+    confidence !== null &&
+    confidence !== "" &&
+    Number.isFinite(Number(confidence))
   ){
-
-    $("thinkingBox").style.display = "none";
-    $("resultBox").style.display = "block";
-
-    const text =
-      String(prediction || "").toUpperCase();
-
-    const predictionElement =
-      $("predictionText");
-
-    predictionElement.textContent =
-      text || "NO CLEAR SIGNAL";
-
-    predictionElement.className =
-      "prediction";
-
-    if(text === "BIG"){
-      predictionElement.classList.add("big");
-    }
-
-    if(text === "SMALL"){
-      predictionElement.classList.add("small");
-    }
 
     $("confidence").textContent =
       "Confidence " +
-      (
-        confidence !== undefined &&
-        confidence !== null
-          ? confidence + "%"
-          : "—"
-      );
+      Number(confidence) +
+      "%";
 
-    $("modelVersion").textContent =
-      model ||
-      "DY AI HUMAN LOGIC";
+  }else{
+
+    $("confidence").textContent =
+      "Confidence —";
   }
 
 
-  /* =========================================================
-     STATE
-  ========================================================= */
+  $("modelVersion").textContent =
+    model ||
+    "DY AI HUMAN LOGIC";
+}
 
-  async function loadState(){
 
-    if(!accessKey){
-      return;
-    }
+/* =========================================================
+   STATE
+========================================================= */
 
-    try{
+async function loadState(){
 
-      const response = await fetch(
+  if(!accessKey){
+    return;
+  }
+
+
+  try{
+
+    const response =
+      await fetch(
         "/api/state",
         {
           headers:headers(),
@@ -896,472 +1224,629 @@
         }
       );
 
-      if(response.status === 401 ||
-         response.status === 403){
 
-        logoutLocal();
+    if(
+      response.status === 401 ||
+      response.status === 403
+    ){
 
-        return;
-      }
-
-      if(!response.ok){
-        throw new Error("State request failed");
-      }
-
-      const data =
-        await response.json();
-
-      $("statusDot").style.background =
-        "#22c55e";
-
-      $("statusText").textContent =
-        "LIVE";
-
-
-      /*
-        SERVER STRUCTURE:
-        data.current
-        data.model
-      */
-
-      const current =
-        data.current || {};
-
-      const model =
-        data.model || {};
-
-      const issue =
-        current.issueNumber ||
-        current.issue ||
-        model.targetIssue ||
-        "";
-
-      const prediction =
-        model.prediction ||
-        model.result ||
-        model.label ||
-        "";
-
-      const confidence =
-        model.confidence ??
-        model.score ??
-        0;
-
-      const version =
-        model.modelVersion ||
-        model.version ||
-        "DY AI HUMAN LOGIC";
-
-
-      if(issue){
-
-        $("targetIssue").textContent =
-          issue;
-      }
-
-
-      /*
-        IMPORTANT:
-
-        Thinking starts only when target issue
-        changes or a fresh prediction arrives.
-
-        Old prediction is NOT kept visible
-        during analysis.
-      */
-
-      const isNewPrediction =
-        issue &&
-        (
-          issue !== lastTargetIssue ||
-          prediction !== lastPrediction
-        );
-
-
-      if(isNewPrediction && prediction){
-
-        lastTargetIssue = issue;
-        lastPrediction = prediction;
-
-        startThinking(
-          issue,
-          prediction,
-          confidence,
-          version
-        );
-      }
-
-
-      /*
-        If server has no prediction,
-        keep analyzing state.
-      */
-
-      if(!prediction){
-
-        $("thinkingBox").style.display =
-          "flex";
-
-        $("resultBox").style.display =
-          "none";
-      }
-
-
-      await loadHistory();
-
-    }catch(error){
-
-      $("statusDot").style.background =
-        "#f59e0b";
-
-      $("statusText").textContent =
-        "RECONNECTING";
-
-      console.log(error);
+      logoutLocal();
+      return;
     }
-  }
 
 
-  /* =========================================================
-     HISTORY
-  ========================================================= */
+    if(!response.ok){
 
-  async function loadHistory(){
+      throw new Error(
+        "State request failed"
+      );
+    }
 
-    try{
 
-      const response = await fetch(
-        "/api/history?limit=30",
-        {
-          headers:headers(),
-          cache:"no-store"
-        }
+    const data =
+      await response.json();
+
+
+    $("statusDot").style.background =
+      "#22c55e";
+
+    $("statusText").textContent =
+      "LIVE";
+
+
+    const current =
+      data.current ||
+      data.currentResult ||
+      data.latest ||
+      data.latestResult ||
+      {};
+
+
+    const model =
+      data.model ||
+      data.prediction ||
+      data.ai ||
+      {};
+
+
+    /*
+      Multiple API formats supported.
+    */
+
+    let currentIssue =
+      getIssue(current);
+
+
+    let targetIssue =
+      getIssue(model);
+
+
+    if(!targetIssue){
+
+      targetIssue =
+        getIssue(data);
+    }
+
+
+    /*
+      If server doesn't explicitly send target,
+      use latest settled + 1.
+    */
+
+    if(
+      !targetIssue &&
+      currentIssue
+    ){
+
+      targetIssue =
+        nextIssue(
+          currentIssue
+        );
+    }
+
+
+    if(targetIssue){
+
+      $("targetIssue").textContent =
+        targetIssue;
+    }
+
+
+    const prediction =
+      normalizePrediction(
+        model.prediction ??
+        model.result ??
+        model.label ??
+        data.prediction ??
+        data.result
       );
 
-      if(!response.ok){
-        return;
-      }
+
+    const confidence =
+      model.confidence ??
+      model.score ??
+      data.confidence ??
+      data.score ??
+      null;
+
+
+    const version =
+      model.modelVersion ||
+      model.model_version ||
+      model.version ||
+      data.modelVersion ||
+      "DY AI HUMAN LOGIC";
+
+
+    /*
+      New target = fresh 3 sec thinking.
+    */
+
+    if(
+      targetIssue &&
+      prediction &&
+      (
+        targetIssue !== lastTargetIssue ||
+        prediction !== lastPrediction
+      )
+    ){
+
+      lastTargetIssue =
+        targetIssue;
+
+      lastPrediction =
+        prediction;
+
+
+      startThinking(
+        prediction,
+        confidence,
+        version
+      );
+    }
+
+
+    if(
+      !prediction &&
+      !targetIssue
+    ){
+
+      $("targetIssue").textContent =
+        "Waiting for API...";
+
+      $("thinkingText").textContent =
+        "CONNECTING";
+
+      $("thinkingCount").textContent =
+        "Waiting for live game data...";
+
+    }
+
+
+    /*
+      History separately.
+    */
+
+    await loadHistory();
+
+  }catch(error){
+
+    $("statusDot").style.background =
+      "#f59e0b";
+
+    $("statusText").textContent =
+      "RECONNECTING";
+
+    console.log(
+      "State error:",
+      error
+    );
+  }
+}
+
+
+/* =========================================================
+   HISTORY
+========================================================= */
+
+async function loadHistory(){
+
+  try{
+
+    const [
+      historyResponse,
+      stateResponse
+    ] =
+      await Promise.all([
+        fetch(
+          "/api/history?limit=30",
+          {
+            headers:headers(),
+            cache:"no-store"
+          }
+        ),
+
+        fetch(
+          "/api/state",
+          {
+            headers:headers(),
+            cache:"no-store"
+          }
+        )
+      ]);
+
+
+    let records = [];
+
+    let provider = [];
+
+
+    if(historyResponse.ok){
 
       const data =
-        await response.json();
+        await historyResponse.json();
 
-      const records =
+      records =
         Array.isArray(data)
           ? data
           : (
               data.records ||
               data.history ||
+              data.predictions ||
               []
             );
+    }
 
 
-      /*
-        Fetch provider history also so the table
-        can show actual numbers.
-      */
+    if(stateResponse.ok){
 
-      let provider = [];
+      const state =
+        await stateResponse.json();
 
-      try{
-
-        const stateResponse =
-          await fetch(
-            "/api/state",
-            {
-              headers:headers(),
-              cache:"no-store"
-            }
-          );
-
-        if(stateResponse.ok){
-
-          const state =
-            await stateResponse.json();
-
-          provider =
-            state.history ||
-            state.results ||
-            [];
-        }
-
-      }catch(e){}
+      provider =
+        state.history ||
+        state.results ||
+        state.providerHistory ||
+        [];
+    }
 
 
-      const predictionMap =
-        new Map();
+    /*
+      Prediction map
+    */
 
-      records.forEach(row=>{
+    const predictionMap =
+      new Map();
+
+
+    records.forEach(row=>{
+
+      const issue =
+        getIssue(row);
+
+
+      if(issue){
+
+        predictionMap.set(
+          String(issue),
+          row
+        );
+      }
+
+    });
+
+
+    /*
+      Provider result is primary because
+      it contains actual number.
+    */
+
+    let rows =
+      Array.isArray(provider) &&
+      provider.length
+        ? provider
+        : records;
+
+
+    /*
+      Remove duplicate issues.
+    */
+
+    const unique =
+      new Map();
+
+
+    rows.forEach(row=>{
+
+      const issue =
+        getIssue(row);
+
+      if(issue){
+        unique.set(
+          String(issue),
+          row
+        );
+      }
+
+    });
+
+
+    rows =
+      Array.from(
+        unique.values()
+      ).slice(0,30);
+
+
+    if(!rows.length){
+
+      $("historyBody").innerHTML = `
+        <tr>
+          <td colspan="4"
+              style="color:#64748b">
+            No history available
+          </td>
+        </tr>
+      `;
+
+      return;
+    }
+
+
+    $("historyBody").innerHTML =
+      rows.map(row=>{
 
         const issue =
-          row.target_issue ||
-          row.issueNumber ||
-          row.issue;
+          getIssue(row) ||
+          "—";
 
-        if(issue){
-          predictionMap.set(
-            String(issue),
-            row
+
+        const actual =
+          row.number ??
+          row.actual_number ??
+          row.actualNumber ??
+          "—";
+
+
+        const actualType =
+          getActualType(row);
+
+
+        const saved =
+          predictionMap.get(
+            String(issue)
           );
+
+
+        const ai =
+          normalizePrediction(
+            saved?.prediction ??
+            row.prediction ??
+            row.ai ??
+            ""
+          );
+
+
+        /*
+          IMPORTANT FIX:
+
+          Never display raw B/S.
+
+          Actual 5-9 = BIG
+          Actual 0-4 = SMALL
+
+          Prediction == Actual
+             => WIN
+
+          Otherwise
+             => LOSS
+        */
+
+        let result =
+          "";
+
+
+        if(
+          ai &&
+          actualType
+        ){
+
+          result =
+            ai === actualType
+              ? "WIN"
+              : "LOSS";
+
+        }else if(
+          saved?.actual_result
+        ){
+
+          const raw =
+            String(
+              saved.actual_result
+            ).toUpperCase();
+
+
+          if(
+            raw === "WIN" ||
+            raw === "W"
+          ){
+
+            result = "WIN";
+
+          }else if(
+            raw === "LOSS" ||
+            raw === "L"
+          ){
+
+            result = "LOSS";
+          }
+
         }
-      });
 
 
-      /*
-        If provider history isn't available,
-        display prediction records.
-      */
+        /*
+          If this issue has no AI prediction yet,
+          show PENDING.
+        */
 
-      let rows =
-        provider.length
-          ? provider
-          : records;
+        if(!ai){
 
-
-      rows = rows.slice(0,30);
+          result =
+            "PENDING";
+        }
 
 
-      if(!rows.length){
+        let resultClass =
+          "pending";
 
-        $("historyBody").innerHTML = `
+
+        if(result === "WIN"){
+          resultClass = "win";
+        }
+
+        if(result === "LOSS"){
+          resultClass = "loss";
+        }
+
+
+        const aiClass =
+          ai === "BIG"
+            ? "typeBig"
+            : ai === "SMALL"
+              ? "typeSmall"
+              : "pending";
+
+
+        return `
           <tr>
-            <td colspan="4" style="color:#64748b">
-              No history available
+
+            <td>
+              ${escapeHtml(issue)}
             </td>
+
+            <td>
+              ${
+                actual === "—"
+                  ? "—"
+                  : escapeHtml(actual)
+              }
+            </td>
+
+            <td class="${aiClass}">
+              ${
+                ai ||
+                "—"
+              }
+            </td>
+
+            <td class="${resultClass}">
+              ${result}
+            </td>
+
           </tr>
         `;
 
-        return;
-      }
+      }).join("");
 
+  }catch(error){
 
-      $("historyBody").innerHTML =
-        rows.map(row=>{
-
-          const issue =
-            row.issueNumber ||
-            row.target_issue ||
-            row.issue ||
-            "—";
-
-          const actual =
-            row.number ??
-            row.actual_number ??
-            "—";
-
-          const actualType =
-            row.type ||
-            row.label ||
-            (
-              actual !== "—"
-                ? (
-                    Number(actual) >= 5
-                      ? "BIG"
-                      : "SMALL"
-                  )
-                : ""
-            );
-
-
-          const saved =
-            predictionMap.get(
-              String(issue)
-            );
-
-
-          const ai =
-            saved?.prediction ||
-            row.prediction ||
-            "—";
-
-
-          let result =
-            saved?.actual_result ||
-            row.actual_result ||
-            "";
-
-
-          if(!result &&
-             ai !== "—" &&
-             actualType){
-
-            const normalizedAI =
-              String(ai).toUpperCase();
-
-            const normalizedActual =
-              String(actualType).toUpperCase();
-
-            if(
-              normalizedAI === normalizedActual
-            ){
-              result = "WIN";
-            }else{
-              result = "LOSS";
-            }
-          }
-
-
-          let resultClass =
-            "pending";
-
-          if(result === "WIN"){
-            resultClass = "win";
-          }
-
-          if(result === "LOSS"){
-            resultClass = "loss";
-          }
-
-
-          const typeClass =
-            String(actualType).toUpperCase()
-              === "BIG"
-                ? "typeBig"
-                : "typeSmall";
-
-
-          return `
-            <tr>
-
-              <td>
-                ${escapeHtml(issue)}
-              </td>
-
-              <td>
-                ${
-                  actual === "—"
-                    ? "—"
-                    : escapeHtml(actual)
-                }
-              </td>
-
-              <td class="${
-                String(ai).toUpperCase()
-                  === "BIG"
-                    ? "typeBig"
-                    : "typeSmall"
-              }">
-                ${escapeHtml(ai)}
-              </td>
-
-              <td class="${resultClass}">
-                ${
-                  result ||
-                  "PENDING"
-                }
-              </td>
-
-            </tr>
-          `;
-
-        }).join("");
-
-    }catch(error){
-
-      console.log(
-        "History error:",
-        error
-      );
-    }
+    console.log(
+      "History error:",
+      error
+    );
   }
+}
 
 
-  /* =========================================================
-     TIMER
-  ========================================================= */
+/* =========================================================
+   TIMER
+========================================================= */
 
-  function updateTimer(){
+function updateTimer(){
 
-    const now =
-      Date.now();
-
-    const cycle =
-      30000;
-
-    const remaining =
-      cycle -
-      (now % cycle);
-
-    const seconds =
-      Math.ceil(
-        remaining / 1000
-      );
-
-    $("timer").textContent =
-      String(seconds)
-        .padStart(2,"0");
+  const cycle =
+    30000;
 
 
-    const percentage =
-      (remaining / cycle) * 100;
+  const remaining =
+    cycle -
+    (
+      Date.now() %
+      cycle
+    );
 
-    $("progressBar").style.width =
-      percentage + "%";
-  }
+
+  const seconds =
+    Math.ceil(
+      remaining / 1000
+    );
 
 
-  /* =========================================================
-     DASHBOARD START
-  ========================================================= */
+  $("timer").textContent =
+    String(seconds)
+      .padStart(2,"0");
 
-  function startDashboard(){
 
-    if(stateTimer){
-      clearInterval(stateTimer);
-    }
+  $("progressBar").style.width =
+    (
+      remaining / cycle * 100
+    ) + "%";
+}
 
-    loadState();
 
-    stateTimer =
-      setInterval(
-        loadState,
-        API_REFRESH
-      );
+/* =========================================================
+   START
+========================================================= */
 
-    updateTimer();
+function startDashboard(){
 
+  clearInterval(
+    stateTimer
+  );
+
+  clearInterval(
+    historyTimer
+  );
+
+
+  loadState();
+
+
+  stateTimer =
     setInterval(
-      updateTimer,
-      250
-    );
-  }
-
-
-  /* =========================================================
-     LOCAL LOGOUT
-  ========================================================= */
-
-  function logoutLocal(){
-
-    accessKey = "";
-
-    localStorage.removeItem(
-      "dy_ai_access_key"
+      loadState,
+      API_REFRESH
     );
 
-    clearInterval(stateTimer);
-    clearInterval(countdownTimer);
 
-    $("dashboard").style.display =
-      "none";
+  /*
+    History 3 sec me refresh.
+  */
 
-    $("loginScreen").style.display =
-      "block";
-
-    $("loginError").textContent =
-      "Session expired. Please login again.";
-
-    $("loginError").style.display =
-      "block";
-  }
+  historyTimer =
+    setInterval(
+      loadHistory,
+      API_REFRESH
+    );
 
 
-  /* =========================================================
-     START
-  ========================================================= */
+  updateTimer();
 
-  deviceId = getDeviceId();
 
-  autoLogin();
+  setInterval(
+    updateTimer,
+    250
+  );
+}
+
+
+/* =========================================================
+   LOGOUT
+========================================================= */
+
+function logoutLocal(){
+
+  accessKey = "";
+
+  localStorage.removeItem(
+    "dy_ai_access_key"
+  );
+
+
+  clearInterval(
+    stateTimer
+  );
+
+  clearInterval(
+    historyTimer
+  );
+
+  clearInterval(
+    countdownTimer
+  );
+
+
+  $("dashboard").style.display =
+    "none";
+
+  $("loginScreen").style.display =
+    "block";
+
+  $("loginError").textContent =
+    "Session expired. Please login again.";
+
+  $("loginError").style.display =
+    "block";
+}
+
+
+/* =========================================================
+   BOOT
+========================================================= */
+
+deviceId =
+  getDeviceId();
+
+autoLogin();
 
 </script>
 
