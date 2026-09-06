@@ -3,7 +3,7 @@
 /*
 ============================================================
                  DY AI WINGO SERVER
-        HUMAN PATTERN + OPPOSITE ENGINE
+        25 RULE PATTERN + OPPOSITE ENGINE
 ============================================================
 
 A = SMALL
@@ -12,23 +12,19 @@ B = BIG
 0-4 = SMALL
 5-9 = BIG
 
-ENGINE:
+MAIN LOGIC:
 
-1. WingoBot se live history
-2. Numbers -> A/B
-3. 25 Master patterns
-4. Har pattern ka opposite
-5. EXACT match = strongest
-6. Strong PARTIAL match = prediction allowed
-7. Weak partial = WATCH
-8. Multiple matches = weighted consensus
-9. Prediction = matched pattern endpoint ka opposite
-10. No forced alternation
-11. No random prediction
+1. History ko A/B me convert karo.
+2. Tumhare diye hue 25 rules use karo.
+3. Latest history suffix ko pattern ke PREFIX se match karo.
+4. 2+ match ko candidate maana jayega.
+5. Pattern ke next character ko historical signal maana jayega.
+6. Multiple signals ko weighted support diya jayega.
+7. Strong side ko prediction diya jayega.
+8. Current side aur next signal opposite ho to reversal watch.
+9. Random / forced alternation nahi.
+10. Exact prediction guarantee nahi.
 
-IMPORTANT:
-Historical pattern analysis only.
-Prediction guaranteed nahi hai.
 ============================================================
 */
 
@@ -70,7 +66,7 @@ const WINGOBOT_API =
 
 
 const MODEL_VERSION =
-    "DY-AI-TASHAN-PATTERN-V7";
+    "DY-AI-25-RULE-PATTERN-V1";
 
 
 const THINKING_DURATION_MS =
@@ -86,54 +82,10 @@ const REQUEST_TIMEOUT_MS =
 
 
 // ============================================================
-// PATTERN SETTINGS
-// ============================================================
-
-/*
-Exact match:
-100%
-
-Strong partial:
-70%+ AND minimum 7 matched
-
-Very strong partial:
-80%+
-
-Weak partial:
-below 70%
-*/
-
-const PARTIAL_MIN_MATCH =
-    7;
-
-const PARTIAL_MIN_PERCENT =
-    70;
-
-
-/*
-Minimum support required when
-several partial patterns are present.
-*/
-
-const MIN_PARTIAL_SUPPORT =
-    6;
-
-
-/*
-If two sides are too close,
-do not generate prediction.
-*/
-
-const MIN_SUPPORT_GAP =
-    25;
-
-
-// ============================================================
 // DATABASE
 // ============================================================
 
 let pool = null;
-
 
 if (DATABASE_URL) {
 
@@ -193,902 +145,103 @@ let refreshInProgress =
 
 
 // ============================================================
-// DATABASE INIT
-// ============================================================
-
-async function initDatabase() {
-
-    if (!pool) {
-
-        console.log(
-            "[DB] DATABASE_URL missing"
-        );
-
-        return;
-
-    }
-
-
-    await pool.query(`
-        CREATE TABLE IF NOT EXISTS access_keys (
-            id SERIAL PRIMARY KEY,
-            access_key TEXT UNIQUE NOT NULL,
-            device_id TEXT,
-            created_at BIGINT NOT NULL,
-            last_seen BIGINT DEFAULT 0
-        );
-    `);
-
-
-    await pool.query(`
-        CREATE TABLE IF NOT EXISTS prediction_records (
-            id SERIAL PRIMARY KEY,
-            target_issue TEXT NOT NULL,
-            prediction TEXT NOT NULL,
-            confidence INTEGER DEFAULT 0,
-            model_version TEXT,
-            actual_number INTEGER,
-            actual_result TEXT,
-            created_at BIGINT NOT NULL,
-            settled_at BIGINT
-        );
-    `);
-
-
-    await pool.query(`
-        CREATE INDEX IF NOT EXISTS idx_prediction_issue
-        ON prediction_records(target_issue);
-    `);
-
-
-    await pool.query(`
-        CREATE INDEX IF NOT EXISTS idx_prediction_created
-        ON prediction_records(created_at DESC);
-    `);
-
-
-    console.log(
-        "[DB] Ready"
-    );
-
-}
-
-
-// ============================================================
-// BASIC HELPERS
-// ============================================================
-
-function now() {
-
-    return Date.now();
-
-}
-
-
-function numberToSide(number) {
-
-    const n =
-        Number(number);
-
-
-    if (
-        !Number.isInteger(n) ||
-        n < 0 ||
-        n > 9
-    ) {
-
-        return null;
-
-    }
-
-
-    return n <= 4
-        ? "A"
-        : "B";
-
-}
-
-
-function sideToLabel(side) {
-
-    if (side === "A") {
-
-        return "SMALL";
-
-    }
-
-
-    if (side === "B") {
-
-        return "BIG";
-
-    }
-
-
-    return null;
-
-}
-
-
-function labelToSide(label) {
-
-    const value =
-        String(label || "")
-            .trim()
-            .toUpperCase();
-
-
-    if (value === "SMALL") {
-
-        return "A";
-
-    }
-
-
-    if (value === "BIG") {
-
-        return "B";
-
-    }
-
-
-    return null;
-
-}
-
-
-function oppositeSide(side) {
-
-    if (side === "A") {
-
-        return "B";
-
-    }
-
-
-    if (side === "B") {
-
-        return "A";
-
-    }
-
-
-    return null;
-
-}
-
-
-function incrementIssue(issue) {
-
-    if (
-        issue === null ||
-        issue === undefined
-    ) {
-
-        return null;
-
-    }
-
-
-    const value =
-        String(issue);
-
-
-    if (
-        !/^\d+$/.test(value)
-    ) {
-
-        return null;
-
-    }
-
-
-    try {
-
-        return (
-            BigInt(value) + 1n
-        )
-            .toString()
-            .padStart(
-                value.length,
-                "0"
-            );
-
-    } catch {
-
-        return null;
-
-    }
-
-}
-
-
-function compareIssue(a, b) {
-
-    try {
-
-        const aa =
-            BigInt(
-                String(a)
-            );
-
-        const bb =
-            BigInt(
-                String(b)
-            );
-
-
-        if (aa > bb) {
-
-            return 1;
-
-        }
-
-
-        if (aa < bb) {
-
-            return -1;
-
-        }
-
-
-        return 0;
-
-    } catch {
-
-        return 0;
-
-    }
-
-}
-
-
-function randomKey() {
-
-    return (
-        "DY-" +
-        crypto
-            .randomBytes(12)
-            .toString("hex")
-            .toUpperCase()
-    );
-
-}
-
-
-// ============================================================
-// JSON
-// ============================================================
-
-function json(
-    res,
-    status,
-    data
-) {
-
-    const body =
-        JSON.stringify(data);
-
-
-    res.writeHead(
-
-        status,
-
-        {
-
-            "Content-Type":
-                "application/json; charset=utf-8",
-
-            "Cache-Control":
-                "no-store",
-
-            "Access-Control-Allow-Origin":
-                "*",
-
-            "Access-Control-Allow-Headers":
-                "Content-Type, X-Access-Key, X-Device-Id, X-Admin-Key",
-
-            "Access-Control-Allow-Methods":
-                "GET, POST, DELETE, OPTIONS"
-
-        }
-
-    );
-
-
-    res.end(body);
-
-}
-
-
-function text(
-    res,
-    status,
-    body,
-    type =
-        "text/plain; charset=utf-8"
-) {
-
-    res.writeHead(
-
-        status,
-
-        {
-
-            "Content-Type":
-                type,
-
-            "Cache-Control":
-                "no-store"
-
-        }
-
-    );
-
-
-    res.end(body);
-
-}
-
-
-// ============================================================
-// BODY
-// ============================================================
-
-function readBody(req) {
-
-    return new Promise(
-        (
-            resolve,
-            reject
-        ) => {
-
-            let data = "";
-
-
-            req.on(
-                "data",
-                chunk => {
-
-                    data += chunk;
-
-
-                    if (
-                        data.length >
-                        1024 * 1024
-                    ) {
-
-                        reject(
-                            new Error(
-                                "Request body too large"
-                            )
-                        );
-
-                        req.destroy();
-
-                    }
-
-                }
-            );
-
-
-            req.on(
-                "end",
-                () => {
-
-                    if (!data) {
-
-                        resolve({});
-
-                        return;
-
-                    }
-
-
-                    try {
-
-                        resolve(
-                            JSON.parse(
-                                data
-                            )
-                        );
-
-                    } catch {
-
-                        resolve({});
-
-                    }
-
-                }
-            );
-
-
-            req.on(
-                "error",
-                reject
-            );
-
-        }
-    );
-
-}
-
-
-// ============================================================
-// WINGOBOT API
-// ============================================================
-
-function fetchWingoBot() {
-
-    return new Promise(
-        (
-            resolve,
-            reject
-        ) => {
-
-            if (
-                !WINGOBOT_TOKEN
-            ) {
-
-                reject(
-                    new Error(
-                        "WINGOBOT_TOKEN missing"
-                    )
-                );
-
-                return;
-
-            }
-
-
-            const request =
-                https.request(
-
-                    WINGOBOT_API,
-
-                    {
-
-                        method: "GET",
-
-                        timeout:
-                            REQUEST_TIMEOUT_MS,
-
-                        headers: {
-
-                            Authorization:
-                                `Bearer ${WINGOBOT_TOKEN}`,
-
-                            Accept:
-                                "application/json",
-
-                            "User-Agent":
-                                "DY-AI-Wingo"
-
-                        }
-
-                    },
-
-                    response => {
-
-                        let body = "";
-
-
-                        response.on(
-                            "data",
-                            chunk => {
-
-                                body += chunk;
-
-                            }
-                        );
-
-
-                        response.on(
-                            "end",
-                            () => {
-
-                                if (
-                                    response.statusCode < 200 ||
-                                    response.statusCode >= 300
-                                ) {
-
-                                    reject(
-                                        new Error(
-                                            `WingoBot HTTP ${response.statusCode}`
-                                        )
-                                    );
-
-                                    return;
-
-                                }
-
-
-                                try {
-
-                                    resolve(
-                                        JSON.parse(
-                                            body
-                                        )
-                                    );
-
-                                } catch {
-
-                                    reject(
-                                        new Error(
-                                            "Invalid WingoBot JSON"
-                                        )
-                                    );
-
-                                }
-
-                            }
-                        );
-
-                    }
-
-                );
-
-
-            request.on(
-                "timeout",
-                () => {
-
-                    request.destroy(
-                        new Error(
-                            "WingoBot timeout"
-                        )
-                    );
-
-                }
-            );
-
-
-            request.on(
-                "error",
-                reject
-            );
-
-
-            request.end();
-
-        }
-    );
-
-}
-
-
-// ============================================================
-// NORMALIZE WINGOBOT
-// ============================================================
-
-function normalizeHistory(
-    payload
-) {
-
-    const raw =
-
-        Array.isArray(
-            payload?.history
-        )
-
-            ? payload.history
-
-            : Array.isArray(
-                payload?.data
-            )
-
-                ? payload.data
-
-                : Array.isArray(
-                    payload?.results
-                )
-
-                    ? payload.results
-
-                    : [];
-
-
-    const result = [];
-
-
-    for (
-        const item of raw
-    ) {
-
-        const issue =
-            item?.issueNumber ??
-            item?.issue ??
-            item?.period ??
-            item?.periodNumber;
-
-
-        const number =
-            item?.number ??
-            item?.result ??
-            item?.openNumber ??
-            item?.digit;
-
-
-        const n =
-            Number(number);
-
-
-        if (
-
-            issue !== undefined &&
-
-            Number.isInteger(n) &&
-
-            n >= 0 &&
-            n <= 9
-
-        ) {
-
-            result.push({
-
-                issueNumber:
-                    String(issue),
-
-                number:
-                    n,
-
-                colour:
-                    item?.colour ??
-                    item?.color ??
-                    null,
-
-                premium:
-                    item?.premium ??
-                    null,
-
-                sum:
-                    item?.sum ??
-                    null
-
-            });
-
-        }
-
-    }
-
-
-    /*
-      Newest first.
-    */
-
-    result.sort(
-        (
-            a,
-            b
-        ) =>
-            compareIssue(
-                b.issueNumber,
-                a.issueNumber
-            )
-    );
-
-
-    return result;
-
-}
-
-
-// ============================================================
-// CURRENT ISSUE
-// ============================================================
-
-function getCurrentIssue(
-    payload
-) {
-
-    return (
-
-        payload?.current?.issueNumber
-
-        ??
-
-        payload?.currentIssue
-
-        ??
-
-        payload?.current?.issue
-
-        ??
-
-        payload?.current?.period
-
-        ??
-
-        null
-
-    );
-
-}
-
-
-// ============================================================
-// REFRESH PROVIDER
-// ============================================================
-
-async function refreshProvider() {
-
-    if (
-        refreshInProgress
-    ) {
-
-        return providerState;
-
-    }
-
-
-    refreshInProgress =
-        true;
-
-
-    try {
-
-        const payload =
-            await fetchWingoBot();
-
-
-        const history =
-            normalizeHistory(
-                payload
-            );
-
-
-        const currentIssue =
-            getCurrentIssue(
-                payload
-            );
-
-
-        providerState = {
-
-            ok: true,
-
-            currentIssue:
-                currentIssue !== null
-                    ? String(
-                        currentIssue
-                    )
-                    : (
-                        history[0]
-                            ?.issueNumber ||
-                        null
-                    ),
-
-            history,
-
-            fetched:
-                Number(
-                    payload?.stats?.fetched
-                ) ||
-                history.length,
-
-            lastUpdated:
-                Number(
-                    payload?.stats?.last_updated
-                ) ||
-                now(),
-
-            error:
-                null
-
-        };
-
-
-        return providerState;
-
-    } catch (error) {
-
-        providerState = {
-
-            ...providerState,
-
-            ok: false,
-
-            error:
-                error.message ||
-                "Provider error"
-
-        };
-
-
-        return providerState;
-
-    } finally {
-
-        refreshInProgress =
-            false;
-
-    }
-
-}
-
-
-// ============================================================
 // 25 MASTER PATTERNS
 // ============================================================
 
-const MASTER_PATTERNS = {
+const RULES = [
 
-    1:
-        "ABABABABAB",
+    { id: 1, pattern: "ABABABABAB" },
 
-    2:
-        "AABBAABB",
+    { id: 2, pattern: "AABBAABB" },
 
-    3:
-        "AAABBBAAABBB",
+    { id: 3, pattern: "AAABBBAAABBB" },
 
-    4:
-        "AAAABBBBAAAABBBB",
+    { id: 4, pattern: "AAAABBBBAAAABBBB" },
 
-    5:
-        "AABAABAAB",
+    { id: 5, pattern: "AABAABAAB" },
 
-    6:
-        "AAAAAAAABBBBBBBB",
+    {
+        id: 6,
+        pattern:
+            "AAAAAAAA BBBBBBBB"
+                .replace(/\s/g, "")
+    },
 
-    7:
-        "ABBABBABB",
+    { id: 7, pattern: "ABBABBABB" },
 
-    8:
-        "AAABAAABAAAB",
+    { id: 8, pattern: "AAABAAABAAAB" },
 
-    9:
-        "AAABAAAB",
+    { id: 9, pattern: "AAABBAAABB" },
 
-    10:
-        "AAAABBABBAAAA",
+    {
+        id: 10,
+        pattern:
+            "AAAAB B A BB AAAA"
+                .replace(/\s/g, "")
+    },
 
-    11:
-        "ABBBABBBABBB",
+    { id: 11, pattern: "ABBBABBBABBB" },
 
-    12:
-        "ABABBABBB",
+    { id: 12, pattern: "ABABBABBB" },
 
-    13:
-        "AABBAAABBBAAAABBBB",
+    {
+        id: 13,
+        pattern:
+            "AABBAAABBBAAAABBBB"
+    },
 
-    14:
-        "ABBAAABBBB",
+    { id: 14, pattern: "ABBAAABBBB" },
 
-    15:
-        "AAAABBBAAB",
+    { id: 15, pattern: "AAAABBBAAB" },
 
-    16:
-        "ABAABBAAABBB",
+    { id: 16, pattern: "ABAABBAAABBB" },
 
-    17:
-        "AABBBAABBBAA",
+    {
+        id: 17,
+        pattern:
+            "AABBBABBB AA"
+                .replace(/\s/g, "")
+    },
 
-    18:
-        "ABBAAAABBBBBBBB",
+    { id: 18, pattern: "ABBAAAABBBBBBBB" },
 
-    19:
-        "ABBBABBB",
+    { id: 19, pattern: "ABBBABBB" },
 
-    20:
-        "AABBBAABBB",
+    { id: 20, pattern: "AABBBAABBB" },
 
-    21:
-        "ABAABAAAB",
+    { id: 21, pattern: "ABAABAAAB" },
 
-    22:
-        "AABAABBAABBB",
+    { id: 22, pattern: "AABAABBAABBB" },
 
-    23:
-        "AAAABAAAAB",
+    {
+        id: 23,
+        pattern:
+            "AAAABA AA AAB"
+                .replace(/\s/g, "")
+    },
 
-    24:
-        "AAAABBAAAABB",
+    { id: 24, pattern: "AAAABBAAAABB" },
 
-    25:
-        "AAAABBBAAAABBB"
+    { id: 25, pattern: "AAAABBBAAAABBB" }
 
-};
+];
+
+
+// ============================================================
+// CLEAN RULES
+// ============================================================
+
+for (
+    const rule of RULES
+) {
+
+    rule.pattern =
+        rule.pattern.replace(
+            /[^AB]/g,
+            ""
+        );
+
+}
 
 
 // ============================================================
@@ -1099,7 +252,7 @@ function oppositePattern(
     pattern
 ) {
 
-    return String(pattern)
+    return pattern
         .split("")
         .map(
             char =>
@@ -1113,62 +266,48 @@ function oppositePattern(
 
 
 // ============================================================
-// PATTERN DATABASE
+// BUILD PATTERN DATABASE
 // ============================================================
 
 const PATTERN_DATABASE = [];
 
 
 for (
-    const [
-        id,
-        pattern
-    ]
-    of Object.entries(
-        MASTER_PATTERNS
-    )
+    const rule of RULES
 ) {
-
-    const clean =
-        String(pattern)
-            .replace(
-                /[^AB]/g,
-                ""
-            );
-
 
     PATTERN_DATABASE.push({
 
+        id:
+            `${rule.id}-ORIGINAL`,
+
         rule:
-            Number(id),
+            rule.id,
 
         type:
             "ORIGINAL",
 
         pattern:
-            clean,
-
-        length:
-            clean.length
+            rule.pattern
 
     });
 
 
     PATTERN_DATABASE.push({
 
+        id:
+            `${rule.id}-OPPOSITE`,
+
         rule:
-            Number(id),
+            rule.id,
 
         type:
             "OPPOSITE",
 
         pattern:
             oppositePattern(
-                clean
-            ),
-
-        length:
-            clean.length
+                rule.pattern
+            )
 
     });
 
@@ -1176,27 +315,171 @@ for (
 
 
 // ============================================================
-// CONVERT NUMBERS
+// NUMBER -> A/B
 // ============================================================
 
-function convertHistory(
-    numbers
+function numberToAB(
+    number
 ) {
 
-    const output = [];
+    const n =
+        Number(number);
 
 
     if (
-        !Array.isArray(numbers)
+        !Number.isInteger(n)
     ) {
 
-        return output;
+        return null;
 
     }
 
 
+    if (
+        n < 0 ||
+        n > 9
+    ) {
+
+        return null;
+
+    }
+
+
+    /*
+    0-4 SMALL = A
+    5-9 BIG   = B
+    */
+
+    return n <= 4
+        ? "A"
+        : "B";
+
+}
+
+
+// ============================================================
+// A/B -> LABEL
+// ============================================================
+
+function abToLabel(
+    value
+) {
+
+    if (
+        value === "A"
+    ) {
+
+        return "SMALL";
+
+    }
+
+
+    if (
+        value === "B"
+    ) {
+
+        return "BIG";
+
+    }
+
+
+    return null;
+
+}
+
+
+// ============================================================
+// OPPOSITE SIDE
+// ============================================================
+
+function oppositeSide(
+    side
+) {
+
+    if (
+        side === "A"
+    ) {
+
+        return "B";
+
+    }
+
+
+    if (
+        side === "B"
+    ) {
+
+        return "A";
+
+    }
+
+
+    return null;
+
+}
+
+
+// ============================================================
+// LABEL -> A/B
+// ============================================================
+
+function labelToAB(
+    label
+) {
+
+    const value =
+        String(
+            label || ""
+        )
+            .trim()
+            .toUpperCase();
+
+
+    if (
+        value === "SMALL"
+    ) {
+
+        return "A";
+
+    }
+
+
+    if (
+        value === "BIG"
+    ) {
+
+        return "B";
+
+    }
+
+
+    return null;
+
+}
+
+
+// ============================================================
+// CONVERT HISTORY
+// ============================================================
+
+function convertHistory(
+    results
+) {
+
+    if (
+        !Array.isArray(results)
+    ) {
+
+        return [];
+
+    }
+
+
+    const output = [];
+
+
     for (
-        const item of numbers
+        const item of results
     ) {
 
         let number;
@@ -1224,7 +507,7 @@ function convertHistory(
 
 
         const side =
-            numberToSide(
+            numberToAB(
                 number
             );
 
@@ -1248,151 +531,140 @@ function convertHistory(
 
 
 // ============================================================
-// EXACT MATCH
+// SUFFIX MATCH
 // ============================================================
 
-function exactMatch(
+function suffixMatch(
     history,
     pattern
 ) {
 
-    if (
-        history.length <
-        pattern.length
-    ) {
-
-        return false;
-
-    }
-
-
-    const recent =
-        history
-            .slice(
-                -pattern.length
-            )
-            .join("");
-
-
-    return (
-        recent ===
-        pattern
-    );
-
-}
-
-
-// ============================================================
-// EXACT MATCHES
-// ============================================================
-
-function findExactMatches(
-    history
-) {
-
-    return PATTERN_DATABASE
-        .filter(
-            item =>
-                exactMatch(
-                    history,
-                    item.pattern
-                )
-        )
-        .map(
-            item => ({
-
-                ...item,
-
-                matched:
-                    item.length,
-
-                matchPercent:
-                    100
-
-            })
-        );
-
-}
-
-
-// ============================================================
-// PARTIAL MATCH
-// ============================================================
-
-function partialMatch(
-    history,
-    pattern
-) {
-
-    const max =
+    const maxLength =
         Math.min(
             history.length,
             pattern.length
         );
 
 
-    let best = 0;
+    let bestMatch = 0;
 
-
-    /*
-      Compare current suffix
-      against pattern prefix.
-
-      Example:
-
-      History:
-      B S B S S B B
-
-      Pattern:
-      B S B S S B B B
-
-      7/8 matched.
-    */
 
     for (
-        let length = 2;
-        length <= max;
-        length++
+        let len = 1;
+        len <= maxLength;
+        len++
     ) {
 
-        const recent =
+        const historyPart =
             history
                 .slice(
-                    -length
+                    history.length - len
                 )
                 .join("");
 
 
-        const expected =
+        const patternPart =
             pattern.slice(
                 0,
-                length
+                len
             );
 
 
         if (
-            recent ===
-            expected
+            historyPart ===
+            patternPart
         ) {
 
-            best =
-                length;
+            bestMatch = len;
 
         }
 
     }
 
 
-    return best;
+    return bestMatch;
 
 }
 
 
 // ============================================================
-// ALL PARTIAL MATCHES
+// WEIGHT
 // ============================================================
 
-function findPartialMatches(
+function calculateWeight(
+    match
+) {
+
+    const length =
+        Number(
+            match.matched || 0
+        );
+
+
+    if (
+        length >= 10
+    ) {
+
+        return 10;
+
+    }
+
+
+    if (
+        length >= 8
+    ) {
+
+        return 8;
+
+    }
+
+
+    if (
+        length >= 6
+    ) {
+
+        return 6;
+
+    }
+
+
+    if (
+        length >= 5
+    ) {
+
+        return 5;
+
+    }
+
+
+    if (
+        length >= 4
+    ) {
+
+        return 4;
+
+    }
+
+
+    if (
+        length >= 3
+    ) {
+
+        return 3;
+
+    }
+
+
+    return 1;
+
+}
+
+
+// ============================================================
+// FIND RULES
+// ============================================================
+
+function findRules(
     history
 ) {
 
@@ -1400,77 +672,93 @@ function findPartialMatches(
 
 
     for (
-        const item of
+        const rule of
             PATTERN_DATABASE
     ) {
 
         const matched =
-            partialMatch(
+            suffixMatch(
                 history,
-                item.pattern
+                rule.pattern
             );
+
+
+        if (
+            matched < 2
+        ) {
+
+            continue;
+
+        }
+
+
+        let next = null;
 
 
         if (
             matched <
-            PARTIAL_MIN_MATCH
+            rule.pattern.length
         ) {
 
-            continue;
+            next =
+                rule.pattern[
+                    matched
+                ];
 
         }
 
 
-        /*
-          Don't treat full match
-          as partial.
-        */
+        const weight =
+            calculateWeight({
 
-        if (
-            matched >=
-            item.length
-        ) {
+                matched
 
-            continue;
-
-        }
-
-
-        const percent =
-            Math.round(
-                matched /
-                item.length *
-                100
-            );
-
-
-        if (
-            percent <
-            PARTIAL_MIN_PERCENT
-        ) {
-
-            continue;
-
-        }
+            });
 
 
         matches.push({
 
-            ...item,
+            id:
+                rule.id,
+
+            rule:
+                rule.rule,
+
+            type:
+                rule.type,
+
+            pattern:
+                rule.pattern,
 
             matched,
 
+            next,
+
+            weight,
+
             matchPercent:
-                percent
+                Number(
+                    (
+                        matched /
+                        rule.pattern.length *
+                        100
+                    ).toFixed(2)
+                )
 
         });
 
     }
 
 
-    return matches.sort(
+    /*
+      Strongest first
+    */
 
-        (a, b) => {
+    matches.sort(
+        (
+            a,
+            b
+        ) => {
 
             if (
                 b.matched !==
@@ -1485,49 +773,155 @@ function findPartialMatches(
             }
 
 
-            if (
-                b.matchPercent !==
-                a.matchPercent
-            ) {
+            return (
+                b.weight -
+                a.weight
+            );
 
-                return (
-                    b.matchPercent -
-                    a.matchPercent
-                );
-
-            }
+        }
+    );
 
 
-            if (
-                b.length !==
-                a.length
-            ) {
+    return matches;
 
-                return (
-                    b.length -
-                    a.length
-                );
-
-            }
+}
 
 
-            if (
-                a.type ===
-                    "ORIGINAL" &&
-                b.type ===
-                    "OPPOSITE"
-            ) {
+// ============================================================
+// SUPPORT
+// ============================================================
 
-                return -1;
+function calculateSupport(
+    matches
+) {
 
-            }
+    let A = 0;
+
+    let B = 0;
 
 
-            return 0;
+    const evidence = [];
+
+
+    for (
+        const match of matches
+    ) {
+
+        if (
+            !match.next
+        ) {
+
+            continue;
 
         }
 
-    );
+
+        const weight =
+            calculateWeight(
+                match
+            );
+
+
+        if (
+            match.next === "A"
+        ) {
+
+            A += weight;
+
+        }
+
+
+        if (
+            match.next === "B"
+        ) {
+
+            B += weight;
+
+        }
+
+
+        evidence.push({
+
+            rule:
+                match.rule,
+
+            type:
+                match.type,
+
+            pattern:
+                match.pattern,
+
+            matched:
+                match.matched,
+
+            matchPercent:
+                match.matchPercent,
+
+            expectedNext:
+                match.next,
+
+            expectedLabel:
+                abToLabel(
+                    match.next
+                ),
+
+            weight
+
+        });
+
+    }
+
+
+    const total =
+        A + B;
+
+
+    let APct = 0;
+
+    let BPct = 0;
+
+
+    if (
+        total > 0
+    ) {
+
+        APct =
+            Number(
+                (
+                    A /
+                    total *
+                    100
+                ).toFixed(2)
+            );
+
+
+        BPct =
+            Number(
+                (
+                    B /
+                    total *
+                    100
+                ).toFixed(2)
+            );
+
+    }
+
+
+    return {
+
+        A,
+
+        B,
+
+        APct,
+
+        BPct,
+
+        total,
+
+        evidence
+
+    };
 
 }
 
@@ -1544,7 +938,15 @@ function currentStreak(
         !history.length
     ) {
 
-        return null;
+        return {
+
+            side: null,
+
+            code: null,
+
+            count: 0
+
+        };
 
     }
 
@@ -1585,13 +987,13 @@ function currentStreak(
 
     return {
 
-        code:
-            current,
-
         side:
-            sideToLabel(
+            abToLabel(
                 current
             ),
+
+        code:
+            current,
 
         count
 
@@ -1601,10 +1003,10 @@ function currentStreak(
 
 
 // ============================================================
-// WINDOW ANALYSIS
+// WINDOW
 // ============================================================
 
-function analyzeWindow(
+function windowAnalysis(
     history,
     size
 ) {
@@ -1684,7 +1086,7 @@ function analyzeWindow(
 // SWITCHING
 // ============================================================
 
-function switching(
+function switchingAnalysis(
     history
 ) {
 
@@ -1698,14 +1100,14 @@ function switching(
 
             transitions: 0,
 
-            rate: 0
+            switchRate: 0
 
         };
 
     }
 
 
-    let count = 0;
+    let switches = 0;
 
 
     for (
@@ -1719,7 +1121,7 @@ function switching(
             history[i - 1]
         ) {
 
-            count++;
+            switches++;
 
         }
 
@@ -1732,15 +1134,14 @@ function switching(
 
     return {
 
-        switches:
-            count,
+        switches,
 
         transitions,
 
-        rate:
+        switchRate:
             Number(
                 (
-                    count /
+                    switches /
                     transitions *
                     100
                 ).toFixed(2)
@@ -1752,298 +1153,102 @@ function switching(
 
 
 // ============================================================
-// PATTERN BREAK
+// REVERSAL ANALYSIS
 // ============================================================
 
-function patternBreak(
-    history
+function reversalAnalysis(
+    history,
+    support
 ) {
 
     if (
-        history.length < 6
+        !history.length
     ) {
 
         return {
 
-            detected: false,
+            current: null,
 
-            sequence: null
+            currentLabel: null,
+
+            reversalWatch: false,
+
+            prediction: null,
+
+            reason: ""
 
         };
 
     }
 
 
-    const last6 =
-        history.slice(-6);
+    const current =
+        history[
+            history.length - 1
+        ];
 
 
-    const first5 =
-        last6.slice(0, 5);
+    let prediction = null;
 
+    let reversalWatch =
+        false;
 
-    const alternating =
-        first5.every(
-            (
-                value,
-                index
-            ) => {
+    let reason = "";
 
-                if (
-                    index === 0
-                ) {
-
-                    return true;
-
-                }
-
-
-                return (
-                    value !==
-                    first5[
-                        index - 1
-                    ]
-                );
-
-            }
-        );
-
-
-    return {
-
-        detected:
-            alternating &&
-            last6[4] ===
-            last6[5],
-
-        sequence:
-            last6.join("")
-
-    };
-
-}
-
-
-// ============================================================
-// PARTIAL NEXT SIDE
-// ============================================================
-
-function getPatternNextSide(
-    match
-) {
 
     if (
-        !match ||
-        !match.pattern
+        current === "A" &&
+        support.B > support.A
     ) {
 
-        return null;
+        reversalWatch =
+            true;
+
+        prediction =
+            "BIG";
+
+        reason =
+            "Current SMALL hai aur matched pattern support BIG side ko stronger dikha raha hai.";
 
     }
 
 
-    /*
-      For partial:
-
-      matched portion ends at
-      match.matched - 1
-
-      The next pattern symbol is:
-
-      pattern[matched]
-
-      That is the continuation.
-
-      User wants opposite of the
-      matched endpoint, so we use
-      the endpoint itself for reversal.
-    */
-
-    const index =
-        (
-            match.matched ??
-            match.length
-        ) - 1;
-
-
-    const matchedSide =
-        match.pattern[index];
-
-
     if (
-        matchedSide !== "A" &&
-        matchedSide !== "B"
+        current === "B" &&
+        support.A > support.B
     ) {
 
-        return null;
+        reversalWatch =
+            true;
+
+        prediction =
+            "SMALL";
+
+        reason =
+            "Current BIG hai aur matched pattern support SMALL side ko stronger dikha raha hai.";
 
     }
 
 
     return {
 
-        matchedSide,
+        current,
 
-        matchedLabel:
-            sideToLabel(
-                matchedSide
+        currentLabel:
+            abToLabel(
+                current
             ),
 
-        predictionSide:
-            oppositeSide(
-                matchedSide
-            ),
+        reversalWatch,
 
-        prediction:
-            sideToLabel(
-                oppositeSide(
-                    matchedSide
-                )
-            )
-
-    };
-
-}
-
-
-// ============================================================
-// EXACT DECISION
-// ============================================================
-
-function exactDecision(
-    matches
-) {
-
-    if (
-        !matches.length
-    ) {
-
-        return null;
-
-    }
-
-
-    /*
-      Longest pattern first.
-    */
-
-    const sorted =
-        matches.slice().sort(
-
-            (a, b) => {
-
-                if (
-                    b.length !==
-                    a.length
-                ) {
-
-                    return (
-                        b.length -
-                        a.length
-                    );
-
-                }
-
-
-                if (
-                    a.type ===
-                        "ORIGINAL" &&
-                    b.type ===
-                        "OPPOSITE"
-                ) {
-
-                    return -1;
-
-                }
-
-
-                if (
-                    a.type ===
-                        "OPPOSITE" &&
-                    b.type ===
-                        "ORIGINAL"
-                ) {
-
-                    return 1;
-
-                }
-
-
-                return (
-                    a.rule -
-                    b.rule
-                );
-
-            }
-
-        );
-
-
-    const best =
-        sorted[0];
-
-
-    const info =
-        getPatternNextSide({
-
-            ...best,
-
-            matched:
-                best.length
-
-        });
-
-
-    if (!info) {
-
-        return null;
-
-    }
-
-
-    return {
-
-        prediction:
-            info.prediction,
+        prediction,
 
         predictionCode:
-            info.predictionSide,
+            labelToAB(
+                prediction
+            ),
 
-        matchedSide:
-            info.matchedLabel,
-
-        matchedSideCode:
-            info.matchedSide,
-
-        matchedRule:
-            best.rule,
-
-        matchedType:
-            best.type,
-
-        matchedPattern:
-            best.pattern,
-
-        matchedLength:
-            best.length,
-
-        matchPercent:
-            100,
-
-        confidence:
-            90,
-
-        confidenceLevel:
-            "EXACT_PATTERN",
-
-        logic:
-            `${best.type} Rule ${best.rule} exact match. Matched endpoint ${info.matchedLabel}; opposite = ${info.prediction}.`,
-
-        bestMatch:
-            best,
-
-        allMatches:
-            matches
+        reason
 
     };
 
@@ -2051,263 +1256,137 @@ function exactDecision(
 
 
 // ============================================================
-// PARTIAL CONSENSUS
+// DECISION
 // ============================================================
 
-function partialDecision(
-    matches
+function decide(
+    history,
+    support
 ) {
 
     if (
-        !matches.length
+        support.A === 0 &&
+        support.B === 0
     ) {
 
-        return null;
+        return {
+
+            signal: null,
+
+            signalCode: null,
+
+            confidence: "LOW",
+
+            confidencePercent: 0,
+
+            difference: 0,
+
+            status:
+                "NO_MATCH"
+
+        };
 
     }
 
 
-    let bigSupport = 0;
-    let smallSupport = 0;
-
-
-    const evidence = [];
-
-
-    for (
-        const match of
-            matches
-    ) {
-
-        const info =
-            getPatternNextSide(
-                match
-            );
-
-
-        if (!info) {
-
-            continue;
-
-        }
-
-
-        /*
-          Weight:
-
-          7 match  = 7
-          8 match  = 9
-          9 match  = 11
-          etc.
-        */
-
-        let weight =
-            match.matched;
-
-
-        if (
-            match.matchPercent >=
-            85
-        ) {
-
-            weight += 3;
-
-        } else if (
-            match.matchPercent >=
-            75
-        ) {
-
-            weight += 2;
-
-        }
-
-
-        if (
-            match.type ===
-            "ORIGINAL"
-        ) {
-
-            weight += 1;
-
-        }
-
-
-        if (
-            info.predictionSide ===
-            "B"
-        ) {
-
-            bigSupport +=
-                weight;
-
-        } else {
-
-            smallSupport +=
-                weight;
-
-        }
-
-
-        evidence.push({
-
-            rule:
-                match.rule,
-
-            type:
-                match.type,
-
-            matched:
-                match.matched,
-
-            total:
-                match.length,
-
-            percent:
-                match.matchPercent,
-
-            matchedSide:
-                info.matchedLabel,
-
-            oppositePrediction:
-                info.prediction,
-
-            weight
-
-        });
-
-    }
+    const difference =
+        Math.abs(
+            support.A -
+            support.B
+        );
 
 
     const total =
-        bigSupport +
-        smallSupport;
+        support.A +
+        support.B;
 
 
-    if (
-        total < MIN_PARTIAL_SUPPORT
-    ) {
-
-        return null;
-
-    }
-
-
-    const gap =
-        Math.abs(
-            bigSupport -
-            smallSupport
-        );
-
-
-    /*
-      Too close = conflict.
-    */
-
-    if (
-        gap <
-        MIN_SUPPORT_GAP
-    ) {
-
-        return {
-
-            prediction:
-                null,
-
-            predictionCode:
-                null,
-
-            confidence:
-                0,
-
-            confidenceLevel:
-                "CONFLICT",
-
-            status:
-                "CONFLICTING_PARTIAL",
-
-            bigSupport,
-
-            smallSupport,
-
-            gap,
-
-            evidence
-
-        };
-
-    }
-
-
-    const predictionSide =
-        bigSupport >
-        smallSupport
-            ? "B"
-            : "A";
-
-
-    const winningSupport =
-        Math.max(
-            bigSupport,
-            smallSupport
-        );
-
-
-    const losingSupport =
-        Math.min(
-            bigSupport,
-            smallSupport
-        );
-
-
-    const ratio =
-        winningSupport /
-        total;
+    const percentage =
+        total === 0
+            ? 0
+            : difference /
+                total *
+                100;
 
 
     let confidence =
-        Math.round(
-            55 +
-            ratio * 30
-        );
+        "LOW";
 
 
     if (
-        confidence > 84
+        percentage >= 60
     ) {
 
-        confidence = 84;
+        confidence =
+            "HIGH";
+
+    }
+    else if (
+        percentage >= 30
+    ) {
+
+        confidence =
+            "MEDIUM";
+
+    }
+
+
+    let signal = null;
+
+
+    if (
+        support.A >
+        support.B
+    ) {
+
+        signal =
+            "SMALL";
+
+    }
+    else if (
+        support.B >
+        support.A
+    ) {
+
+        signal =
+            "BIG";
+
+    }
+    else {
+
+        signal = null;
+
+        confidence =
+            "LOW";
 
     }
 
 
     return {
 
-        prediction:
-            sideToLabel(
-                predictionSide
-            ),
+        signal,
 
-        predictionCode:
-            predictionSide,
+        signalCode:
+            labelToAB(
+                signal
+            ),
 
         confidence,
 
-        confidenceLevel:
-            "STRONG_PARTIAL",
+        confidencePercent:
+            Number(
+                percentage.toFixed(2)
+            ),
+
+        difference:
+            Number(
+                percentage.toFixed(2)
+            ),
 
         status:
-            "STRONG_PARTIAL_PATTERN",
-
-        bigSupport,
-
-        smallSupport,
-
-        gap,
-
-        evidence,
-
-        logic:
-            `Strong partial pattern consensus. BIG support ${bigSupport}, SMALL support ${smallSupport}.`
+            signal
+                ? "SIGNAL"
+                : "CONFLICT"
 
     };
 
@@ -2315,21 +1394,21 @@ function partialDecision(
 
 
 // ============================================================
-// MAIN PATTERN ENGINE
+// MAIN ANALYZE
 // ============================================================
 
-function analyzePattern(
-    numbers
+function analyze(
+    results
 ) {
 
     const history =
         convertHistory(
-            numbers
+            results
         );
 
 
     if (
-        history.length < 5
+        history.length < 3
     ) {
 
         return {
@@ -2347,10 +1426,7 @@ function analyzePattern(
                 0,
 
             sequence:
-                history.join(""),
-
-            message:
-                "At least 5 valid results required."
+                history.join("")
 
         };
 
@@ -2358,51 +1434,173 @@ function analyzePattern(
 
 
     /*
-      EXACT
+      Pattern matching
     */
 
-    const exactMatches =
-        findExactMatches(
+    const matches =
+        findRules(
             history
         );
 
 
     /*
-      PARTIAL
+      Weighted support
     */
 
-    const partialMatches =
-        findPartialMatches(
-            history
+    const support =
+        calculateSupport(
+            matches
         );
 
 
     /*
-      Supporting analytics
+      Reversal
+    */
+
+    const reversal =
+        reversalAnalysis(
+            history,
+            support
+        );
+
+
+    /*
+      Decision
+    */
+
+    const decision =
+        decide(
+            history,
+            support
+        );
+
+
+    /*
+      Prediction logic:
+
+      If support says BIG
+      -> BIG
+
+      If support says SMALL
+      -> SMALL
+
+      BUT if current side is opposite,
+      mark reversal.
+
+      This prevents blindly following
+      only the current streak.
+    */
+
+    let prediction =
+        decision.signal;
+
+
+    let predictionCode =
+        decision.signalCode;
+
+
+    /*
+      If support is tied:
+      no prediction.
+    */
+
+    if (
+        support.A ===
+        support.B
+    ) {
+
+        prediction = null;
+
+        predictionCode = null;
+
+    }
+
+
+    /*
+      If no matched next side:
+      no prediction.
+    */
+
+    if (
+        !support.total
+    ) {
+
+        prediction = null;
+
+        predictionCode = null;
+
+    }
+
+
+    /*
+      Status
+    */
+
+    let status =
+        "NO_MATCH";
+
+
+    if (
+        matches.length > 0 &&
+        prediction
+    ) {
+
+        const strongest =
+            matches[0];
+
+
+        if (
+            strongest.matched >=
+            strongest.pattern.length
+        ) {
+
+            status =
+                "EXACT_PATTERN_MATCH";
+
+        } else {
+
+            status =
+                "PATTERN_MATCH";
+
+        }
+
+    }
+    else if (
+        matches.length > 0
+    ) {
+
+        status =
+            "PATTERN_CONFLICT";
+
+    }
+
+
+    /*
+      Windows
     */
 
     const windows = {
 
         last5:
-            analyzeWindow(
+            windowAnalysis(
                 history,
                 5
             ),
 
         last10:
-            analyzeWindow(
+            windowAnalysis(
                 history,
                 10
             ),
 
         last20:
-            analyzeWindow(
+            windowAnalysis(
                 history,
                 20
             ),
 
         last30:
-            analyzeWindow(
+            windowAnalysis(
                 history,
                 30
             )
@@ -2410,585 +1608,700 @@ function analyzePattern(
     };
 
 
-    const streak =
-        currentStreak(
-            history
-        );
+    /*
+      Switching
+    */
 
-
-    const switchInfo =
-        switching(
-            history
-        );
-
-
-    const breakInfo =
-        patternBreak(
+    const switching =
+        switchingAnalysis(
             history
         );
 
 
     /*
-      ========================================================
-      EXACT MATCH HAS TOP PRIORITY
-      ========================================================
+      Human reasons
     */
 
+    const reasons = [];
+
+
     if (
-        exactMatches.length > 0
+        matches.length
     ) {
 
-        const decision =
-            exactDecision(
-                exactMatches
+        reasons.push(
+            `${matches.length} pattern candidates matched`
+        );
+
+    }
+
+
+    if (
+        matches[0]
+    ) {
+
+        reasons.push(
+            `Strongest Rule ${matches[0].rule}: ${matches[0].matched} matched`
+        );
+
+    }
+
+
+    if (
+        support.A >
+        support.B
+    ) {
+
+        reasons.push(
+            `SMALL support ${support.A} > BIG support ${support.B}`
+        );
+
+    }
+    else if (
+        support.B >
+        support.A
+    ) {
+
+        reasons.push(
+            `BIG support ${support.B} > SMALL support ${support.A}`
+        );
+
+    }
+
+
+    if (
+        reversal.reversalWatch
+    ) {
+
+        reasons.push(
+            `REVERSAL WATCH: ${reversal.currentLabel} -> ${reversal.prediction}`
+        );
+
+    }
+
+
+    return {
+
+        status,
+
+        prediction,
+
+        predictionCode,
+
+        confidence:
+            decision.confidencePercent,
+
+        confidenceLevel:
+            decision.confidence,
+
+
+        rawResults:
+            results,
+
+
+        ABHistory:
+            history.join(""),
+
+
+        current:
+            history[
+                history.length - 1
+            ],
+
+
+        currentLabel:
+            abToLabel(
+                history[
+                    history.length - 1
+                ]
+            ),
+
+
+        currentStreak:
+            currentStreak(
+                history
+            ),
+
+
+        matchedRules:
+            matches,
+
+
+        support: {
+
+            A:
+                support.A,
+
+            B:
+                support.B,
+
+            APercent:
+                support.APct,
+
+            BPercent:
+                support.BPct,
+
+            total:
+                support.total
+
+        },
+
+
+        reversal,
+
+
+        decision,
+
+
+        windows,
+
+
+        switching,
+
+
+        reasons,
+
+
+        bestMatch:
+            matches[0]
+                ? {
+
+                    rule:
+                        matches[0].rule,
+
+                    type:
+                        matches[0].type,
+
+                    pattern:
+                        matches[0].pattern,
+
+                    matched:
+                        matches[0].matched,
+
+                    next:
+                        matches[0].next,
+
+                    weight:
+                        matches[0].weight,
+
+                    matchPercent:
+                        matches[0]
+                            .matchPercent
+
+                }
+                : null,
+
+
+        message:
+            prediction
+                ? "Pattern support found."
+                : "No clear pattern prediction.",
+
+
+        warning:
+            "Historical pattern analysis only. Next result is not guaranteed."
+
+    };
+
+}
+
+
+// ============================================================
+// ISSUE INCREMENT
+// ============================================================
+
+function incrementIssue(
+    issue
+) {
+
+    if (
+        issue === null ||
+        issue === undefined
+    ) {
+
+        return null;
+
+    }
+
+
+    const value =
+        String(issue);
+
+
+    if (
+        !/^\d+$/.test(value)
+    ) {
+
+        return null;
+
+    }
+
+
+    try {
+
+        return (
+            BigInt(value) + 1n
+        )
+            .toString()
+            .padStart(
+                value.length,
+                "0"
+            );
+
+    } catch {
+
+        return null;
+
+    }
+
+}
+
+
+// ============================================================
+// ISSUE COMPARE
+// ============================================================
+
+function compareIssue(
+    a,
+    b
+) {
+
+    try {
+
+        const aa =
+            BigInt(
+                String(a)
             );
 
 
-        if (decision) {
-
-            return {
-
-                status:
-                    "EXACT_PATTERN_MATCH",
-
-                prediction:
-                    decision.prediction,
-
-                predictionCode:
-                    decision.predictionCode,
-
-                confidence:
-                    decision.confidence,
-
-                confidenceLevel:
-                    decision.confidenceLevel,
+        const bb =
+            BigInt(
+                String(b)
+            );
 
 
-                matchedRule:
-                    decision.matchedRule,
+        if (
+            aa > bb
+        ) {
 
-                matchedType:
-                    decision.matchedType,
+            return 1;
 
-                matchedPattern:
-                    decision.matchedPattern,
-
-                matchedLength:
-                    decision.matchedLength,
-
-                matchPercent:
-                    100,
+        }
 
 
-                matchedSide:
-                    decision.matchedSide,
+        if (
+            aa < bb
+        ) {
 
-                matchedSideCode:
-                    decision.matchedSideCode,
+            return -1;
 
-
-                logic:
-                    decision.logic,
+        }
 
 
-                bestMatch:
+        return 0;
+
+    } catch {
+
+        return 0;
+
+    }
+
+}
+
+
+// ============================================================
+// WINGOBOT REQUEST
+// ============================================================
+
+function fetchWingoBot() {
+
+    return new Promise(
+        (
+            resolve,
+            reject
+        ) => {
+
+            if (
+                !WINGOBOT_TOKEN
+            ) {
+
+                reject(
+                    new Error(
+                        "WINGOBOT_TOKEN missing"
+                    )
+                );
+
+                return;
+
+            }
+
+
+            const request =
+                https.request(
+
+                    WINGOBOT_API,
+
                     {
 
-                        rule:
-                            decision.bestMatch.rule,
+                        method:
+                            "GET",
 
-                        type:
-                            decision.bestMatch.type,
+                        timeout:
+                            REQUEST_TIMEOUT_MS,
 
-                        pattern:
-                            decision.bestMatch.pattern,
+                        headers: {
 
-                        length:
-                            decision.bestMatch.length
+                            Authorization:
+                                `Bearer ${WINGOBOT_TOKEN}`,
+
+                            Accept:
+                                "application/json",
+
+                            "User-Agent":
+                                "DY-AI-Wingo"
+
+                        }
 
                     },
 
+                    response => {
 
-                allMatches:
-                    decision.allMatches.map(
-                        item => ({
-
-                            rule:
-                                item.rule,
-
-                            type:
-                                item.type,
-
-                            pattern:
-                                item.pattern,
-
-                            length:
-                                item.length
-
-                        })
-                    ),
+                        let body = "";
 
 
-                partialMatches:
-                    partialMatches
-                        .slice(0, 10),
+                        response.on(
+                            "data",
+                            chunk => {
+
+                                body += chunk;
+
+                            }
+                        );
 
 
-                currentStreak:
-                    streak,
+                        response.on(
+                            "end",
+                            () => {
+
+                                if (
+                                    response.statusCode <
+                                        200 ||
+                                    response.statusCode >=
+                                        300
+                                ) {
+
+                                    reject(
+                                        new Error(
+                                            `WingoBot HTTP ${response.statusCode}`
+                                        )
+                                    );
+
+                                    return;
+
+                                }
 
 
-                windows,
+                                try {
+
+                                    resolve(
+                                        JSON.parse(
+                                            body
+                                        )
+                                    );
+
+                                } catch {
+
+                                    reject(
+                                        new Error(
+                                            "Invalid WingoBot JSON"
+                                        )
+                                    );
+
+                                }
+
+                            }
+                        );
+
+                    }
+
+                );
 
 
-                switching:
-                    switchInfo,
+            request.on(
+                "timeout",
+                () => {
+
+                    request.destroy(
+                        new Error(
+                            "WingoBot timeout"
+                        )
+                    );
+
+                }
+            );
 
 
-                patternBreak:
-                    breakInfo,
+            request.on(
+                "error",
+                reject
+            );
 
 
-                sequence:
-                    history.join(""),
+            request.end();
+
+        }
+    );
+
+}
 
 
-                dataSize:
-                    history.length,
+// ============================================================
+// NORMALIZE API HISTORY
+// ============================================================
+
+function normalizeHistory(
+    payload
+) {
+
+    const raw =
+
+        Array.isArray(
+            payload?.history
+        )
+
+            ? payload.history
+
+            : Array.isArray(
+                payload?.data
+            )
+
+                ? payload.data
+
+                : Array.isArray(
+                    payload?.results
+                )
+
+                    ? payload.results
+
+                    : [];
 
 
-                engine:
-                    "25 MASTER + OPPOSITE + EXACT PRIORITY",
+    const output = [];
 
 
-                message:
-                    "Exact pattern matched. Opposite-side pattern rule activated.",
+    for (
+        const item of raw
+    ) {
+
+        const issue =
+            item?.issueNumber ??
+            item?.issue ??
+            item?.period ??
+            item?.periodNumber;
 
 
-                warning:
-                    "Historical pattern analysis only; no result is guaranteed."
+        const number =
+            item?.number ??
+            item?.result ??
+            item?.openNumber ??
+            item?.digit;
 
-            };
+
+        const n =
+            Number(number);
+
+
+        if (
+
+            issue !== undefined &&
+
+            Number.isInteger(n) &&
+
+            n >= 0 &&
+            n <= 9
+
+        ) {
+
+            output.push({
+
+                issueNumber:
+                    String(issue),
+
+                number:
+                    n,
+
+                colour:
+                    item?.colour ??
+                    item?.color ??
+                    null,
+
+                premium:
+                    item?.premium ??
+                    null,
+
+                sum:
+                    item?.sum ??
+                    null
+
+            });
 
         }
 
     }
 
 
-    /*
-      ========================================================
-      STRONG PARTIAL MATCH
-      ========================================================
-    */
-
-    const partial =
-        partialDecision(
-            partialMatches
-        );
-
-
-    if (
-        partial &&
-        partial.prediction
-    ) {
-
-        const best =
-            partialMatches[0];
+    output.sort(
+        (
+            a,
+            b
+        ) =>
+            compareIssue(
+                b.issueNumber,
+                a.issueNumber
+            )
+    );
 
 
-        return {
+    return output;
 
-            status:
-                "STRONG_PARTIAL_PATTERN",
-
-            prediction:
-                partial.prediction,
-
-            predictionCode:
-                partial.predictionCode,
-
-            confidence:
-                partial.confidence,
-
-            confidenceLevel:
-                partial.confidenceLevel,
+}
 
 
-            matchedRule:
-                best?.rule ??
-                null,
+// ============================================================
+// CURRENT ISSUE
+// ============================================================
 
-            matchedType:
-                best?.type ??
-                null,
+function getCurrentIssue(
+    payload
+) {
 
-            matchedPattern:
-                best?.pattern ??
-                null,
+    return (
 
-            matchedLength:
-                best?.matched ??
-                null,
+        payload?.current
+            ?.issueNumber
 
-            matchPercent:
-                best?.matchPercent ??
-                null,
+        ??
 
+        payload?.currentIssue
 
-            matchedSide:
-                best
-                    ? getPatternNextSide(
-                        best
-                    )?.matchedLabel ||
-                    null
-                    : null,
+        ??
 
+        payload?.current
+            ?.issue
 
-            logic:
-                partial.logic,
+        ??
 
+        payload?.current
+            ?.period
 
-            support: {
+        ??
 
-                big:
-                    partial.bigSupport,
+        null
 
-                small:
-                    partial.smallSupport,
+    );
 
-                gap:
-                    partial.gap
-
-            },
+}
 
 
-            bestMatch:
-                best
-                    ? {
+// ============================================================
+// REFRESH PROVIDER
+// ============================================================
 
-                        rule:
-                            best.rule,
-
-                        type:
-                            best.type,
-
-                        pattern:
-                            best.pattern,
-
-                        matched:
-                            best.matched,
-
-                        length:
-                            best.length,
-
-                        percent:
-                            best.matchPercent
-
-                    }
-                    : null,
-
-
-            partialMatches:
-                partialMatches
-                    .slice(
-                        0,
-                        15
-                    ),
-
-
-            evidence:
-                partial.evidence,
-
-
-            currentStreak:
-                streak,
-
-
-            windows,
-
-
-            switching:
-                switchInfo,
-
-
-            patternBreak:
-                breakInfo,
-
-
-            sequence:
-                history.join(""),
-
-
-            dataSize:
-                history.length,
-
-
-            engine:
-                "25 MASTER + OPPOSITE + EXACT + STRONG PARTIAL",
-
-
-            message:
-                "Strong partial pattern consensus found.",
-
-
-            warning:
-                "Partial historical pattern is not a guarantee."
-
-        };
-
-    }
-
-
-    /*
-      ========================================================
-      CONFLICT
-      ========================================================
-    */
+async function refreshProvider() {
 
     if (
-        partial &&
-        partial.status ===
-        "CONFLICTING_PARTIAL"
+        refreshInProgress
     ) {
 
-        return {
-
-            status:
-                "CONFLICTING_PARTIAL",
-
-            prediction:
-                null,
-
-            predictionCode:
-                null,
-
-            confidence:
-                0,
-
-
-            support: {
-
-                big:
-                    partial.bigSupport,
-
-                small:
-                    partial.smallSupport,
-
-                gap:
-                    partial.gap
-
-            },
-
-
-            partialMatches:
-                partialMatches
-                    .slice(
-                        0,
-                        15
-                    ),
-
-
-            currentStreak:
-                streak,
-
-
-            windows,
-
-
-            switching:
-                switchInfo,
-
-
-            patternBreak:
-                breakInfo,
-
-
-            sequence:
-                history.join(""),
-
-
-            dataSize:
-                history.length,
-
-
-            engine:
-                "25 MASTER + OPPOSITE + EXACT + STRONG PARTIAL",
-
-
-            message:
-                "Patterns are conflicting. Prediction withheld.",
-
-
-            warning:
-                "No forced prediction during pattern conflict."
-
-        };
+        return providerState;
 
     }
 
 
-    /*
-      ========================================================
-      PARTIAL WATCH
-      ========================================================
-    */
-
-    const watch =
-        partialMatches[0];
+    refreshInProgress =
+        true;
 
 
-    if (watch) {
+    try {
 
-        return {
-
-            status:
-                "PARTIAL_PATTERN_WATCH",
-
-            prediction:
-                null,
-
-            predictionCode:
-                null,
-
-            confidence:
-                0,
+        const payload =
+            await fetchWingoBot();
 
 
-            matchedRule:
-                watch.rule,
-
-            matchedType:
-                watch.type,
-
-            matchedPattern:
-                watch.pattern,
-
-            matchedLength:
-                watch.matched,
-
-            matchPercent:
-                watch.matchPercent,
+        const history =
+            normalizeHistory(
+                payload
+            );
 
 
-            currentStreak:
-                streak,
+        const currentIssue =
+            getCurrentIssue(
+                payload
+            );
 
 
-            windows,
+        providerState = {
 
+            ok: true,
 
-            switching:
-                switchInfo,
-
-
-            patternBreak:
-                breakInfo,
-
-
-            partialMatches:
-                partialMatches
-                    .slice(
-                        0,
-                        15
+            currentIssue:
+                currentIssue !== null
+                    ? String(
+                        currentIssue
+                    )
+                    : (
+                        history[0]
+                            ?.issueNumber ||
+                        null
                     ),
 
+            history,
 
-            sequence:
-                history.join(""),
-
-
-            dataSize:
+            fetched:
+                Number(
+                    payload?.stats?.fetched
+                ) ||
                 history.length,
 
+            lastUpdated:
+                Number(
+                    payload?.stats?.last_updated
+                ) ||
+                Date.now(),
 
-            engine:
-                "25 MASTER + OPPOSITE + EXACT + STRONG PARTIAL",
-
-
-            message:
-                "Partial similarity found but support is not strong enough.",
-
-
-            warning:
-                "Prediction withheld until stronger pattern evidence appears."
+            error:
+                null
 
         };
 
+
+        return providerState;
+
+    } catch (
+        error
+    ) {
+
+        providerState = {
+
+            ...providerState,
+
+            ok: false,
+
+            error:
+                error.message ||
+                "Provider error"
+
+        };
+
+
+        return providerState;
+
+    } finally {
+
+        refreshInProgress =
+            false;
+
     }
-
-
-    /*
-      ========================================================
-      NO PATTERN
-      ========================================================
-    */
-
-    return {
-
-        status:
-            "NO_PATTERN_MATCH",
-
-        prediction:
-            null,
-
-        predictionCode:
-            null,
-
-        confidence:
-            0,
-
-
-        matchedRule:
-            null,
-
-        matchedType:
-            null,
-
-        matchedPattern:
-            null,
-
-        matchedLength:
-            null,
-
-        matchPercent:
-            null,
-
-
-        currentStreak:
-            streak,
-
-
-        windows,
-
-
-        switching:
-            switchInfo,
-
-
-        patternBreak:
-            breakInfo,
-
-
-        sequence:
-            history.join(""),
-
-
-        dataSize:
-            history.length,
-
-
-        engine:
-            "25 MASTER + OPPOSITE + EXACT + STRONG PARTIAL",
-
-
-        message:
-            "No usable master pattern found.",
-
-
-        warning:
-            "No pattern-based prediction generated."
-
-    };
 
 }
 
@@ -2999,45 +2312,35 @@ function analyzePattern(
 
 function resolveTargetIssue() {
 
-    const history =
-        providerState.history;
-
-
     if (
-        !history.length
+        providerState.currentIssue
     ) {
 
-        return null;
+        const latest =
+            providerState.history[0]
+                ?.issueNumber;
+
+
+        if (
+            latest &&
+            compareIssue(
+                providerState.currentIssue,
+                latest
+            ) > 0
+        ) {
+
+            return String(
+                providerState.currentIssue
+            );
+
+        }
 
     }
 
 
     const latest =
-        history[0]
+        providerState.history[0]
             ?.issueNumber;
-
-
-    const providerCurrent =
-        providerState.currentIssue;
-
-
-    if (
-
-        providerCurrent &&
-        latest &&
-
-        compareIssue(
-            providerCurrent,
-            latest
-        ) > 0
-
-    ) {
-
-        return String(
-            providerCurrent
-        );
-
-    }
 
 
     return incrementIssue(
@@ -3048,176 +2351,57 @@ function resolveTargetIssue() {
 
 
 // ============================================================
-// GENERATE MODEL
+// DATABASE INIT
 // ============================================================
 
-async function generateModel() {
+async function initDatabase() {
 
-    /*
-      WingoBot:
-      newest -> oldest
+    if (!pool) {
 
-      Engine:
-      oldest -> newest
-    */
-
-    const numbers =
-        providerState.history
-            .map(
-                row =>
-                    Number(
-                        row.number
-                    )
-            )
-            .filter(
-                n =>
-                    Number.isInteger(n) &&
-                    n >= 0 &&
-                    n <= 9
-            )
-            .reverse();
-
-
-    const analysis =
-        analyzePattern(
-            numbers
+        console.log(
+            "[DB] DATABASE_URL not configured"
         );
 
-
-    const targetIssue =
-        resolveTargetIssue();
-
-
-    const generatedAt =
-        now();
-
-
-    /*
-      Build model object
-    */
-
-    modelCache = {
-
-        targetIssue,
-
-        prediction: {
-
-            targetIssue,
-
-            prediction:
-                analysis.prediction ||
-                null,
-
-            predictionCode:
-                analysis.predictionCode ||
-                null,
-
-            confidence:
-                Number(
-                    analysis.confidence ||
-                    0
-                ),
-
-            confidenceLevel:
-                analysis.confidenceLevel ||
-                "NO_SIGNAL",
-
-
-            status:
-                analysis.status,
-
-
-            classification:
-                analysis.status,
-
-
-            matchedRule:
-                analysis.matchedRule ??
-                null,
-
-
-            matchedType:
-                analysis.matchedType ??
-                null,
-
-
-            matchedPattern:
-                analysis.matchedPattern ??
-                null,
-
-
-            matchedLength:
-                analysis.matchedLength ??
-                null,
-
-
-            matchPercent:
-                analysis.matchPercent ??
-                null,
-
-
-            matchedSide:
-                analysis.matchedSide ??
-                null,
-
-
-            reason:
-                analysis.logic ||
-                analysis.message ||
-                "",
-
-
-            modelVersion:
-                MODEL_VERSION,
-
-
-            generatedAt,
-
-
-            analysis
-
-        },
-
-
-        generatedAt
-
-    };
-
-
-    /*
-      Save only when there is
-      an actual usable prediction.
-    */
-
-    if (
-
-        analysis.prediction &&
-
-        (
-            analysis.status ===
-                "EXACT_PATTERN_MATCH" ||
-
-            analysis.status ===
-                "STRONG_PARTIAL_PATTERN"
-
-        )
-
-    ) {
-
-        await savePrediction(
-            targetIssue,
-            analysis
-        );
+        return;
 
     }
 
 
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS access_keys (
+            id SERIAL PRIMARY KEY,
+            access_key TEXT UNIQUE NOT NULL,
+            device_id TEXT,
+            created_at BIGINT NOT NULL,
+            last_seen BIGINT DEFAULT 0
+        );
+    `);
+
+
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS prediction_records (
+            id SERIAL PRIMARY KEY,
+            target_issue TEXT NOT NULL,
+            prediction TEXT NOT NULL,
+            confidence INTEGER DEFAULT 0,
+            model_version TEXT,
+            actual_number INTEGER,
+            actual_result TEXT,
+            created_at BIGINT NOT NULL,
+            settled_at BIGINT
+        );
+    `);
+
+
+    await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_prediction_issue
+        ON prediction_records(target_issue);
+    `);
+
+
     console.log(
-        `[MODEL] Target=${targetIssue} Status=${analysis.status} Prediction=${analysis.prediction || "NONE"}`
+        "[DB] Database ready"
     );
-
-
-    return modelCache;
 
 }
 
@@ -3298,18 +2482,19 @@ async function savePrediction(
 
                 MODEL_VERSION,
 
-                now()
+                Date.now()
 
             ]
         );
 
 
         console.log(
-            `[DB] Prediction saved: ${targetIssue} -> ${analysis.prediction}`
+            `[DB] Saved ${targetIssue} -> ${analysis.prediction}`
         );
 
-
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "[DB SAVE]",
@@ -3322,7 +2507,7 @@ async function savePrediction(
 
 
 // ============================================================
-// SETTLE
+// SETTLE PREDICTIONS
 // ============================================================
 
 async function settlePredictions() {
@@ -3334,16 +2519,12 @@ async function settlePredictions() {
     }
 
 
-    const history =
-        providerState.history
-            .slice(
+    for (
+        const row of
+            providerState.history.slice(
                 0,
                 100
-            );
-
-
-    for (
-        const row of history
+            )
     ) {
 
         const actualNumber =
@@ -3353,7 +2534,7 @@ async function settlePredictions() {
 
 
         const actualSide =
-            numberToSide(
+            numberToAB(
                 actualNumber
             );
 
@@ -3411,7 +2592,7 @@ async function settlePredictions() {
 
 
             const predictedSide =
-                labelToSide(
+                labelToAB(
                     record.prediction
                 );
 
@@ -3449,7 +2630,7 @@ async function settlePredictions() {
 
                     resultStatus,
 
-                    now(),
+                    Date.now(),
 
                     record.id
 
@@ -3457,15 +2638,12 @@ async function settlePredictions() {
             );
 
 
-            console.log(
-                `[SETTLE] ${row.issueNumber} ${record.prediction} -> ${resultStatus}`
-            );
-
-
-        } catch (error) {
+        } catch (
+            error
+        ) {
 
             console.error(
-                "[DB SETTLE]",
+                "[SETTLE]",
                 error.message
             );
 
@@ -3477,10 +2655,160 @@ async function settlePredictions() {
 
 
 // ============================================================
-// ACCESS AUTH
+// GENERATE MODEL
 // ============================================================
 
-function getAccessKey(req) {
+async function generateModel() {
+
+    /*
+      WingoBot history:
+      newest -> oldest
+
+      Engine ko:
+      oldest -> newest
+    */
+
+    const numbers =
+        providerState.history
+            .map(
+                row =>
+                    Number(
+                        row.number
+                    )
+            )
+            .filter(
+                n =>
+                    Number.isInteger(n) &&
+                    n >= 0 &&
+                    n <= 9
+            )
+            .reverse();
+
+
+    const analysis =
+        analyze(
+            numbers
+        );
+
+
+    const targetIssue =
+        resolveTargetIssue();
+
+
+    const generatedAt =
+        Date.now();
+
+
+    modelCache = {
+
+        targetIssue,
+
+        prediction: {
+
+            targetIssue,
+
+            prediction:
+                analysis.prediction ||
+                null,
+
+            predictionCode:
+                analysis.predictionCode ||
+                null,
+
+            confidence:
+                Number(
+                    analysis.confidence ||
+                    0
+                ),
+
+            confidenceLevel:
+                analysis.confidenceLevel ||
+                "LOW",
+
+            status:
+                analysis.status,
+
+            classification:
+                analysis.status,
+
+            matchedRule:
+                analysis.bestMatch
+                    ?.rule ??
+                null,
+
+            matchedType:
+                analysis.bestMatch
+                    ?.type ??
+                null,
+
+            matchedPattern:
+                analysis.bestMatch
+                    ?.pattern ??
+                null,
+
+            matchedLength:
+                analysis.bestMatch
+                    ?.matched ??
+                null,
+
+            matchPercent:
+                analysis.bestMatch
+                    ?.matchPercent ??
+                null,
+
+            matchedSide:
+                analysis.currentLabel ||
+                null,
+
+            reason:
+                analysis.reversal
+                    ?.reason ||
+                analysis.message ||
+                "",
+
+            modelVersion:
+                MODEL_VERSION,
+
+            generatedAt,
+
+            analysis
+
+        },
+
+        generatedAt
+
+    };
+
+
+    if (
+        analysis.prediction
+    ) {
+
+        await savePrediction(
+            targetIssue,
+            analysis
+        );
+
+    }
+
+
+    console.log(
+        `[MODEL] ${targetIssue} | ${analysis.status} | ${analysis.prediction || "NO PREDICTION"} | ${analysis.confidence || 0}%`
+    );
+
+
+    return modelCache;
+
+}
+
+
+// ============================================================
+// ACCESS KEY
+// ============================================================
+
+function getAccessKey(
+    req
+) {
 
     return String(
         req.headers[
@@ -3491,7 +2819,9 @@ function getAccessKey(req) {
 }
 
 
-function getDeviceId(req) {
+function getDeviceId(
+    req
+) {
 
     return String(
         req.headers[
@@ -3502,7 +2832,9 @@ function getDeviceId(req) {
 }
 
 
-function getAdminKey(req) {
+function getAdminKey(
+    req
+) {
 
     return String(
         req.headers[
@@ -3522,11 +2854,15 @@ async function validateAccess(
 ) {
 
     const accessKey =
-        getAccessKey(req);
+        getAccessKey(
+            req
+        );
 
 
     const deviceId =
-        getDeviceId(req);
+        getDeviceId(
+            req
+        );
 
 
     if (
@@ -3627,7 +2963,7 @@ async function validateAccess(
 
             deviceId,
 
-            now(),
+            Date.now(),
 
             row.id
 
@@ -3654,13 +2990,17 @@ async function validateAccess(
 // ADMIN AUTH
 // ============================================================
 
-function requireAdmin(req) {
+function requireAdmin(
+    req
+) {
 
     return (
 
         ADMIN_KEY.length > 0 &&
 
-        getAdminKey(req) ===
+        getAdminKey(
+            req
+        ) ===
         ADMIN_KEY
 
     );
@@ -3669,7 +3009,7 @@ function requireAdmin(req) {
 
 
 // ============================================================
-// KEY CHECK
+// KEY CHECK API
 // ============================================================
 
 async function keyCheck(
@@ -3685,7 +3025,7 @@ async function keyCheck(
 
     if (!auth.ok) {
 
-        json(
+        sendJSON(
             res,
             401,
             auth
@@ -3696,7 +3036,7 @@ async function keyCheck(
     }
 
 
-    json(
+    sendJSON(
         res,
         200,
         {
@@ -3721,7 +3061,7 @@ async function keyCheck(
 // STATE API
 // ============================================================
 
-async function stateApi(
+async function stateAPI(
     req,
     res
 ) {
@@ -3734,7 +3074,7 @@ async function stateApi(
 
     if (!auth.ok) {
 
-        json(
+        sendJSON(
             res,
             401,
             auth
@@ -3756,9 +3096,8 @@ async function stateApi(
 
 
     /*
-      IMPORTANT:
-      Generate fresh model if target
-      changed OR no model exists.
+      New target =
+      new model.
     */
 
     if (
@@ -3776,7 +3115,7 @@ async function stateApi(
 
 
     /*
-      DB predictions
+      Prediction DB records
     */
 
     let records = [];
@@ -3808,10 +3147,12 @@ async function stateApi(
             records =
                 result.rows;
 
-        } catch (error) {
+        } catch (
+            error
+        ) {
 
             console.error(
-                "[DB HISTORY]",
+                "[HISTORY DB]",
                 error.message
             );
 
@@ -3829,13 +3170,10 @@ async function stateApi(
     ) {
 
         recordMap.set(
-
             String(
                 record.target_issue
             ),
-
             record
-
         );
 
     }
@@ -3861,50 +3199,17 @@ async function stateApi(
 
 
                     const side =
-                        numberToSide(
+                        numberToAB(
                             number
                         );
 
 
-                    const predictionRecord =
+                    const record =
                         recordMap.get(
                             String(
                                 row.issueNumber
                             )
                         );
-
-
-                    let prediction =
-                        null;
-
-
-                    let result =
-                        "PENDING";
-
-
-                    if (
-                        predictionRecord
-                    ) {
-
-                        prediction =
-                            String(
-                                predictionRecord.prediction ||
-                                ""
-                            ).toUpperCase();
-
-
-                        if (
-                            predictionRecord.actual_result
-                        ) {
-
-                            result =
-                                String(
-                                    predictionRecord.actual_result
-                                ).toUpperCase();
-
-                        }
-
-                    }
 
 
                     return {
@@ -3915,41 +3220,42 @@ async function stateApi(
                         issueNumber:
                             row.issueNumber,
 
+                        number,
+
                         actual:
                             number,
-
-                        number,
 
                         type:
                             side,
 
                         label:
-                            sideToLabel(
+                            abToLabel(
                                 side
                             ),
 
-                        prediction,
+                        prediction:
+                            record?.prediction ||
+                            null,
 
                         ai:
-                            prediction,
+                            record?.prediction ||
+                            null,
 
                         confidence:
-                            predictionRecord
+                            record
                                 ? Number(
-                                    predictionRecord.confidence ||
+                                    record.confidence ||
                                     0
                                 )
                                 : null,
 
-                        result,
+                        result:
+                            record?.actual_result ||
+                            "PENDING",
 
                         actualResult:
-                            result,
-
-                        modelVersion:
-                            predictionRecord
-                                ?.model_version ||
-                            null
+                            record?.actual_result ||
+                            "PENDING"
 
                     };
 
@@ -3961,7 +3267,7 @@ async function stateApi(
         modelCache.prediction;
 
 
-    json(
+    sendJSON(
         res,
         200,
         {
@@ -3969,7 +3275,7 @@ async function stateApi(
             ok: true,
 
             serverTime:
-                now(),
+                Date.now(),
 
 
             targetIssue,
@@ -4010,15 +3316,15 @@ async function stateApi(
 
                 confidenceLevel:
                     model?.confidenceLevel ||
-                    "NO_SIGNAL",
+                    "LOW",
 
                 status:
                     model?.status ||
-                    "NO_PATTERN_MATCH",
+                    "NO_MATCH",
 
                 classification:
                     model?.classification ||
-                    "NO_PATTERN_MATCH",
+                    "NO_MATCH",
 
                 matchedRule:
                     model?.matchedRule ??
@@ -4053,7 +3359,7 @@ async function stateApi(
 
                 generatedAt:
                     model?.generatedAt ||
-                    now(),
+                    Date.now(),
 
                 analysis:
                     model?.analysis ||
@@ -4099,7 +3405,7 @@ async function stateApi(
 
 
 // ============================================================
-// PREDICTION HISTORY API
+// PREDICTION HISTORY
 // ============================================================
 
 async function predictionHistory(
@@ -4108,7 +3414,7 @@ async function predictionHistory(
 
     if (!pool) {
 
-        json(
+        sendJSON(
             res,
             200,
             {
@@ -4145,7 +3451,7 @@ async function predictionHistory(
         );
 
 
-    json(
+    sendJSON(
         res,
         200,
         {
@@ -4169,7 +3475,7 @@ async function adminStatus(
     res
 ) {
 
-    json(
+    sendJSON(
         res,
         200,
         {
@@ -4177,41 +3483,22 @@ async function adminStatus(
             ok: true,
 
             serverTime:
-                now(),
+                Date.now(),
 
             modelVersion:
                 MODEL_VERSION,
 
             engine:
-                "25 MASTER + OPPOSITE + EXACT + STRONG PARTIAL",
+                "25 RULE PATTERN + OPPOSITE + WEIGHTED SUPPORT",
 
-            originalRules:
-                Object.keys(
-                    MASTER_PATTERNS
-                ).length,
+            masterRules:
+                RULES.length,
 
             totalPatterns:
                 PATTERN_DATABASE.length,
 
             thinkingDurationMs:
                 THINKING_DURATION_MS,
-
-
-            settings: {
-
-                partialMinimumMatched:
-                    PARTIAL_MIN_MATCH,
-
-                partialMinimumPercent:
-                    PARTIAL_MIN_PERCENT,
-
-                minimumPartialSupport:
-                    MIN_PARTIAL_SUPPORT,
-
-                minimumSupportGap:
-                    MIN_SUPPORT_GAP
-
-            },
 
 
             provider: {
@@ -4254,7 +3541,7 @@ function adminPing(
     res
 ) {
 
-    json(
+    sendJSON(
         res,
         200,
         {
@@ -4265,7 +3552,7 @@ function adminPing(
                 "PONG",
 
             time:
-                now(),
+                Date.now(),
 
             modelVersion:
                 MODEL_VERSION
@@ -4288,7 +3575,7 @@ async function adminWingoTest(
         await refreshProvider();
 
 
-    json(
+    sendJSON(
         res,
         200,
         {
@@ -4341,7 +3628,7 @@ async function adminModelTest(
         await generateModel();
 
 
-    json(
+    sendJSON(
         res,
         200,
         {
@@ -4369,17 +3656,17 @@ async function adminModelTest(
             confidenceLevel:
                 model.prediction
                     ?.confidenceLevel ||
-                "NO_SIGNAL",
+                "LOW",
 
             status:
                 model.prediction
                     ?.status ||
-                "NO_PATTERN_MATCH",
+                "NO_MATCH",
 
             classification:
                 model.prediction
                     ?.classification ||
-                "NO_PATTERN_MATCH",
+                "NO_MATCH",
 
             matchedRule:
                 model.prediction
@@ -4406,11 +3693,6 @@ async function adminModelTest(
                     ?.matchPercent ??
                 null,
 
-            matchedSide:
-                model.prediction
-                    ?.matchedSide ??
-                null,
-
             reason:
                 model.prediction
                     ?.reason ||
@@ -4428,7 +3710,7 @@ async function adminModelTest(
 
 
 // ============================================================
-// ADMIN KEYS LIST
+// ADMIN KEY LIST
 // ============================================================
 
 async function adminKeysList(
@@ -4437,7 +3719,7 @@ async function adminKeysList(
 
     if (!pool) {
 
-        json(
+        sendJSON(
             res,
             500,
             {
@@ -4470,7 +3752,7 @@ async function adminKeysList(
         );
 
 
-    json(
+    sendJSON(
         res,
         200,
         {
@@ -4497,7 +3779,7 @@ async function adminKeysCreate(
 
     if (!pool) {
 
-        json(
+        sendJSON(
             res,
             500,
             {
@@ -4521,7 +3803,7 @@ async function adminKeysCreate(
         );
 
 
-    const customKey =
+    const requested =
         String(
             body?.key ||
             body?.access_key ||
@@ -4530,8 +3812,14 @@ async function adminKeysCreate(
 
 
     const key =
-        customKey ||
-        randomKey();
+        requested ||
+        (
+            "DY-" +
+            crypto
+                .randomBytes(12)
+                .toString("hex")
+                .toUpperCase()
+        );
 
 
     try {
@@ -4552,13 +3840,13 @@ async function adminKeysCreate(
 
                     key,
 
-                    now()
+                    Date.now()
 
                 ]
             );
 
 
-        json(
+        sendJSON(
             res,
             200,
             {
@@ -4579,9 +3867,11 @@ async function adminKeysCreate(
             }
         );
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
-        json(
+        sendJSON(
             res,
             400,
             {
@@ -4616,7 +3906,7 @@ async function adminKeysDelete(
 
     if (!pool) {
 
-        json(
+        sendJSON(
             res,
             500,
             {
@@ -4659,7 +3949,7 @@ async function adminKeysDelete(
         !key
     ) {
 
-        json(
+        sendJSON(
             res,
             400,
             {
@@ -4711,7 +4001,7 @@ async function adminKeysDelete(
     }
 
 
-    json(
+    sendJSON(
         res,
         200,
         {
@@ -4739,7 +4029,7 @@ async function adminResetDevice(
 
     if (!pool) {
 
-        json(
+        sendJSON(
             res,
             500,
             {
@@ -4777,7 +4067,7 @@ async function adminResetDevice(
         !key
     ) {
 
-        json(
+        sendJSON(
             res,
             400,
             {
@@ -4831,7 +4121,7 @@ async function adminResetDevice(
     }
 
 
-    json(
+    sendJSON(
         res,
         200,
         {
@@ -4849,6 +4139,137 @@ async function adminResetDevice(
 
 
 // ============================================================
+// JSON RESPONSE
+// ============================================================
+
+function sendJSON(
+    res,
+    status,
+    data
+) {
+
+    const body =
+        JSON.stringify(
+            data
+        );
+
+
+    res.writeHead(
+        status,
+        {
+
+            "Content-Type":
+                "application/json; charset=utf-8",
+
+            "Cache-Control":
+                "no-store",
+
+            "Access-Control-Allow-Origin":
+                "*",
+
+            "Access-Control-Allow-Headers":
+                "Content-Type, X-Access-Key, X-Device-Id, X-Admin-Key",
+
+            "Access-Control-Allow-Methods":
+                "GET, POST, DELETE, OPTIONS"
+
+        }
+    );
+
+
+    res.end(
+        body
+    );
+
+}
+
+
+// ============================================================
+// READ BODY
+// ============================================================
+
+function readBody(
+    req
+) {
+
+    return new Promise(
+        (
+            resolve,
+            reject
+        ) => {
+
+            let body = "";
+
+
+            req.on(
+                "data",
+                chunk => {
+
+                    body += chunk;
+
+
+                    if (
+                        body.length >
+                        1024 * 1024
+                    ) {
+
+                        reject(
+                            new Error(
+                                "Body too large"
+                            )
+                        );
+
+                        req.destroy();
+
+                    }
+
+                }
+            );
+
+
+            req.on(
+                "end",
+                () => {
+
+                    if (!body) {
+
+                        resolve({});
+
+                        return;
+
+                    }
+
+
+                    try {
+
+                        resolve(
+                            JSON.parse(
+                                body
+                            )
+                        );
+
+                    } catch {
+
+                        resolve({});
+
+                    }
+
+                }
+            );
+
+
+            req.on(
+                "error",
+                reject
+            );
+
+        }
+    );
+
+}
+
+
+// ============================================================
 // HEALTH
 // ============================================================
 
@@ -4856,7 +4277,7 @@ function health(
     res
 ) {
 
-    json(
+    sendJSON(
         res,
         200,
         {
@@ -4870,10 +4291,10 @@ function health(
                 MODEL_VERSION,
 
             engine:
-                "25 MASTER + OPPOSITE + EXACT + STRONG PARTIAL",
+                "25 RULE PATTERN + OPPOSITE + WEIGHTED SUPPORT",
 
             time:
-                now(),
+                Date.now(),
 
             providerOk:
                 providerState.ok,
@@ -4891,7 +4312,7 @@ function health(
 // CONTENT TYPE
 // ============================================================
 
-function contentType(
+function getContentType(
     filePath
 ) {
 
@@ -4945,7 +4366,7 @@ function contentType(
 
 
 // ============================================================
-// STATIC SERVER
+// STATIC FILE
 // ============================================================
 
 function serveStatic(
@@ -4969,9 +4390,11 @@ function serveStatic(
 
     } catch {
 
-        text(
-            res,
-            400,
+        res.writeHead(
+            400
+        );
+
+        res.end(
             "Bad Request"
         );
 
@@ -4999,9 +4422,11 @@ function serveStatic(
         )
     ) {
 
-        text(
-            res,
-            403,
+        res.writeHead(
+            403
+        );
+
+        res.end(
             "Forbidden"
         );
 
@@ -5022,9 +4447,11 @@ function serveStatic(
                 !stats.isFile()
             ) {
 
-                text(
-                    res,
-                    404,
+                res.writeHead(
+                    404
+                );
+
+                res.end(
                     "Not Found"
                 );
 
@@ -5034,13 +4461,13 @@ function serveStatic(
 
 
             const type =
-                contentType(
+                getContentType(
                     filePath
                 );
 
 
             /*
-              MP3 RANGE
+              MP3 RANGE SUPPORT
             */
 
             if (
@@ -5057,10 +4484,12 @@ function serveStatic(
 
                 if (!match) {
 
-                    text(
-                        res,
-                        416,
-                        "Invalid range"
+                    res.writeHead(
+                        416
+                    );
+
+                    res.end(
+                        "Invalid Range"
                     );
 
                     return;
@@ -5121,7 +4550,9 @@ function serveStatic(
                             "bytes",
 
                         "Content-Length":
-                            end - start + 1
+                            end -
+                            start +
+                            1
 
                     }
                 );
@@ -5133,7 +4564,9 @@ function serveStatic(
                         start,
                         end
                     }
-                ).pipe(res);
+                ).pipe(
+                    res
+                );
 
 
                 return;
@@ -5157,7 +4590,9 @@ function serveStatic(
 
             fs.createReadStream(
                 filePath
-            ).pipe(res);
+            ).pipe(
+                res
+            );
 
         }
     );
@@ -5166,7 +4601,7 @@ function serveStatic(
 
 
 // ============================================================
-// SERVER
+// HTTP SERVER
 // ============================================================
 
 const server =
@@ -5227,7 +4662,9 @@ const server =
                     "/health"
                 ) {
 
-                    health(res);
+                    health(
+                        res
+                    );
 
                     return;
 
@@ -5235,7 +4672,7 @@ const server =
 
 
                 /*
-                  KEY CHECK
+                  ACCESS KEY CHECK
                 */
 
                 if (
@@ -5266,7 +4703,7 @@ const server =
                         "GET"
                 ) {
 
-                    await stateApi(
+                    await stateAPI(
                         req,
                         res
                     );
@@ -5293,9 +4730,11 @@ const server =
                         );
 
 
-                    if (!auth.ok) {
+                    if (
+                        !auth.ok
+                    ) {
 
-                        json(
+                        sendJSON(
                             res,
                             401,
                             auth
@@ -5331,7 +4770,7 @@ const server =
                         )
                     ) {
 
-                        json(
+                        sendJSON(
                             res,
                             401,
                             {
@@ -5525,7 +4964,10 @@ const server =
                     pathname
                 );
 
-            } catch (error) {
+
+            } catch (
+                error
+            ) {
 
                 console.error(
                     "[SERVER ERROR]",
@@ -5537,7 +4979,7 @@ const server =
                     !res.headersSent
                 ) {
 
-                    json(
+                    sendJSON(
                         res,
                         500,
                         {
@@ -5546,7 +4988,7 @@ const server =
 
                             error:
                                 error.message ||
-                                "Internal server error"
+                                "Internal Server Error"
 
                         }
                     );
@@ -5564,7 +5006,7 @@ const server =
 
 
 // ============================================================
-// BACKGROUND
+// BACKGROUND REFRESH
 // ============================================================
 
 async function backgroundRefresh() {
@@ -5599,7 +5041,9 @@ async function backgroundRefresh() {
 
         }
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "[BACKGROUND]",
@@ -5612,7 +5056,7 @@ async function backgroundRefresh() {
 
 
 // ============================================================
-// START
+// START SERVER
 // ============================================================
 
 async function start() {
@@ -5637,15 +5081,15 @@ async function start() {
             () => {
 
                 console.log(
-                    "=============================================="
+                    "================================================"
                 );
 
                 console.log(
-                    "          DY AI WINGO SERVER"
+                    "             DY AI WINGO SERVER"
                 );
 
                 console.log(
-                    "=============================================="
+                    "================================================"
                 );
 
                 console.log(
@@ -5657,37 +5101,26 @@ async function start() {
                 );
 
                 console.log(
-                    `MASTER RULES: ${
-                        Object.keys(
-                            MASTER_PATTERNS
-                        ).length
-                    }`
+                    `MASTER RULES: ${RULES.length}`
                 );
 
                 console.log(
-                    `TOTAL PATTERNS: ${
-                        PATTERN_DATABASE.length
-                    }`
+                    `TOTAL PATTERNS: ${PATTERN_DATABASE.length}`
                 );
 
                 console.log(
-                    `HISTORY: ${
-                        providerState.history.length
-                    }`
+                    `HISTORY: ${providerState.history.length}`
                 );
 
                 console.log(
-                    `TARGET: ${
-                        modelCache.targetIssue ||
-                        "NONE"
-                    }`
+                    `TARGET: ${modelCache.targetIssue || "NONE"}`
                 );
 
                 console.log(
                     `STATUS: ${
                         modelCache.prediction
                             ?.status ||
-                        "NO_PATTERN_MATCH"
+                        "NO_MATCH"
                     }`
                 );
 
@@ -5708,7 +5141,7 @@ async function start() {
                 );
 
                 console.log(
-                    "=============================================="
+                    "================================================"
                 );
 
             }
@@ -5721,7 +5154,9 @@ async function start() {
         );
 
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "[START ERROR]",
@@ -5737,7 +5172,7 @@ async function start() {
 
 
 // ============================================================
-// PROCESS ERRORS
+// ERROR HANDLERS
 // ============================================================
 
 process.on(
