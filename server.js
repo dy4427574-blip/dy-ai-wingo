@@ -3,34 +3,36 @@
 /*
 ============================================================
                  DY AI WINGO SERVER
-        HUMAN PATTERN + OPPOSITE PATTERN ENGINE
+        TASHAN-WIN HUMAN PATTERN MATCH ENGINE
 ============================================================
 
-0-4 = SMALL = S
-5-9 = BIG   = B
+A = SMALL
+B = BIG
 
-ENGINE:
+0-4 = SMALL
+5-9 = BIG
 
-1. Supplied 10-result patterns
-2. Automatic opposite patterns
-3. Exact current last-10 matching
-4. Partial current pattern matching
-5. Historical occurrence search
-6. Historical NEXT result analysis
-7. Original vs Opposite comparison
-8. Pattern confidence
-9. Conflict protection
-10. Pattern-break information
-11. Streak / switching information
-12. PostgreSQL prediction history
-13. WIN / LOSS settlement
-14. WingoBot live history
-15. Access-key system
-16. Admin system
+MAIN RULE:
+
+1. Live history -> A/B
+2. Last history ko 25 master patterns se compare
+3. Har pattern ka opposite automatically generate
+4. EXACT MATCH ko highest priority
+5. Exact match hone par:
+      A / SMALL -> B / BIG
+      B / BIG   -> A / SMALL
+6. Multiple exact matches:
+      longest pattern wins
+7. Same length:
+      ORIGINAL priority
+8. Partial match:
+      WATCH ONLY
+      prediction = null
+9. No pattern:
+      prediction = null
 
 IMPORTANT:
-
-Pattern matching is historical analysis only.
+Historical pattern analysis only.
 No result is guaranteed.
 ============================================================
 */
@@ -65,7 +67,7 @@ const WINGOBOT_API =
     "https://api.wingobot.com/v2/30-sec-game-history";
 
 const MODEL_VERSION =
-    "DY-AI-HUMAN-PATTERN-V5";
+    "DY-AI-TASHAN-PATTERN-V6";
 
 const THINKING_DURATION_MS =
     3000;
@@ -82,6 +84,7 @@ const REQUEST_TIMEOUT_MS =
 // ============================================================
 
 let pool = null;
+
 
 if (DATABASE_URL) {
 
@@ -111,7 +114,7 @@ async function initDatabase() {
     if (!pool) {
 
         console.log(
-            "[DB] DATABASE_URL missing"
+            "[DB] DATABASE_URL not configured"
         );
 
         return;
@@ -156,7 +159,8 @@ async function initDatabase() {
     `);
 
 
-    console.log("[DB] Ready");
+    console.log("[DB] Database ready");
+
 }
 
 
@@ -206,7 +210,7 @@ function now() {
 }
 
 
-function numberToBS(number) {
+function numberToSide(number) {
 
     const n =
         Number(number);
@@ -223,25 +227,30 @@ function numberToBS(number) {
     }
 
 
-    return n >= 5
-        ? "B"
-        : "S";
+    if (n <= 4) {
 
-}
-
-
-function bsToLabel(bs) {
-
-    if (bs === "B") {
-
-        return "BIG";
+        return "A";
 
     }
 
 
-    if (bs === "S") {
+    return "B";
+
+}
+
+
+function sideToLabel(side) {
+
+    if (side === "A") {
 
         return "SMALL";
+
+    }
+
+
+    if (side === "B") {
+
+        return "BIG";
 
     }
 
@@ -251,7 +260,7 @@ function bsToLabel(bs) {
 }
 
 
-function labelToBS(label) {
+function labelToSide(label) {
 
     const value =
         String(label || "")
@@ -259,16 +268,16 @@ function labelToBS(label) {
             .trim();
 
 
-    if (value === "BIG") {
+    if (value === "SMALL") {
 
-        return "B";
+        return "A";
 
     }
 
 
-    if (value === "SMALL") {
+    if (value === "BIG") {
 
-        return "S";
+        return "B";
 
     }
 
@@ -334,9 +343,19 @@ function compareIssue(a, b) {
             BigInt(String(b));
 
 
-        if (aa > bb) return 1;
+        if (aa > bb) {
 
-        if (aa < bb) return -1;
+            return 1;
+
+        }
+
+
+        if (aa < bb) {
+
+            return -1;
+
+        }
+
 
         return 0;
 
@@ -434,7 +453,7 @@ function text(
 
 
 // ============================================================
-// BODY
+// READ REQUEST BODY
 // ============================================================
 
 function readBody(req) {
@@ -460,7 +479,7 @@ function readBody(req) {
 
                         reject(
                             new Error(
-                                "Body too large"
+                                "Request body too large"
                             )
                         );
 
@@ -514,7 +533,7 @@ function readBody(req) {
 
 
 // ============================================================
-// WINGOBOT FETCH
+// WINGOBOT REQUEST
 // ============================================================
 
 function fetchWingoBot() {
@@ -557,7 +576,7 @@ function fetchWingoBot() {
                                 "application/json",
 
                             "User-Agent":
-                                "DY-AI-Wingo/5.0"
+                                "DY-AI-Wingo/6.0"
 
                         }
 
@@ -600,8 +619,13 @@ function fetchWingoBot() {
 
                                 try {
 
+                                    const parsed =
+                                        JSON.parse(
+                                            body
+                                        );
+
                                     resolve(
-                                        JSON.parse(body)
+                                        parsed
                                     );
 
                                 } catch {
@@ -628,7 +652,7 @@ function fetchWingoBot() {
 
                     request.destroy(
                         new Error(
-                            "WingoBot timeout"
+                            "WingoBot request timeout"
                         )
                     );
 
@@ -652,20 +676,29 @@ function fetchWingoBot() {
 
 
 // ============================================================
-// NORMALIZE WINGOBOT HISTORY
+// NORMALIZE HISTORY
 // ============================================================
 
 function normalizeHistory(payload) {
 
     const raw =
 
-        Array.isArray(payload?.history)
+        Array.isArray(
+            payload?.history
+        )
+
             ? payload.history
 
-            : Array.isArray(payload?.data)
+            : Array.isArray(
+                payload?.data
+            )
+
                 ? payload.data
 
-                : Array.isArray(payload?.results)
+                : Array.isArray(
+                    payload?.results
+                )
+
                     ? payload.results
 
                     : [];
@@ -743,10 +776,10 @@ function normalizeHistory(payload) {
 
 
 // ============================================================
-// CURRENT ISSUE
+// PROVIDER CURRENT ISSUE
 // ============================================================
 
-function providerCurrentIssue(payload) {
+function getProviderCurrentIssue(payload) {
 
     return (
 
@@ -802,7 +835,7 @@ async function refreshProvider() {
 
 
         const currentIssue =
-            providerCurrentIssue(
+            getProviderCurrentIssue(
                 payload
             );
 
@@ -867,38 +900,86 @@ async function refreshProvider() {
 
 // ============================================================
 // ============================================================
-//              HUMAN PATTERN DEFINITIONS
+//                 MASTER 25 PATTERNS
 // ============================================================
 // ============================================================
 
-const ORIGINAL_PATTERNS = {
+const MASTER_PATTERNS = {
 
     1:
-        "BSBSSSBBSB",
+        "ABABABABAB",
 
     2:
-        "BSBBSBSSSS",
+        "AABBAABB",
 
     3:
-        "BBBSBSSBBB",
+        "AAABBBAAABBB",
 
     4:
-        "BBBBBSBSSB",
+        "AAAABBBBAAAABBBB",
 
     5:
-        "BBSBBBSSBB",
+        "AABAABAAB",
 
     6:
-        "BBBSSBSBBS",
+        "AAAAAAAABBBBBBBB",
 
     7:
-        "BSBSBBSBSS",
+        "ABBABBABB",
+
+    8:
+        "AAABAAABAAAB",
 
     9:
-        "BSSBSSBBBS",
+        "AAABAAAB",
 
     10:
-        "BSSSBSBBSS"
+        "AAAABBABBAAAA",
+
+    11:
+        "ABBBABBBABBB",
+
+    12:
+        "ABABBABBB",
+
+    13:
+        "AABBAAABBBAAAABBBB",
+
+    14:
+        "ABBAAABBBB",
+
+    15:
+        "AAAABBBAAB",
+
+    16:
+        "ABAABBAAABBB",
+
+    17:
+        "AABBBAABBBAA",
+
+    18:
+        "ABBAAAABBBBBBBB",
+
+    19:
+        "ABBBABBB",
+
+    20:
+        "AABBBAABBB",
+
+    21:
+        "ABAABAAAB",
+
+    22:
+        "AABAABBAABBB",
+
+    23:
+        "AAAABAAAAB",
+
+    24:
+        "AAAABBAAAABB",
+
+    25:
+        "AAAABBBAAAABBB"
 
 };
 
@@ -911,41 +992,54 @@ function oppositePattern(pattern) {
 
     return String(pattern)
         .split("")
-        .map(
-            x =>
-                x === "B"
-                    ? "S"
-                    : "B"
-        )
+        .map(char => {
+
+            if (char === "A") {
+
+                return "B";
+
+            }
+
+
+            if (char === "B") {
+
+                return "A";
+
+            }
+
+
+            return char;
+
+        })
         .join("");
 
 }
 
 
 // ============================================================
-// BUILD PATTERNS
+// BUILD PATTERN DATABASE
 // ============================================================
 
-const PATTERNS = [];
+const PATTERN_DATABASE = [];
 
 
 for (
     const [id, pattern]
     of Object.entries(
-        ORIGINAL_PATTERNS
+        MASTER_PATTERNS
     )
 ) {
 
-    const clean =
+    const cleanPattern =
         String(pattern)
             .replace(
-                /[^BS]/g,
+                /[^AB]/g,
                 ""
             );
 
 
     if (
-        clean.length !== 10
+        !cleanPattern.length
     ) {
 
         continue;
@@ -953,29 +1047,34 @@ for (
     }
 
 
-    PATTERNS.push({
+    /*
+      ORIGINAL
+    */
 
-        id:
-            `${id}-ORIGINAL`,
+    PATTERN_DATABASE.push({
 
-        sourceRule:
+        rule:
             Number(id),
 
         type:
             "ORIGINAL",
 
         pattern:
-            clean
+            cleanPattern,
+
+        length:
+            cleanPattern.length
 
     });
 
 
-    PATTERNS.push({
+    /*
+      OPPOSITE
+    */
 
-        id:
-            `${id}-OPPOSITE`,
+    PATTERN_DATABASE.push({
 
-        sourceRule:
+        rule:
             Number(id),
 
         type:
@@ -983,8 +1082,11 @@ for (
 
         pattern:
             oppositePattern(
-                clean
-            )
+                cleanPattern
+            ),
+
+        length:
+            cleanPattern.length
 
     });
 
@@ -992,18 +1094,18 @@ for (
 
 
 // ============================================================
-// NUMBER HISTORY
+// CONVERT HISTORY
 // ============================================================
 
-function convertResults(results) {
+function convertHistory(numbers) {
 
     const output = [];
 
 
     for (
         const value of
-            Array.isArray(results)
-                ? results
+            Array.isArray(numbers)
+                ? numbers
                 : []
     ) {
 
@@ -1031,15 +1133,19 @@ function convertResults(results) {
         }
 
 
-        const bs =
-            numberToBS(
+        const side =
+            numberToSide(
                 number
             );
 
 
-        if (bs !== null) {
+        if (
+            side !== null
+        ) {
 
-            output.push(bs);
+            output.push(
+                side
+            );
 
         }
 
@@ -1052,10 +1158,10 @@ function convertResults(results) {
 
 
 // ============================================================
-// EXACT LAST 10
+// EXACT MATCH
 // ============================================================
 
-function exactLast10Match(
+function exactMatch(
     history,
     pattern
 ) {
@@ -1070,7 +1176,7 @@ function exactLast10Match(
     }
 
 
-    const last =
+    const recent =
         history
             .slice(
                 -pattern.length
@@ -1079,7 +1185,7 @@ function exactLast10Match(
 
 
     return (
-        last ===
+        recent ===
         pattern
     );
 
@@ -1087,62 +1193,7 @@ function exactLast10Match(
 
 
 // ============================================================
-// PARTIAL CURRENT MATCH
-// ============================================================
-
-function partialMatch(
-    history,
-    pattern
-) {
-
-    const max =
-        Math.min(
-            history.length,
-            pattern.length
-        );
-
-
-    let best = 0;
-
-
-    for (
-        let length = 1;
-        length <= max;
-        length++
-    ) {
-
-        const historyPart =
-            history
-                .slice(-length)
-                .join("");
-
-
-        const patternPart =
-            pattern.slice(
-                0,
-                length
-            );
-
-
-        if (
-            historyPart ===
-            patternPart
-        ) {
-
-            best = length;
-
-        }
-
-    }
-
-
-    return best;
-
-}
-
-
-// ============================================================
-// FIND EXACT CURRENT MATCHES
+// FIND EXACT MATCHES
 // ============================================================
 
 function findExactMatches(
@@ -1153,25 +1204,25 @@ function findExactMatches(
 
 
     for (
-        const rule of
-            PATTERNS
+        const item of
+            PATTERN_DATABASE
     ) {
 
         if (
-            exactLast10Match(
+            exactMatch(
                 history,
-                rule.pattern
+                item.pattern
             )
         ) {
 
             matches.push({
 
-                ...rule,
+                ...item,
 
                 matched:
-                    10,
+                    item.length,
 
-                percentage:
+                matchPercent:
                     100
 
             });
@@ -1187,7 +1238,64 @@ function findExactMatches(
 
 
 // ============================================================
-// FIND PARTIAL CURRENT MATCHES
+// PARTIAL MATCH
+// ============================================================
+
+function partialMatch(
+    history,
+    pattern
+) {
+
+    const maxLength =
+        Math.min(
+            history.length,
+            pattern.length
+        );
+
+
+    let best = 0;
+
+
+    for (
+        let length = 2;
+        length <= maxLength;
+        length++
+    ) {
+
+        const recent =
+            history
+                .slice(-length)
+                .join("");
+
+
+        const patternPart =
+            pattern
+                .slice(
+                    0,
+                    length
+                );
+
+
+        if (
+            recent ===
+            patternPart
+        ) {
+
+            best =
+                length;
+
+        }
+
+    }
+
+
+    return best;
+
+}
+
+
+// ============================================================
+// FIND PARTIAL MATCHES
 // ============================================================
 
 function findPartialMatches(
@@ -1198,39 +1306,37 @@ function findPartialMatches(
 
 
     for (
-        const rule of
-            PATTERNS
+        const item of
+            PATTERN_DATABASE
     ) {
 
         const matched =
             partialMatch(
                 history,
-                rule.pattern
+                item.pattern
             );
 
 
         /*
-          Minimum 5.
-
-          5/10 = candidate only.
-          6/10+ = stronger.
+          5+ match =
+          WATCH ONLY.
         */
 
         if (
             matched >= 5 &&
-            matched < 10
+            matched < item.length
         ) {
 
             matches.push({
 
-                ...rule,
+                ...item,
 
                 matched,
 
-                percentage:
+                matchPercent:
                     Math.round(
                         matched /
-                        rule.pattern.length *
+                        item.length *
                         100
                     )
 
@@ -1241,302 +1347,285 @@ function findPartialMatches(
     }
 
 
-    return matches;
+    return matches.sort(
+
+        (a, b) => {
+
+            /*
+              First:
+              longest matched portion
+            */
+
+            if (
+                b.matched !==
+                a.matched
+            ) {
+
+                return (
+                    b.matched -
+                    a.matched
+                );
+
+            }
+
+
+            /*
+              Then:
+              longer template
+            */
+
+            if (
+                b.length !==
+                a.length
+            ) {
+
+                return (
+                    b.length -
+                    a.length
+                );
+
+            }
+
+
+            /*
+              ORIGINAL first
+            */
+
+            if (
+                a.type ===
+                    "ORIGINAL" &&
+                b.type ===
+                    "OPPOSITE"
+            ) {
+
+                return -1;
+
+            }
+
+
+            if (
+                a.type ===
+                    "OPPOSITE" &&
+                b.type ===
+                    "ORIGINAL"
+            ) {
+
+                return 1;
+
+            }
+
+
+            return 0;
+
+        }
+
+    );
 
 }
 
 
 // ============================================================
-// HISTORICAL NEXT RESULT SEARCH
+// REVERSAL PREDICTION
 // ============================================================
 
-/*
-IMPORTANT:
-
-Current pattern itself 10 characters ka hai.
-
-Prediction tab niklegi jab:
-
-PAST:
-same 10-result pattern
-        +
-uske immediately baad actual result
-
-Example:
-
-Past:
-BSBSSSBBSB -> B
-
-Agar current bhi:
-BSBSSSBBSB
-
-to historical evidence:
-NEXT = BIG
-
-Ye actual pattern-following logic hai.
-*/
-
-
-function historicalNextEvidence(
-    history,
-    pattern,
-    excludeCurrent = true
+function reversalPrediction(
+    matchedPattern
 ) {
 
-    const sequence =
-        history.join("");
+    if (
+        !matchedPattern ||
+        !matchedPattern.pattern
+    ) {
+
+        return {
+
+            matchedSide:
+                null,
+
+            prediction:
+                null,
+
+            predictionCode:
+                null,
+
+            logic:
+                "Invalid pattern."
+
+        };
+
+    }
 
 
-    const occurrences = [];
+    const last =
+        matchedPattern.pattern[
+            matchedPattern.pattern.length - 1
+        ];
+
+
+    /*
+      A = SMALL
+      B = BIG
+
+      User's exact rule:
+
+      A -> B
+      B -> A
+    */
+
+    if (
+        last === "A"
+    ) {
+
+        return {
+
+            matchedSide:
+                "SMALL",
+
+            matchedSideCode:
+                "A",
+
+            prediction:
+                "BIG",
+
+            predictionCode:
+                "B",
+
+            logic:
+                "Matched pattern ends with SMALL (A), therefore opposite prediction = BIG (B)."
+
+        };
+
+    }
 
 
     if (
-        sequence.length <=
-        pattern.length
+        last === "B"
     ) {
 
-        return occurrences;
+        return {
+
+            matchedSide:
+                "BIG",
+
+            matchedSideCode:
+                "B",
+
+            prediction:
+                "SMALL",
+
+            predictionCode:
+                "A",
+
+            logic:
+                "Matched pattern ends with BIG (B), therefore opposite prediction = SMALL (A)."
+
+        };
 
     }
-
-
-    for (
-        let i = 0;
-
-        i + pattern.length <
-        sequence.length;
-
-        i++
-    ) {
-
-        const current =
-            sequence.slice(
-                i,
-                i + pattern.length
-            );
-
-
-        if (
-            current !==
-            pattern
-        ) {
-
-            continue;
-
-        }
-
-
-        const next =
-            sequence[
-                i + pattern.length
-            ];
-
-
-        /*
-          Last 10 current sequence
-          ko historical evidence me
-          dobara count nahi karna.
-        */
-
-        if (
-            excludeCurrent &&
-            i + pattern.length >=
-            sequence.length
-        ) {
-
-            continue;
-
-        }
-
-
-        occurrences.push({
-
-            index:
-                i,
-
-            matchedPattern:
-                pattern,
-
-            next,
-
-            nextLabel:
-                bsToLabel(next)
-
-        });
-
-    }
-
-
-    return occurrences;
-
-}
-
-
-// ============================================================
-// PREFIX HISTORICAL EVIDENCE
-// ============================================================
-
-function historicalPrefixEvidence(
-    history,
-    prefix,
-    excludeCurrent = true
-) {
-
-    const sequence =
-        history.join("");
-
-
-    const occurrences = [];
-
-
-    if (
-        sequence.length <=
-        prefix.length
-    ) {
-
-        return occurrences;
-
-    }
-
-
-    for (
-        let i = 0;
-
-        i + prefix.length <
-        sequence.length;
-
-        i++
-    ) {
-
-        const current =
-            sequence.slice(
-                i,
-                i + prefix.length
-            );
-
-
-        if (
-            current !==
-            prefix
-        ) {
-
-            continue;
-
-        }
-
-
-        const next =
-            sequence[
-                i + prefix.length
-            ];
-
-
-        if (
-            excludeCurrent &&
-            i + prefix.length >=
-            sequence.length
-        ) {
-
-            continue;
-
-        }
-
-
-        occurrences.push({
-
-            index:
-                i,
-
-            matchedPattern:
-                prefix,
-
-            next,
-
-            nextLabel:
-                bsToLabel(next)
-
-        });
-
-    }
-
-
-    return occurrences;
-
-}
-
-
-// ============================================================
-// COUNT NEXT RESULTS
-// ============================================================
-
-function countNextEvidence(
-    evidence
-) {
-
-    let B = 0;
-    let S = 0;
-
-
-    for (
-        const row of
-            evidence
-    ) {
-
-        if (
-            row.next === "B"
-        ) {
-
-            B++;
-
-        }
-
-
-        if (
-            row.next === "S"
-        ) {
-
-            S++;
-
-        }
-
-    }
-
-
-    const total =
-        B + S;
 
 
     return {
 
-        B,
+        matchedSide:
+            null,
 
-        S,
+        prediction:
+            null,
 
-        total,
+        predictionCode:
+            null,
 
-        bigPercent:
-            total
-                ? Number(
-                    (
-                        B /
-                        total *
-                        100
-                    ).toFixed(2)
-                )
-                : 0,
-
-        smallPercent:
-            total
-                ? Number(
-                    (
-                        S /
-                        total *
-                        100
-                    ).toFixed(2)
-                )
-                : 0
+        logic:
+            "Invalid pattern."
 
     };
+
+}
+
+
+// ============================================================
+// SELECT BEST EXACT MATCH
+// ============================================================
+
+function selectBestMatch(
+    matches
+) {
+
+    if (
+        !matches ||
+        !matches.length
+    ) {
+
+        return null;
+
+    }
+
+
+    const sorted =
+        matches.slice().sort(
+
+            (a, b) => {
+
+                /*
+                  1. LONGEST PATTERN
+                */
+
+                if (
+                    b.length !==
+                    a.length
+                ) {
+
+                    return (
+                        b.length -
+                        a.length
+                    );
+
+                }
+
+
+                /*
+                  2. ORIGINAL PRIORITY
+                */
+
+                if (
+                    a.type ===
+                        "ORIGINAL" &&
+                    b.type ===
+                        "OPPOSITE"
+                ) {
+
+                    return -1;
+
+                }
+
+
+                if (
+                    a.type ===
+                        "OPPOSITE" &&
+                    b.type ===
+                        "ORIGINAL"
+                ) {
+
+                    return 1;
+
+                }
+
+
+                /*
+                  3. RULE NUMBER
+                */
+
+                return (
+                    a.rule -
+                    b.rule
+                );
+
+            }
+
+        );
+
+
+    return sorted[0];
 
 }
 
@@ -1545,7 +1634,7 @@ function countNextEvidence(
 // CURRENT STREAK
 // ============================================================
 
-function currentStreak(
+function getCurrentStreak(
     history
 ) {
 
@@ -1553,23 +1642,12 @@ function currentStreak(
         !history.length
     ) {
 
-        return {
-
-            side:
-                null,
-
-            label:
-                null,
-
-            count:
-                0
-
-        };
+        return null;
 
     }
 
 
-    const current =
+    const last =
         history[
             history.length - 1
         ];
@@ -1589,7 +1667,7 @@ function currentStreak(
 
         if (
             history[i] ===
-            current
+            last
         ) {
 
             count++;
@@ -1605,12 +1683,12 @@ function currentStreak(
 
     return {
 
-        side:
-            current,
+        code:
+            last,
 
-        label:
-            bsToLabel(
-                current
+        side:
+            sideToLabel(
+                last
             ),
 
         count
@@ -1639,30 +1717,35 @@ function windowAnalysis(
 
         return {
 
-            size: 0,
+            size:
+                0,
 
-            B: 0,
+            big:
+                0,
 
-            S: 0,
+            small:
+                0,
 
-            bigPercent: 0,
+            bigPercent:
+                0,
 
-            smallPercent: 0
+            smallPercent:
+                0
 
         };
 
     }
 
 
-    const B =
+    const big =
         data.filter(
             x => x === "B"
         ).length;
 
 
-    const S =
+    const small =
         data.filter(
-            x => x === "S"
+            x => x === "A"
         ).length;
 
 
@@ -1671,14 +1754,14 @@ function windowAnalysis(
         size:
             data.length,
 
-        B,
+        big,
 
-        S,
+        small,
 
         bigPercent:
             Number(
                 (
-                    B /
+                    big /
                     data.length *
                     100
                 ).toFixed(2)
@@ -1687,7 +1770,7 @@ function windowAnalysis(
         smallPercent:
             Number(
                 (
-                    S /
+                    small /
                     data.length *
                     100
                 ).toFixed(2)
@@ -1712,11 +1795,14 @@ function switchingAnalysis(
 
         return {
 
-            switches: 0,
+            switches:
+                0,
 
-            transitions: 0,
+            transitions:
+                0,
 
-            switchRate: 0
+            switchRate:
+                0
 
         };
 
@@ -1803,10 +1889,11 @@ function detectPatternBreak(
 
     const alternating =
         first5.every(
-            (x, i) => {
+
+            (value, index) => {
 
                 if (
-                    i === 0
+                    index === 0
                 ) {
 
                     return true;
@@ -1815,11 +1902,14 @@ function detectPatternBreak(
 
 
                 return (
-                    x !==
-                    first5[i - 1]
+                    value !==
+                    first5[
+                        index - 1
+                    ]
                 );
 
             }
+
         );
 
 
@@ -1842,136 +1932,50 @@ function detectPatternBreak(
 
 
 // ============================================================
-// RUN ANALYSIS
+// PATTERN DESCRIPTION
 // ============================================================
 
-function runAnalysis(
-    history
+function patternDescription(
+    match
 ) {
 
-    const runs = [];
+    if (!match) {
 
-
-    if (
-        !history.length
-    ) {
-
-        return {
-
-            runs: [],
-
-            current:
-                null
-
-        };
+        return null;
 
     }
 
 
-    let current =
-        history[0];
+    const side =
+        match.type ===
+            "ORIGINAL"
 
-    let length = 1;
+            ? "MASTER"
 
-
-    for (
-        let i = 1;
-        i < history.length;
-        i++
-    ) {
-
-        if (
-            history[i] ===
-            current
-        ) {
-
-            length++;
-
-        } else {
-
-            runs.push({
-
-                side:
-                    current,
-
-                label:
-                    bsToLabel(
-                        current
-                    ),
-
-                length
-
-            });
-
-
-            current =
-                history[i];
-
-            length = 1;
-
-        }
-
-    }
-
-
-    runs.push({
-
-        side:
-            current,
-
-        label:
-            bsToLabel(
-                current
-            ),
-
-        length
-
-    });
-
-
-    const lengths =
-        runs.map(
-            x => x.length
-        );
-
-
-    const longest =
-        lengths.length
-            ? Math.max(
-                ...lengths
-            )
-            : 0;
-
-
-    const average =
-        lengths.length
-            ? Number(
-                (
-                    lengths.reduce(
-                        (a, b) =>
-                            a + b,
-                        0
-                    ) /
-                    lengths.length
-                ).toFixed(2)
-            )
-            : 0;
+            : "OPPOSITE";
 
 
     return {
 
-        totalRuns:
-            runs.length,
+        rule:
+            match.rule,
 
-        longest,
+        type:
+            side,
 
-        average,
+        pattern:
+            match.pattern,
 
-        current:
-            runs[runs.length - 1],
+        length:
+            match.length,
 
-        runs:
-            runs.slice(-20)
+        matched:
+            match.matched ??
+            match.length,
+
+        percent:
+            match.matchPercent ??
+            100
 
     };
 
@@ -1979,824 +1983,27 @@ function runAnalysis(
 
 
 // ============================================================
-// PATTERN MATCH SCORING
+// MAIN PATTERN ANALYZER
 // ============================================================
 
-function matchWeight(
-    matched,
-    exact
+function analyzePattern(
+    numbers
 ) {
-
-    if (exact) {
-
-        return 12;
-
-    }
-
-
-    if (
-        matched >= 9
-    ) {
-
-        return 10;
-
-    }
-
-
-    if (
-        matched >= 8
-    ) {
-
-        return 8;
-
-    }
-
-
-    if (
-        matched >= 7
-    ) {
-
-        return 6;
-
-    }
-
-
-    if (
-        matched >= 6
-    ) {
-
-        return 4;
-
-    }
-
-
-    if (
-        matched >= 5
-    ) {
-
-        return 2;
-
-    }
-
-
-    return 0;
-
-}
-
-
-// ============================================================
-// BUILD EVIDENCE FOR CURRENT PATTERNS
-// ============================================================
-
-function buildPatternEvidence(
-    history,
-    exactMatches,
-    partialMatches
-) {
-
-    const all = [];
-
-
-    /*
-      EXACT:
-      use 10/10 pattern
-    */
-
-    for (
-        const match of
-            exactMatches
-    ) {
-
-        const evidence =
-            historicalNextEvidence(
-                history,
-                match.pattern,
-                true
-            );
-
-
-        const counts =
-            countNextEvidence(
-                evidence
-            );
-
-
-        all.push({
-
-            ...match,
-
-            matchType:
-                "EXACT",
-
-            weight:
-                matchWeight(
-                    10,
-                    true
-                ),
-
-            historicalOccurrences:
-                evidence.length,
-
-            historicalNext:
-                counts,
-
-            evidence:
-                evidence.slice(-20)
-
-        });
-
-    }
-
-
-    /*
-      PARTIAL:
-      use current matching prefix.
-    */
-
-    for (
-        const match of
-            partialMatches
-    ) {
-
-        const prefix =
-            match.pattern.slice(
-                0,
-                match.matched
-            );
-
-
-        const evidence =
-            historicalPrefixEvidence(
-                history,
-                prefix,
-                true
-            );
-
-
-        const counts =
-            countNextEvidence(
-                evidence
-            );
-
-
-        all.push({
-
-            ...match,
-
-            matchType:
-                "PARTIAL",
-
-            prefix,
-
-            weight:
-                matchWeight(
-                    match.matched,
-                    false
-                ),
-
-            historicalOccurrences:
-                evidence.length,
-
-            historicalNext:
-                counts,
-
-            evidence:
-                evidence.slice(-20)
-
-        });
-
-    }
-
-
-    return all;
-
-}
-
-
-// ============================================================
-// AGGREGATE HISTORICAL PATTERN SUPPORT
-// ============================================================
-
-function aggregatePatternSupport(
-    evidence
-) {
-
-    let B = 0;
-    let S = 0;
-
-
-    const details = [];
-
-
-    for (
-        const item of
-            evidence
-    ) {
-
-        const next =
-            item.historicalNext;
-
-
-        /*
-          No historical occurrence
-          = no prediction evidence.
-        */
-
-        if (
-            !next ||
-            next.total === 0
-        ) {
-
-            continue;
-
-        }
-
-
-        const baseWeight =
-            item.weight;
-
-
-        const bigRate =
-            next.bigPercent /
-            100;
-
-
-        const smallRate =
-            next.smallPercent /
-            100;
-
-
-        /*
-          Historical support:
-
-          Pattern weight
-          × historical next-side rate
-        */
-
-        B +=
-            baseWeight *
-            bigRate;
-
-
-        S +=
-            baseWeight *
-            smallRate;
-
-
-        details.push({
-
-            rule:
-                item.sourceRule,
-
-            id:
-                item.id,
-
-            type:
-                item.type,
-
-            matchType:
-                item.matchType,
-
-            pattern:
-                item.pattern,
-
-            matched:
-                item.matched,
-
-            weight:
-                baseWeight,
-
-            historicalOccurrences:
-                next.total,
-
-            historicalBig:
-                next.B,
-
-            historicalSmall:
-                next.S,
-
-            historicalBigPercent:
-                next.bigPercent,
-
-            historicalSmallPercent:
-                next.smallPercent
-
-        });
-
-    }
-
-
-    const total =
-        B + S;
-
-
-    return {
-
-        B:
-            Number(B.toFixed(3)),
-
-        S:
-            Number(S.toFixed(3)),
-
-        total:
-            Number(total.toFixed(3)),
-
-        bigPercent:
-            total
-                ? Number(
-                    (
-                        B /
-                        total *
-                        100
-                    ).toFixed(2)
-                )
-                : 0,
-
-        smallPercent:
-            total
-                ? Number(
-                    (
-                        S /
-                        total *
-                        100
-                    ).toFixed(2)
-                )
-                : 0,
-
-        details
-
-    };
-
-}
-
-
-// ============================================================
-// PATTERN DECISION
-// ============================================================
-
-function patternDecision(
-    history,
-    evidence,
-    support,
-    exactMatches
-) {
-
-    if (
-        !evidence.length
-    ) {
-
-        return {
-
-            prediction:
-                null,
-
-            confidence:
-                0,
-
-            status:
-                "NO_PATTERN",
-
-            reason:
-                "No supplied pattern matched."
-
-        };
-
-    }
-
-
-    if (
-        support.total <= 0
-    ) {
-
-        return {
-
-            prediction:
-                null,
-
-            confidence:
-                0,
-
-            status:
-                "PATTERN_FOUND_NO_HISTORY",
-
-            reason:
-                "Pattern matched, but historical next-result evidence was not found."
-
-        };
-
-    }
-
-
-    const difference =
-        Math.abs(
-            support.B -
-            support.S
-        );
-
-
-    const balance =
-        support.total
-            ? difference /
-              support.total
-            : 0;
-
-
-    /*
-      If both sides are too close,
-      do not force prediction.
-    */
-
-    if (
-        balance < 0.20
-    ) {
-
-        return {
-
-            prediction:
-                null,
-
-            confidence:
-                Math.round(
-                    Math.max(
-                        support.bigPercent,
-                        support.smallPercent
-                    )
-                ),
-
-            status:
-                "CONFLICTING_PATTERN",
-
-            reason:
-                "Matched patterns give conflicting historical next-side evidence."
-
-        };
-
-    }
-
-
-    let predictionSide;
-
-
-    if (
-        support.B >
-        support.S
-    ) {
-
-        predictionSide = "B";
-
-    } else {
-
-        predictionSide = "S";
-
-    }
-
-
-    /*
-      Need stronger historical evidence.
-    */
-
-    const sidePercent =
-        predictionSide === "B"
-            ? support.bigPercent
-            : support.smallPercent;
-
-
-    const strongestMatch =
-        evidence
-            .slice()
-            .sort(
-                (a, b) =>
-                    (
-                        b.matched -
-                        a.matched
-                    ) ||
-                    (
-                        b.weight -
-                        a.weight
-                    )
-            )[0];
-
-
-    /*
-      Minimum historical confidence.
-    */
-
-    if (
-        sidePercent < 60
-    ) {
-
-        return {
-
-            prediction:
-                null,
-
-            confidence:
-                Math.round(
-                    sidePercent
-                ),
-
-            status:
-                "WEAK_PATTERN",
-
-            reason:
-                "Pattern matched, but historical next-side support is below threshold."
-
-        };
-
-    }
-
-
-    /*
-      Partial 5/10 alone is too weak.
-    */
-
-    const hasStrongMatch =
-        evidence.some(
-            x =>
-                x.matched >= 7
-        );
-
-
-    const hasExact =
-        exactMatches.length >
-        0;
-
-
-    if (
-        !hasExact &&
-        !hasStrongMatch &&
-        sidePercent < 70
-    ) {
-
-        return {
-
-            prediction:
-                null,
-
-            confidence:
-                Math.round(
-                    sidePercent
-                ),
-
-            status:
-                "PARTIAL_PATTERN_WEAK",
-
-            reason:
-                "Only weak partial pattern evidence is available."
-
-        };
-
-    }
-
-
-    let confidence =
-        Math.round(
-            sidePercent
-        );
-
-
-    /*
-      Exact match bonus,
-      capped below 100.
-    */
-
-    if (
-        hasExact
-    ) {
-
-        confidence += 5;
-
-    }
-
-
-    if (
-        strongestMatch &&
-        strongestMatch.matched >= 9
-    ) {
-
-        confidence += 3;
-
-    }
-
-
-    confidence =
-        Math.min(
-            95,
-            confidence
-        );
-
-
-    return {
-
-        prediction:
-            bsToLabel(
-                predictionSide
-            ),
-
-        predictionSide,
-
-        confidence,
-
-        status:
-            hasExact
-                ? "EXACT_PATTERN_MATCH"
-                : "PARTIAL_PATTERN_MATCH",
-
-        reason:
-            hasExact
-
-                ? "Exact 10-result template matched and historical next-result evidence supports the prediction."
-
-                : "Current suffix matches a supplied template and historical next-result evidence supports the prediction.",
-
-        strongestMatch:
-
-            strongestMatch
-                ? {
-
-                    rule:
-                        strongestMatch.sourceRule,
-
-                    id:
-                        strongestMatch.id,
-
-                    type:
-                        strongestMatch.type,
-
-                    matched:
-                        strongestMatch.matched,
-
-                    pattern:
-                        strongestMatch.pattern
-
-                }
-                : null
-
-    };
-
-}
-
-
-// ============================================================
-// HUMAN INTERPRETATION
-// ============================================================
-
-function humanInterpretation(
-    exactMatches,
-    partialMatches,
-    evidence,
-    decision,
-    streak,
-    windows,
-    switching,
-    patternBreak
-) {
-
-    const reasons = [];
-
-
-    if (
-        exactMatches.length
-    ) {
-
-        reasons.push(
-            `EXACT ${exactMatches.length} TEMPLATE MATCH`
-        );
-
-    }
-
-
-    if (
-        partialMatches.length
-    ) {
-
-        reasons.push(
-            `${partialMatches.length} PARTIAL TEMPLATE MATCH`
-        );
-
-    }
-
-
-    if (
-        decision.status ===
-        "EXACT_PATTERN_MATCH"
-    ) {
-
-        reasons.push(
-            "HISTORICAL NEXT-RESULT SUPPORT FOUND"
-        );
-
-    }
-
-
-    if (
-        decision.status ===
-        "CONFLICTING_PATTERN"
-    ) {
-
-        reasons.push(
-            "PATTERN EVIDENCE CONFLICT"
-        );
-
-    }
-
-
-    if (
-        streak.count >= 3
-    ) {
-
-        reasons.push(
-            `${streak.label} STREAK × ${streak.count}`
-        );
-
-    }
-
-
-    if (
-        windows.last5.bigPercent >= 70
-    ) {
-
-        reasons.push(
-            "LAST 5 BIG DOMINANT"
-        );
-
-    }
-
-
-    if (
-        windows.last5.smallPercent >= 70
-    ) {
-
-        reasons.push(
-            "LAST 5 SMALL DOMINANT"
-        );
-
-    }
-
-
-    if (
-        switching.switchRate >= 70
-    ) {
-
-        reasons.push(
-            "HIGH SWITCHING"
-        );
-
-    }
-
-
-    if (
-        switching.switchRate <= 30
-    ) {
-
-        reasons.push(
-            "LOW SWITCHING / STREAK MODE"
-        );
-
-    }
-
-
-    if (
-        patternBreak.detected
-    ) {
-
-        reasons.push(
-            "PATTERN BREAK DETECTED"
-        );
-
-    }
-
-
-    if (
-        !reasons.length
-    ) {
-
-        reasons.push(
-            "NO STRONG HUMAN PATTERN EVIDENCE"
-        );
-
-    }
-
-
-    return reasons;
-
-}
-
-
-// ============================================================
-// MAIN ANALYZER
-// ============================================================
-
-function analyze(results) {
 
     const history =
-        convertResults(
-            results
+        convertHistory(
+            numbers
         );
 
 
+    /*
+      Need enough data for
+      at least the shortest
+      useful master pattern.
+    */
+
     if (
-        history.length < 10
+        history.length < 5
     ) {
 
         return {
@@ -2807,19 +2014,34 @@ function analyze(results) {
             prediction:
                 null,
 
+            predictionCode:
+                null,
+
             confidence:
                 0,
 
             sequence:
                 history.join(""),
 
+            currentStreak:
+                getCurrentStreak(
+                    history
+                ),
+
             message:
-                "At least 10 valid results required for the 10-result pattern engine."
+                "At least 5 valid results required.",
+
+            warning:
+                "No pattern prediction generated."
 
         };
 
     }
 
+
+    /*
+      EXACT MATCHES
+    */
 
     const exactMatches =
         findExactMatches(
@@ -2827,17 +2049,19 @@ function analyze(results) {
         );
 
 
+    /*
+      PARTIAL MATCHES
+    */
+
     const partialMatches =
         findPartialMatches(
             history
         );
 
 
-    const streak =
-        currentStreak(
-            history
-        );
-
+    /*
+      WINDOWS
+    */
 
     const windows = {
 
@@ -2868,11 +2092,19 @@ function analyze(results) {
     };
 
 
+    /*
+      SWITCHING
+    */
+
     const switching =
         switchingAnalysis(
             history
         );
 
+
+    /*
+      PATTERN BREAK
+    */
 
     const patternBreak =
         detectPatternBreak(
@@ -2880,122 +2112,268 @@ function analyze(results) {
         );
 
 
-    const runs =
-        runAnalysis(
+    /*
+      CURRENT STREAK
+    */
+
+    const streak =
+        getCurrentStreak(
             history
         );
 
 
     /*
-      Build evidence from
-      exact + partial matches.
+      EXACT MATCH
     */
 
-    const evidence =
-        buildPatternEvidence(
-            history,
-            exactMatches,
-            partialMatches
-        );
-
-
-    /*
-      Historical next-side support.
-    */
-
-    const support =
-        aggregatePatternSupport(
-            evidence
-        );
-
-
-    /*
-      Final pattern decision.
-    */
-
-    const decision =
-        patternDecision(
-            history,
-            evidence,
-            support,
-            exactMatches
-        );
-
-
-    const reasons =
-        humanInterpretation(
-            exactMatches,
-            partialMatches,
-            evidence,
-            decision,
-            streak,
-            windows,
-            switching,
-            patternBreak
-        );
-
-
-    /*
-      Original / opposite count.
-    */
-
-    let originalMatches = 0;
-
-    let oppositeMatches = 0;
-
-
-    for (
-        const row of
-            exactMatches
+    if (
+        exactMatches.length > 0
     ) {
 
-        if (
-            row.type ===
-            "ORIGINAL"
-        ) {
-
-            originalMatches++;
-
-        }
+        const bestMatch =
+            selectBestMatch(
+                exactMatches
+            );
 
 
-        if (
-            row.type ===
-            "OPPOSITE"
-        ) {
+        const reversal =
+            reversalPrediction(
+                bestMatch
+            );
 
-            oppositeMatches++;
 
-        }
+        return {
+
+            status:
+                "EXACT_PATTERN_MATCH",
+
+            prediction:
+                reversal.prediction,
+
+            predictionCode:
+                reversal.predictionCode,
+
+            confidence:
+                85,
+
+            confidenceLevel:
+                "PATTERN_MATCH",
+
+
+            matchedRule:
+                bestMatch.rule,
+
+            matchedType:
+                bestMatch.type,
+
+            matchedPattern:
+                bestMatch.pattern,
+
+            patternLength:
+                bestMatch.length,
+
+            matchedSide:
+                reversal.matchedSide,
+
+            matchedSideCode:
+                reversal.matchedSideCode,
+
+            logic:
+                reversal.logic,
+
+
+            bestMatch:
+                patternDescription(
+                    bestMatch
+                ),
+
+
+            allMatches:
+                exactMatches.map(
+                    patternDescription
+                ),
+
+
+            partialMatches:
+                partialMatches
+                    .slice(0, 10)
+                    .map(
+                        patternDescription
+                    ),
+
+
+            currentStreak:
+                streak,
+
+
+            windows,
+
+
+            switching,
+
+
+            patternBreak,
+
+
+            sequence:
+                history.join(""),
+
+
+            dataSize:
+                history.length,
+
+
+            engine:
+                "25 MASTER + OPPOSITE + EXACT REVERSAL",
+
+
+            warning:
+                "Historical pattern/reversal logic only. The next result is not guaranteed."
+
+        };
 
     }
 
 
+    /*
+      NO EXACT MATCH
+
+      Partial = WATCH ONLY
+    */
+
+    if (
+        partialMatches.length > 0
+    ) {
+
+        const bestPartial =
+            partialMatches[0];
+
+
+        return {
+
+            status:
+                "PARTIAL_PATTERN_WATCH",
+
+            prediction:
+                null,
+
+            predictionCode:
+                null,
+
+            confidence:
+                0,
+
+
+            matchedRule:
+                bestPartial.rule,
+
+            matchedType:
+                bestPartial.type,
+
+            matchedPattern:
+                bestPartial.pattern,
+
+            matchedLength:
+                bestPartial.matched,
+
+            totalLength:
+                bestPartial.length,
+
+            matchPercent:
+                bestPartial.matchPercent,
+
+
+            bestMatch:
+                patternDescription(
+                    bestPartial
+                ),
+
+
+            partialMatches:
+                partialMatches
+                    .slice(0, 15)
+                    .map(
+                        patternDescription
+                    ),
+
+
+            currentStreak:
+                streak,
+
+
+            windows,
+
+
+            switching,
+
+
+            patternBreak,
+
+
+            sequence:
+                history.join(""),
+
+
+            dataSize:
+                history.length,
+
+
+            engine:
+                "25 MASTER + OPPOSITE + EXACT REVERSAL",
+
+
+            message:
+                "Partial pattern found. Exact match required before prediction.",
+
+
+            warning:
+                "Partial pattern is WATCH only. No prediction generated."
+
+        };
+
+    }
+
+
+    /*
+      NO PATTERN
+    */
+
     return {
 
         status:
-            decision.status,
+            "NO_PATTERN_MATCH",
 
         prediction:
-            decision.prediction ||
+            null,
+
+        predictionCode:
             null,
 
         confidence:
-            decision.confidence ||
             0,
 
-        confidenceLevel:
 
-            decision.confidence >= 80
-                ? "HIGH"
+        matchedRule:
+            null,
 
-                : decision.confidence >= 70
-                    ? "MEDIUM"
+        matchedType:
+            null,
 
-                    : decision.confidence >= 60
-                        ? "LOW-MEDIUM"
+        matchedPattern:
+            null,
 
-                        : "LOW",
+
+        currentStreak:
+            streak,
+
+
+        windows,
+
+
+        switching,
+
+
+        patternBreak,
 
 
         sequence:
@@ -3006,79 +2384,16 @@ function analyze(results) {
             history.length,
 
 
-        current:
-            streak,
-
-
-        windows,
-
-
-        switching,
-
-
-        runs,
-
-
-        patternBreak,
-
-
-        exactMatches,
-
-
-        partialMatches,
-
-
-        evidence,
-
-
-        support,
-
-
-        decision,
-
-
-        summary: {
-
-            originalMatches,
-
-            oppositeMatches,
-
-            totalExactMatches:
-                exactMatches.length,
-
-            totalPartialMatches:
-                partialMatches.length,
-
-            totalEvidenceRows:
-                evidence.length
-
-        },
-
-
-        humanReasons:
-            reasons,
-
-
         engine:
-            "10 RESULT HUMAN PATTERN + OPPOSITE",
+            "25 MASTER + OPPOSITE + EXACT REVERSAL",
 
 
-        modelVersion:
-            MODEL_VERSION,
-
-
-        originalPatterns:
-            Object.keys(
-                ORIGINAL_PATTERNS
-            ).length,
-
-
-        totalPatterns:
-            PATTERNS.length,
+        message:
+            "No master pattern matched the current sequence.",
 
 
         warning:
-            "Historical pattern analysis only. No future result is guaranteed."
+            "No pattern-based prediction generated."
 
     };
 
@@ -3104,30 +2419,44 @@ function resolveTargetIssue() {
     }
 
 
-    const latest =
+    const newestIssue =
         history[0]?.issueNumber;
 
 
-    const current =
+    const providerCurrent =
         providerState.currentIssue;
 
 
+    /*
+      If provider explicitly gives
+      a current issue greater than
+      the latest settled history,
+      use it.
+    */
+
     if (
-        current &&
-        latest &&
+        providerCurrent &&
+        newestIssue &&
         compareIssue(
-            current,
-            latest
+            providerCurrent,
+            newestIssue
         ) > 0
     ) {
 
-        return String(current);
+        return String(
+            providerCurrent
+        );
 
     }
 
 
+    /*
+      Otherwise:
+      latest result + 1
+    */
+
     return incrementIssue(
-        latest
+        newestIssue
     );
 
 }
@@ -3139,23 +2468,21 @@ function resolveTargetIssue() {
 
 async function generateModel() {
 
-    const providerHistory =
-        providerState.history;
-
-
     /*
-      WingoBot:
+      WingoBot history normally:
       newest -> oldest
 
-      Analyzer:
+      Analyzer needs:
       oldest -> newest
     */
 
     const numbers =
-        providerHistory
+        providerState.history
             .map(
                 row =>
-                    Number(row.number)
+                    Number(
+                        row.number
+                    )
             )
             .filter(
                 n =>
@@ -3167,7 +2494,7 @@ async function generateModel() {
 
 
     const analysis =
-        analyze(
+        analyzePattern(
             numbers
         );
 
@@ -3192,6 +2519,10 @@ async function generateModel() {
                 analysis.prediction ||
                 null,
 
+            predictionCode:
+                analysis.predictionCode ||
+                null,
+
             confidence:
                 Number(
                     analysis.confidence ||
@@ -3200,7 +2531,7 @@ async function generateModel() {
 
             confidenceLevel:
                 analysis.confidenceLevel ||
-                "LOW",
+                "NO_SIGNAL",
 
             status:
                 analysis.status,
@@ -3208,34 +2539,43 @@ async function generateModel() {
             classification:
                 analysis.status,
 
-            pattern:
 
-                analysis.decision
-                    ?.strongestMatch
-                    ? `RULE ${analysis.decision.strongestMatch.rule}`
-                    : "NONE",
-
-
-            matchedPattern:
-
-                analysis.decision
-                    ?.strongestMatch
-                    ?.type ||
+            matchedRule:
+                analysis.matchedRule ??
                 null,
 
+            matchedType:
+                analysis.matchedType ??
+                null,
 
-            matchedSequence:
+            matchedPattern:
+                analysis.matchedPattern ??
+                null,
 
-                analysis.decision
-                    ?.strongestMatch
-                    ?.pattern ||
+            matchedLength:
+                analysis.matchedLength ??
+                analysis.patternLength ??
+                null,
+
+            matchPercent:
+                analysis.matchPercent ??
+                (
+                    analysis.status ===
+                    "EXACT_PATTERN_MATCH"
+                        ? 100
+                        : null
+                ),
+
+
+            matchedSide:
+                analysis.matchedSide ??
                 null,
 
 
             reason:
-                analysis.decision
-                    ?.reason ||
-                "No pattern prediction.",
+                analysis.logic ||
+                analysis.message ||
+                "",
 
 
             modelVersion:
@@ -3255,10 +2595,26 @@ async function generateModel() {
     };
 
 
-    await savePrediction(
-        targetIssue,
-        analysis
-    );
+    /*
+      Only exact pattern prediction
+      is saved.
+
+      Partial/no match:
+      no DB prediction.
+    */
+
+    if (
+        analysis.status ===
+        "EXACT_PATTERN_MATCH" &&
+        analysis.prediction
+    ) {
+
+        await savePrediction(
+            targetIssue,
+            analysis
+        );
+
+    }
 
 
     return modelCache;
@@ -3274,16 +2630,6 @@ async function savePrediction(
     targetIssue,
     analysis
 ) {
-
-    /*
-      IMPORTANT:
-
-      NO PATTERN =
-      NO DB PREDICTION
-
-      Isse UI me fake prediction
-      nahi banegi.
-    */
 
     if (
         !pool ||
@@ -3347,7 +2693,7 @@ async function savePrediction(
 
                 Number(
                     analysis.confidence ||
-                    0
+                    85
                 ),
 
                 MODEL_VERSION,
@@ -3358,10 +2704,15 @@ async function savePrediction(
         );
 
 
+        console.log(
+            `[MODEL] Saved ${targetIssue} -> ${analysis.prediction}`
+        );
+
+
     } catch (error) {
 
         console.error(
-            "[DB] save prediction:",
+            "[DB] savePrediction:",
             error.message
         );
 
@@ -3383,25 +2734,33 @@ async function settlePredictions() {
     }
 
 
-    for (
-        const row of
-            providerState.history.slice(
+    const history =
+        providerState.history
+            .slice(
                 0,
                 100
-            )
-    ) {
-
-        const number =
-            Number(row.number);
-
-
-        const actualBS =
-            numberToBS(
-                number
             );
 
 
-        if (!actualBS) {
+    for (
+        const row of history
+    ) {
+
+        const actualNumber =
+            Number(
+                row.number
+            );
+
+
+        const actualSide =
+            numberToSide(
+                actualNumber
+            );
+
+
+        if (
+            actualSide === null
+        ) {
 
             continue;
 
@@ -3451,24 +2810,33 @@ async function settlePredictions() {
             }
 
 
-            const prediction =
-                String(
-                    record.prediction ||
-                    ""
-                )
-                    .toUpperCase();
-
-
-            const actualLabel =
-                bsToLabel(
-                    actualBS
+            const predictionSide =
+                labelToSide(
+                    record.prediction
                 );
 
 
-            const actualResult =
-                prediction ===
-                actualLabel
+            if (
+                !predictionSide
+            ) {
+
+                continue;
+
+            }
+
+
+            const actualLabel =
+                sideToLabel(
+                    actualSide
+                );
+
+
+            const resultStatus =
+                predictionSide ===
+                actualSide
+
                     ? "WIN"
+
                     : "LOSS";
 
 
@@ -3483,9 +2851,9 @@ async function settlePredictions() {
                 `,
                 [
 
-                    number,
+                    actualNumber,
 
-                    actualResult,
+                    resultStatus,
 
                     now(),
 
@@ -3495,10 +2863,15 @@ async function settlePredictions() {
             );
 
 
+            console.log(
+                `[SETTLE] ${row.issueNumber} ${record.prediction} -> ${actualLabel} = ${resultStatus}`
+            );
+
+
         } catch (error) {
 
             console.error(
-                "[DB] settle:",
+                "[DB] settlePrediction:",
                 error.message
             );
 
@@ -3510,7 +2883,7 @@ async function settlePredictions() {
 
 
 // ============================================================
-// ACCESS KEY
+// ACCESS KEY HEADERS
 // ============================================================
 
 function getAccessKey(req) {
@@ -3547,22 +2920,22 @@ function getAdminKey(req) {
 
 
 // ============================================================
-// VALIDATE ACCESS
+// VALIDATE ACCESS KEY
 // ============================================================
 
 async function validateAccess(req) {
 
-    const key =
+    const accessKey =
         getAccessKey(req);
 
 
-    const device =
+    const deviceId =
         getDeviceId(req);
 
 
     if (
-        !key ||
-        !device
+        !accessKey ||
+        !deviceId
     ) {
 
         return {
@@ -3600,7 +2973,7 @@ async function validateAccess(req) {
             LIMIT 1
             `,
             [
-                key
+                accessKey
             ]
         );
 
@@ -3625,10 +2998,14 @@ async function validateAccess(req) {
         result.rows[0];
 
 
+    /*
+      One key -> one browser device
+    */
+
     if (
         row.device_id &&
         row.device_id !==
-            device
+        deviceId
     ) {
 
         return {
@@ -3657,7 +3034,7 @@ async function validateAccess(req) {
             `,
             [
 
-                device,
+                deviceId,
 
                 now(),
 
@@ -3691,11 +3068,11 @@ async function validateAccess(req) {
 
         ok: true,
 
-        key:
-            row.access_key,
-
         id:
-            row.id
+            row.id,
+
+        key:
+            row.access_key
 
     };
 
@@ -3710,11 +3087,63 @@ function requireAdmin(req) {
 
     return (
 
-        ADMIN_KEY &&
+        ADMIN_KEY.length > 0 &&
 
         getAdminKey(req) ===
-            ADMIN_KEY
+        ADMIN_KEY
 
+    );
+
+}
+
+
+// ============================================================
+// KEY CHECK API
+// ============================================================
+
+async function keyCheck(
+    req,
+    res
+) {
+
+    const auth =
+        await validateAccess(
+            req
+        );
+
+
+    if (!auth.ok) {
+
+        json(
+            res,
+            401,
+            auth
+        );
+
+        return;
+
+    }
+
+
+    json(
+        res,
+        200,
+        {
+
+            ok: true,
+
+            valid: true,
+
+            key:
+                auth.key,
+
+            id:
+                auth.id,
+
+            modelVersion:
+                MODEL_VERSION
+
+        }
     );
 
 }
@@ -3759,8 +3188,8 @@ async function stateApi(
 
 
     /*
-      New target =
-      new analysis.
+      New target issue:
+      generate fresh model.
     */
 
     if (
@@ -3768,7 +3197,7 @@ async function stateApi(
         !modelCache.prediction ||
 
         modelCache.targetIssue !==
-            targetIssue
+        targetIssue
 
     ) {
 
@@ -3778,7 +3207,9 @@ async function stateApi(
 
 
     /*
-      Prediction DB records.
+      If provider refreshed but
+      current target is same, keep
+      same prediction.
     */
 
     let predictionRecords = [];
@@ -3813,7 +3244,7 @@ async function stateApi(
         } catch (error) {
 
             console.error(
-                "[DB] state history:",
+                "[DB] history:",
                 error.message
             );
 
@@ -3832,23 +3263,28 @@ async function stateApi(
     ) {
 
         predictionMap.set(
+
             String(
                 record.target_issue
             ),
+
             record
+
         );
 
     }
 
 
     /*
-      Live history:
-      newest -> oldest
+      LAST 30 LIVE RESULTS
     */
 
     const history =
         providerState.history
-            .slice(0, 30)
+            .slice(
+                0,
+                30
+            )
             .map(
                 row => {
 
@@ -3858,8 +3294,8 @@ async function stateApi(
                         );
 
 
-                    const bs =
-                        numberToBS(
+                    const side =
+                        numberToSide(
                             number
                         );
 
@@ -3881,7 +3317,7 @@ async function stateApi(
                             : null;
 
 
-                    let result =
+                    let resultStatus =
                         "PENDING";
 
 
@@ -3889,7 +3325,7 @@ async function stateApi(
                         record?.actual_result
                     ) {
 
-                        result =
+                        resultStatus =
                             String(
                                 record.actual_result
                             ).toUpperCase();
@@ -3907,12 +3343,15 @@ async function stateApi(
 
                         number,
 
+                        actual:
+                            number,
+
                         type:
-                            bs,
+                            side,
 
                         label:
-                            bsToLabel(
-                                bs
+                            sideToLabel(
+                                side
                             ),
 
                         prediction:
@@ -3931,10 +3370,11 @@ async function stateApi(
                                 )
                                 : null,
 
-                        result,
+                        result:
+                            resultStatus,
 
                         actualResult:
-                            result,
+                            resultStatus,
 
                         modelVersion:
                             record?.model_version ||
@@ -3957,10 +3397,13 @@ async function stateApi(
 
             ok: true,
 
+
             serverTime:
                 now(),
 
+
             targetIssue,
+
 
             thinkingDurationMs:
                 THINKING_DURATION_MS,
@@ -3987,32 +3430,48 @@ async function stateApi(
                     model?.prediction ||
                     null,
 
+                predictionCode:
+                    model?.predictionCode ||
+                    null,
+
                 confidence:
                     model?.confidence ||
                     0,
 
                 confidenceLevel:
                     model?.confidenceLevel ||
-                    "LOW",
+                    "NO_SIGNAL",
 
                 status:
                     model?.status ||
-                    "NO_PATTERN",
+                    "NO_PATTERN_MATCH",
 
                 classification:
                     model?.classification ||
-                    "NO_PATTERN",
+                    "NO_PATTERN_MATCH",
 
-                pattern:
-                    model?.pattern ||
-                    "NONE",
-
-                matchedPattern:
-                    model?.matchedPattern ||
+                matchedRule:
+                    model?.matchedRule ??
                     null,
 
-                matchedSequence:
-                    model?.matchedSequence ||
+                matchedType:
+                    model?.matchedType ??
+                    null,
+
+                matchedPattern:
+                    model?.matchedPattern ??
+                    null,
+
+                matchedLength:
+                    model?.matchedLength ??
+                    null,
+
+                matchPercent:
+                    model?.matchPercent ??
+                    null,
+
+                matchedSide:
+                    model?.matchedSide ??
                     null,
 
                 reason:
@@ -4070,59 +3529,7 @@ async function stateApi(
 
 
 // ============================================================
-// KEY CHECK
-// ============================================================
-
-async function keyCheck(
-    req,
-    res
-) {
-
-    const auth =
-        await validateAccess(
-            req
-        );
-
-
-    if (!auth.ok) {
-
-        json(
-            res,
-            401,
-            auth
-        );
-
-        return;
-
-    }
-
-
-    json(
-        res,
-        200,
-        {
-
-            ok: true,
-
-            valid: true,
-
-            key:
-                auth.key,
-
-            id:
-                auth.id,
-
-            modelVersion:
-                MODEL_VERSION
-
-        }
-    );
-
-}
-
-
-// ============================================================
-// PREDICTION HISTORY
+// PREDICTION HISTORY API
 // ============================================================
 
 async function predictionHistory(
@@ -4206,15 +3613,15 @@ async function adminStatus(
                 MODEL_VERSION,
 
             engine:
-                "10 RESULT HUMAN PATTERN + OPPOSITE",
+                "25 MASTER + OPPOSITE + EXACT REVERSAL",
 
             originalRules:
                 Object.keys(
-                    ORIGINAL_PATTERNS
+                    MASTER_PATTERNS
                 ).length,
 
             totalPatterns:
-                PATTERNS.length,
+                PATTERN_DATABASE.length,
 
             thinkingDurationMs:
                 THINKING_DURATION_MS,
@@ -4318,7 +3725,7 @@ async function adminWingoTest(
             sample:
                 state.history.slice(
                     0,
-                    10
+                    15
                 )
 
         }
@@ -4360,6 +3767,11 @@ async function adminModelTest(
                     ?.prediction ||
                 null,
 
+            predictionCode:
+                model.prediction
+                    ?.predictionCode ||
+                null,
+
             confidence:
                 model.prediction
                     ?.confidence ||
@@ -4368,31 +3780,46 @@ async function adminModelTest(
             confidenceLevel:
                 model.prediction
                     ?.confidenceLevel ||
-                "LOW",
+                "NO_SIGNAL",
 
             status:
                 model.prediction
                     ?.status ||
-                "NO_PATTERN",
+                "NO_PATTERN_MATCH",
 
             classification:
                 model.prediction
                     ?.classification ||
-                "NO_PATTERN",
+                "NO_PATTERN_MATCH",
 
-            pattern:
+            matchedRule:
                 model.prediction
-                    ?.pattern ||
-                "NONE",
+                    ?.matchedRule ??
+                null,
+
+            matchedType:
+                model.prediction
+                    ?.matchedType ??
+                null,
 
             matchedPattern:
                 model.prediction
-                    ?.matchedPattern ||
+                    ?.matchedPattern ??
                 null,
 
-            matchedSequence:
+            matchedLength:
                 model.prediction
-                    ?.matchedSequence ||
+                    ?.matchedLength ??
+                null,
+
+            matchPercent:
+                model.prediction
+                    ?.matchPercent ??
+                null,
+
+            matchedSide:
+                model.prediction
+                    ?.matchedSide ??
                 null,
 
             reason:
@@ -4505,7 +3932,7 @@ async function adminKeysCreate(
         );
 
 
-    const custom =
+    const customKey =
         String(
             body?.key ||
             body?.access_key ||
@@ -4514,7 +3941,7 @@ async function adminKeysCreate(
 
 
     const key =
-        custom ||
+        customKey ||
         randomKey();
 
 
@@ -4714,7 +4141,7 @@ async function adminKeysDelete(
 
 
 // ============================================================
-// RESET DEVICE
+// ADMIN RESET DEVICE
 // ============================================================
 
 async function adminResetDevice(
@@ -4853,7 +4280,7 @@ function health(res) {
                 MODEL_VERSION,
 
             engine:
-                "10 RESULT HUMAN PATTERN + OPPOSITE",
+                "25 MASTER + OPPOSITE + EXACT REVERSAL",
 
             time:
                 now(),
@@ -4928,7 +4355,7 @@ function contentType(
 
 
 // ============================================================
-// STATIC SERVER
+// STATIC FILE SERVER
 // ============================================================
 
 function serveStatic(
@@ -5023,7 +4450,7 @@ function serveStatic(
 
 
             /*
-              MP3 RANGE
+              MP3 RANGE SUPPORT
             */
 
             if (
@@ -5154,6 +4581,7 @@ function serveStatic(
 
 const server =
     http.createServer(
+
         async (
             req,
             res
@@ -5162,7 +4590,7 @@ const server =
             try {
 
                 /*
-                  OPTIONS
+                  CORS OPTIONS
                 */
 
                 if (
@@ -5222,7 +4650,7 @@ const server =
 
 
                 /*
-                  ACCESS KEY CHECK
+                  KEY CHECK
                 */
 
                 if (
@@ -5303,7 +4731,7 @@ const server =
 
 
                 /*
-                  ADMIN
+                  ADMIN AUTH
                 */
 
                 if (
@@ -5377,7 +4805,7 @@ const server =
 
 
                 /*
-                  WINGO TEST
+                  WINGOBOT TEST
                 */
 
                 if (
@@ -5501,7 +4929,7 @@ const server =
 
 
                 /*
-                  STATIC FILES
+                  STATIC
                 */
 
                 serveStatic(
@@ -5545,6 +4973,7 @@ const server =
             }
 
         }
+
     );
 
 
@@ -5566,6 +4995,11 @@ async function backgroundRefresh() {
             resolveTargetIssue();
 
 
+        /*
+          Generate only when
+          target changes.
+        */
+
         if (
 
             target &&
@@ -5574,7 +5008,8 @@ async function backgroundRefresh() {
                 !modelCache.prediction ||
 
                 modelCache.targetIssue !==
-                    target
+                target
+
             )
 
         ) {
@@ -5596,7 +5031,7 @@ async function backgroundRefresh() {
 
 
 // ============================================================
-// START
+// START SERVER
 // ============================================================
 
 async function start() {
@@ -5616,42 +5051,52 @@ async function start() {
 
 
         server.listen(
+
             PORT,
+
             "0.0.0.0",
+
             () => {
 
                 console.log(
-                    `DY AI WINGO running on ${PORT}`
+                    "=========================================="
                 );
 
+                console.log(
+                    "       DY AI WINGO SERVER STARTED"
+                );
+
+                console.log(
+                    "=========================================="
+                );
+
+                console.log(
+                    `PORT: ${PORT}`
+                );
 
                 console.log(
                     `MODEL: ${MODEL_VERSION}`
                 );
 
-
                 console.log(
                     `ORIGINAL RULES: ${
                         Object.keys(
-                            ORIGINAL_PATTERNS
+                            MASTER_PATTERNS
                         ).length
                     }`
                 );
 
-
                 console.log(
                     `TOTAL PATTERNS: ${
-                        PATTERNS.length
+                        PATTERN_DATABASE.length
                     }`
                 );
-
 
                 console.log(
                     `HISTORY: ${
                         providerState.history.length
                     }`
                 );
-
 
                 console.log(
                     `LATEST ISSUE: ${
@@ -5661,43 +5106,51 @@ async function start() {
                     }`
                 );
 
-
                 console.log(
-                    `TARGET: ${
+                    `TARGET ISSUE: ${
                         modelCache.targetIssue ||
                         "NONE"
                     }`
                 );
 
-
                 console.log(
                     `STATUS: ${
                         modelCache.prediction
                             ?.status ||
-                        "NO_PATTERN"
+                        "NO_PATTERN_MATCH"
                     }`
                 );
 
-
                 console.log(
-                    `PATTERN: ${
+                    `MATCHED RULE: ${
                         modelCache.prediction
-                            ?.pattern ||
+                            ?.matchedRule ??
                         "NONE"
                     }`
                 );
 
+                console.log(
+                    `MATCHED TYPE: ${
+                        modelCache.prediction
+                            ?.matchedType ??
+                        "NONE"
+                    }`
+                );
 
                 console.log(
                     `PREDICTION: ${
                         modelCache.prediction
                             ?.prediction ||
-                        "NO PATTERN"
+                        "NO PREDICTION"
                     }`
+                );
 
+                console.log(
+                    "=========================================="
                 );
 
             }
+
         );
 
 
@@ -5730,7 +5183,7 @@ process.on(
     error => {
 
         console.error(
-            "[UNHANDLED]",
+            "[UNHANDLED REJECTION]",
             error
         );
 
@@ -5743,7 +5196,7 @@ process.on(
     error => {
 
         console.error(
-            "[UNCAUGHT]",
+            "[UNCAUGHT EXCEPTION]",
             error
         );
 
