@@ -2,38 +2,41 @@
 
 /*
 ============================================================
-DY AI WINGO
-ADAPTIVE CHART PATTERN ENGINE V4
+              DY AI WINGO - SERVER
+          OPPOSITE CHART PATTERN ENGINE
 ============================================================
 
-A = SMALL = 0,1,2,3,4
-B = BIG   = 5,6,7,8,9
+A = SMALL  (0-4)
+B = BIG    (5-9)
 
 IMPORTANT:
 
-Prediction is generated ONLY when a usable chart pattern
-matches the latest historical sequence.
+Prediction ONLY when a meaningful chart pattern matches.
 
-NO:
-- frequency-only prediction
-- momentum-only prediction
-- random prediction
-- forced alternation
-- forced BIG
-- forced SMALL
+No:
+- Random prediction
+- Frequency-only prediction
+- Momentum-only prediction
+- Forced alternation
+- "BIG ke baad SMALL"
+- "SMALL ke baad BIG"
 
-If no usable pattern matches:
-prediction = null
+25 chart rules are included.
 
-This is historical pattern analysis only.
-It does not guarantee future outcomes.
+Every rule automatically gets an OPPOSITE version:
+
+A -> B
+B -> A
+
+Example:
+
+AABBAABB
+      ↓
+BBAABBAA
+
 ============================================================
 */
 
-
-// ============================================================
-// MODULES
-// ============================================================
 
 const http = require("http");
 const https = require("https");
@@ -52,25 +55,19 @@ const PORT =
   Number(process.env.PORT || 10000);
 
 const ADMIN_KEY =
-  String(
-    process.env.ADMIN_KEY || ""
-  ).trim();
+  String(process.env.ADMIN_KEY || "").trim();
 
 const WINGOBOT_TOKEN =
-  String(
-    process.env.WINGOBOT_TOKEN || ""
-  ).trim();
+  String(process.env.WINGOBOT_TOKEN || "").trim();
 
 const DATABASE_URL =
-  String(
-    process.env.DATABASE_URL || ""
-  ).trim();
+  String(process.env.DATABASE_URL || "").trim();
 
 const WINGOBOT_API =
   "https://api.wingobot.com/v2/30-sec-game-history";
 
 const MODEL_VERSION =
-  "DY-AI-ADAPTIVE-CHART-V4";
+  "DY-AI-OPPOSITE-CHART-V4";
 
 const THINKING_DURATION_MS =
   3000;
@@ -88,24 +85,78 @@ const REQUEST_TIMEOUT_MS =
 
 let pool = null;
 
+
 if (DATABASE_URL) {
 
-  pool =
-    new Pool({
-      connectionString:
-        DATABASE_URL,
+  pool = new Pool({
+    connectionString: DATABASE_URL,
 
-      ssl:
-        DATABASE_URL.includes(
-          "localhost"
-        )
-          ? false
-          : {
-              rejectUnauthorized:
-                false
-            }
-    });
+    ssl:
+      DATABASE_URL.includes("localhost")
+        ? false
+        : {
+            rejectUnauthorized: false
+          }
+  });
 
+}
+
+
+// ============================================================
+// DATABASE INIT
+// ============================================================
+
+async function initDatabase() {
+
+  if (!pool) {
+
+    console.log(
+      "[DB] DATABASE_URL missing"
+    );
+
+    return;
+  }
+
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS access_keys (
+      id SERIAL PRIMARY KEY,
+      access_key TEXT UNIQUE NOT NULL,
+      device_id TEXT,
+      created_at BIGINT NOT NULL,
+      last_seen BIGINT DEFAULT 0
+    );
+  `);
+
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS prediction_records (
+      id SERIAL PRIMARY KEY,
+      target_issue TEXT NOT NULL,
+      prediction TEXT NOT NULL,
+      confidence INTEGER DEFAULT 0,
+      model_version TEXT,
+      actual_number INTEGER,
+      actual_result TEXT,
+      created_at BIGINT NOT NULL,
+      settled_at BIGINT
+    );
+  `);
+
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_prediction_issue
+    ON prediction_records(target_issue);
+  `);
+
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_prediction_created
+    ON prediction_records(created_at DESC);
+  `);
+
+
+  console.log("[DB] Ready");
 }
 
 
@@ -141,8 +192,7 @@ let modelCache = {
 };
 
 
-let refreshInProgress =
-  false;
+let refreshInProgress = false;
 
 
 // ============================================================
@@ -150,48 +200,37 @@ let refreshInProgress =
 // ============================================================
 
 function now() {
-
   return Date.now();
-
 }
 
 
-function percentage(
-  part,
-  total
-) {
+function numberToType(number) {
 
-  if (!total) {
+  const n = Number(number);
 
-    return 0;
-
+  if (
+    !Number.isInteger(n) ||
+    n < 0 ||
+    n > 9
+  ) {
+    return null;
   }
 
-  return Number(
-    (
-      part /
-      total *
-      100
-    ).toFixed(2)
-  );
-
+  return n >= 5 ? "B" : "S";
 }
 
 
-function clamp(
-  value,
-  min,
-  max
-) {
+function typeLabel(type) {
 
-  return Math.max(
-    min,
-    Math.min(
-      max,
-      value
-    )
-  );
+  if (type === "B") {
+    return "BIG";
+  }
 
+  if (type === "S") {
+    return "SMALL";
+  }
+
+  return "UNKNOWN";
 }
 
 
@@ -208,136 +247,23 @@ function randomKey() {
 }
 
 
-// ============================================================
-// NUMBER -> BIG / SMALL
-// ============================================================
-
-function numberToType(
-  number
-) {
-
-  const n =
-    Number(number);
-
-  if (
-    !Number.isInteger(n) ||
-    n < 0 ||
-    n > 9
-  ) {
-
-    return null;
-
-  }
-
-  return n >= 5
-    ? "B"
-    : "S";
-
-}
-
-
-function typeLabel(
-  type
-) {
-
-  if (type === "B") {
-
-    return "BIG";
-
-  }
-
-  if (type === "S") {
-
-    return "SMALL";
-
-  }
-
-  return "UNKNOWN";
-
-}
-
-
-// ============================================================
-// NUMBER -> A/B
-// ============================================================
-
-function numberToAB(
-  number
-) {
-
-  const n =
-    Number(number);
-
-  if (
-    !Number.isInteger(n) ||
-    n < 0 ||
-    n > 9
-  ) {
-
-    return null;
-
-  }
-
-  /*
-    A = SMALL
-    B = BIG
-  */
-
-  return n <= 4
-    ? "A"
-    : "B";
-
-}
-
-
-function abToPrediction(
-  value
-) {
-
-  if (value === "A") {
-
-    return "SMALL";
-
-  }
-
-  if (value === "B") {
-
-    return "BIG";
-
-  }
-
-  return null;
-
-}
-
-
-// ============================================================
-// ISSUE HELPERS
-// ============================================================
-
-function incrementIssue(
-  issue
-) {
+function incrementIssue(issue) {
 
   if (
     issue === null ||
     issue === undefined
   ) {
-
     return null;
-
   }
 
-  const value =
-    String(issue);
 
-  if (
-    !/^\d+$/.test(value)
-  ) {
+  const value = String(issue);
 
+
+  if (!/^\d+$/.test(value)) {
     return null;
-
   }
+
 
   try {
 
@@ -345,10 +271,7 @@ function incrementIssue(
       BigInt(value) + 1n
     )
       .toString()
-      .padStart(
-        value.length,
-        "0"
-      );
+      .padStart(value.length, "0");
 
   } catch {
 
@@ -359,38 +282,15 @@ function incrementIssue(
 }
 
 
-function compareIssue(
-  a,
-  b
-) {
+function compareIssue(a, b) {
 
   try {
 
-    const aa =
-      BigInt(
-        String(a)
-      );
+    const aa = BigInt(String(a));
+    const bb = BigInt(String(b));
 
-    const bb =
-      BigInt(
-        String(b)
-      );
-
-    if (
-      aa > bb
-    ) {
-
-      return 1;
-
-    }
-
-    if (
-      aa < bb
-    ) {
-
-      return -1;
-
-    }
+    if (aa > bb) return 1;
+    if (aa < bb) return -1;
 
     return 0;
 
@@ -407,19 +307,15 @@ function compareIssue(
 // JSON RESPONSE
 // ============================================================
 
-function json(
-  res,
-  status,
-  data
-) {
+function json(res, status, data) {
 
   const body =
     JSON.stringify(data);
 
+
   res.writeHead(
     status,
     {
-
       "Content-Type":
         "application/json; charset=utf-8",
 
@@ -434,9 +330,9 @@ function json(
 
       "Access-Control-Allow-Methods":
         "GET, POST, DELETE, OPTIONS"
-
     }
   );
+
 
   res.end(body);
 
@@ -454,15 +350,14 @@ function text(
   res.writeHead(
     status,
     {
-
       "Content-Type":
         contentType,
 
       "Cache-Control":
         "no-store"
-
     }
   );
+
 
   res.end(body);
 
@@ -476,18 +371,17 @@ function text(
 function readBody(req) {
 
   return new Promise(
-    (
-      resolve,
-      reject
-    ) => {
+    (resolve, reject) => {
 
       let data = "";
+
 
       req.on(
         "data",
         chunk => {
 
           data += chunk;
+
 
           if (
             data.length >
@@ -507,6 +401,7 @@ function readBody(req) {
         }
       );
 
+
       req.on(
         "end",
         () => {
@@ -518,6 +413,7 @@ function readBody(req) {
             return;
 
           }
+
 
           try {
 
@@ -534,6 +430,7 @@ function readBody(req) {
         }
       );
 
+
       req.on(
         "error",
         reject
@@ -546,73 +443,13 @@ function readBody(req) {
 
 
 // ============================================================
-// DATABASE INIT
-// ============================================================
-
-async function initDatabase() {
-
-  if (!pool) {
-
-    console.log(
-      "[DB] DATABASE_URL missing"
-    );
-
-    return;
-
-  }
-
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS access_keys (
-      id SERIAL PRIMARY KEY,
-      access_key TEXT UNIQUE NOT NULL,
-      device_id TEXT,
-      created_at BIGINT NOT NULL,
-      last_seen BIGINT DEFAULT 0
-    );
-  `);
-
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS prediction_records (
-      id SERIAL PRIMARY KEY,
-      target_issue TEXT NOT NULL,
-      prediction TEXT NOT NULL,
-      confidence INTEGER DEFAULT 0,
-      model_version TEXT,
-      actual_number INTEGER,
-      actual_result TEXT,
-      created_at BIGINT NOT NULL,
-      settled_at BIGINT
-    );
-  `);
-
-  await pool.query(`
-    CREATE INDEX IF NOT EXISTS idx_prediction_issue
-    ON prediction_records(target_issue);
-  `);
-
-  await pool.query(`
-    CREATE INDEX IF NOT EXISTS idx_prediction_created
-    ON prediction_records(created_at DESC);
-  `);
-
-  console.log(
-    "[DB] Ready"
-  );
-
-}
-
-
-// ============================================================
 // WINGOBOT API
 // ============================================================
 
 function fetchWingoBot() {
 
   return new Promise(
-    (
-      resolve,
-      reject
-    ) => {
+    (resolve, reject) => {
 
       if (!WINGOBOT_TOKEN) {
 
@@ -626,13 +463,12 @@ function fetchWingoBot() {
 
       }
 
+
       const request =
         https.request(
           WINGOBOT_API,
           {
-
-            method:
-              "GET",
+            method: "GET",
 
             timeout:
               REQUEST_TIMEOUT_MS,
@@ -649,12 +485,12 @@ function fetchWingoBot() {
                 "DY-AI-Wingo/4.0"
 
             }
-
           },
 
           response => {
 
             let body = "";
+
 
             response.on(
               "data",
@@ -665,15 +501,14 @@ function fetchWingoBot() {
               }
             );
 
+
             response.on(
               "end",
               () => {
 
                 if (
-                  response.statusCode <
-                    200 ||
-                  response.statusCode >=
-                    300
+                  response.statusCode < 200 ||
+                  response.statusCode >= 300
                 ) {
 
                   reject(
@@ -686,12 +521,11 @@ function fetchWingoBot() {
 
                 }
 
+
                 try {
 
                   resolve(
-                    JSON.parse(
-                      body
-                    )
+                    JSON.parse(body)
                   );
 
                 } catch {
@@ -710,6 +544,7 @@ function fetchWingoBot() {
           }
         );
 
+
       request.on(
         "timeout",
         () => {
@@ -723,10 +558,12 @@ function fetchWingoBot() {
         }
       );
 
+
       request.on(
         "error",
         reject
       );
+
 
       request.end();
 
@@ -740,29 +577,20 @@ function fetchWingoBot() {
 // NORMALIZE HISTORY
 // ============================================================
 
-function normalizeHistory(
-  payload
-) {
+function normalizeHistory(payload) {
 
   const raw =
-    Array.isArray(
-      payload?.history
-    )
+    Array.isArray(payload?.history)
       ? payload.history
-
-      : Array.isArray(
-          payload?.data
-        )
+      : Array.isArray(payload?.data)
       ? payload.data
-
-      : Array.isArray(
-          payload?.results
-        )
+      : Array.isArray(payload?.results)
       ? payload.results
-
       : [];
 
+
   const result = [];
+
 
   for (
     const item of raw
@@ -774,14 +602,16 @@ function normalizeHistory(
       item?.period ??
       item?.periodNumber;
 
+
     const number =
       item?.number ??
       item?.result ??
       item?.openNumber ??
       item?.digit;
 
-    const n =
-      Number(number);
+
+    const n = Number(number);
+
 
     if (
       issue !== undefined &&
@@ -817,6 +647,7 @@ function normalizeHistory(
 
   }
 
+
   return result;
 
 }
@@ -826,14 +657,11 @@ function normalizeHistory(
 // CURRENT ISSUE
 // ============================================================
 
-function providerCurrentIssue(
-  payload
-) {
+function providerCurrentIssue(payload) {
 
   return (
 
-    payload?.current
-      ?.issueNumber
+    payload?.current?.issueNumber
 
     ??
 
@@ -841,13 +669,11 @@ function providerCurrentIssue(
 
     ??
 
-    payload?.current
-      ?.issue
+    payload?.current?.issue
 
     ??
 
-    payload?.current
-      ?.period
+    payload?.current?.period
 
     ??
 
@@ -864,31 +690,33 @@ function providerCurrentIssue(
 
 async function refreshProvider() {
 
-  if (
-    refreshInProgress
-  ) {
+  if (refreshInProgress) {
 
     return providerState;
 
   }
 
-  refreshInProgress =
-    true;
+
+  refreshInProgress = true;
+
 
   try {
 
     const payload =
       await fetchWingoBot();
 
+
     const history =
       normalizeHistory(
         payload
       );
 
+
     const currentIssue =
       providerCurrentIssue(
         payload
       );
+
 
     providerState = {
 
@@ -896,33 +724,28 @@ async function refreshProvider() {
 
       currentIssue:
         currentIssue !== null
-          ? String(
-              currentIssue
-            )
-          : history[0]
-              ?.issueNumber ||
+          ? String(currentIssue)
+          : history[0]?.issueNumber ||
             null,
 
       history,
 
       fetched:
         Number(
-          payload?.stats
-            ?.fetched
+          payload?.stats?.fetched
         ) ||
         history.length,
 
       lastUpdated:
         Number(
-          payload?.stats
-            ?.last_updated
+          payload?.stats?.last_updated
         ) ||
         now(),
 
-      error:
-        null
+      error: null
 
     };
+
 
     return providerState;
 
@@ -940,12 +763,12 @@ async function refreshProvider() {
 
     };
 
+
     return providerState;
 
   } finally {
 
-    refreshInProgress =
-      false;
+    refreshInProgress = false;
 
   }
 
@@ -953,97 +776,241 @@ async function refreshProvider() {
 
 
 // ============================================================
-// PATTERN CLEANER
+// ============================================================
+//              25 CHART RULES
+// ============================================================
 // ============================================================
 
-function cleanPattern(
-  pattern
-) {
+const BASE_RULES = [
 
-  return String(
-    pattern || ""
-  )
-    .replace(
-      /[^AB]/g,
-      ""
-    );
+  { id: 1, pattern: "ABABABABAB" },
+
+  { id: 2, pattern: "AABBAABB" },
+
+  { id: 3, pattern: "AAABBBAAABBB" },
+
+  { id: 4, pattern: "AAAABBBBAAAABBBB" },
+
+  { id: 5, pattern: "AABAABAAB" },
+
+  { id: 6, pattern: "AAAAAAAABBBBBBBB" },
+
+  { id: 7, pattern: "ABBABBABB" },
+
+  { id: 8, pattern: "AAABAAABAAAB" },
+
+  { id: 9, pattern: "AAABBAAABB" },
+
+  { id: 10, pattern: "AAAABBABBBAAAA" },
+
+  { id: 11, pattern: "ABBBABBBABBB" },
+
+  { id: 12, pattern: "ABABBABBB" },
+
+  { id: 13, pattern: "AABBAAABBBAAAABBBB" },
+
+  { id: 14, pattern: "ABBAAABBBB" },
+
+  { id: 15, pattern: "AAAABBBAAB" },
+
+  { id: 16, pattern: "ABAABBAAABBB" },
+
+  { id: 17, pattern: "AABBBABBBBAA" },
+
+  { id: 18, pattern: "ABBAAAABBBBBBBB" },
+
+  { id: 19, pattern: "ABBBABBB" },
+
+  { id: 20, pattern: "AABBBAABBB" },
+
+  { id: 21, pattern: "ABAABAAAB" },
+
+  { id: 22, pattern: "AABAABBAABBB" },
+
+  { id: 23, pattern: "AAAABAAAAB" },
+
+  { id: 24, pattern: "AAAABBAAAABB" },
+
+  { id: 25, pattern: "AAAABBBAAAABBB" }
+
+];
+
+
+// ============================================================
+// OPPOSITE PATTERN
+// ============================================================
+
+function invertPattern(pattern) {
+
+  return String(pattern)
+    .split("")
+    .map(ch => {
+
+      if (ch === "A") {
+        return "B";
+      }
+
+      if (ch === "B") {
+        return "A";
+      }
+
+      return "";
+
+    })
+    .join("");
 
 }
 
 
 // ============================================================
-// ADD PATTERN HELPER
+// BUILD ORIGINAL + OPPOSITE
 // ============================================================
 
-function addPattern(
-  list,
-  name,
-  pattern,
-  family,
-  priority
+const RULES = [];
+
+
+for (
+  const base of BASE_RULES
 ) {
 
-  pattern =
-    cleanPattern(
-      pattern
-    );
+  const original =
+    String(base.pattern)
+      .replace(/[^AB]/g, "");
 
-  if (
-    pattern.length < 4
-  ) {
 
-    return;
-
+  if (!original) {
+    continue;
   }
 
-  list.push({
 
-    name,
+  RULES.push({
 
-    pattern,
+    id:
+      base.id,
 
-    family,
+    variant:
+      "ORIGINAL",
 
-    priority:
-      Number(
-        priority || 1
-      )
+    pattern:
+      original
 
   });
 
+
+  const opposite =
+    invertPattern(
+      original
+    );
+
+
+  if (
+    opposite !==
+    original
+  ) {
+
+    RULES.push({
+
+      id:
+        base.id,
+
+      variant:
+        "OPPOSITE",
+
+      pattern:
+        opposite
+
+    });
+
+  }
+
 }
 
 
 // ============================================================
-// RUN LENGTH -> PATTERN
+// NUMBER -> A/B
 // ============================================================
 
-function makeRunPattern(
-  start,
-  lengths
-) {
+function numberToAB(number) {
 
-  let side =
-    start;
+  const n =
+    Number(number);
 
-  let output = "";
 
-  for (
-    const length of
-      lengths
+  if (
+    !Number.isInteger(n) ||
+    n < 0 ||
+    n > 9
   ) {
 
-    output +=
-      side.repeat(
-        length
-      );
-
-    side =
-      side === "A"
-        ? "B"
-        : "A";
+    return null;
 
   }
+
+
+  /*
+    0-4 = A = SMALL
+    5-9 = B = BIG
+  */
+
+  return n <= 4
+    ? "A"
+    : "B";
+
+}
+
+
+// ============================================================
+// HISTORY -> A/B
+// ============================================================
+
+function convertHistory(results) {
+
+  const output = [];
+
+
+  for (
+    const value of
+      Array.isArray(results)
+        ? results
+        : []
+  ) {
+
+    let n;
+
+
+    if (
+      typeof value ===
+      "object" &&
+      value !== null
+    ) {
+
+      n =
+        Number(
+          value.number ??
+          value.actual_number ??
+          value.value
+        );
+
+    } else {
+
+      n =
+        Number(value);
+
+    }
+
+
+    const ab =
+      numberToAB(n);
+
+
+    if (ab !== null) {
+
+      output.push(ab);
+
+    }
+
+  }
+
 
   return output;
 
@@ -1051,541 +1018,157 @@ function makeRunPattern(
 
 
 // ============================================================
-// ADAPTIVE PATTERN LIBRARY
+// MATCH QUALITY
 // ============================================================
 
-function buildPatternLibrary() {
-
-  const list = [];
-
-  // ----------------------------------------------------------
-  // ALTERNATION
-  // ----------------------------------------------------------
-
-  for (
-    let length = 4;
-    length <= 14;
-    length++
-  ) {
-
-    addPattern(
-      list,
-      "SINGLE TREND",
-      "AB".repeat(
-        Math.ceil(
-          length / 2
-        )
-      ).slice(
-        0,
-        length
-      ),
-      "ALTERNATION",
-      3
-    );
-
-    addPattern(
-      list,
-      "SINGLE TREND",
-      "BA".repeat(
-        Math.ceil(
-          length / 2
-        )
-      ).slice(
-        0,
-        length
-      ),
-      "ALTERNATION",
-      3
-    );
-
-  }
-
-
-  // ----------------------------------------------------------
-  // DOUBLE BLOCK
-  // ----------------------------------------------------------
-
-  for (
-    let repeats = 2;
-    repeats <= 6;
-    repeats++
-  ) {
-
-    addPattern(
-      list,
-      "DOUBLE TREND",
-      "AABB".repeat(
-        repeats
-      ),
-      "DOUBLE",
-      5
-    );
-
-    addPattern(
-      list,
-      "DOUBLE TREND",
-      "BBAA".repeat(
-        repeats
-      ),
-      "DOUBLE",
-      5
-    );
-
-  }
-
-
-  // ----------------------------------------------------------
-  // TRIPLE BLOCK
-  // ----------------------------------------------------------
-
-  for (
-    let repeats = 2;
-    repeats <= 4;
-    repeats++
-  ) {
-
-    addPattern(
-      list,
-      "TRIPLE TREND",
-      "AAABBB".repeat(
-        repeats
-      ),
-      "TRIPLE",
-      6
-    );
-
-    addPattern(
-      list,
-      "TRIPLE TREND",
-      "BBBAAA".repeat(
-        repeats
-      ),
-      "TRIPLE",
-      6
-    );
-
-  }
-
-
-  // ----------------------------------------------------------
-  // QUAD BLOCK
-  // ----------------------------------------------------------
-
-  for (
-    let repeats = 2;
-    repeats <= 3;
-    repeats++
-  ) {
-
-    addPattern(
-      list,
-      "QUADRA TREND",
-      "AAAABBBB".repeat(
-        repeats
-      ),
-      "QUAD",
-      7
-    );
-
-    addPattern(
-      list,
-      "QUADRA TREND",
-      "BBBBAAAA".repeat(
-        repeats
-      ),
-      "QUAD",
-      7
-    );
-
-  }
-
-
-  // ----------------------------------------------------------
-  // COMMON CHART STRUCTURES
-  // ----------------------------------------------------------
-
-  const common = [
-
-    [
-      "THREE IN ONE",
-      "AAABAAA"
-    ],
-
-    [
-      "THREE IN ONE",
-      "BBBABBB"
-    ],
-
-    [
-      "THREE IN ONE",
-      "AAABAAAB"
-    ],
-
-    [
-      "THREE IN ONE",
-      "BBBABBBA"
-    ],
-
-    [
-      "TWO IN ONE",
-      "AABAAB"
-    ],
-
-    [
-      "TWO IN ONE",
-      "BBABBA"
-    ],
-
-    [
-      "TWO IN ONE",
-      "AABAABAAB"
-    ],
-
-    [
-      "TWO IN ONE",
-      "BBABBABBA"
-    ],
-
-    [
-      "THREE IN TWO",
-      "AAABB"
-    ],
-
-    [
-      "THREE IN TWO",
-      "BBBAA"
-    ],
-
-    [
-      "THREE IN TWO",
-      "AAABBBAABB"
-    ],
-
-    [
-      "THREE IN TWO",
-      "BBBAAABBAA"
-    ],
-
-    [
-      "FOUR IN ONE",
-      "AAAABAAAA"
-    ],
-
-    [
-      "FOUR IN ONE",
-      "BBBBABBBB"
-    ],
-
-    [
-      "FOUR IN TWO",
-      "AAAABB"
-    ],
-
-    [
-      "FOUR IN TWO",
-      "BBBBAA"
-    ],
-
-    [
-      "MIRROR",
-      "ABBA"
-    ],
-
-    [
-      "MIRROR",
-      "BAAB"
-    ],
-
-    [
-      "MIRROR",
-      "ABBAABBA"
-    ],
-
-    [
-      "MIRROR",
-      "BAABBAAB"
-    ],
-
-    [
-      "EXTENDED BLOCK",
-      "AABBAABB"
-    ],
-
-    [
-      "EXTENDED BLOCK",
-      "BBAABBAA"
-    ],
-
-    [
-      "EXTENDED BLOCK",
-      "AAABBAAABB"
-    ],
-
-    [
-      "EXTENDED BLOCK",
-      "BBBAABBBAA"
-
-    ]
-
-  ];
-
-
-  for (
-    const item of common
-  ) {
-
-    addPattern(
-      list,
-      item[0],
-      item[1],
-      "CHART",
-      5
-    );
-
-  }
-
-
-  // ----------------------------------------------------------
-  // RUN LENGTH PATTERNS
-  // ----------------------------------------------------------
-
-  const runTemplates = [
-
-    [1, 1],
-
-    [1, 2],
-
-    [2, 1],
-
-    [1, 3],
-
-    [3, 1],
-
-    [2, 2],
-
-    [2, 3],
-
-    [3, 2],
-
-    [1, 2, 1],
-
-    [2, 1, 2],
-
-    [1, 2, 2],
-
-    [2, 2, 1],
-
-    [1, 3, 1],
-
-    [3, 1, 3],
-
-    [1, 2, 3],
-
-    [3, 2, 1],
-
-    [1, 1, 2],
-
-    [2, 1, 1],
-
-    [2, 2, 2],
-
-    [3, 2, 2],
-
-    [2, 3, 2],
-
-    [2, 2, 3]
-
-  ];
-
-
-  for (
-    const lengths of
-      runTemplates
-  ) {
-
-    addPattern(
-      list,
-      `RUN ${lengths.join("-")}`,
-      makeRunPattern(
-        "A",
-        lengths
-      ),
-      "RUN_LENGTH",
-      5
-    );
-
-    addPattern(
-      list,
-      `RUN ${lengths.join("-")}`,
-      makeRunPattern(
-        "B",
-        lengths
-      ),
-      "RUN_LENGTH",
-      5
-    );
-
-  }
-
-
-  // ----------------------------------------------------------
-  // REPEATED MOTIFS
-  // ----------------------------------------------------------
-
-  const motifs = [
-
-    "AB",
-    "BA",
-
-    "AA",
-    "BB",
-
-    "AAB",
-    "ABB",
-
-    "BAA",
-    "BBA",
-
-    "ABA",
-    "BAB",
-
-    "AABB",
-    "BBAA",
-
-    "ABBA",
-    "BAAB",
-
-    "AAAB",
-    "BBBA",
-
-    "AABA",
-    "BBAB",
-
-    "ABAA",
-    "BABB"
-
-  ];
-
-
-  for (
-    const motif of
-      motifs
-  ) {
-
-    for (
-      let repeat = 2;
-      repeat <= 4;
-      repeat++
-    ) {
-
-      addPattern(
-        list,
-        "REPEATED MOTIF",
-        motif.repeat(
-          repeat
-        ),
-        "REPEAT",
-        4 + repeat
-      );
-
-    }
-
-  }
-
-
-  // ----------------------------------------------------------
-  // REMOVE DUPLICATES
-  // ----------------------------------------------------------
-
-  const unique =
-    new Map();
-
-  for (
-    const item of
-      list
-  ) {
-
-    const key =
-      `${item.name}|${item.pattern}`;
-
-    if (
-      !unique.has(key)
-    ) {
-
-      unique.set(
-        key,
-        item
-      );
-
-    }
-
-  }
-
-  return [
-    ...unique.values()
-  ];
-
-}
-
-
-const ADAPTIVE_PATTERNS =
-  buildPatternLibrary();
-
-
-// ============================================================
-// CURRENT RUN
-// ============================================================
-
-function currentRunInfo(
-  sequence
+function matchQuality(
+  matched,
+  patternLength
 ) {
 
+  /*
+    1-2 characters:
+    NO PREDICTION
+
+    3:
+    weak candidate
+
+    4:
+    moderate
+
+    5:
+    good
+
+    6+:
+    strong
+  */
+
   if (
-    !sequence.length
+    matched < 3
   ) {
 
     return {
 
-      side: null,
+      valid: false,
 
-      length: 0
+      weight: 0,
+
+      level:
+        "TOO_SHORT"
 
     };
 
   }
 
-  const side =
-    sequence[
-      sequence.length - 1
-    ];
 
-  let length = 1;
+  const ratio =
+    matched /
+    patternLength;
 
-  for (
-    let i =
-      sequence.length - 2;
-    i >= 0;
-    i--
+
+  if (
+    matched >= 8 &&
+    ratio >= 0.70
   ) {
 
-    if (
-      sequence[i] !==
-      side
-    ) {
+    return {
 
-      break;
+      valid: true,
 
-    }
+      weight: 10,
 
-    length++;
+      level:
+        "VERY_STRONG"
+
+    };
 
   }
 
+
+  if (
+    matched >= 6 &&
+    ratio >= 0.60
+  ) {
+
+    return {
+
+      valid: true,
+
+      weight: 8,
+
+      level:
+        "STRONG"
+
+    };
+
+  }
+
+
+  if (
+    matched >= 5 &&
+    ratio >= 0.55
+  ) {
+
+    return {
+
+      valid: true,
+
+      weight: 6,
+
+      level:
+        "GOOD"
+
+    };
+
+  }
+
+
+  if (
+    matched >= 4 &&
+    ratio >= 0.50
+  ) {
+
+    return {
+
+      valid: true,
+
+      weight: 4,
+
+      level:
+        "MODERATE"
+
+    };
+
+  }
+
+
+  if (
+    matched >= 3 &&
+    ratio >= 0.40
+  ) {
+
+    return {
+
+      valid: true,
+
+      weight: 2,
+
+      level:
+        "WEAK"
+
+    };
+
+  }
+
+
   return {
 
-    side,
+    valid: false,
 
-    length
+    weight: 0,
+
+    level:
+      "LOW"
 
   };
 
@@ -1593,213 +1176,115 @@ function currentRunInfo(
 
 
 // ============================================================
-// RUN SIGNATURE
+// FIND BEST SUFFIX MATCH
 // ============================================================
 
-function getRuns(
-  sequence
+function findBestMatch(
+  history,
+  rule
 ) {
 
-  const runs = [];
-
-  if (
-    !sequence.length
-  ) {
-
-    return runs;
-
-  }
-
-  let side =
-    sequence[0];
-
-  let length = 1;
-
-  for (
-    let i = 1;
-    i < sequence.length;
-    i++
-  ) {
-
-    if (
-      sequence[i] ===
-      side
-    ) {
-
-      length++;
-
-    } else {
-
-      runs.push({
-
-        side,
-
-        length
-
-      });
-
-      side =
-        sequence[i];
-
-      length = 1;
-
-    }
-
-  }
-
-  runs.push({
-
-    side,
-
-    length
-
-  });
-
-  return runs;
-
-}
+  const historyString =
+    history.join("");
 
 
-function runSignature(
-  sequence
-) {
-
-  return getRuns(
-    sequence
-  )
-    .map(
-      item =>
-        `${item.side}${item.length}`
-    )
-    .join("-");
-
-}
+  const pattern =
+    rule.pattern;
 
 
-// ============================================================
-// CLEAN NUMBERS
-// ============================================================
-
-function cleanPatternNumbers(
-  results
-) {
-
-  const clean = [];
-
-  for (
-    const item of
-      Array.isArray(results)
-        ? results
-        : []
-  ) {
-
-    let number;
-
-    if (
-      typeof item ===
-        "object" &&
-      item !== null
-    ) {
-
-      number =
-        Number(
-          item.number ??
-          item.actual_number ??
-          item.value
-        );
-
-    } else {
-
-      number =
-        Number(item);
-
-    }
-
-    if (
-      Number.isInteger(number) &&
-      number >= 0 &&
-      number <= 9
-    ) {
-
-      clean.push(
-        number
-      );
-
-    }
-
-  }
-
-  return clean;
-
-}
-
-
-// ============================================================
-// PREFIX/SUFFIX MATCH
-// ============================================================
-//
-// History suffix must match pattern prefix.
-//
-// Example:
-//
-// Pattern:
-// AABB AABB
-//
-// History ending:
-// AABB
-//
-// Match:
-// 4
-//
-// Next:
-// A
-//
-// ============================================================
-
-function prefixSuffixMatch(
-  sequence,
-  pattern
-) {
+  /*
+    Pattern ke START ko
+    current history ke END se
+    compare karte hain.
+  */
 
   const max =
     Math.min(
-      sequence.length,
+      historyString.length,
       pattern.length - 1
     );
 
-  let best = 0;
+
+  let best = null;
+
 
   for (
-    let length = 1;
-    length <= max;
-    length++
+    let len = max;
+    len >= 3;
+    len--
   ) {
 
     const historyPart =
-      sequence
-        .slice(
-          -length
-        )
-        .join("");
+      historyString.slice(
+        -len
+      );
+
 
     const patternPart =
-      pattern
-        .slice(
-          0,
-          length
-        );
+      pattern.slice(
+        0,
+        len
+      );
+
 
     if (
       historyPart ===
       patternPart
     ) {
 
-      best =
-        length;
+      const next =
+        pattern[len];
+
+
+      if (!next) {
+        continue;
+      }
+
+
+      const quality =
+        matchQuality(
+          len,
+          pattern.length
+        );
+
+
+      if (!quality.valid) {
+        continue;
+      }
+
+
+      best = {
+
+        rule:
+          rule.id,
+
+        variant:
+          rule.variant,
+
+        pattern:
+          pattern,
+
+        matched:
+          len,
+
+        next:
+          next,
+
+        weight:
+          quality.weight,
+
+        level:
+          quality.level
+
+      };
+
+
+      break;
 
     }
 
   }
+
 
   return best;
 
@@ -1807,121 +1292,38 @@ function prefixSuffixMatch(
 
 
 // ============================================================
-// DYNAMIC REPEATED BLOCK DETECTION
-// ============================================================
-//
-// Example:
-//
-// ABABAB
-// AABB AABB
-// ABBABB
-//
-// If recent sequence is a repeated block,
-// the engine can use the block's next
-// continuation.
-//
+// FIND PATTERN CANDIDATES
 // ============================================================
 
-function findDynamicRepeat(
-  sequence
+function findPatternCandidates(
+  history
 ) {
 
   const candidates = [];
 
-  const maxBlock =
-    Math.min(
-      6,
-      Math.floor(
-        sequence.length / 2
-      )
-    );
 
   for (
-    let size = 2;
-    size <= maxBlock;
-    size++
+    const rule of
+      RULES
   ) {
 
-    const last =
-      sequence.slice(
-        -size
+    const match =
+      findBestMatch(
+        history,
+        rule
       );
 
-    const previous =
-      sequence.slice(
-        -size * 2,
-        -size
+
+    if (match) {
+
+      candidates.push(
+        match
       );
 
-    if (
-      last.length !==
-      size ||
-      previous.length !==
-      size
-    ) {
-
-      continue;
-
     }
-
-    if (
-      last.join("") !==
-      previous.join("")
-    ) {
-
-      continue;
-
-    }
-
-    const block =
-      last.join("");
-
-    /*
-      Need a third repetition
-      or enough evidence to
-      continue the block.
-
-      We only predict the first
-      element of the repeated block.
-    */
-
-    const next =
-      block[0];
-
-    candidates.push({
-
-      name:
-        "DYNAMIC REPEAT",
-
-      pattern:
-        block,
-
-      family:
-        "DYNAMIC_REPEAT",
-
-      priority:
-        7,
-
-      matched:
-        size,
-
-      patternLength:
-        size + 1,
-
-      next,
-
-      prediction:
-        abToPrediction(
-          next
-        ),
-
-      score:
-        60 +
-        size * 10
-
-    });
 
   }
+
 
   return candidates;
 
@@ -1929,296 +1331,178 @@ function findDynamicRepeat(
 
 
 // ============================================================
-// FIND ADAPTIVE MATCHES
+// REMOVE DUPLICATES
 // ============================================================
 
-function findAdaptiveMatches(
-  sequence
+function uniqueCandidates(
+  candidates
 ) {
 
-  const matches = [];
+  const map =
+    new Map();
+
 
   for (
-    const rule of
-      ADAPTIVE_PATTERNS
+    const candidate of
+      candidates
   ) {
 
-    const matched =
-      prefixSuffixMatch(
-        sequence,
-        rule.pattern
+    const key =
+      [
+        candidate.pattern,
+        candidate.next
+      ].join("|");
+
+
+    const old =
+      map.get(key);
+
+
+    if (
+      !old ||
+      candidate.weight >
+        old.weight ||
+      (
+        candidate.weight ===
+          old.weight &&
+        candidate.matched >
+          old.matched
+      )
+    ) {
+
+      map.set(
+        key,
+        candidate
       );
 
-    /*
-      Minimum 4.
+    }
 
-      This prevents very common
-      1-2 character coincidences.
-    */
+  }
+
+
+  return Array.from(
+    map.values()
+  );
+
+}
+
+
+// ============================================================
+// PATTERN SUPPORT
+// ============================================================
+
+function calculatePatternSupport(
+  candidates
+) {
+
+  let A = 0;
+  let B = 0;
+
+
+  const evidence = [];
+
+
+  for (
+    const candidate of
+      candidates
+  ) {
+
+    const weight =
+      candidate.weight;
+
 
     if (
-      matched < 4
+      candidate.next ===
+      "A"
     ) {
 
-      continue;
+      A += weight;
 
     }
 
-    /*
-      Must have a next character
-      available in the pattern.
-    */
 
     if (
-      matched >=
-      rule.pattern.length
+      candidate.next ===
+      "B"
     ) {
 
-      continue;
+      B += weight;
 
     }
 
-    const next =
-      rule.pattern[
-        matched
-      ];
 
-    matches.push({
+    evidence.push({
 
-      ...rule,
+      rule:
+        candidate.rule,
 
-      matched,
+      variant:
+        candidate.variant,
+
+      pattern:
+        candidate.pattern,
+
+      matched:
+        candidate.matched,
 
       patternLength:
-        rule.pattern.length,
+        candidate.pattern.length,
 
-      next,
+      expectedNext:
+        candidate.next,
 
-      prediction:
-        abToPrediction(
-          next
-        )
+      weight:
+        weight,
+
+      level:
+        candidate.level
 
     });
 
   }
 
 
-  /*
-    Dynamic repeated blocks
-  */
-
-  matches.push(
-    ...findDynamicRepeat(
-      sequence
-    )
-  );
+  const total =
+    A + B;
 
 
-  return matches;
-
-}
-
-
-// ============================================================
-// MATCH SCORE
-// ============================================================
-
-function matchScore(
-  match
-) {
-
-  /*
-    Match length = most important.
-  */
-
-  let score =
-    match.matched *
-    15;
-
-
-  /*
-    Pattern complexity.
-  */
-
-  score +=
-    Number(
-      match.priority || 1
-    ) *
-    4;
-
-
-  /*
-    Near completion.
-  */
-
-  const remaining =
-    Math.max(
-      0,
-      match.patternLength -
-      match.matched
-    );
-
-
-  if (
-    remaining === 1
-  ) {
-
-    score += 40;
-
-  } else if (
-    remaining === 2
-  ) {
-
-    score += 22;
-
-  } else if (
-    remaining === 3
-  ) {
-
-    score += 10;
-
-  }
-
-
-  /*
-    Longer matched pattern
-    receives extra weight.
-  */
-
-  if (
-    match.matched >= 6
-  ) {
-
-    score += 10;
-
-  }
-
-  if (
-    match.matched >= 8
-  ) {
-
-    score += 12;
-
-  }
-
-  if (
-    match.matched >= 10
-  ) {
-
-    score += 15;
-
-  }
-
-
-  return score;
-
-}
-
-
-// ============================================================
-// HISTORICAL SAME-PATTERN CHECK
-// ============================================================
-
-function historicalPatternCheck(
-  sequence,
-  pattern,
-  expectedNext
-) {
-
-  const length =
-    pattern.length;
-
-  let matches = 0;
-
-  let correct = 0;
-
-  let wrong = 0;
-
-  if (
-    sequence.length <=
-    length
-  ) {
-
-    return {
-
-      matches: 0,
-
-      correct: 0,
-
-      wrong: 0,
-
-      rate: null
-
-    };
-
-  }
-
-
-  for (
-    let i = length;
-    i < sequence.length;
-    i++
-  ) {
-
-    const previous =
-      sequence
-        .slice(
-          i - length,
-          i
+  const APercent =
+    total
+      ? Number(
+          (
+            A /
+            total *
+            100
+          ).toFixed(2)
         )
-        .join("");
+      : 0;
 
-    if (
-      previous !==
-      pattern
-    ) {
 
-      continue;
-
-    }
-
-    /*
-      Don't count the current
-      unfinished suffix.
-    */
-
-    matches++;
-
-    if (
-      sequence[i] ===
-      expectedNext
-    ) {
-
-      correct++;
-
-    } else {
-
-      wrong++;
-
-    }
-
-  }
+  const BPercent =
+    total
+      ? Number(
+          (
+            B /
+            total *
+            100
+          ).toFixed(2)
+        )
+      : 0;
 
 
   return {
 
-    matches,
+    A,
 
-    correct,
+    B,
 
-    wrong,
+    total,
 
-    rate:
-      matches > 0
-        ? Number(
-            (
-              correct /
-              matches *
-              100
-            ).toFixed(2)
-          )
-        : null
+    APercent,
+
+    BPercent,
+
+    evidence
 
   };
 
@@ -2226,16 +1510,83 @@ function historicalPatternCheck(
 
 
 // ============================================================
-// SELECT BEST PATTERN
+// CONFLICT CHECK
 // ============================================================
 
-function selectBestPattern(
-  sequence,
-  matches
+function detectConflict(
+  support
 ) {
 
   if (
-    !matches.length
+    support.A === 0 &&
+    support.B === 0
+  ) {
+
+    return true;
+
+  }
+
+
+  if (
+    support.A ===
+    support.B
+  ) {
+
+    return true;
+
+  }
+
+
+  const total =
+    support.A +
+    support.B;
+
+
+  if (!total) {
+    return true;
+  }
+
+
+  const difference =
+    Math.abs(
+      support.A -
+      support.B
+    );
+
+
+  /*
+    Difference less than 20%
+    means evidence is too close.
+  */
+
+  if (
+    difference /
+      total <
+    0.20
+  ) {
+
+    return true;
+
+  }
+
+
+  return false;
+
+}
+
+
+// ============================================================
+// DECISION
+// ============================================================
+
+function decidePattern(
+  history,
+  candidates,
+  support
+) {
+
+  if (
+    !candidates.length
   ) {
 
     return {
@@ -2243,118 +1594,190 @@ function selectBestPattern(
       prediction:
         null,
 
-      status:
-        "NO PATTERN",
-
       confidence:
         0,
 
-      best:
-        null,
+      classification:
+        "NO PATTERN",
 
-      top:
-        [],
+      reason:
+        "No meaningful chart pattern matched.",
 
-      conflict:
-        false
+      selected:
+        null
 
     };
 
   }
 
 
-  const scored =
-    matches
-      .map(
-        item => ({
+  if (
+    detectConflict(
+      support
+    )
+  ) {
 
-          ...item,
+    return {
 
-          score:
-            matchScore(
-              item
-            )
+      prediction:
+        null,
 
-        })
+      confidence:
+        0,
+
+      classification:
+        "PATTERN CONFLICT",
+
+      reason:
+        "Matched chart patterns are conflicting.",
+
+      selected:
+        null
+
+    };
+
+  }
+
+
+  let side;
+
+
+  if (
+    support.A >
+    support.B
+  ) {
+
+    side = "A";
+
+  } else {
+
+    side = "B";
+
+  }
+
+
+  /*
+    Select strongest matching
+    candidate from winning side.
+  */
+
+  const sideCandidates =
+    candidates
+      .filter(
+        candidate =>
+          candidate.next ===
+          side
       )
       .sort(
-        (
-          a,
-          b
-        ) => {
+        (a, b) => {
 
           if (
-            b.score !==
-            a.score
+            b.weight !==
+            a.weight
           ) {
 
             return (
-              b.score -
-              a.score
+              b.weight -
+              a.weight
             );
 
           }
 
-          if (
-            b.matched !==
-            a.matched
-          ) {
-
-            return (
-              b.matched -
-              a.matched
-            );
-
-          }
 
           return (
-            b.patternLength -
-            a.patternLength
+            b.matched -
+            a.matched
           );
 
         }
       );
 
 
-  const best =
-    scored[0];
+  const selected =
+    sideCandidates[0];
 
 
-  /*
-    Only patterns reasonably close
-    to the strongest pattern are
-    considered for conflict.
-  */
+  if (!selected) {
 
-  const tolerance = 12;
+    return {
 
-  const top =
-    scored.filter(
-      item =>
-        item.score >=
-        best.score -
-        tolerance
-    );
+      prediction:
+        null,
+
+      confidence:
+        0,
+
+      classification:
+        "NO PATTERN",
+
+      reason:
+        "No consistent next side.",
+
+      selected:
+        null
+
+    };
+
+  }
 
 
-  const sides =
-    [
-      ...new Set(
-        top.map(
-          item =>
-            item.next
+  const total =
+    support.A +
+    support.B;
+
+
+  const sideSupport =
+    side === "A"
+      ? support.A
+      : support.B;
+
+
+  let confidence =
+    total
+      ? (
+          sideSupport /
+          total *
+          100
         )
-      )
-    ];
+      : 0;
 
 
   /*
-    Opposite strong evidence =
-    don't make a prediction.
+    Match strength bonus.
   */
 
   if (
-    sides.length > 1
+    selected.matched >= 8
+  ) {
+
+    confidence += 5;
+
+  }
+  else if (
+    selected.matched >= 6
+  ) {
+
+    confidence += 3;
+
+  }
+
+
+  confidence =
+    Math.min(
+      95,
+      Math.round(
+        confidence
+      )
+    );
+
+
+  /*
+    Weak chart match:
+    NO prediction.
+  */
+
+  if (
+    confidence < 60
   ) {
 
     return {
@@ -2362,137 +1785,66 @@ function selectBestPattern(
       prediction:
         null,
 
-      status:
-        "PATTERN CONFLICT",
+      confidence,
 
-      confidence:
-        0,
+      classification:
+        "WEAK PATTERN",
 
-      best:
-        null,
+      reason:
+        "Pattern matched but evidence is not strong enough.",
 
-      top,
-
-      conflict:
-        true
+      selected
 
     };
 
   }
 
 
-  /*
-    Pattern confidence.
-
-    This is pattern-strength,
-    not probability guarantee.
-  */
-
-  let confidence = 52;
+  const prediction =
+    selected.next === "A"
+      ? "SMALL"
+      : "BIG";
 
 
-  if (
-    best.matched >= 5
-  ) {
-
-    confidence += 6;
-
-  }
+  let classification =
+    "PATTERN MATCH";
 
 
   if (
-    best.matched >= 6
-  ) {
-
-    confidence += 7;
-
-  }
-
-
-  if (
-    best.matched >= 8
-  ) {
-
-    confidence += 8;
-
-  }
-
-
-  if (
-    best.matched >= 10
-  ) {
-
-    confidence += 7;
-
-  }
-
-
-  if (
-    best.patternLength -
-    best.matched ===
-    1
-  ) {
-
-    confidence += 8;
-
-  }
-
-
-  confidence =
-    clamp(
-      confidence,
-      50,
-      90
-    );
-
-
-  let level =
-    "LOW";
-
-
-  if (
+    selected.matched >= 8 &&
     confidence >= 80
   ) {
 
-    level =
-      "HIGH";
+    classification =
+      "STRONG PATTERN MATCH";
 
-  } else if (
-    confidence >= 70
+  }
+  else if (
+    selected.matched >= 6
   ) {
 
-    level =
-      "MEDIUM";
-
-  } else {
-
-    level =
-      "LOW";
+    classification =
+      "GOOD PATTERN MATCH";
 
   }
 
 
   return {
 
-    prediction:
-      abToPrediction(
-        best.next
-      ),
-
-    status:
-      "PATTERN MATCH",
+    prediction,
 
     confidence,
 
-    confidenceLevel:
-      level,
+    classification,
 
-    best,
+    reason:
+      `RULE ${selected.rule} ` +
+      `${selected.variant} | ` +
+      `${selected.pattern} | ` +
+      `${selected.matched}/${selected.pattern.length} ` +
+      `matched | NEXT ${prediction}`,
 
-    top,
-
-    conflict:
-      false
+    selected
 
   };
 
@@ -2500,32 +1852,33 @@ function selectBestPattern(
 
 
 // ============================================================
-// MAIN PATTERN ANALYSIS
+// MAIN PATTERN ENGINE
 // ============================================================
 
-function analyzePattern(
+function humanBigSmallLogic(
   results
 ) {
 
-  const numbers =
-    cleanPatternNumbers(
+  const history =
+    convertHistory(
       results
     );
 
 
   const sequence =
-    numbers.map(
-      numberToAB
-    )
-    .filter(Boolean);
+    history.join("");
 
 
-  const sequenceString =
-    sequence.join("");
+  const dataSize =
+    history.length;
 
+
+  /*
+    Need enough history.
+  */
 
   if (
-    sequence.length < 5
+    dataSize < 10
   ) {
 
     return {
@@ -2540,7 +1893,7 @@ function analyzePattern(
         0,
 
       confidenceLevel:
-        "VERY LOW",
+        "LOW",
 
       classification:
         "INSUFFICIENT DATA",
@@ -2554,41 +1907,33 @@ function analyzePattern(
       matchedSequence:
         null,
 
-      nextAB:
-        null,
+      sequence,
 
-      sequence:
-        sequenceString,
-
-      dataSize:
-        sequence.length,
+      dataSize,
 
       matchedRules:
         [],
 
-      strongestMatches:
-        [],
+      support: {
 
-      selectedMatch:
-        null,
+        A: 0,
 
-      historical: {
+        B: 0,
 
-        matches: 0,
+        APercent: 0,
 
-        correct: 0,
-
-        wrong: 0,
-
-        rate: null
+        BPercent: 0
 
       },
 
       reason:
-        "At least 5 valid results are required.",
+        "At least 10 valid results are preferred.",
 
-      patternCount:
-        ADAPTIVE_PATTERNS.length,
+      engine:
+        "DY-AI-OPPOSITE-CHART-V4",
+
+      rulesCount:
+        RULES.length,
 
       analyzedAt:
         now()
@@ -2598,142 +1943,47 @@ function analyzePattern(
   }
 
 
-  // ----------------------------------------------------------
-  // MATCH
-  // ----------------------------------------------------------
+  /*
+    Find ORIGINAL + OPPOSITE.
+  */
 
-  const matches =
-    findAdaptiveMatches(
-      sequence
+  let candidates =
+    findPatternCandidates(
+      history
     );
 
 
-  // ----------------------------------------------------------
-  // SELECT
-  // ----------------------------------------------------------
+  candidates =
+    uniqueCandidates(
+      candidates
+    );
+
+
+  /*
+    Calculate pattern support.
+  */
+
+  const support =
+    calculatePatternSupport(
+      candidates
+    );
+
+
+  /*
+    Decide.
+  */
+
+  const decision =
+    decidePattern(
+      history,
+      candidates,
+      support
+    );
+
 
   const selected =
-    selectBestPattern(
-      sequence,
-      matches
-    );
+    decision.selected;
 
-
-  // ----------------------------------------------------------
-  // HISTORICAL VALIDATION
-  // ----------------------------------------------------------
-
-  let historical = {
-
-    matches: 0,
-
-    correct: 0,
-
-    wrong: 0,
-
-    rate: null
-
-  };
-
-
-  if (
-    selected.best
-  ) {
-
-    historical =
-      historicalPatternCheck(
-        sequence,
-        selected.best.pattern,
-        selected.best.next
-      );
-
-  }
-
-
-  // ----------------------------------------------------------
-  // CURRENT RUN
-  // ----------------------------------------------------------
-
-  const currentRun =
-    currentRunInfo(
-      sequence
-    );
-
-
-  // ----------------------------------------------------------
-  // CLASSIFICATION
-  // ----------------------------------------------------------
-
-  let classification =
-    "NO CLEAR PATTERN";
-
-
-  if (
-    selected.status ===
-    "PATTERN MATCH"
-  ) {
-
-    classification =
-      "PATTERN MATCH";
-
-  }
-
-
-  if (
-    selected.status ===
-    "PATTERN CONFLICT"
-  ) {
-
-    classification =
-      "PATTERN CONFLICT";
-
-  }
-
-
-  // ----------------------------------------------------------
-  // REASON
-  // ----------------------------------------------------------
-
-  let reason =
-    "No usable chart pattern matched the latest history. Prediction withheld.";
-
-
-  if (
-    selected.status ===
-    "PATTERN CONFLICT"
-  ) {
-
-    reason =
-      "Multiple strong chart patterns gave different next sides. Prediction withheld.";
-
-  }
-
-
-  if (
-    selected.best
-  ) {
-
-    reason =
-      `PATTERN ${selected.best.name} | ` +
-      `${selected.best.pattern} | ` +
-      `MATCH ${selected.best.matched}/${selected.best.patternLength} | ` +
-      `NEXT ${selected.best.next}`;
-
-    if (
-      historical.matches > 0
-    ) {
-
-      reason +=
-        ` | HISTORY ${historical.correct}/${historical.matches}`;
-
-    }
-
-  }
-
-
-  // ----------------------------------------------------------
-  // RETURN
-  // ----------------------------------------------------------
 
   return {
 
@@ -2741,127 +1991,79 @@ function analyzePattern(
       "OK",
 
     prediction:
-      selected.prediction,
+      decision.prediction,
 
     confidence:
-      selected.confidence,
+      decision.confidence,
 
     confidenceLevel:
-      selected.confidenceLevel ||
-      "LOW",
+      decision.confidence >= 80
+        ? "HIGH"
+        : decision.confidence >= 70
+        ? "MEDIUM"
+        : decision.confidence >= 60
+        ? "LOW-MEDIUM"
+        : "LOW",
 
-    classification,
+    classification:
+      decision.classification,
 
     pattern:
-      selected.best
-        ? selected.best.name
+      selected
+        ? `RULE ${selected.rule}`
         : "NONE",
 
     matchedPattern:
-      selected.best
-        ?.pattern ||
-      null,
-
-    matchedSequence:
-      selected.best
-        ? sequenceString.slice(
-            -selected.best.matched
-          )
+      selected
+        ? selected.variant
         : null,
 
-    nextAB:
-      selected.best
-        ?.next ||
+    matchedSequence:
+      selected
+        ? selected.pattern
+        : null,
+
+    sequence,
+
+    dataSize,
+
+    current:
+      history[dataSize - 1] ||
       null,
 
-    sequence:
-      sequenceString,
+    matchedRules:
+      candidates,
 
-    dataSize:
-      sequence.length,
+    support: {
 
-    current: {
+      A:
+        support.A,
 
-      type:
-        currentRun.side,
+      B:
+        support.B,
 
-      label:
-        currentRun.side === "A"
-          ? "SMALL"
-          : currentRun.side === "B"
-          ? "BIG"
-          : null,
+      APercent:
+        support.APercent,
 
-      streak:
-        currentRun.length
+      BPercent:
+        support.BPercent
 
     },
 
-    runSignature:
-      runSignature(
-        sequence
-      ),
+    reason:
+      decision.reason,
 
-    patternStatus:
-      selected.status,
+    engine:
+      "DY-AI-OPPOSITE-CHART-V4",
 
-    conflict:
-      selected.conflict,
+    rulesCount:
+      RULES.length,
 
-    matchedRules:
-      matches
-        .map(
-          item => ({
+    originalRules:
+      BASE_RULES.length,
 
-            name:
-              item.name,
-
-            family:
-              item.family,
-
-            pattern:
-              item.pattern,
-
-            matched:
-              item.matched,
-
-            patternLength:
-              item.patternLength,
-
-            next:
-              item.next,
-
-            prediction:
-              item.prediction,
-
-            score:
-              matchScore(
-                item
-              )
-
-          })
-        )
-        .sort(
-          (
-            a,
-            b
-          ) =>
-            b.score -
-            a.score
-        ),
-
-    strongestMatches:
-      selected.top,
-
-    selectedMatch:
-      selected.best,
-
-    historical,
-
-    reason,
-
-    patternCount:
-      ADAPTIVE_PATTERNS.length,
+    oppositePatterns:
+      true,
 
     analyzedAt:
       now()
@@ -2891,13 +2093,18 @@ function resolveTargetIssue() {
 
 
   const latest =
-    history[0]
-      ?.issueNumber;
+    history[0]?.issueNumber;
 
 
   const current =
     providerState.currentIssue;
 
+
+  /*
+    If current issue is ahead
+    of latest settled result,
+    use current.
+  */
 
   if (
     current &&
@@ -2908,12 +2115,15 @@ function resolveTargetIssue() {
     ) > 0
   ) {
 
-    return String(
-      current
-    );
+    return String(current);
 
   }
 
+
+  /*
+    Otherwise:
+    latest + 1
+  */
 
   return incrementIssue(
     latest
@@ -2944,23 +2154,19 @@ async function generateModel() {
     history
       .map(
         row =>
-          Number(
-            row.number
-          )
+          Number(row.number)
       )
       .filter(
-        number =>
-          Number.isInteger(
-            number
-          ) &&
-          number >= 0 &&
-          number <= 9
+        n =>
+          Number.isInteger(n) &&
+          n >= 0 &&
+          n <= 9
       )
       .reverse();
 
 
   const analysis =
-    analyzePattern(
+    humanBigSmallLogic(
       numbers
     );
 
@@ -3000,7 +2206,7 @@ async function generateModel() {
 
       classification:
         analysis.classification ||
-        "NO CLEAR PATTERN",
+        "NO PATTERN",
 
       pattern:
         analysis.pattern ||
@@ -3012,10 +2218,6 @@ async function generateModel() {
 
       matchedSequence:
         analysis.matchedSequence ||
-        null,
-
-      nextAB:
-        analysis.nextAB ||
         null,
 
       reason:
@@ -3035,11 +2237,6 @@ async function generateModel() {
 
   };
 
-
-  /*
-    Save ONLY when an actual
-    pattern produced a prediction.
-  */
 
   await savePrediction(
     targetIssue,
@@ -3061,24 +2258,15 @@ async function savePrediction(
   analysis
 ) {
 
-  if (!pool) {
-
-    return;
-
-  }
-
-
   /*
-    No pattern =
-    no prediction record.
+    IMPORTANT:
+    No pattern = no prediction record.
   */
 
   if (
+    !pool ||
     !targetIssue ||
-    !analysis ||
-    !analysis.prediction ||
-    analysis.patternStatus !==
-      "PATTERN MATCH"
+    !analysis?.prediction
   ) {
 
     return;
@@ -3087,6 +2275,10 @@ async function savePrediction(
 
 
   try {
+
+    /*
+      Prevent duplicate.
+    */
 
     const existing =
       await pool.query(
@@ -3097,9 +2289,7 @@ async function savePrediction(
         LIMIT 1
         `,
         [
-          String(
-            targetIssue
-          )
+          String(targetIssue)
         ]
       );
 
@@ -3127,9 +2317,7 @@ async function savePrediction(
       `,
       [
 
-        String(
-          targetIssue
-        ),
+        String(targetIssue),
 
         String(
           analysis.prediction
@@ -3167,25 +2355,20 @@ async function savePrediction(
 async function settlePredictions() {
 
   if (!pool) {
-
     return;
-
   }
 
 
   for (
     const row of
-      providerState.history
-        .slice(
-          0,
-          100
-        )
+      providerState.history.slice(
+        0,
+        100
+      )
   ) {
 
     const number =
-      Number(
-        row.number
-      );
+      Number(row.number);
 
 
     const actualType =
@@ -3195,9 +2378,7 @@ async function settlePredictions() {
 
 
     if (!actualType) {
-
       continue;
-
     }
 
 
@@ -3248,8 +2429,7 @@ async function settlePredictions() {
         String(
           record.prediction ||
           ""
-        )
-          .toUpperCase();
+        ).toUpperCase();
 
 
       const actualLabel =
@@ -3306,40 +2486,31 @@ async function settlePredictions() {
 // ACCESS KEY
 // ============================================================
 
-function getAccessKey(
-  req
-) {
+function getAccessKey(req) {
 
   return String(
-    req.headers[
-      "x-access-key"
-    ] || ""
+    req.headers["x-access-key"] ||
+    ""
   ).trim();
 
 }
 
 
-function getDeviceId(
-  req
-) {
+function getDeviceId(req) {
 
   return String(
-    req.headers[
-      "x-device-id"
-    ] || ""
+    req.headers["x-device-id"] ||
+    ""
   ).trim();
 
 }
 
 
-function getAdminKey(
-  req
-) {
+function getAdminKey(req) {
 
   return String(
-    req.headers[
-      "x-admin-key"
-    ] || ""
+    req.headers["x-admin-key"] ||
+    ""
   ).trim();
 
 }
@@ -3349,19 +2520,14 @@ function getAdminKey(
 // VALIDATE ACCESS
 // ============================================================
 
-async function validateAccess(
-  req
-) {
+async function validateAccess(req) {
 
   const key =
-    getAccessKey(
-      req
-    );
+    getAccessKey(req);
+
 
   const device =
-    getDeviceId(
-      req
-    );
+    getDeviceId(req);
 
 
   if (
@@ -3403,9 +2569,7 @@ async function validateAccess(
       WHERE access_key = $1
       LIMIT 1
       `,
-      [
-        key
-      ]
+      [key]
     );
 
 
@@ -3429,10 +2593,13 @@ async function validateAccess(
     result.rows[0];
 
 
+  /*
+    One key = one browser.
+  */
+
   if (
     row.device_id &&
-    row.device_id !==
-      device
+    row.device_id !== device
   ) {
 
     return {
@@ -3447,9 +2614,7 @@ async function validateAccess(
   }
 
 
-  if (
-    !row.device_id
-  ) {
+  if (!row.device_id) {
 
     await pool.query(
       `
@@ -3469,7 +2634,6 @@ async function validateAccess(
 
       ]
     );
-
 
   } else {
 
@@ -3511,206 +2675,12 @@ async function validateAccess(
 // ADMIN AUTH
 // ============================================================
 
-function requireAdmin(
-  req
-) {
+function requireAdmin(req) {
 
   return (
     ADMIN_KEY &&
-    getAdminKey(
-      req
-    ) === ADMIN_KEY
-  );
-
-}
-
-
-// ============================================================
-// PREDICTION HISTORY MAP
-// ============================================================
-
-async function getPredictionRecords() {
-
-  if (!pool) {
-
-    return [];
-
-  }
-
-
-  const result =
-    await pool.query(
-      `
-      SELECT
-        id,
-        target_issue,
-        prediction,
-        confidence,
-        model_version,
-        actual_number,
-        actual_result,
-        created_at,
-        settled_at
-      FROM prediction_records
-      ORDER BY created_at DESC
-      LIMIT 200
-      `
-    );
-
-
-  return result.rows;
-
-}
-
-
-// ============================================================
-// MERGED LIVE HISTORY
-// ============================================================
-
-async function buildLiveHistory() {
-
-  const provider =
-    providerState.history
-      .slice(
-        0,
-        30
-      );
-
-
-  let records = [];
-
-  try {
-
-    records =
-      await getPredictionRecords();
-
-  } catch {
-
-    records = [];
-
-  }
-
-
-  const recordMap =
-    new Map();
-
-
-  for (
-    const record of
-      records
-  ) {
-
-    const issue =
-      String(
-        record.target_issue
-      );
-
-
-    if (
-      !recordMap.has(
-        issue
-      )
-    ) {
-
-      recordMap.set(
-        issue,
-        record
-      );
-
-    }
-
-  }
-
-
-  return provider.map(
-    row => {
-
-      const number =
-        Number(
-          row.number
-        );
-
-
-      const type =
-        numberToType(
-          number
-        );
-
-
-      const record =
-        recordMap.get(
-          String(
-            row.issueNumber
-          )
-        );
-
-
-      let result =
-        "PENDING";
-
-
-      if (
-        record?.actual_result
-      ) {
-
-        result =
-          String(
-            record.actual_result
-          )
-            .toUpperCase();
-
-      }
-
-
-      return {
-
-        issue:
-          String(
-            row.issueNumber
-          ),
-
-        issueNumber:
-          String(
-            row.issueNumber
-          ),
-
-        number,
-
-        type,
-
-        label:
-          typeLabel(
-            type
-          ),
-
-        prediction:
-          record?.prediction ||
-          null,
-
-        confidence:
-          record?.confidence ||
-          0,
-
-        actualResult:
-          result,
-
-        result,
-
-        modelVersion:
-          record?.model_version ||
-          null,
-
-        createdAt:
-          record?.created_at ||
-          null,
-
-        settledAt:
-          record?.settled_at ||
-          null
-
-      };
-
-    }
+    getAdminKey(req) ===
+      ADMIN_KEY
   );
 
 }
@@ -3746,6 +2716,7 @@ async function stateApi(
 
   await refreshProvider();
 
+
   await settlePredictions();
 
 
@@ -3754,7 +2725,8 @@ async function stateApi(
 
 
   /*
-    Generate model when target changes.
+    Generate model only when target
+    changes or cache is missing.
   */
 
   if (
@@ -3768,8 +2740,191 @@ async function stateApi(
   }
 
 
-  const liveHistory =
-    await buildLiveHistory();
+  /*
+    Provider history.
+  */
+
+  const providerHistory =
+    providerState.history
+      .slice(0, 30)
+      .map(row => {
+
+        const number =
+          Number(row.number);
+
+
+        const type =
+          numberToType(
+            number
+          );
+
+
+        return {
+
+          issue:
+            row.issueNumber,
+
+          issueNumber:
+            row.issueNumber,
+
+          number,
+
+          type,
+
+          label:
+            typeLabel(type)
+
+        };
+
+      });
+
+
+  /*
+    Get prediction records so
+    UI can show WIN/LOSS.
+  */
+
+  let predictionRecords = [];
+
+
+  if (pool) {
+
+    try {
+
+      const dbResult =
+        await pool.query(
+          `
+          SELECT
+            target_issue,
+            prediction,
+            confidence,
+            model_version,
+            actual_number,
+            actual_result,
+            created_at,
+            settled_at
+          FROM prediction_records
+          ORDER BY created_at DESC
+          LIMIT 100
+          `
+        );
+
+
+      predictionRecords =
+        dbResult.rows;
+
+    } catch (error) {
+
+      console.error(
+        "[DB] history:",
+        error.message
+      );
+
+    }
+
+  }
+
+
+  const predictionMap =
+    new Map();
+
+
+  for (
+    const record of
+      predictionRecords
+  ) {
+
+    predictionMap.set(
+      String(
+        record.target_issue
+      ),
+      record
+    );
+
+  }
+
+
+  /*
+    Merge provider + prediction.
+  */
+
+  const history =
+    providerHistory.map(
+      row => {
+
+        const record =
+          predictionMap.get(
+            String(
+              row.issueNumber
+            )
+          );
+
+
+        let prediction =
+          null;
+
+        let result =
+          "PENDING";
+
+
+        let confidence =
+          null;
+
+
+        if (record) {
+
+          prediction =
+            String(
+              record.prediction ||
+              ""
+            ).toUpperCase();
+
+
+          confidence =
+            Number(
+              record.confidence ||
+              0
+            );
+
+
+          if (
+            record.actual_result
+          ) {
+
+            result =
+              String(
+                record.actual_result
+              ).toUpperCase();
+
+          }
+
+        }
+
+
+        return {
+
+          ...row,
+
+          prediction,
+
+          ai:
+            prediction,
+
+          confidence,
+
+          result,
+
+          actualResult:
+            result,
+
+          modelVersion:
+            record?.model_version ||
+            null
+
+        };
+
+      }
+    );
 
 
   const model =
@@ -3803,10 +2958,6 @@ async function stateApi(
       },
 
 
-      /*
-        Main model.
-      */
-
       model: {
 
         targetIssue:
@@ -3827,7 +2978,7 @@ async function stateApi(
 
         classification:
           model?.classification ||
-          "NO CLEAR PATTERN",
+          "NO PATTERN",
 
         pattern:
           model?.pattern ||
@@ -3841,13 +2992,9 @@ async function stateApi(
           model?.matchedSequence ||
           null,
 
-        nextAB:
-          model?.nextAB ||
-          null,
-
         reason:
           model?.reason ||
-          "No usable pattern matched.",
+          "",
 
         modelVersion:
           MODEL_VERSION,
@@ -3863,18 +3010,10 @@ async function stateApi(
       },
 
 
-      /*
-        Direct compatibility field.
-      */
-
       prediction:
         model?.prediction ||
         null,
 
-
-      /*
-        Provider.
-      */
 
       provider: {
 
@@ -3899,12 +3038,7 @@ async function stateApi(
       },
 
 
-      /*
-        LAST 30
-      */
-
-      history:
-        liveHistory
+      history
 
     }
   );
@@ -3965,15 +3099,50 @@ async function keyCheck(
 
 
 // ============================================================
-// HISTORY API
+// PREDICTION HISTORY API
 // ============================================================
 
 async function predictionHistory(
   res
 ) {
 
-  const records =
-    await getPredictionRecords();
+  if (!pool) {
+
+    json(
+      res,
+      200,
+      {
+
+        ok: true,
+
+        records: []
+
+      }
+    );
+
+    return;
+
+  }
+
+
+  const result =
+    await pool.query(
+      `
+      SELECT
+        id,
+        target_issue,
+        prediction,
+        confidence,
+        model_version,
+        actual_number,
+        actual_result,
+        created_at,
+        settled_at
+      FROM prediction_records
+      ORDER BY created_at DESC
+      LIMIT 100
+      `
+    );
 
 
   json(
@@ -3983,7 +3152,8 @@ async function predictionHistory(
 
       ok: true,
 
-      records
+      records:
+        result.rows
 
     }
   );
@@ -3995,9 +3165,7 @@ async function predictionHistory(
 // ADMIN STATUS
 // ============================================================
 
-async function adminStatus(
-  res
-) {
+async function adminStatus(res) {
 
   json(
     res,
@@ -4012,8 +3180,14 @@ async function adminStatus(
       modelVersion:
         MODEL_VERSION,
 
-      patternCount:
-        ADAPTIVE_PATTERNS.length,
+      engine:
+        "25 RULE + OPPOSITE PATTERN ENGINE",
+
+      rules:
+        BASE_RULES.length,
+
+      totalPatterns:
+        RULES.length,
 
       thinkingDurationMs:
         THINKING_DURATION_MS,
@@ -4040,6 +3214,7 @@ async function adminStatus(
 
       },
 
+
       model:
         modelCache
 
@@ -4053,9 +3228,7 @@ async function adminStatus(
 // ADMIN PING
 // ============================================================
 
-function adminPing(
-  res
-) {
+function adminPing(res) {
 
   json(
     res,
@@ -4071,10 +3244,7 @@ function adminPing(
         now(),
 
       modelVersion:
-        MODEL_VERSION,
-
-      patternCount:
-        ADAPTIVE_PATTERNS.length
+        MODEL_VERSION
 
     }
   );
@@ -4086,9 +3256,7 @@ function adminPing(
 // ADMIN WINGO TEST
 // ============================================================
 
-async function adminWingoTest(
-  res
-) {
+async function adminWingoTest(res) {
 
   const state =
     await refreshProvider();
@@ -4133,13 +3301,13 @@ async function adminWingoTest(
 // ADMIN MODEL TEST
 // ============================================================
 
-async function adminModelTest(
-  res
-) {
+async function adminModelTest(res) {
 
   await refreshProvider();
 
+
   await settlePredictions();
+
 
   const model =
     await generateModel();
@@ -4156,51 +3324,39 @@ async function adminModelTest(
         model.targetIssue,
 
       prediction:
-        model.prediction
-          ?.prediction ||
+        model.prediction?.prediction ||
         null,
 
       confidence:
-        model.prediction
-          ?.confidence ||
+        model.prediction?.confidence ||
         0,
 
       confidenceLevel:
-        model.prediction
-          ?.confidenceLevel ||
+        model.prediction?.confidenceLevel ||
         "LOW",
 
+      classification:
+        model.prediction?.classification ||
+        "NO PATTERN",
+
       pattern:
-        model.prediction
-          ?.pattern ||
+        model.prediction?.pattern ||
         "NONE",
 
       matchedPattern:
-        model.prediction
-          ?.matchedPattern ||
+        model.prediction?.matchedPattern ||
         null,
 
       matchedSequence:
-        model.prediction
-          ?.matchedSequence ||
+        model.prediction?.matchedSequence ||
         null,
 
-      classification:
-        model.prediction
-          ?.classification ||
-        "NO CLEAR PATTERN",
-
       reason:
-        model.prediction
-          ?.reason ||
+        model.prediction?.reason ||
         "",
 
-      patternCount:
-        ADAPTIVE_PATTERNS.length,
-
       analysis:
-        model.prediction
-          ?.analysis ||
+        model.prediction?.analysis ||
         null
 
     }
@@ -4213,9 +3369,7 @@ async function adminModelTest(
 // ADMIN KEYS LIST
 // ============================================================
 
-async function adminKeysList(
-  res
-) {
+async function adminKeysList(res) {
 
   if (!pool) {
 
@@ -4298,9 +3452,7 @@ async function adminKeysCreate(
 
 
   const body =
-    await readBody(
-      req
-    );
+    await readBody(req);
 
 
   const custom =
@@ -4418,22 +3570,16 @@ async function adminKeysDelete(
 
 
   const body =
-    await readBody(
-      req
-    );
+    await readBody(req);
 
 
   const id =
-    url.searchParams.get(
-      "id"
-    ) ||
+    url.searchParams.get("id") ||
     body?.id;
 
 
   const key =
-    url.searchParams.get(
-      "key"
-    ) ||
+    url.searchParams.get("key") ||
     body?.key;
 
 
@@ -4541,9 +3687,7 @@ async function adminResetDevice(
 
 
   const body =
-    await readBody(
-      req
-    );
+    await readBody(req);
 
 
   const id =
@@ -4635,9 +3779,7 @@ async function adminResetDevice(
 // HEALTH
 // ============================================================
 
-function health(
-  res
-) {
+function health(res) {
 
   json(
     res,
@@ -4652,11 +3794,8 @@ function health(
       modelVersion:
         MODEL_VERSION,
 
-      patternCount:
-        ADAPTIVE_PATTERNS.length,
-
-      thinkingDurationMs:
-        THINKING_DURATION_MS,
+      engine:
+        "25 RULE + OPPOSITE PATTERN",
 
       time:
         now(),
@@ -4683,9 +3822,7 @@ function contentType(
 
   const ext =
     path
-      .extname(
-        filePath
-      )
+      .extname(filePath)
       .toLowerCase();
 
 
@@ -4832,8 +3969,7 @@ function serveStatic(
       // ------------------------------------------------------
 
       if (
-        type ===
-          "audio/mpeg" &&
+        type === "audio/mpeg" &&
         req.headers.range
       ) {
 
@@ -4862,17 +3998,13 @@ function serveStatic(
 
         let start =
           match[1]
-            ? Number(
-                match[1]
-              )
+            ? Number(match[1])
             : 0;
 
 
         let end =
           match[2]
-            ? Number(
-                match[2]
-              )
+            ? Number(match[2])
             : size - 1;
 
 
@@ -4921,9 +4053,7 @@ function serveStatic(
             start,
             end
           }
-        ).pipe(
-          res
-        );
+        ).pipe(res);
 
 
         return;
@@ -4951,9 +4081,7 @@ function serveStatic(
 
       fs.createReadStream(
         filePath
-      ).pipe(
-        res
-      );
+      ).pipe(res);
 
     }
   );
@@ -5027,9 +4155,7 @@ const server =
           "/health"
         ) {
 
-          health(
-            res
-          );
+          health(res);
 
           return;
 
@@ -5128,9 +4254,7 @@ const server =
         ) {
 
           if (
-            !requireAdmin(
-              req
-            )
+            !requireAdmin(req)
           ) {
 
             json(
@@ -5184,9 +4308,7 @@ const server =
             "GET"
         ) {
 
-          adminPing(
-            res
-          );
+          adminPing(res);
 
           return;
 
@@ -5234,7 +4356,7 @@ const server =
 
 
         // ----------------------------------------------------
-        // KEYS GET
+        // ADMIN KEYS GET
         // ----------------------------------------------------
 
         if (
@@ -5254,7 +4376,7 @@ const server =
 
 
         // ----------------------------------------------------
-        // KEYS CREATE
+        // ADMIN KEY CREATE
         // ----------------------------------------------------
 
         if (
@@ -5275,7 +4397,7 @@ const server =
 
 
         // ----------------------------------------------------
-        // KEYS DELETE
+        // ADMIN KEY DELETE
         // ----------------------------------------------------
 
         if (
@@ -5327,7 +4449,6 @@ const server =
           pathname
         );
 
-
       } catch (error) {
 
         console.error(
@@ -5376,17 +4497,13 @@ async function backgroundRefresh() {
 
     await refreshProvider();
 
+
     await settlePredictions();
 
 
     const target =
       resolveTargetIssue();
 
-
-    /*
-      New issue =
-      generate new pattern analysis.
-    */
 
     if (
       target &&
@@ -5423,9 +4540,12 @@ async function start() {
 
     await initDatabase();
 
+
     await refreshProvider();
 
+
     await settlePredictions();
+
 
     await generateModel();
 
@@ -5436,40 +4556,38 @@ async function start() {
       () => {
 
         console.log(
-          "========================================"
+          `DY AI WINGO running on ${PORT}`
         );
 
-        console.log(
-          "DY AI WINGO STARTED"
-        );
-
-        console.log(
-          "========================================"
-        );
-
-        console.log(
-          `PORT: ${PORT}`
-        );
 
         console.log(
           `MODEL: ${MODEL_VERSION}`
         );
 
+
         console.log(
-          `PATTERNS: ${ADAPTIVE_PATTERNS.length}`
+          `BASE RULES: ${BASE_RULES.length}`
         );
+
+
+        console.log(
+          `TOTAL PATTERNS: ${RULES.length}`
+        );
+
 
         console.log(
           `HISTORY: ${providerState.history.length}`
         );
 
+
         console.log(
-          `LATEST: ${
+          `LATEST ISSUE: ${
             providerState.history[0]
               ?.issueNumber ||
             "NONE"
           }`
         );
+
 
         console.log(
           `TARGET: ${
@@ -5477,6 +4595,7 @@ async function start() {
             "NONE"
           }`
         );
+
 
         console.log(
           `PATTERN: ${
@@ -5486,16 +4605,22 @@ async function start() {
           }`
         );
 
+
+        console.log(
+          `MATCH: ${
+            modelCache.prediction
+              ?.matchedPattern ||
+            "NONE"
+          }`
+        );
+
+
         console.log(
           `PREDICTION: ${
             modelCache.prediction
               ?.prediction ||
             "NO PATTERN"
           }`
-        );
-
-        console.log(
-          "========================================"
         );
 
       }
@@ -5514,6 +4639,7 @@ async function start() {
       "[STARTUP ERROR]",
       error
     );
+
 
     process.exit(1);
 
