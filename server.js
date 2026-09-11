@@ -17,6 +17,31 @@ const WINGOBOT_URL =
 
 const THINKING_DURATION_MS = 3000;
 
+/*
+=========================================================
+ DY AI WINGO - OWN ANALYSIS ENGINE V3
+
+ Prediction cycle:
+
+ 1 prediction
+       ↓
+ prediction settles
+       ↓
+ 5 complete rounds WAIT
+       ↓
+ fresh full analysis
+       ↓
+ next prediction
+
+ No forced alternation.
+ No endless same-side prediction.
+ No prediction during cooldown.
+
+ A = SMALL 0-4
+ B = BIG   5-9
+=========================================================
+*/
+
 
 /* =====================================================
    DATABASE
@@ -33,79 +58,46 @@ const pool = DATABASE_URL
 
 
 /* =====================================================
-   25 RULE PATTERN ENGINE
-
-   A = SMALL
-   B = BIG
+   DATABASE INIT
 ===================================================== */
 
-const RULES = [
-    { id: 1, pattern: "ABABABABAB" },
-    { id: 2, pattern: "AABBAABB" },
-    { id: 3, pattern: "AAABBBAAABBB" },
-    { id: 4, pattern: "AAAABBBBAAAABBBB" },
-    { id: 5, pattern: "AABAABAAB" },
-    { id: 6, pattern: "AAAAAAAA BBBBBBBB" },
-    { id: 7, pattern: "ABBABBABB" },
-    { id: 8, pattern: "AAABAAABAAAB" },
-    { id: 9, pattern: "AAABBAAABB" },
-    { id: 10, pattern: "AAAAB B A BB AAAA" },
-    { id: 11, pattern: "ABBBABBBABBB" },
-    { id: 12, pattern: "ABABBABBB" },
-    { id: 13, pattern: "AABBAAABBBAAAABBBB" },
-    { id: 14, pattern: "ABBAAABBBB" },
-    { id: 15, pattern: "AAAABBBAAB" },
-    { id: 16, pattern: "ABAABBAAABBB" },
-    { id: 17, pattern: "AABBBABBB AA" },
-    { id: 18, pattern: "ABBAAAABBBBBBBB" },
-    { id: 19, pattern: "ABBBABBB" },
-    { id: 20, pattern: "AABBBAABBB" },
-    { id: 21, pattern: "ABAABAAAB" },
-    { id: 22, pattern: "AABAABBAABBB" },
-    { id: 23, pattern: "AAAABA AA AAB" },
-    { id: 24, pattern: "AAAABBAAAABB" },
-    { id: 25, pattern: "AAAABBBAAAABBB" }
-];
+async function initDB() {
 
-for (const rule of RULES) {
-    rule.pattern =
-        rule.pattern.replace(/[^AB]/g, "");
+    if (!pool) {
+        console.log("DATABASE_URL not configured.");
+        return;
+    }
+
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS access_keys (
+            id SERIAL PRIMARY KEY,
+            access_key TEXT UNIQUE NOT NULL,
+            device_id TEXT,
+            created_at BIGINT NOT NULL,
+            last_seen BIGINT DEFAULT 0
+        );
+    `);
+
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS prediction_records (
+            id SERIAL PRIMARY KEY,
+            target_issue TEXT NOT NULL,
+            prediction TEXT NOT NULL,
+            confidence INTEGER DEFAULT 0,
+            model_version TEXT,
+            actual_number INTEGER,
+            actual_result TEXT,
+            created_at BIGINT NOT NULL,
+            settled_at BIGINT
+        );
+    `);
+
+    console.log("Database initialized.");
 }
 
 
 /* =====================================================
-   OPPOSITE PATTERN LIBRARY
-===================================================== */
-
-function oppositePattern(pattern) {
-    return pattern
-        .split("")
-        .map(x => x === "A" ? "B" : "A")
-        .join("");
-}
-
-const PATTERN_LIBRARY = [];
-
-for (const rule of RULES) {
-
-    PATTERN_LIBRARY.push({
-        rule: rule.id,
-        type: "original",
-        pattern: rule.pattern
-    });
-
-    PATTERN_LIBRARY.push({
-        rule: rule.id,
-        type: "opposite",
-        pattern: oppositePattern(
-            rule.pattern
-        )
-    });
-}
-
-
-/* =====================================================
-   NUMBER -> A/B
+   NUMBER MAPPING
 ===================================================== */
 
 function numberToAB(value) {
@@ -120,28 +112,21 @@ function numberToAB(value) {
         return null;
     }
 
-    return n <= 4
-        ? "A"
-        : "B";
+    return n <= 4 ? "A" : "B";
 }
 
 
 function abToType(value) {
 
-    if (value === "A") {
-        return "SMALL";
-    }
-
-    if (value === "B") {
-        return "BIG";
-    }
+    if (value === "A") return "SMALL";
+    if (value === "B") return "BIG";
 
     return null;
 }
 
 
 /* =====================================================
-   CLEAN HISTORY
+   CLEAN NUMBERS
 ===================================================== */
 
 function cleanNumbers(results) {
@@ -166,13 +151,17 @@ function cleanNumbers(results) {
 
             return Number(item);
         })
-        .filter(number =>
-            Number.isInteger(number) &&
-            number >= 0 &&
-            number <= 9
+        .filter(n =>
+            Number.isInteger(n) &&
+            n >= 0 &&
+            n <= 9
         );
 }
 
+
+/* =====================================================
+   HISTORY
+===================================================== */
 
 function convertHistory(results) {
 
@@ -201,13 +190,15 @@ function countAB(history) {
         B,
         total,
 
-        APercent: total
-            ? +(A / total * 100).toFixed(2)
-            : 0,
+        APercent:
+            total
+                ? +(A / total * 100).toFixed(2)
+                : 0,
 
-        BPercent: total
-            ? +(B / total * 100).toFixed(2)
-            : 0
+        BPercent:
+            total
+                ? +(B / total * 100).toFixed(2)
+                : 0
     };
 }
 
@@ -251,15 +242,15 @@ function currentStreak(history) {
 
 
 /* =====================================================
-   ALL RUNS
+   RUN ANALYSIS
 ===================================================== */
 
-function allRuns(history) {
+function getRuns(history) {
 
-    const output = [];
+    const runs = [];
 
     if (!history.length) {
-        return output;
+        return runs;
     }
 
     let side = history[0];
@@ -277,7 +268,7 @@ function allRuns(history) {
 
         } else {
 
-            output.push({
+            runs.push({
                 side,
                 length
             });
@@ -287,45 +278,78 @@ function allRuns(history) {
         }
     }
 
-    output.push({
+    runs.push({
         side,
         length
     });
 
-    return output;
+    return runs;
 }
 
 
-/* =====================================================
-   LONGEST STREAK
-===================================================== */
-
-function longestStreak(history, side) {
+function runStats(history) {
 
     const runs =
-        allRuns(history);
+        getRuns(history);
 
-    let longest = 0;
+    const lengths =
+        runs.map(x => x.length);
 
-    for (const run of runs) {
+    if (!lengths.length) {
 
-        if (
-            run.side === side &&
-            run.length > longest
-        ) {
-            longest = run.length;
-        }
+        return {
+            runs: [],
+            average: 0,
+            median: 0,
+            longest: 0
+        };
     }
 
-    return longest;
+    const average =
+        lengths.reduce(
+            (a, b) => a + b,
+            0
+        ) / lengths.length;
+
+    const sorted =
+        [...lengths].sort(
+            (a, b) => a - b
+        );
+
+    const middle =
+        Math.floor(
+            sorted.length / 2
+        );
+
+    const median =
+        sorted.length % 2
+            ? sorted[middle]
+            : (
+                sorted[middle - 1] +
+                sorted[middle]
+            ) / 2;
+
+    return {
+
+        runs,
+
+        average:
+            +average.toFixed(2),
+
+        median:
+            +median.toFixed(2),
+
+        longest:
+            Math.max(...lengths)
+    };
 }
 
 
 /* =====================================================
-   SWITCH RATE
+   SWITCHING
 ===================================================== */
 
-function switchRate(history) {
+function switchingStats(history) {
 
     if (history.length < 2) {
 
@@ -352,6 +376,7 @@ function switchRate(history) {
     }
 
     return {
+
         switches,
 
         rate:
@@ -364,428 +389,10 @@ function switchRate(history) {
 
 
 /* =====================================================
-   ALTERNATION
+   TRANSITION ANALYSIS
 ===================================================== */
 
-function alternationInfo(history) {
-
-    if (history.length < 2) {
-
-        return {
-            length: 0,
-            active: false,
-            broken: false
-        };
-    }
-
-    let length = 1;
-
-    for (
-        let i = history.length - 1;
-        i > 0;
-        i--
-    ) {
-
-        if (
-            history[i] ===
-            history[i - 1]
-        ) {
-            break;
-        }
-
-        length++;
-    }
-
-    return {
-        length,
-        active: length >= 4,
-        broken:
-            length > 1 &&
-            length < 4
-    };
-}
-
-
-/* =====================================================
-   SUFFIX MATCH
-===================================================== */
-
-function suffixMatch(
-    history,
-    pattern
-) {
-
-    const maxLength =
-        Math.min(
-            history.length,
-            pattern.length
-        );
-
-    let bestMatch = 0;
-
-    for (
-        let len = 1;
-        len <= maxLength;
-        len++
-    ) {
-
-        const historyPart =
-            history
-                .slice(
-                    history.length - len
-                )
-                .join("");
-
-        const patternPart =
-            pattern.slice(
-                0,
-                len
-            );
-
-        if (
-            historyPart ===
-            patternPart
-        ) {
-            bestMatch = len;
-        }
-    }
-
-    return bestMatch;
-}
-
-
-/* =====================================================
-   FIND RULES
-===================================================== */
-
-function findRules(history) {
-
-    const matches = [];
-
-    for (
-        const item of PATTERN_LIBRARY
-    ) {
-
-        const matched =
-            suffixMatch(
-                history,
-                item.pattern
-            );
-
-        if (matched < 2) {
-            continue;
-        }
-
-        let next = null;
-
-        if (
-            matched <
-            item.pattern.length
-        ) {
-
-            next =
-                item.pattern[matched];
-        }
-
-        matches.push({
-            rule: item.rule,
-            type: item.type,
-            pattern: item.pattern,
-            matched,
-            next
-        });
-    }
-
-    return matches;
-}
-
-
-/* =====================================================
-   RULE WEIGHT
-
-   Short matches intentionally weak.
-===================================================== */
-
-function ruleWeight(matched) {
-
-    if (matched >= 12) return 14;
-    if (matched >= 10) return 12;
-    if (matched >= 8) return 10;
-    if (matched >= 7) return 8;
-    if (matched >= 6) return 7;
-    if (matched >= 5) return 6;
-    if (matched >= 4) return 3;
-    if (matched >= 3) return 1;
-
-    return 0.25;
-}
-
-
-/* =====================================================
-   RULE SUPPORT
-===================================================== */
-
-function calculateRuleSupport(matches) {
-
-    let A = 0;
-    let B = 0;
-
-    const evidence = [];
-
-    for (
-        const match of matches
-    ) {
-
-        if (!match.next) {
-            continue;
-        }
-
-        const weight =
-            ruleWeight(
-                match.matched
-            );
-
-        if (match.next === "A") {
-            A += weight;
-        }
-
-        if (match.next === "B") {
-            B += weight;
-        }
-
-        evidence.push({
-            rule: match.rule,
-            type: match.type,
-            matched: match.matched,
-            expectedNext: match.next,
-            weight:
-                +weight.toFixed(2)
-        });
-    }
-
-    const total =
-        A + B;
-
-    return {
-
-        A: +A.toFixed(2),
-        B: +B.toFixed(2),
-
-        total:
-            +total.toFixed(2),
-
-        APercent:
-            total
-                ? +(A / total * 100).toFixed(2)
-                : 0,
-
-        BPercent:
-            total
-                ? +(B / total * 100).toFixed(2)
-                : 0,
-
-        evidence
-    };
-}
-
-
-/* =====================================================
-   HISTORICAL NEXT EVIDENCE
-
-   Same pattern history me pehle aaya ho to uske
-   baad actual A/B kya aaya tha wo dekha jayega.
-===================================================== */
-
-function historicalNextEvidence(
-    history,
-    pattern
-) {
-
-    if (pattern.length < 3) {
-
-        return {
-            A: 0,
-            B: 0,
-            total: 0,
-            APercent: 0,
-            BPercent: 0,
-            occurrences: 0
-        };
-    }
-
-    let A = 0;
-    let B = 0;
-    let occurrences = 0;
-
-    for (
-        let i = 0;
-        i + pattern.length <
-        history.length;
-        i++
-    ) {
-
-        const part =
-            history
-                .slice(
-                    i,
-                    i + pattern.length
-                )
-                .join("");
-
-        if (
-            part !== pattern
-        ) {
-            continue;
-        }
-
-        const next =
-            history[
-                i + pattern.length
-            ];
-
-        occurrences++;
-
-        if (next === "A") {
-            A++;
-        }
-
-        if (next === "B") {
-            B++;
-        }
-    }
-
-    const total = A + B;
-
-    return {
-
-        A,
-        B,
-        total,
-
-        APercent:
-            total
-                ? +(A / total * 100).toFixed(2)
-                : 0,
-
-        BPercent:
-            total
-                ? +(B / total * 100).toFixed(2)
-                : 0,
-
-        occurrences
-    };
-}
-
-
-/* =====================================================
-   PARTIAL HISTORICAL EVIDENCE
-===================================================== */
-
-function partialHistoricalEvidence(history) {
-
-    const output = [];
-
-    const maxLength =
-        Math.min(
-            8,
-            history.length
-        );
-
-    for (
-        let len = maxLength;
-        len >= 4;
-        len--
-    ) {
-
-        const suffix =
-            history
-                .slice(-len)
-                .join("");
-
-        let A = 0;
-        let B = 0;
-        let occurrences = 0;
-
-        for (
-            let i = 0;
-            i + len <
-            history.length;
-            i++
-        ) {
-
-            const part =
-                history
-                    .slice(
-                        i,
-                        i + len
-                    )
-                    .join("");
-
-            if (
-                part !== suffix
-            ) {
-                continue;
-            }
-
-            const next =
-                history[i + len];
-
-            occurrences++;
-
-            if (next === "A") {
-                A++;
-            }
-
-            if (next === "B") {
-                B++;
-            }
-        }
-
-        if (occurrences > 0) {
-
-            output.push({
-
-                length: len,
-
-                pattern:
-                    suffix,
-
-                A,
-                B,
-
-                occurrences,
-
-                APercent:
-                    +(A /
-                        occurrences *
-                        100
-                    ).toFixed(2),
-
-                BPercent:
-                    +(B /
-                        occurrences *
-                        100
-                    ).toFixed(2)
-            });
-        }
-    }
-
-    output.sort(
-        (a, b) =>
-            b.length - a.length ||
-            b.occurrences -
-            a.occurrences
-    );
-
-    return output;
-}
-
-
-/* =====================================================
-   TRANSITION MATRIX
-===================================================== */
-
-function transitionMatrix(history) {
+function transitions(history) {
 
     const matrix = {
         AA: 0,
@@ -865,40 +472,115 @@ function transitionMatrix(history) {
 
 
 /* =====================================================
+   WINDOW ANALYSIS
+===================================================== */
+
+function windowsAnalysis(history) {
+
+    const sizes =
+        [5, 10, 20, 30, 50, 100];
+
+    const output = {};
+
+    for (
+        const size of sizes
+    ) {
+
+        if (
+            history.length < size
+        ) {
+            continue;
+        }
+
+        const part =
+            history.slice(-size);
+
+        const stats =
+            countAB(part);
+
+        output[size] = {
+
+            A: stats.A,
+            B: stats.B,
+
+            APercent:
+                stats.APercent,
+
+            BPercent:
+                stats.BPercent,
+
+            switching:
+                switchingStats(part),
+
+            streak:
+                currentStreak(part),
+
+            longestA:
+                runStats(part).runs
+                    .filter(x => x.side === "A")
+                    .reduce(
+                        (m, x) =>
+                            Math.max(
+                                m,
+                                x.length
+                            ),
+                        0
+                    ),
+
+            longestB:
+                runStats(part).runs
+                    .filter(x => x.side === "B")
+                    .reduce(
+                        (m, x) =>
+                            Math.max(
+                                m,
+                                x.length
+                            ),
+                        0
+                    )
+        };
+    }
+
+    return output;
+}
+
+
+/* =====================================================
    MOMENTUM
 ===================================================== */
 
-function momentum(history) {
+function momentumAnalysis(history) {
 
     if (history.length < 20) {
 
         return {
-            recent: null,
-            previous: null,
-            shift: "LOW_DATA",
-            classification: "LOW_DATA"
+            status: "LOW_DATA"
         };
     }
 
     const recent =
-        countAB(
-            history.slice(-10)
-        );
+        history.slice(-10);
 
     const previous =
-        countAB(
-            history.slice(-20, -10)
-        );
+        history.slice(-20, -10);
+
+    const r =
+        countAB(recent);
+
+    const p =
+        countAB(previous);
+
+    const recentBias =
+        r.BPercent -
+        r.APercent;
+
+    const previousBias =
+        p.BPercent -
+        p.APercent;
 
     const shift =
-        (
-            recent.BPercent -
-            recent.APercent
-        ) -
-        (
-            previous.BPercent -
-            previous.APercent
-        );
+        recentBias -
+        previousBias;
 
     let classification =
         "STABLE";
@@ -922,119 +604,62 @@ function momentum(history) {
     }
 
     return {
+
         recent,
         previous,
+
         shift:
             +shift.toFixed(2),
+
         classification
     };
 }
 
 
 /* =====================================================
-   RUN ANALYSIS
+   ALTERNATION
 ===================================================== */
 
-function runAnalysis(history) {
+function alternationAnalysis(history) {
 
-    const runs =
-        allRuns(history);
+    if (history.length < 2) {
 
-    const lengths =
-        runs.map(
-            x => x.length
-        );
-
-    const average =
-        lengths.length
-            ? lengths.reduce(
-                (a, b) => a + b,
-                0
-            ) / lengths.length
-            : 0;
-
-    const sorted =
-        [...lengths].sort(
-            (a, b) => a - b
-        );
-
-    let median = 0;
-
-    if (sorted.length) {
-
-        const middle =
-            Math.floor(
-                sorted.length / 2
-            );
-
-        if (
-            sorted.length % 2
-        ) {
-
-            median =
-                sorted[middle];
-
-        } else {
-
-            median =
-                (
-                    sorted[middle - 1] +
-                    sorted[middle]
-                ) / 2;
-        }
+        return {
+            length: 0,
+            active: false
+        };
     }
 
-    const frequency = {};
+    let length = 1;
 
     for (
-        const length of lengths
-    ) {
-
-        frequency[length] =
-            (frequency[length] || 0) + 1;
-    }
-
-    let mostCommon = 0;
-
-    for (
-        const key of Object.keys(
-            frequency
-        )
+        let i = history.length - 1;
+        i > 0;
+        i--
     ) {
 
         if (
-            !mostCommon ||
-            frequency[key] >
-            frequency[mostCommon]
+            history[i] ===
+            history[i - 1]
         ) {
-
-            mostCommon =
-                Number(key);
+            break;
         }
+
+        length++;
     }
 
     return {
 
-        runs,
+        length,
 
-        average:
-            +average.toFixed(2),
-
-        median:
-            +median.toFixed(2),
-
-        longest:
-            lengths.length
-                ? Math.max(...lengths)
-                : 0,
-
-        mostCommon
+        active:
+            length >= 4
     };
 }
 
 
 /* =====================================================
-   REPEATING BLOCKS
+   REPEATING BLOCK
 ===================================================== */
 
 function repeatingBlocks(history) {
@@ -1042,40 +667,39 @@ function repeatingBlocks(history) {
     const output = [];
 
     for (
-        let length = 2;
-        length <= 6;
-        length++
+        let size = 2;
+        size <= 6;
+        size++
     ) {
 
         if (
             history.length <
-            length * 3
+            size * 3
         ) {
             continue;
         }
 
         const block =
             history
-                .slice(-length)
+                .slice(-size)
                 .join("");
 
         let repeats = 0;
 
         for (
             let i =
-                history.length -
-                length;
+                history.length - size;
 
             i >= 0;
 
-            i -= length
+            i -= size
         ) {
 
             const part =
                 history
                     .slice(
                         i,
-                        i + length
+                        i + size
                     )
                     .join("");
 
@@ -1094,7 +718,7 @@ function repeatingBlocks(history) {
         if (repeats >= 2) {
 
             output.push({
-                length,
+                size,
                 block,
                 repeats
             });
@@ -1115,13 +739,13 @@ function digitAnalysis(numbers) {
         Array(10).fill(0);
 
     for (
-        const number of numbers
+        const n of numbers
     ) {
 
         if (
-            Number.isInteger(number)
+            Number.isInteger(n)
         ) {
-            frequency[number]++;
+            frequency[n]++;
         }
     }
 
@@ -1138,7 +762,8 @@ function digitAnalysis(numbers) {
             numbers.length
                 ? +(
                     numbers.reduce(
-                        (a, b) => a + b,
+                        (a, b) =>
+                            a + b,
                         0
                     ) /
                     numbers.length
@@ -1149,412 +774,141 @@ function digitAnalysis(numbers) {
 
 
 /* =====================================================
-   REVERSAL ENGINE
-
-   IMPORTANT:
-   Yahi anti-streak ka main part hai.
+   RECENT SIDE BIAS
 ===================================================== */
 
-function reversalEngine(history) {
+function sideBias(history, size) {
 
-    const current =
-        currentStreak(history);
+    const part =
+        history.slice(-size);
 
-    const runs =
-        runAnalysis(history);
+    const stats =
+        countAB(part);
 
-    const result = {
-
-        currentSide:
-            current.side,
-
-        currentLength:
-            current.length,
-
-        scoreA: 0,
-        scoreB: 0,
-
-        reasons: [],
-
-        watch: false,
-
-        strength: "NONE"
-    };
-
-    if (
-        !current.side ||
-        current.length < 3
-    ) {
-        return result;
-    }
-
-    const opposite =
-        current.side === "A"
-            ? "B"
-            : "A";
-
-
-    /* R1 */
-
-    if (
-        current.length >= 5 &&
-        current.length >
-        runs.median + 1
-    ) {
-
-        if (opposite === "A") {
-            result.scoreA += 2;
-        } else {
-            result.scoreB += 2;
-        }
-
-        result.reasons.push(
-            "Current streak is longer than typical run."
-        );
-    }
-
-
-    /* R2 */
-
-    if (
-        current.length >= 6
-    ) {
-
-        if (opposite === "A") {
-            result.scoreA += 3;
-        } else {
-            result.scoreB += 3;
-        }
-
-        result.reasons.push(
-            "Extended same-side streak detected."
-        );
-    }
-
-
-    /* R3 */
-
-    const recent =
-        transitionMatrix(
-            history.slice(-20)
-        );
-
-    if (
-        current.side === "A" &&
-        recent.afterA.switch >= 55
-    ) {
-
-        result.scoreB += 2;
-
-        result.reasons.push(
-            "Recent history often switches after SMALL."
-        );
-    }
-
-    if (
-        current.side === "B" &&
-        recent.afterB.switch >= 55
-    ) {
-
-        result.scoreA += 2;
-
-        result.reasons.push(
-            "Recent history often switches after BIG."
-        );
-    }
-
-
-    /* R4 */
-
-    const switching =
-        switchRate(
-            history.slice(-20)
-        );
-
-    if (
-        switching.rate >= 60
-    ) {
-
-        if (opposite === "A") {
-            result.scoreA += 1;
-        } else {
-            result.scoreB += 1;
-        }
-
-        result.reasons.push(
-            "High recent switching regime."
-        );
-    }
-
-
-    /* R5 */
-
-    if (
-        current.length >= 4 &&
-        current.length >=
-        runs.longest - 1
-    ) {
-
-        if (opposite === "A") {
-            result.scoreA += 2;
-        } else {
-            result.scoreB += 2;
-        }
-
-        result.reasons.push(
-            "Current streak is near historical maximum."
-        );
-    }
-
-
-    /* LIMIT */
-
-    result.scoreA =
-        Math.min(
-            8,
-            result.scoreA
-        );
-
-    result.scoreB =
-        Math.min(
-            8,
-            result.scoreB
-        );
-
-
-    const maxScore =
-        Math.max(
-            result.scoreA,
-            result.scoreB
-        );
-
-    if (
-        maxScore >= 4
-    ) {
-
-        result.watch = true;
-
-        result.strength =
-            maxScore >= 6
-                ? "STRONG"
-                : "MODERATE";
-    }
-
-    return result;
-}
-
-
-/* =====================================================
-   FAILED REVERSAL
-===================================================== */
-
-function failedReversal(history) {
-
-    if (
-        history.length < 8
-    ) {
-
-        return {
-            detected: false,
-            reason: ""
-        };
-    }
-
-    const recent =
-        history.slice(-8);
-
-    const runs =
-        allRuns(recent);
-
-    if (
-        runs.length < 3
-    ) {
-
-        return {
-            detected: false,
-            reason: ""
-        };
-    }
-
-    const last =
-        runs.at(-1);
-
-    const previous =
-        runs.at(-2);
-
-    if (
-        previous.length === 1 &&
-        last.length >= 2
-    ) {
-
-        return {
-            detected: true,
-
-            reason:
-                "Short reversal attempt failed and current side continued."
-        };
-    }
-
-    return {
-        detected: false,
-        reason: ""
-    };
-}
-
-
-/* =====================================================
-   ANTI-STREAK ADJUSTMENT
-
-   Same side ko endlessly repeat hone se rokta hai.
-===================================================== */
-
-function antiStreakAdjustment(
-    history,
-    candidate
-) {
-
-    const current =
-        currentStreak(history);
-
-    if (!current.side) {
-        return 0;
-    }
-
-
-    /*
-      Current side same prediction:
-
-      4 streak = small penalty
-      5 streak = medium
-      6 streak = strong
-      7+ = very strong
-    */
-
-    if (
-        candidate ===
-        current.side
-    ) {
-
-        if (
-            current.length >= 7
-        ) {
-            return -7;
-        }
-
-        if (
-            current.length >= 6
-        ) {
-            return -5;
-        }
-
-        if (
-            current.length >= 5
-        ) {
-            return -3;
-        }
-
-        if (
-            current.length >= 4
-        ) {
-            return -1.5;
-        }
-    }
-
-
-    /*
-      Opposite ko sirf modest bonus.
-      Isliye forced alternation nahi hoga.
-    */
-
-    if (
-        candidate !== current.side &&
-        current.length >= 5
-    ) {
-
-        return 1.5;
-    }
-
-    return 0;
-}
-
-
-/* =====================================================
-   CONFIDENCE
-===================================================== */
-
-function calculateConfidence(
-    scoreA,
-    scoreB,
-    historyLength
-) {
-
-    const total =
-        Math.abs(scoreA) +
-        Math.abs(scoreB);
-
-    if (!total) {
-        return 0;
-    }
-
-    let confidence =
-        Math.abs(
-            scoreA - scoreB
-        ) /
-        total *
-        100;
-
-
-    /* SAMPLE SIZE PENALTY */
-
-    if (
-        historyLength < 10
-    ) {
-
-        confidence *= 0.55;
-
-    } else if (
-        historyLength < 20
-    ) {
-
-        confidence *= 0.75;
-
-    } else if (
-        historyLength < 30
-    ) {
-
-        confidence *= 0.88;
-    }
-
-
-    return Math.max(
-        0,
-        Math.min(
-            95,
-            Math.round(
-                confidence
-            )
-        )
+    return (
+        stats.BPercent -
+        stats.APercent
     );
 }
 
 
 /* =====================================================
-   MAIN ANALYSIS
+   HISTORICAL SEQUENCE ANALYSIS
+
+   Current last N sequence ko history me search karke
+   dekhta hai ki uske baad actual me kya hua.
 ===================================================== */
 
-function analyze(results) {
+function historicalSequence(
+    history
+) {
 
-    const numbers =
-        cleanNumbers(results);
+    const results = [];
+
+    const maxLength =
+        Math.min(
+            8,
+            Math.floor(
+                history.length / 3
+            )
+        );
+
+    for (
+        let length = maxLength;
+        length >= 4;
+        length--
+    ) {
+
+        const pattern =
+            history
+                .slice(-length)
+                .join("");
+
+        let A = 0;
+        let B = 0;
+
+        for (
+            let i = 0;
+            i + length <
+            history.length;
+            i++
+        ) {
+
+            const part =
+                history
+                    .slice(
+                        i,
+                        i + length
+                    )
+                    .join("");
+
+            if (
+                part !== pattern
+            ) {
+                continue;
+            }
+
+            const next =
+                history[i + length];
+
+            if (next === "A") {
+                A++;
+            }
+
+            if (next === "B") {
+                B++;
+            }
+        }
+
+        const total =
+            A + B;
+
+        if (total > 0) {
+
+            results.push({
+
+                length,
+
+                pattern,
+
+                occurrences:
+                    total,
+
+                A,
+                B,
+
+                APercent:
+                    +(A /
+                        total *
+                        100
+                    ).toFixed(2),
+
+                BPercent:
+                    +(B /
+                        total *
+                        100
+                    ).toFixed(2)
+            });
+        }
+    }
+
+    return results;
+}
+
+
+/* =====================================================
+   OWN ANALYSIS ENGINE
+
+   Multiple independent components.
+===================================================== */
+
+function fullAnalysis(numbers) {
 
     const history =
-        numbers
-            .map(numberToAB)
-            .filter(Boolean);
-
+        convertHistory(numbers);
 
     if (
-        history.length < 3
+        history.length < 10
     ) {
 
         return {
@@ -1568,8 +922,8 @@ function analyze(results) {
             confidence:
                 0,
 
-            message:
-                "More historical results required."
+            historyLength:
+                history.length
         };
     }
 
@@ -1580,149 +934,195 @@ function analyze(results) {
     const streak =
         currentStreak(history);
 
+    const runs =
+        runStats(history);
+
     const switching =
-        switchRate(history);
+        switchingStats(history);
+
+    const windows =
+        windowsAnalysis(history);
+
+    const transition =
+        transitions(history);
+
+    const recentTransition =
+        transitions(
+            history.slice(-20)
+        );
+
+    const momentum =
+        momentumAnalysis(history);
 
     const alternation =
-        alternationInfo(history);
-
-    const runs =
-        runAnalysis(history);
+        alternationAnalysis(history);
 
     const blocks =
         repeatingBlocks(history);
 
-    const momentumData =
-        momentum(history);
-
-    const transitions =
-        transitionMatrix(history);
-
-    const recentTransitions =
-        transitionMatrix(
-            history.slice(-20)
-        );
-
     const digits =
         digitAnalysis(numbers);
 
-    const matches =
-        findRules(history);
-
-    const ruleSupport =
-        calculateRuleSupport(
-            matches
-        );
-
-    const reversal =
-        reversalEngine(history);
-
-    const failed =
-        failedReversal(history);
-
-    const historicalPatterns =
-        partialHistoricalEvidence(
-            history
-        );
+    const historical =
+        historicalSequence(history);
 
 
     /* =================================================
-       START SCORE
+       SCORES
+
+       Separate BIG / SMALL support.
     ================================================= */
 
-    let scoreA =
-        ruleSupport.A;
+    let small = 0;
+    let big = 0;
 
-    let scoreB =
-        ruleSupport.B;
+    const reasons = [];
 
 
     /* =================================================
-       HISTORICAL ACTUAL NEXT EVIDENCE
+       1. RECENT WINDOW - 20%
     ================================================= */
 
-    if (
-        historicalPatterns.length
-    ) {
+    const w5 =
+        windows[5];
 
-        const best =
-            historicalPatterns[0];
+    const w10 =
+        windows[10];
 
-        const weight =
-            Math.min(
-                8,
-                best.length
-            );
+    const w20 =
+        windows[20];
 
-        scoreA +=
-            best.A *
-            weight;
+    if (w5) {
 
-        scoreB +=
-            best.B *
-            weight;
+        small +=
+            w5.APercent *
+            0.08;
+
+        big +=
+            w5.BPercent *
+            0.08;
+    }
+
+    if (w10) {
+
+        small +=
+            w10.APercent *
+            0.05;
+
+        big +=
+            w10.BPercent *
+            0.05;
+    }
+
+    if (w20) {
+
+        small +=
+            w20.APercent *
+            0.03;
+
+        big +=
+            w20.BPercent *
+            0.03;
     }
 
 
     /* =================================================
-       TRANSITION
+       2. FREQUENCY - LOW WEIGHT
+    ================================================= */
+
+    const frequencyBias =
+        stats.APercent -
+        stats.BPercent;
+
+    small +=
+        frequencyBias *
+        0.04;
+
+    big -=
+        frequencyBias *
+        0.04;
+
+
+    /* =================================================
+       3. STREAK STRUCTURE
     ================================================= */
 
     if (
         streak.side === "A"
     ) {
 
-        scoreA +=
-            recentTransitions
-                .afterA
-                .same *
-            0.04;
+        /*
+          Short streak:
+          continuation still possible.
+        */
 
-        scoreB +=
-            recentTransitions
-                .afterA
-                .switch *
-            0.04;
+        if (
+            streak.length <= 2
+        ) {
 
-    } else {
+            small += 2;
 
-        scoreA +=
-            recentTransitions
-                .afterB
-                .switch *
-            0.04;
+        } else if (
+            streak.length === 3
+        ) {
 
-        scoreB +=
-            recentTransitions
-                .afterB
-                .same *
-            0.04;
+            small += 0.5;
+
+        } else if (
+            streak.length >= 4
+        ) {
+
+            /*
+              Long streak:
+              do not blindly continue.
+            */
+
+            big +=
+                Math.min(
+                    6,
+                    streak.length * 0.8
+                );
+
+            reasons.push(
+                `SMALL streak ${streak.length}; continuation penalized.`
+            );
+        }
+
+    } else if (
+        streak.side === "B"
+    ) {
+
+        if (
+            streak.length <= 2
+        ) {
+
+            big += 2;
+
+        } else if (
+            streak.length === 3
+        ) {
+
+            big += 0.5;
+
+        } else if (
+            streak.length >= 4
+        ) {
+
+            small +=
+                Math.min(
+                    6,
+                    streak.length * 0.8
+                );
+
+            reasons.push(
+                `BIG streak ${streak.length}; continuation penalized.`
+            );
+        }
     }
 
 
     /* =================================================
-       MOMENTUM
-    ================================================= */
-
-    if (
-        momentumData.classification ===
-        "TOWARD_BIG"
-    ) {
-
-        scoreB += 2;
-    }
-
-    if (
-        momentumData.classification ===
-        "TOWARD_SMALL"
-    ) {
-
-        scoreA += 2;
-    }
-
-
-    /* =================================================
-       SWITCHING
+       4. SWITCHING
     ================================================= */
 
     if (
@@ -1733,285 +1133,371 @@ function analyze(results) {
             streak.side === "A"
         ) {
 
-            scoreB += 2;
+            big += 4;
 
         } else {
 
-            scoreA += 2;
+            small += 4;
         }
+
+        reasons.push(
+            "High switching regime."
+        );
 
     } else if (
         switching.rate < 40
     ) {
 
         /*
-          Streak-dominant regime.
-          Automatic reversal nahi.
+          Streak-dominant:
+          don't force reversal.
         */
 
         if (
             streak.side === "A"
         ) {
 
-            scoreA += 1;
+            small += 2;
 
         } else {
 
-            scoreB += 1;
+            big += 2;
         }
     }
 
 
     /* =================================================
-       REVERSAL
-    ================================================= */
-
-    scoreA +=
-        reversal.scoreA *
-        1.5;
-
-    scoreB +=
-        reversal.scoreB *
-        1.5;
-
-
-    /* =================================================
-       FAILED REVERSAL PROTECTION
+       5. TRANSITION
     ================================================= */
 
     if (
-        failed.detected
+        streak.side === "A"
+    ) {
+
+        small +=
+            recentTransition
+                .afterA
+                .same *
+            0.04;
+
+        big +=
+            recentTransition
+                .afterA
+                .switch *
+            0.04;
+
+    } else {
+
+        small +=
+            recentTransition
+                .afterB
+                .switch *
+            0.04;
+
+        big +=
+            recentTransition
+                .afterB
+                .same *
+            0.04;
+    }
+
+
+    /* =================================================
+       6. MOMENTUM
+    ================================================= */
+
+    if (
+        momentum.classification ===
+        "TOWARD_BIG"
+    ) {
+
+        big += 5;
+
+        reasons.push(
+            "Recent momentum moved toward BIG."
+        );
+    }
+
+    if (
+        momentum.classification ===
+        "TOWARD_SMALL"
+    ) {
+
+        small += 5;
+
+        reasons.push(
+            "Recent momentum moved toward SMALL."
+        );
+    }
+
+
+    /* =================================================
+       7. HISTORICAL SEQUENCE
+    ================================================= */
+
+    if (
+        historical.length
+    ) {
+
+        /*
+          Longest historical sequence gets
+          highest weight, but only when it has
+          enough occurrences.
+        */
+
+        const useful =
+            historical.find(
+                x =>
+                    x.occurrences >= 2
+            ) ||
+            historical[0];
+
+        if (
+            useful
+        ) {
+
+            const reliability =
+                Math.min(
+                    1,
+                    useful.occurrences /
+                    5
+                );
+
+            small +=
+                useful.APercent *
+                0.05 *
+                reliability;
+
+            big +=
+                useful.BPercent *
+                0.05 *
+                reliability;
+
+            reasons.push(
+                `Historical sequence ${useful.pattern} checked (${useful.occurrences} occurrences).`
+            );
+        }
+    }
+
+
+    /* =================================================
+       8. ALTERNATION
+    ================================================= */
+
+    if (
+        alternation.active
     ) {
 
         if (
             streak.side === "A"
         ) {
 
-            scoreA += 2;
+            big += 2;
 
         } else {
 
-            scoreB += 2;
+            small += 2;
+        }
+
+        reasons.push(
+            "Recent alternation detected."
+        );
+    }
+
+
+    /* =================================================
+       9. REPEATING BLOCK
+    ================================================= */
+
+    if (
+        blocks.length
+    ) {
+
+        const strongest =
+            blocks[0];
+
+        const next =
+            strongest.block[
+                0
+            ];
+
+        if (
+            next === "A"
+        ) {
+
+            small += 2;
+
+        } else {
+
+            big += 2;
         }
     }
 
 
     /* =================================================
-       ANTI-STREAK
-    ================================================= */
+       10. VERY LONG STREAK PROTECTION
 
-    scoreA +=
-        antiStreakAdjustment(
-            history,
-            "A"
-        );
+       MAIN FIX AGAINST:
 
-    scoreB +=
-        antiStreakAdjustment(
-            history,
-            "B"
-        );
-
-
-    /* =================================================
-       FREQUENCY
+       SMALL SMALL SMALL SMALL...
+       or
+       BIG BIG BIG BIG...
     ================================================= */
 
     if (
-        history.length >= 20
+        streak.length >= 5
     ) {
 
-        const diff =
-            stats.APercent -
-            stats.BPercent;
+        if (
+            streak.side === "A"
+        ) {
 
-        scoreA +=
-            diff * 0.03;
+            small -=
+                streak.length >= 7
+                    ? 8
+                    : 5;
 
-        scoreB -=
-            diff * 0.03;
+            big +=
+                streak.length >= 7
+                    ? 6
+                    : 3;
+
+            reasons.push(
+                "Long SMALL streak anti-repeat protection."
+            );
+
+        } else {
+
+            big -=
+                streak.length >= 7
+                    ? 8
+                    : 5;
+
+            small +=
+                streak.length >= 7
+                    ? 6
+                    : 3;
+
+            reasons.push(
+                "Long BIG streak anti-repeat protection."
+            );
+        }
     }
 
 
     /* =================================================
-       CLEAN SCORE
+       11. CONFLICT CHECK
     ================================================= */
 
-    scoreA =
-        +Math.max(
+    small =
+        Math.max(
             0,
-            scoreA
-        ).toFixed(2);
+            small
+        );
 
-    scoreB =
-        +Math.max(
+    big =
+        Math.max(
             0,
-            scoreB
-        ).toFixed(2);
+            big
+        );
 
+
+    const total =
+        small + big;
 
     const difference =
         Math.abs(
-            scoreA -
-            scoreB
+            small - big
         );
-
-    const total =
-        scoreA +
-        scoreB;
-
-
-    /* =================================================
-       DECISION
-    ================================================= */
-
-    let prediction = null;
 
 
     /*
-      Very close scores:
-      NO CLEAR SIGNAL
+      If scores are too close,
+      no prediction.
     */
+
+    let prediction = null;
 
     if (
         total > 0 &&
         difference >=
         Math.max(
-            2.5,
-            total * 0.10
+            3,
+            total * 0.12
         )
     ) {
 
         prediction =
-            scoreA > scoreB
+            small > big
                 ? "SMALL"
                 : "BIG";
     }
 
 
     /* =================================================
-       SPECIAL ANTI-STREAK CHECK
+       12. CONFIDENCE
     ================================================= */
 
+    let confidence = 0;
+
     if (
-        prediction ===
-            abToType(
-                streak.side
-            ) &&
-        streak.length >= 5
+        prediction
     ) {
 
-        const opposite =
-            streak.side === "A"
-                ? "B"
-                : "A";
-
-        const oppositeScore =
-            opposite === "A"
-                ? scoreA
-                : scoreB;
-
-        const sameScore =
-            streak.side === "A"
-                ? scoreA
-                : scoreB;
-
-
-        const historicalSupportsOpposite =
-            historicalPatterns.some(
-                item => {
-
-                    if (
-                        item.length < 5
-                    ) {
-                        return false;
-                    }
-
-                    return opposite === "A"
-                        ? item.APercent >= 65
-                        : item.BPercent >= 65;
-                }
+        confidence =
+            Math.round(
+                difference /
+                total *
+                100
             );
 
-
-        const strongOpposite =
-            oppositeScore >
-            sameScore * 0.90 &&
-            (
-                reversal.watch ||
-                historicalSupportsOpposite
-            );
-
+        /*
+          More data = more stable,
+          but never show fake 100%.
+        */
 
         if (
-            strongOpposite
+            history.length < 20
         ) {
 
-            prediction =
-                abToType(
-                    opposite
+            confidence =
+                Math.round(
+                    confidence *
+                    0.70
+                );
+
+        } else if (
+            history.length < 30
+        ) {
+
+            confidence =
+                Math.round(
+                    confidence *
+                    0.85
                 );
         }
+
+        confidence =
+            Math.min(
+                92,
+                confidence
+            );
     }
 
 
     /* =================================================
-       CONFIDENCE
-    ================================================= */
-
-    const confidence =
-        prediction
-            ? calculateConfidence(
-                scoreA,
-                scoreB,
-                history.length
-            )
-            : 0;
-
-
-    /* =================================================
-       CLASSIFICATION
+       13. CLASSIFICATION
     ================================================= */
 
     let classification =
         "NO CLEAR SIGNAL";
 
-
     if (
-        history.length < 10
-    ) {
-
-        classification =
-            "INSUFFICIENT DATA";
-
-    } else if (
         !prediction
     ) {
 
         classification =
             "MIXED / CONFLICTING";
-
-    } else if (
-        failed.detected &&
-        prediction ===
-            abToType(
-                streak.side
-            )
-    ) {
-
-        classification =
-            "FAILED REVERSAL";
-
-    } else if (
-        reversal.watch &&
-        prediction !==
-            abToType(
-                streak.side
-            )
-    ) {
-
-        classification =
-            "REVERSAL WATCH";
 
     } else if (
         confidence >= 75
@@ -2036,8 +1522,7 @@ function analyze(results) {
 
     return {
 
-        status:
-            "OK",
+        status: "OK",
 
         prediction,
 
@@ -2045,8 +1530,8 @@ function analyze(results) {
 
         classification,
 
-        thinkingDurationMs:
-            THINKING_DURATION_MS,
+        historyLength:
+            history.length,
 
         current:
             abToType(
@@ -2059,78 +1544,58 @@ function analyze(results) {
         currentStreak:
             streak.length,
 
-        historyLength:
-            history.length,
-
         stats,
+
+        windows,
 
         switching,
 
-        alternation,
+        transition,
+
+        recentTransition,
+
+        momentum,
 
         runs,
+
+        alternation,
 
         repeatingBlocks:
             blocks,
 
-        momentum:
-            momentumData,
-
-        transitions,
-
-        recentTransitions,
-
         digits,
 
-        matchedRules:
-            matches,
-
-        ruleSupport: {
-
-            A:
-                ruleSupport.A,
-
-            B:
-                ruleSupport.B,
-
-            APercent:
-                ruleSupport.APercent,
-
-            BPercent:
-                ruleSupport.BPercent
-        },
-
-        historicalNextEvidence:
-            historicalPatterns.slice(
+        historicalSequence:
+            historical.slice(
                 0,
                 5
             ),
 
-        reversal,
-
-        failedReversal:
-            failed,
-
         score: {
 
             SMALL:
-                scoreA,
+                +small.toFixed(2),
 
             BIG:
-                scoreB,
+                +big.toFixed(2),
 
             difference:
                 +difference.toFixed(2)
         },
 
+        reasons,
+
+        thinkingDurationMs:
+            THINKING_DURATION_MS,
+
         message:
-            "Historical pattern analysis only. No future result is guaranteed."
+            "Historical analysis only. Future results are not guaranteed."
     };
 }
 
 
 /* =====================================================
-   WINGOBOT API
+   WINGOBOT
 ===================================================== */
 
 async function fetchWingoHistory() {
@@ -2149,10 +1614,10 @@ async function fetchWingoHistory() {
                 method: "GET",
 
                 headers: {
-                    "Authorization":
+                    Authorization:
                         `Bearer ${WINGOBOT_TOKEN}`,
 
-                    "Accept":
+                    Accept:
                         "application/json"
                 }
             }
@@ -2192,7 +1657,6 @@ function normalizeWingo(data) {
                     data?.results
                 )
                     ? data.results
-
                     : [];
 
 
@@ -2215,7 +1679,6 @@ function normalizeWingo(data) {
                     number < 0 ||
                     number > 9
                 ) {
-
                     return null;
                 }
 
@@ -2285,30 +1748,7 @@ function normalizeWingo(data) {
 
 
 /* =====================================================
-   MODEL CACHE
-===================================================== */
-
-let modelCache = {
-
-    prediction:
-        null,
-
-    confidence:
-        0,
-
-    targetIssue:
-        null,
-
-    analysis:
-        null,
-
-    generatedAt:
-        0
-};
-
-
-/* =====================================================
-   NEXT ISSUE
+   ISSUE NUMBER
 ===================================================== */
 
 function getNextIssue(issue) {
@@ -2321,11 +1761,9 @@ function getNextIssue(issue) {
         String(issue)
             .match(/\d+/);
 
-
     if (!match) {
         return null;
     }
-
 
     const prefix =
         String(issue).slice(
@@ -2333,10 +1771,8 @@ function getNextIssue(issue) {
             match.index
         );
 
-
     const number =
         BigInt(match[0]);
-
 
     return (
         prefix +
@@ -2348,33 +1784,333 @@ function getNextIssue(issue) {
 
 
 /* =====================================================
-   GENERATE MODEL
+   ISSUE TO NUMBER
+
+   Useful for cooldown calculation.
 ===================================================== */
 
-function generateModel(wingo) {
+function issueNumberPart(issue) {
 
-    const numbers =
-        wingo.history
-            .map(
-                x => x.number
+    if (!issue) {
+        return null;
+    }
+
+    const match =
+        String(issue)
+            .match(/\d+$/);
+
+    if (!match) {
+        return null;
+    }
+
+    try {
+        return BigInt(
+            match[0]
+        );
+    } catch {
+        return null;
+    }
+}
+
+
+/* =====================================================
+   COMPLETED ROUNDS AFTER PREDICTION
+===================================================== */
+
+function completedRoundsAfter(
+    history,
+    targetIssue
+) {
+
+    const target =
+        issueNumberPart(
+            targetIssue
+        );
+
+    if (
+        target === null
+    ) {
+        return 0;
+    }
+
+    let count = 0;
+
+    for (
+        const row of history
+    ) {
+
+        const issue =
+            issueNumberPart(
+                row.issue
             );
+
+        if (
+            issue !== null &&
+            issue > target
+        ) {
+            count++;
+        }
+    }
+
+    return count;
+}
+
+
+/* =====================================================
+   LATEST PREDICTION FROM DB
+===================================================== */
+
+async function getLatestPrediction() {
+
+    if (!pool) {
+        return null;
+    }
+
+    const result =
+        await pool.query(
+            `
+            SELECT
+                id,
+                target_issue,
+                prediction,
+                confidence,
+                model_version,
+                actual_number,
+                actual_result,
+                created_at,
+                settled_at
+            FROM prediction_records
+            ORDER BY id DESC
+            LIMIT 1
+            `
+        );
+
+    return (
+        result.rows[0] ||
+        null
+    );
+}
+
+
+/* =====================================================
+   COOLDOWN STATUS
+
+   One prediction ke baad exactly 5 completed
+   rounds wait.
+===================================================== */
+
+async function getCooldownStatus(
+    history
+) {
+
+    const latest =
+        await getLatestPrediction();
+
+    if (!latest) {
+
+        return {
+
+            active: false,
+
+            waitRounds: 0,
+
+            completedRounds: 0,
+
+            requiredRounds: 5,
+
+            lastPrediction: null
+        };
+    }
 
 
     /*
-      API newest-first hoti hai,
-      analysis chronological order me.
+      Prediction abhi settle nahi hui.
     */
 
-    const chronological =
+    if (
+        !latest.actual_result
+    ) {
+
+        return {
+
+            active: true,
+
+            waitRounds: 5,
+
+            completedRounds: 0,
+
+            requiredRounds: 5,
+
+            reason:
+                "Previous prediction is still pending.",
+
+            lastPrediction:
+                latest
+        };
+    }
+
+
+    const completed =
+        completedRoundsAfter(
+            history,
+            latest.target_issue
+        );
+
+
+    const remaining =
+        Math.max(
+            0,
+            5 - completed
+        );
+
+
+    return {
+
+        active:
+            remaining > 0,
+
+        waitRounds:
+            remaining,
+
+        completedRounds:
+            Math.min(
+                5,
+                completed
+            ),
+
+        requiredRounds:
+            5,
+
+        lastPrediction:
+            latest,
+
+        reason:
+            remaining > 0
+                ? "5-round cooldown active."
+                : "Cooldown complete."
+    };
+}
+
+
+/* =====================================================
+   MODEL CACHE
+===================================================== */
+
+let modelCache = {
+
+    prediction: null,
+
+    confidence: 0,
+
+    targetIssue: null,
+
+    analysis: null,
+
+    cooldown: {
+
+        active: false,
+
+        waitRounds: 0,
+
+        completedRounds: 0,
+
+        requiredRounds: 5
+    },
+
+    generatedAt: 0
+};
+
+
+/* =====================================================
+   CREATE NEW PREDICTION
+
+   IMPORTANT:
+   New prediction ONLY after cooldown complete.
+===================================================== */
+
+async function createPredictionIfAllowed(
+    wingo
+) {
+
+    const cooldown =
+        await getCooldownStatus(
+            wingo.history
+        );
+
+
+    /*
+      COOLDOWN ACTIVE
+    */
+
+    if (
+        cooldown.active
+    ) {
+
+        return {
+
+            prediction: null,
+
+            confidence: 0,
+
+            targetIssue: null,
+
+            cooldown,
+
+            analysis: null,
+
+            thinkingDurationMs:
+                THINKING_DURATION_MS
+        };
+    }
+
+
+    /*
+      Fresh full analysis.
+    */
+
+    const numbers =
         [
-            ...numbers
-        ].reverse();
+            ...wingo.history
+                .map(
+                    x => x.number
+                )
+        ]
+        .reverse();
 
 
     const analysis =
-        analyze(
-            chronological
+        fullAnalysis(
+            numbers
         );
+
+
+    /*
+      No clear signal:
+      don't save a fake prediction.
+    */
+
+    if (
+        !analysis.prediction
+    ) {
+
+        return {
+
+            prediction: null,
+
+            confidence:
+                analysis.confidence,
+
+            targetIssue:
+                null,
+
+            cooldown,
+
+            analysis,
+
+            thinkingDurationMs:
+                THINKING_DURATION_MS
+        };
+    }
 
 
     const targetIssue =
@@ -2384,7 +2120,7 @@ function generateModel(wingo) {
         );
 
 
-    modelCache = {
+    return {
 
         prediction:
             analysis.prediction,
@@ -2394,65 +2130,13 @@ function generateModel(wingo) {
 
         targetIssue,
 
+        cooldown,
+
         analysis,
 
-        generatedAt:
-            Date.now()
+        thinkingDurationMs:
+            THINKING_DURATION_MS
     };
-
-
-    return modelCache;
-}
-
-
-/* =====================================================
-   SETTLE PREDICTIONS
-===================================================== */
-
-async function settlePredictions(
-    history
-) {
-
-    if (!pool) {
-        return;
-    }
-
-
-    for (
-        const row of history
-    ) {
-
-        if (
-            !row.issue ||
-            !row.type
-        ) {
-            continue;
-        }
-
-
-        await pool.query(
-            `
-            UPDATE prediction_records
-            SET
-                actual_number = $1,
-                actual_result =
-                    CASE
-                        WHEN prediction = $2
-                        THEN 'WIN'
-                        ELSE 'LOSS'
-                    END,
-                settled_at = $3
-            WHERE target_issue = $4
-              AND actual_result IS NULL
-            `,
-            [
-                row.number,
-                row.type,
-                Date.now(),
-                row.issue
-            ]
-        );
-    }
 }
 
 
@@ -2511,10 +2195,65 @@ async function savePrediction(
             model.targetIssue,
             model.prediction,
             model.confidence,
-            "25RULE-ANTI-STREAK-V2",
+            "OWN-FULL-ANALYSIS-V3",
             Date.now()
         ]
     );
+}
+
+
+/* =====================================================
+   SETTLE PREDICTIONS
+===================================================== */
+
+async function settlePredictions(
+    history
+) {
+
+    if (!pool) {
+        return;
+    }
+
+
+    for (
+        const row of history
+    ) {
+
+        if (
+            !row.issue ||
+            !row.type
+        ) {
+            continue;
+        }
+
+
+        await pool.query(
+            `
+            UPDATE prediction_records
+            SET
+                actual_number = $1,
+
+                actual_result =
+                    CASE
+                        WHEN prediction = $2
+                        THEN 'WIN'
+                        ELSE 'LOSS'
+                    END,
+
+                settled_at = $3
+
+            WHERE target_issue = $4
+
+              AND actual_result IS NULL
+            `,
+            [
+                row.number,
+                row.type,
+                Date.now(),
+                row.issue
+            ]
+        );
+    }
 }
 
 
@@ -2536,20 +2275,85 @@ async function getLiveState() {
             );
 
 
+        /*
+          First settle old prediction.
+        */
+
         await settlePredictions(
             wingo.history
         );
 
 
+        /*
+          Then check cooldown.
+        */
+
         const model =
-            generateModel(
+            await createPredictionIfAllowed(
                 wingo
             );
 
 
-        await savePrediction(
-            model
-        );
+        /*
+          Save ONLY if cooldown is complete
+          and a real prediction exists.
+        */
+
+        if (
+            model.prediction &&
+            model.targetIssue
+        ) {
+
+            await savePrediction(
+                model
+            );
+        }
+
+
+        const latest =
+            await getLatestPrediction();
+
+
+        const finalCooldown =
+            await getCooldownStatus(
+                wingo.history
+            );
+
+
+        /*
+          During cooldown, don't expose a new
+          prediction as current prediction.
+        */
+
+        modelCache = {
+
+            prediction:
+                finalCooldown.active
+                    ? null
+                    : model.prediction,
+
+            confidence:
+                finalCooldown.active
+                    ? 0
+                    : model.confidence,
+
+            targetIssue:
+                finalCooldown.active
+                    ? null
+                    : model.targetIssue,
+
+            analysis:
+                model.analysis,
+
+            cooldown:
+                finalCooldown,
+
+            lastPrediction:
+                latest,
+
+            generatedAt:
+                Date.now()
+        };
 
 
         return {
@@ -2568,7 +2372,8 @@ async function getLiveState() {
             lastUpdated:
                 wingo.lastUpdated,
 
-            model,
+            model:
+                modelCache,
 
             thinkingDurationMs:
                 THINKING_DURATION_MS
@@ -2641,7 +2446,6 @@ async function keyAuthorized(req) {
             "x-access-key"
         );
 
-
     const deviceId =
         header(
             req,
@@ -2653,7 +2457,6 @@ async function keyAuthorized(req) {
         !accessKey ||
         !deviceId
     ) {
-
         return false;
     }
 
@@ -2675,7 +2478,6 @@ async function keyAuthorized(req) {
     if (
         !result.rows.length
     ) {
-
         return false;
     }
 
@@ -2702,7 +2504,9 @@ async function keyAuthorized(req) {
                     device_id,
                     $1
                 ),
+
             last_seen = $2
+
         WHERE id = $3
         `,
         [
@@ -2741,7 +2545,6 @@ function readBody(req) {
                 () => {
 
                     if (!body) {
-
                         resolve({});
                         return;
                     }
@@ -2750,7 +2553,9 @@ function readBody(req) {
                     try {
 
                         resolve(
-                            JSON.parse(body)
+                            JSON.parse(
+                                body
+                            )
                         );
 
                     } catch {
@@ -2771,7 +2576,7 @@ function readBody(req) {
 
 
 /* =====================================================
-   JSON RESPONSE
+   JSON
 ===================================================== */
 
 function sendJSON(
@@ -2811,7 +2616,7 @@ function sendJSON(
 
 
 /* =====================================================
-   STATIC FILES
+   STATIC
 ===================================================== */
 
 function serveStatic(
@@ -2863,7 +2668,9 @@ function serveStatic(
 
 
     if (
-        !fs.existsSync(filePath)
+        !fs.existsSync(
+            filePath
+        )
     ) {
 
         res.writeHead(404);
@@ -2906,8 +2713,6 @@ function serveStatic(
     };
 
 
-    /* MP3 RANGE */
-
     if (
         ext === ".mp3" &&
         req.headers.range
@@ -2925,7 +2730,6 @@ function serveStatic(
                 Number(
                     match[1] || 0
                 );
-
 
             const end =
                 Math.min(
@@ -3014,8 +2818,6 @@ const server =
 
             try {
 
-                /* OPTIONS */
-
                 if (
                     req.method ===
                     "OPTIONS"
@@ -3058,7 +2860,10 @@ const server =
                                 "DY AI WinGo",
 
                             model:
-                                "25RULE-ANTI-STREAK-V2",
+                                "OWN-FULL-ANALYSIS-V3",
+
+                            cooldownRounds:
+                                5,
 
                             thinkingDurationMs:
                                 THINKING_DURATION_MS
@@ -3173,6 +2978,7 @@ const server =
                         const raw =
                             await fetchWingoHistory();
 
+
                         live =
                             normalizeWingo(
                                 raw
@@ -3181,7 +2987,8 @@ const server =
                     } catch {}
 
 
-                    let predictions = [];
+                    let predictions =
+                        [];
 
 
                     if (pool) {
@@ -3213,15 +3020,15 @@ const server =
 
 
                     for (
-                        const prediction
+                        const p
                         of predictions
                     ) {
 
                         map.set(
                             String(
-                                prediction.target_issue
+                                p.target_issue
                             ),
-                            prediction
+                            p
                         );
                     }
 
@@ -3230,7 +3037,7 @@ const server =
                         live.map(
                             row => {
 
-                                const prediction =
+                                const p =
                                     map.get(
                                         String(
                                             row.issue
@@ -3243,18 +3050,15 @@ const server =
                                     ...row,
 
                                     prediction:
-                                        prediction
-                                            ?.prediction ||
+                                        p?.prediction ||
                                         null,
 
                                     confidence:
-                                        prediction
-                                            ?.confidence ||
+                                        p?.confidence ||
                                         0,
 
                                     outcome:
-                                        prediction
-                                            ?.actual_result ||
+                                        p?.actual_result ||
                                         null
                                 };
                             }
@@ -3311,7 +3115,8 @@ const server =
                             (
                                 await pool.query(
                                     `
-                                    SELECT COUNT(*)::int AS count
+                                    SELECT
+                                        COUNT(*)::int AS count
                                     FROM access_keys
                                     `
                                 )
@@ -3380,7 +3185,10 @@ const server =
                                 Date.now(),
 
                             model:
-                                "25RULE-ANTI-STREAK-V2"
+                                "OWN-FULL-ANALYSIS-V3",
+
+                            cooldownRounds:
+                                5
                         }
                     );
                 }
@@ -3461,12 +3269,7 @@ const server =
                 }
 
 
-                /* =================================================
-                   ADMIN MODEL TEST
-
-                   IMPORTANT:
-                   Yahan bracket/syntax correct hai.
-                ================================================= */
+                /* MODEL TEST */
 
                 if (
                     pathname ===
@@ -3509,7 +3312,7 @@ const server =
                 }
 
 
-                /* ADMIN GET KEYS */
+                /* GET KEYS */
 
                 if (
                     pathname ===
@@ -3624,7 +3427,8 @@ const server =
 
                     const requested =
                         String(
-                            body.key || ""
+                            body.key ||
+                            ""
                         ).trim();
 
 
@@ -3702,9 +3506,7 @@ const server =
                             res,
                             500,
                             {
-                                ok: false,
-                                error:
-                                    "Database unavailable"
+                                ok: false
                             }
                         );
                     }
@@ -3718,7 +3520,8 @@ const server =
 
                     const key =
                         String(
-                            body.key || ""
+                            body.key ||
+                            ""
                         ).trim();
 
 
@@ -3790,9 +3593,7 @@ const server =
                             res,
                             500,
                             {
-                                ok: false,
-                                error:
-                                    "Database unavailable"
+                                ok: false
                             }
                         );
                     }
@@ -3806,7 +3607,8 @@ const server =
 
                     const key =
                         String(
-                            body.key || ""
+                            body.key ||
+                            ""
                         ).trim();
 
 
@@ -3900,61 +3702,7 @@ const server =
 
 
 /* =====================================================
-   DATABASE INIT
-===================================================== */
-
-async function initDB() {
-
-    if (!pool) {
-
-        console.log(
-            "DATABASE_URL not configured."
-        );
-
-        return;
-    }
-
-
-    await pool.query(
-        `
-        CREATE TABLE IF NOT EXISTS access_keys
-        (
-            id SERIAL PRIMARY KEY,
-            access_key TEXT UNIQUE NOT NULL,
-            device_id TEXT,
-            created_at BIGINT NOT NULL,
-            last_seen BIGINT DEFAULT 0
-        );
-        `
-    );
-
-
-    await pool.query(
-        `
-        CREATE TABLE IF NOT EXISTS prediction_records
-        (
-            id SERIAL PRIMARY KEY,
-            target_issue TEXT NOT NULL,
-            prediction TEXT NOT NULL,
-            confidence INTEGER DEFAULT 0,
-            model_version TEXT,
-            actual_number INTEGER,
-            actual_result TEXT,
-            created_at BIGINT NOT NULL,
-            settled_at BIGINT
-        );
-        `
-    );
-
-
-    console.log(
-        "Database initialized."
-    );
-}
-
-
-/* =====================================================
-   START SERVER
+   START
 ===================================================== */
 
 (async () => {
@@ -3973,7 +3721,11 @@ async function initDB() {
                 );
 
                 console.log(
-                    "Model: 25RULE-ANTI-STREAK-V2"
+                    "Model: OWN-FULL-ANALYSIS-V3"
+                );
+
+                console.log(
+                    "Cooldown: 5 rounds"
                 );
 
                 console.log(
