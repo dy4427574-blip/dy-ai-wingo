@@ -13,34 +13,36 @@ const WINGOBOT_TOKEN = process.env.WINGOBOT_TOKEN;
 const WINGOBOT_URL =
   "https://api.wingobot.com/v2/30-sec-game-history";
 
-const THINKING_DURATION_MS = 3000;
 const COOLDOWN_ROUNDS = 5;
-
-if (!DATABASE_URL) {
-  console.error("DATABASE_URL is missing.");
-}
-
-if (!WINGOBOT_TOKEN) {
-  console.error("WINGOBOT_TOKEN is missing.");
-}
-
-const pool = new Pool({
-  connectionString: DATABASE_URL,
-  ssl: DATABASE_URL
-    ? { rejectUnauthorized: false }
-    : undefined,
-  max: 5,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 10000
-});
+const MODEL_VERSION = "OWN-FULL-ANALYSIS-V5";
 
 
 // ======================================================
 // DATABASE
 // ======================================================
 
+const pool = new Pool({
+  connectionString: DATABASE_URL,
+  ssl: DATABASE_URL
+    ? { rejectUnauthorized: false }
+    : undefined,
+
+  max: 5,
+
+  idleTimeoutMillis: 30000,
+
+  connectionTimeoutMillis: 10000
+});
+
+
 async function initDB() {
-  if (!DATABASE_URL) return;
+
+  if (!DATABASE_URL) {
+    throw new Error(
+      "DATABASE_URL is missing"
+    );
+  }
+
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS access_keys (
@@ -51,6 +53,7 @@ async function initDB() {
       last_seen BIGINT DEFAULT 0
     )
   `);
+
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS prediction_records (
@@ -66,83 +69,264 @@ async function initDB() {
     )
   `);
 
+
   await pool.query(`
     CREATE INDEX IF NOT EXISTS idx_prediction_target
     ON prediction_records(target_issue)
   `);
+
 
   await pool.query(`
     CREATE INDEX IF NOT EXISTS idx_prediction_created
     ON prediction_records(created_at)
   `);
 
-  console.log("Database ready.");
+
+  console.log("DATABASE READY");
 }
 
 
 // ======================================================
-// BASIC HELPERS
+// HELPERS
 // ======================================================
-
-function json(res, status, data) {
-  const body = JSON.stringify(data);
-
-  res.writeHead(status, {
-    "Content-Type": "application/json; charset=utf-8",
-    "Cache-Control": "no-store",
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers":
-      "Content-Type, X-Access-Key, X-Device-Id, X-Admin-Key",
-    "Access-Control-Allow-Methods":
-      "GET, POST, DELETE, OPTIONS"
-  });
-
-  res.end(body);
-}
-
-function text(res, status, data, contentType = "text/plain") {
-  res.writeHead(status, {
-    "Content-Type": contentType,
-    "Cache-Control": "no-store"
-  });
-
-  res.end(data);
-}
 
 function now() {
   return Date.now();
 }
 
+
 function safeString(value) {
   return String(value ?? "").trim();
 }
 
-function issueNumberPart(issue) {
-  const s = safeString(issue);
-  const m = s.match(/\d+/g);
 
-  if (!m || !m.length) {
+function json(res, status, data) {
+
+  const body =
+    JSON.stringify(data);
+
+
+  res.writeHead(
+    status,
+    {
+      "Content-Type":
+        "application/json; charset=utf-8",
+
+      "Cache-Control":
+        "no-store",
+
+      "Access-Control-Allow-Origin":
+        "*",
+
+      "Access-Control-Allow-Headers":
+        "Content-Type, X-Access-Key, X-Device-Id, X-Admin-Key",
+
+      "Access-Control-Allow-Methods":
+        "GET, POST, DELETE, OPTIONS"
+    }
+  );
+
+
+  res.end(body);
+}
+
+
+function text(
+  res,
+  status,
+  body,
+  type = "text/plain"
+) {
+
+  res.writeHead(
+    status,
+    {
+      "Content-Type":
+        type,
+
+      "Cache-Control":
+        "no-store"
+    }
+  );
+
+  res.end(body);
+}
+
+
+// ======================================================
+// IMPORTANT ISSUE FUNCTIONS
+// BIGINT IS USED HERE
+// ======================================================
+
+function issueBigInt(issue) {
+
+  const s =
+    safeString(issue);
+
+
+  const digits =
+    s.replace(/\D/g, "");
+
+
+  if (!digits) {
     return null;
   }
 
-  return Number(m[m.length - 1]);
+
+  try {
+
+    return BigInt(digits);
+
+  } catch {
+
+    return null;
+  }
 }
+
+
+function issueString(issue) {
+
+  return safeString(issue);
+}
+
+
+function nextIssue(issue) {
+
+  const s =
+    issueString(issue);
+
+
+  if (!s) {
+    return null;
+  }
+
+
+  /*
+   * Preserve the complete issue string.
+   *
+   * Example:
+   *
+   * 202609111000050262
+   * ->
+   * 202609111000050263
+   *
+   * BigInt prevents JavaScript
+   * Number precision problems.
+   */
+
+  const match =
+    s.match(/(\d+)$/);
+
+
+  if (!match) {
+    return null;
+  }
+
+
+  const suffix =
+    match[1];
+
+
+  const prefix =
+    s.slice(
+      0,
+      s.length -
+      suffix.length
+    );
+
+
+  let next;
+
+  try {
+
+    next =
+      (
+        BigInt(suffix) +
+        1n
+      ).toString();
+
+  } catch {
+
+    return null;
+  }
+
+
+  /*
+   * Preserve leading zero width.
+   */
+
+  if (
+    next.length <
+    suffix.length
+  ) {
+
+    next =
+      next.padStart(
+        suffix.length,
+        "0"
+      );
+  }
+
+
+  return prefix + next;
+}
+
+
+function compareIssues(a, b) {
+
+  const aa =
+    issueBigInt(a);
+
+  const bb =
+    issueBigInt(b);
+
+
+  if (
+    aa === null ||
+    bb === null
+  ) {
+    return 0;
+  }
+
+
+  if (aa < bb) return -1;
+  if (aa > bb) return 1;
+
+  return 0;
+}
+
 
 function numberToAB(number) {
-  const n = Number(number);
 
-  if (!Number.isInteger(n) || n < 0 || n > 9) {
+  const n =
+    Number(number);
+
+
+  if (
+    !Number.isInteger(n) ||
+    n < 0 ||
+    n > 9
+  ) {
     return null;
   }
 
-  return n >= 5 ? "B" : "A";
+
+  return n >= 5
+    ? "B"
+    : "A";
 }
+
 
 function abToType(ab) {
-  return ab === "B" ? "BIG" : "SMALL";
+
+  return ab === "B"
+    ? "BIG"
+    : "SMALL";
 }
 
+
 function cleanNumbers(numbers) {
+
   return (numbers || [])
     .map(Number)
     .filter(
@@ -155,56 +339,76 @@ function cleanNumbers(numbers) {
 
 
 // ======================================================
-// WINGOBOT API
+// WINGOBOT
 // ======================================================
 
 async function fetchWingoHistory() {
+
   if (!WINGOBOT_TOKEN) {
-    throw new Error("WINGOBOT_TOKEN missing");
+
+    throw new Error(
+      "WINGOBOT_TOKEN missing"
+    );
   }
 
-  const controller = new AbortController();
 
-  const timeout = setTimeout(
-    () => controller.abort(),
-    8000
-  );
+  const controller =
+    new AbortController();
 
-  try {
-    const response = await fetch(
-      WINGOBOT_URL,
-      {
-        method: "GET",
-        headers: {
-          Authorization:
-            `Bearer ${WINGOBOT_TOKEN}`,
-          Accept: "application/json"
-        },
-        signal: controller.signal
-      }
+
+  const timeout =
+    setTimeout(
+      () => controller.abort(),
+      8000
     );
 
+
+  try {
+
+    const response =
+      await fetch(
+        WINGOBOT_URL,
+        {
+          method: "GET",
+
+          headers: {
+            Authorization:
+              `Bearer ${WINGOBOT_TOKEN}`,
+
+            Accept:
+              "application/json"
+          },
+
+          signal:
+            controller.signal
+        }
+      );
+
+
     if (!response.ok) {
+
       throw new Error(
         `Wingo API HTTP ${response.status}`
       );
     }
 
-    const data = await response.json();
 
-    return data;
+    return await response.json();
 
   } finally {
+
     clearTimeout(timeout);
   }
 }
 
 
 function normalizeWingo(data) {
+
   const currentIssue =
     data?.current?.issueNumber ||
     data?.currentIssue ||
     null;
+
 
   const rows =
     Array.isArray(data?.history)
@@ -215,132 +419,203 @@ function normalizeWingo(data) {
           ? data.results
           : [];
 
-  const history = rows
-    .map(row => {
 
-      const issue =
-        row?.issueNumber ??
-        row?.issue ??
-        row?.period ??
-        row?.id;
+  const history =
+    rows
+      .map(row => {
 
-      const number =
-        row?.number ??
-        row?.num ??
-        row?.result;
+        const issue =
+          row?.issueNumber ??
+          row?.issue ??
+          row?.period ??
+          row?.id;
 
-      const n = Number(number);
 
-      if (
-        issue === undefined ||
-        !Number.isInteger(n) ||
-        n < 0 ||
-        n > 9
-      ) {
-        return null;
-      }
+        const number =
+          row?.number ??
+          row?.num ??
+          row?.result;
 
-      return {
-        issue: String(issue),
-        number: n,
-        result: abToType(
-          numberToAB(n)
-        ),
-        colour:
-          row?.colour ??
-          row?.color ??
-          null,
-        premium:
-          row?.premium ?? null,
-        sum:
-          row?.sum ?? null
-      };
-    })
-    .filter(Boolean);
+
+        const n =
+          Number(number);
+
+
+        if (
+          issue === undefined ||
+          !Number.isInteger(n) ||
+          n < 0 ||
+          n > 9
+        ) {
+          return null;
+        }
+
+
+        return {
+
+          issue:
+            String(issue),
+
+          number:
+            n,
+
+          result:
+            abToType(
+              numberToAB(n)
+            ),
+
+          colour:
+            row?.colour ??
+            row?.color ??
+            null,
+
+          premium:
+            row?.premium ??
+            null,
+
+          sum:
+            row?.sum ??
+            null
+        };
+      })
+      .filter(Boolean);
+
+
+  /*
+   * Remove duplicate issues.
+   */
 
   const unique = [];
   const seen = new Set();
 
-  for (const row of history) {
-    if (seen.has(row.issue)) continue;
 
-    seen.add(row.issue);
+  for (
+    const row
+    of history
+  ) {
+
+    if (
+      seen.has(
+        row.issue
+      )
+    ) {
+      continue;
+    }
+
+
+    seen.add(
+      row.issue
+    );
+
     unique.push(row);
   }
 
+
   unique.sort(
     (a, b) =>
-      (issueNumberPart(a.issue) ?? 0) -
-      (issueNumberPart(b.issue) ?? 0)
+      compareIssues(
+        a.issue,
+        b.issue
+      )
   );
 
+
   return {
+
     currentIssue:
       currentIssue
         ? String(currentIssue)
         : unique.length
-          ? unique[unique.length - 1].issue
+          ? unique[
+              unique.length - 1
+            ].issue
           : null,
 
-    history: unique
+    history:
+      unique
   };
 }
 
 
 // ======================================================
-// ANALYSIS HELPERS
+// ANALYSIS
 // ======================================================
 
 function countAB(seq) {
+
   let A = 0;
   let B = 0;
 
-  for (const x of seq) {
+
+  for (
+    const x
+    of seq
+  ) {
+
     if (x === "A") A++;
-    else if (x === "B") B++;
+    if (x === "B") B++;
   }
 
-  const total = A + B;
+
+  const total =
+    A + B;
+
 
   return {
+
     A,
     B,
     total,
 
     APercent:
       total
-        ? (A / total) * 100
+        ? A / total * 100
         : 0,
 
     BPercent:
       total
-        ? (B / total) * 100
+        ? B / total * 100
         : 0
   };
 }
 
 
 function currentStreak(seq) {
+
   if (!seq.length) {
+
     return {
       side: null,
       length: 0
     };
   }
 
+
   const side =
-    seq[seq.length - 1];
+    seq[
+      seq.length - 1
+    ];
+
 
   let length = 0;
+
 
   for (
     let i = seq.length - 1;
     i >= 0;
     i--
   ) {
-    if (seq[i] !== side) break;
+
+    if (
+      seq[i] !== side
+    ) {
+      break;
+    }
+
+
     length++;
   }
+
 
   return {
     side,
@@ -350,41 +625,67 @@ function currentStreak(seq) {
 
 
 function getRuns(seq) {
+
+  if (!seq.length) {
+    return [];
+  }
+
+
   const runs = [];
 
-  if (!seq.length) return runs;
 
-  let side = seq[0];
+  let side =
+    seq[0];
+
   let length = 1;
 
-  for (let i = 1; i < seq.length; i++) {
 
-    if (seq[i] === side) {
+  for (
+    let i = 1;
+    i < seq.length;
+    i++
+  ) {
+
+    if (
+      seq[i] === side
+    ) {
+
       length++;
+
     } else {
+
       runs.push({
         side,
         length
       });
 
-      side = seq[i];
+
+      side =
+        seq[i];
+
       length = 1;
     }
   }
+
 
   runs.push({
     side,
     length
   });
 
+
   return runs;
 }
 
 
 function runStats(seq) {
-  const runs = getRuns(seq);
+
+  const runs =
+    getRuns(seq);
+
 
   if (!runs.length) {
+
     return {
       average: 0,
       median: 0,
@@ -394,51 +695,75 @@ function runStats(seq) {
     };
   }
 
+
   const lengths =
-    runs.map(r => r.length);
+    runs.map(
+      x => x.length
+    );
+
 
   const sorted =
     [...lengths].sort(
       (a, b) => a - b
     );
 
-  const mid =
+
+  const middle =
     Math.floor(
       sorted.length / 2
     );
 
+
   const median =
     sorted.length % 2
-      ? sorted[mid]
+      ? sorted[middle]
       : (
-          sorted[mid - 1] +
-          sorted[mid]
+          sorted[middle - 1] +
+          sorted[middle]
         ) / 2;
+
 
   const frequency = {};
 
-  for (const n of lengths) {
+
+  for (
+    const n
+    of lengths
+  ) {
+
     frequency[n] =
       (frequency[n] || 0) + 1;
   }
 
-  let common = lengths[0];
 
-  for (const n of Object.keys(frequency)) {
+  let common =
+    lengths[0];
+
+
+  for (
+    const n
+    of Object.keys(frequency)
+  ) {
+
     if (
       frequency[n] >
-      (frequency[common] || 0)
+      frequency[common]
     ) {
-      common = Number(n);
+
+      common =
+        Number(n);
     }
   }
 
+
   return {
+
     average:
       lengths.reduce(
         (a, b) => a + b,
         0
-      ) / lengths.length,
+      ) /
+      lengths.length,
 
     median,
 
@@ -446,16 +771,24 @@ function runStats(seq) {
       Math.max(
         0,
         ...runs
-          .filter(r => r.side === "A")
-          .map(r => r.length)
+          .filter(
+            x => x.side === "A"
+          )
+          .map(
+            x => x.length
+          )
       ),
 
     longestB:
       Math.max(
         0,
         ...runs
-          .filter(r => r.side === "B")
-          .map(r => r.length)
+          .filter(
+            x => x.side === "B"
+          )
+          .map(
+            x => x.length
+          )
       ),
 
     common
@@ -464,33 +797,64 @@ function runStats(seq) {
 
 
 function switchingStats(seq) {
-  if (seq.length < 2) {
+
+  if (
+    seq.length < 2
+  ) {
+
     return {
       switches: 0,
       rate: 0,
-      classification: "LOW DATA"
+      classification:
+        "LOW DATA"
     };
   }
 
+
   let switches = 0;
 
-  for (let i = 1; i < seq.length; i++) {
-    if (seq[i] !== seq[i - 1]) {
+
+  for (
+    let i = 1;
+    i < seq.length;
+    i++
+  ) {
+
+    if (
+      seq[i] !==
+      seq[i - 1]
+    ) {
+
       switches++;
     }
   }
 
+
   const rate =
-    (switches / (seq.length - 1)) * 100;
+    switches /
+    (seq.length - 1) *
+    100;
+
 
   let classification =
     "STREAK DOMINANT";
 
-  if (rate > 60) {
-    classification = "HIGH SWITCHING";
-  } else if (rate >= 40) {
-    classification = "BALANCED";
+
+  if (
+    rate > 60
+  ) {
+
+    classification =
+      "HIGH SWITCHING";
+
+  } else if (
+    rate >= 40
+  ) {
+
+    classification =
+      "BALANCED";
   }
+
 
   return {
     switches,
@@ -501,6 +865,7 @@ function switchingStats(seq) {
 
 
 function transitions(seq) {
+
   const matrix = {
     AA: 0,
     AB: 0,
@@ -508,13 +873,29 @@ function transitions(seq) {
     BB: 0
   };
 
-  for (let i = 1; i < seq.length; i++) {
-    matrix[
-      seq[i - 1] + seq[i]
-    ]++;
+
+  for (
+    let i = 1;
+    i < seq.length;
+    i++
+  ) {
+
+    const key =
+      seq[i - 1] +
+      seq[i];
+
+
+    if (
+      matrix[key] !== undefined
+    ) {
+
+      matrix[key]++;
+    }
   }
 
+
   const next = {
+
     afterA: {
       A: 0,
       B: 0
@@ -526,25 +907,40 @@ function transitions(seq) {
     }
   };
 
-  if (matrix.AA + matrix.AB > 0) {
+
+  const afterA =
+    matrix.AA +
+    matrix.AB;
+
+
+  const afterB =
+    matrix.BA +
+    matrix.BB;
+
+
+  if (afterA) {
+
     next.afterA.A =
       matrix.AA /
-      (matrix.AA + matrix.AB);
+      afterA;
 
     next.afterA.B =
       matrix.AB /
-      (matrix.AA + matrix.AB);
+      afterA;
   }
 
-  if (matrix.BA + matrix.BB > 0) {
+
+  if (afterB) {
+
     next.afterB.A =
       matrix.BA /
-      (matrix.BA + matrix.BB);
+      afterB;
 
     next.afterB.B =
       matrix.BB /
-      (matrix.BA + matrix.BB);
+      afterB;
   }
+
 
   return {
     matrix,
@@ -554,58 +950,92 @@ function transitions(seq) {
 
 
 function momentumAnalysis(seq) {
-  if (seq.length < 10) {
+
+  if (
+    seq.length < 10
+  ) {
+
     return {
-      classification: "LOW DATA",
+      classification:
+        "LOW DATA",
+
       recent: null,
-      previous: null
+      previous: null,
+      difference: 0
     };
   }
+
 
   const recent =
     seq.slice(-5);
 
+
   const previous =
     seq.slice(-10, -5);
+
 
   const r =
     countAB(recent);
 
+
   const p =
     countAB(previous);
 
-  const diff =
+
+  const difference =
     r.BPercent -
     p.BPercent;
+
 
   let classification =
     "STABLE";
 
-  if (diff >= 25) {
+
+  if (
+    difference >= 25
+  ) {
+
     classification =
       "BIG MOMENTUM";
-  } else if (diff <= -25) {
+
+  } else if (
+    difference <= -25
+  ) {
+
     classification =
       "SMALL MOMENTUM";
-  } else if (diff >= 10) {
+
+  } else if (
+    difference >= 10
+  ) {
+
     classification =
       "BIG LEAN";
-  } else if (diff <= -10) {
+
+  } else if (
+    difference <= -10
+  ) {
+
     classification =
       "SMALL LEAN";
   }
+
 
   return {
     classification,
     recent: r,
     previous: p,
-    difference: diff
+    difference
   };
 }
 
 
 function alternationAnalysis(seq) {
-  if (seq.length < 4) {
+
+  if (
+    seq.length < 4
+  ) {
+
     return {
       active: false,
       length: 0,
@@ -613,48 +1043,74 @@ function alternationAnalysis(seq) {
     };
   }
 
+
   let length = 1;
+
 
   for (
     let i = seq.length - 1;
     i > 0;
     i--
   ) {
+
     if (
       seq[i] ===
       seq[i - 1]
     ) {
+
       break;
     }
+
 
     length++;
   }
 
+
   return {
-    active: length >= 4,
+
+    active:
+      length >= 4,
+
     length,
+
     break:
       length >= 4 &&
-      seq[seq.length - 1] ===
-      seq[seq.length - 2]
+      seq[
+        seq.length - 1
+      ] ===
+      seq[
+        seq.length - 2
+      ]
   };
 }
 
 
 function repeatingBlocks(seq) {
-  const found = [];
 
-  for (let size = 2; size <= 6; size++) {
+  const result = [];
 
-    if (seq.length < size * 2) {
+
+  for (
+    let size = 2;
+    size <= 6;
+    size++
+  ) {
+
+    if (
+      seq.length <
+      size * 2
+    ) {
       continue;
     }
 
+
     const last =
-      seq.slice(-size)
+      seq
+        .slice(-size)
         .join("");
 
-    const prev =
+
+    const previous =
       seq
         .slice(
           -size * 2,
@@ -662,37 +1118,48 @@ function repeatingBlocks(seq) {
         )
         .join("");
 
-    if (last === prev) {
-      found.push({
+
+    if (
+      last === previous
+    ) {
+
+      result.push({
         length: size,
         pattern: last
       });
     }
   }
 
-  return found;
+
+  return result;
 }
 
 
 function digitAnalysis(numbers) {
+
   const frequency =
     Array(10).fill(0);
 
-  for (const n of numbers) {
+
+  for (
+    const n
+    of numbers
+  ) {
+
     if (
       Number.isInteger(n) &&
       n >= 0 &&
       n <= 9
     ) {
+
       frequency[n]++;
     }
   }
 
-  const total =
-    numbers.length;
 
   const gaps =
     Array(10).fill(null);
+
 
   for (
     let i = numbers.length - 1;
@@ -703,9 +1170,11 @@ function digitAnalysis(numbers) {
     const n =
       numbers[i];
 
+
     if (
       gaps[n] === null
     ) {
+
       gaps[n] =
         numbers.length -
         1 -
@@ -713,22 +1182,31 @@ function digitAnalysis(numbers) {
     }
   }
 
+
   return {
+
     frequency,
+
     gaps,
+
     average:
-      total
+      numbers.length
         ? numbers.reduce(
             (a, b) => a + b,
             0
-          ) / total
+          ) /
+          numbers.length
         : 0
   };
 }
 
 
 function historicalSequence(seq) {
-  if (seq.length < 6) {
+
+  if (
+    seq.length < 6
+  ) {
+
     return {
       matches: 0,
       afterA: 0,
@@ -737,12 +1215,15 @@ function historicalSequence(seq) {
     };
   }
 
+
   const pattern =
     seq.slice(-5);
 
+
   let matches = 0;
-  let nextA = 0;
-  let nextB = 0;
+  let afterA = 0;
+  let afterB = 0;
+
 
   for (
     let i = 5;
@@ -756,6 +1237,7 @@ function historicalSequence(seq) {
         i
       );
 
+
     if (
       previous.join("") ===
       pattern.join("")
@@ -763,28 +1245,37 @@ function historicalSequence(seq) {
 
       matches++;
 
+
       if (
         seq[i] === "A"
       ) {
-        nextA++;
+
+        afterA++;
+
       } else {
-        nextB++;
+
+        afterB++;
       }
     }
   }
 
+
   return {
+
     matches,
-    afterA: nextA,
-    afterB: nextB,
+
+    afterA,
+
+    afterB,
 
     support:
       matches
         ? {
             A:
-              nextA / matches,
+              afterA / matches,
+
             B:
-              nextB / matches
+              afterB / matches
           }
         : null
   };
@@ -792,37 +1283,47 @@ function historicalSequence(seq) {
 
 
 // ======================================================
-// FULL MODEL
+// FULL AI ANALYSIS
 // ======================================================
 
 function fullAnalysis(history) {
 
-  const chronological =
-    [...history]
-      .sort(
-        (a, b) =>
-          (issueNumberPart(a.issue) ?? 0) -
-          (issueNumberPart(b.issue) ?? 0)
-      );
+  const ordered =
+    [...history].sort(
+      (a, b) =>
+        compareIssues(
+          a.issue,
+          b.issue
+        )
+    );
+
 
   const numbers =
     cleanNumbers(
-      chronological.map(
+      ordered.map(
         x => x.number
       )
     );
+
 
   const seq =
     numbers.map(
       numberToAB
     );
 
+
   const total =
     seq.length;
 
-  if (total < 10) {
+
+  if (
+    total < 10
+  ) {
+
     return {
+
       prediction: null,
+
       confidence: 0,
 
       classification:
@@ -833,7 +1334,8 @@ function fullAnalysis(history) {
         SMALL: 0
       },
 
-      stats: countAB(seq),
+      stats:
+        countAB(seq),
 
       current:
         currentStreak(seq),
@@ -862,32 +1364,37 @@ function fullAnalysis(history) {
       historical:
         historicalSequence(seq),
 
-      dataCount: total
+      dataCount:
+        total
     };
   }
 
 
   const windows = {};
 
-  for (const size of [
-    5,
-    10,
-    20,
-    30,
-    50,
-    100
-  ]) {
 
-    const part =
-      seq.slice(-size);
+  for (
+    const size
+    of [
+      5,
+      10,
+      20,
+      30,
+      50,
+      100
+    ]
+  ) {
 
     windows[size] =
-      countAB(part);
+      countAB(
+        seq.slice(-size)
+      );
   }
 
 
   const stats =
     countAB(seq);
+
 
   const recent5 =
     windows[5];
@@ -902,9 +1409,6 @@ function fullAnalysis(history) {
   const current =
     currentStreak(seq);
 
-  const runs =
-    runStats(seq);
-
   const switching =
     switchingStats(seq);
 
@@ -913,6 +1417,9 @@ function fullAnalysis(history) {
 
   const momentum =
     momentumAnalysis(seq);
+
+  const runs =
+    runStats(seq);
 
   const alternation =
     alternationAnalysis(seq);
@@ -931,9 +1438,9 @@ function fullAnalysis(history) {
   let smallScore = 50;
 
 
-  // ----------------------------------------------------
+  // ====================================================
   // RECENT WINDOWS
-  // ----------------------------------------------------
+  // ====================================================
 
   bigScore +=
     (recent5.BPercent - 50) *
@@ -962,9 +1469,9 @@ function fullAnalysis(history) {
     0.10;
 
 
-  // ----------------------------------------------------
+  // ====================================================
   // GLOBAL FREQUENCY
-  // ----------------------------------------------------
+  // ====================================================
 
   bigScore +=
     (stats.BPercent - 50) *
@@ -975,9 +1482,9 @@ function fullAnalysis(history) {
     0.10;
 
 
-  // ----------------------------------------------------
+  // ====================================================
   // SWITCHING
-  // ----------------------------------------------------
+  // ====================================================
 
   if (
     switching.classification ===
@@ -987,8 +1494,11 @@ function fullAnalysis(history) {
     if (
       current.side === "A"
     ) {
+
       bigScore += 5;
+
     } else {
+
       smallScore += 5;
     }
 
@@ -1000,16 +1510,19 @@ function fullAnalysis(history) {
     if (
       current.side === "A"
     ) {
+
       smallScore += 4;
+
     } else {
+
       bigScore += 4;
     }
   }
 
 
-  // ----------------------------------------------------
-  // TRANSITION
-  // ----------------------------------------------------
+  // ====================================================
+  // TRANSITION MATRIX
+  // ====================================================
 
   if (
     current.side === "A"
@@ -1035,42 +1548,49 @@ function fullAnalysis(history) {
   }
 
 
-  // ----------------------------------------------------
+  // ====================================================
   // MOMENTUM
-  // ----------------------------------------------------
+  // ====================================================
 
   if (
     momentum.classification ===
     "BIG MOMENTUM"
   ) {
+
     bigScore += 7;
   }
+
 
   if (
     momentum.classification ===
     "SMALL MOMENTUM"
   ) {
+
     smallScore += 7;
   }
+
 
   if (
     momentum.classification ===
     "BIG LEAN"
   ) {
+
     bigScore += 3;
   }
+
 
   if (
     momentum.classification ===
     "SMALL LEAN"
   ) {
+
     smallScore += 3;
   }
 
 
-  // ----------------------------------------------------
-  // HISTORICAL PATTERN
-  // ----------------------------------------------------
+  // ====================================================
+  // HISTORICAL 5-PATTERN
+  // ====================================================
 
   if (
     historical.matches >= 2 &&
@@ -1087,9 +1607,9 @@ function fullAnalysis(history) {
   }
 
 
-  // ----------------------------------------------------
+  // ====================================================
   // ALTERNATION
-  // ----------------------------------------------------
+  // ====================================================
 
   if (
     alternation.active
@@ -1098,16 +1618,19 @@ function fullAnalysis(history) {
     if (
       current.side === "A"
     ) {
+
       bigScore += 5;
+
     } else {
+
       smallScore += 5;
     }
   }
 
 
-  // ----------------------------------------------------
+  // ====================================================
   // REPEATING BLOCK
-  // ----------------------------------------------------
+  // ====================================================
 
   if (
     repeating.length
@@ -1118,22 +1641,29 @@ function fullAnalysis(history) {
         repeating.length - 1
       ];
 
+
     const last =
       block.pattern[
         block.pattern.length - 1
       ];
 
-    if (last === "A") {
+
+    if (
+      last === "A"
+    ) {
+
       bigScore += 2;
+
     } else {
+
       smallScore += 2;
     }
   }
 
 
-  // ----------------------------------------------------
-  // LONG STREAK PROTECTION
-  // ----------------------------------------------------
+  // ====================================================
+  // STREAK STRUCTURE
+  // ====================================================
 
   if (
     current.length >= 4
@@ -1143,38 +1673,38 @@ function fullAnalysis(history) {
       current.side === "A"
     ) {
 
-      bigScore +=
-        Math.min(
-          8,
-          current.length * 1.5
-        );
-
       smallScore +=
         Math.min(
           10,
           current.length * 2
+        );
+
+      bigScore +=
+        Math.min(
+          8,
+          current.length * 1.5
         );
 
     } else {
 
-      smallScore +=
-        Math.min(
-          8,
-          current.length * 1.5
-        );
-
       bigScore +=
         Math.min(
           10,
           current.length * 2
+        );
+
+      smallScore +=
+        Math.min(
+          8,
+          current.length * 1.5
         );
     }
   }
 
 
-  // ----------------------------------------------------
-  // EXTREME STREAK
-  // ----------------------------------------------------
+  // ====================================================
+  // VERY LONG STREAK
+  // ====================================================
 
   if (
     current.length >= 7
@@ -1183,16 +1713,19 @@ function fullAnalysis(history) {
     if (
       current.side === "A"
     ) {
+
       bigScore += 7;
+
     } else {
+
       smallScore += 7;
     }
   }
 
 
-  // ----------------------------------------------------
-  // CONTRADICTION / CONFLICT
-  // ----------------------------------------------------
+  // ====================================================
+  // FINAL DIFFERENCE
+  // ====================================================
 
   const difference =
     Math.abs(
@@ -1201,8 +1734,7 @@ function fullAnalysis(history) {
     );
 
 
-  let classification =
-    "MIXED / CONFLICTING";
+  let classification;
 
 
   if (
@@ -1233,25 +1765,23 @@ function fullAnalysis(history) {
   }
 
 
-  // ----------------------------------------------------
-  // PREDICTION
-  // ----------------------------------------------------
-
   let prediction;
+
 
   if (
     bigScore >
     smallScore
   ) {
-    prediction = "BIG";
+
+    prediction =
+      "BIG";
+
   } else {
-    prediction = "SMALL";
+
+    prediction =
+      "SMALL";
   }
 
-
-  // ----------------------------------------------------
-  // CONFIDENCE
-  // ----------------------------------------------------
 
   let confidence =
     50 +
@@ -1261,18 +1791,24 @@ function fullAnalysis(history) {
     );
 
 
-  // sample penalty
-  if (total < 20) {
+  if (
+    total < 20
+  ) {
+
     confidence -= 8;
-  } else if (total < 30) {
+
+  } else if (
+    total < 30
+  ) {
+
     confidence -= 4;
   }
 
 
-  // conflict penalty
   if (
     difference < 5
   ) {
+
     confidence -= 12;
   }
 
@@ -1298,6 +1834,7 @@ function fullAnalysis(history) {
     classification,
 
     score: {
+
       BIG:
         Number(
           bigScore.toFixed(2)
@@ -1331,20 +1868,17 @@ function fullAnalysis(history) {
 
     windows,
 
-    dataCount: total
+    dataCount:
+      total
   };
 }
 
 
 // ======================================================
-// DATABASE PREDICTIONS
+// PREDICTION DATABASE
 // ======================================================
 
 async function getLatestPrediction() {
-
-  if (!DATABASE_URL) {
-    return null;
-  }
 
   const result =
     await pool.query(`
@@ -1354,7 +1888,38 @@ async function getLatestPrediction() {
       LIMIT 1
     `);
 
-  return result.rows[0] || null;
+
+  return (
+    result.rows[0] ||
+    null
+  );
+}
+
+
+async function getPredictionByTarget(
+  targetIssue
+) {
+
+  const result =
+    await pool.query(
+      `
+      SELECT *
+      FROM prediction_records
+      WHERE target_issue = $1
+      LIMIT 1
+      `,
+      [
+        String(
+          targetIssue
+        )
+      ]
+    );
+
+
+  return (
+    result.rows[0] ||
+    null
+  );
 }
 
 
@@ -1364,24 +1929,22 @@ async function savePrediction({
   confidence
 }) {
 
-  if (!DATABASE_URL) {
-    return null;
-  }
-
-  const existing =
-    await pool.query(
-      `
-      SELECT *
-      FROM prediction_records
-      WHERE target_issue = $1
-      LIMIT 1
-      `,
-      [String(targetIssue)]
+  const target =
+    String(
+      targetIssue
     );
 
-  if (existing.rows.length) {
-    return existing.rows[0];
+
+  const existing =
+    await getPredictionByTarget(
+      target
+    );
+
+
+  if (existing) {
+    return existing;
   }
+
 
   const result =
     await pool.query(
@@ -1399,17 +1962,22 @@ async function savePrediction({
       RETURNING *
       `,
       [
-        String(targetIssue),
+        target,
         prediction,
         confidence,
-        "OWN-FULL-ANALYSIS-V4",
+        MODEL_VERSION,
         now()
       ]
     );
 
+
   return result.rows[0];
 }
 
+
+// ======================================================
+// COOLDOWN
+// ======================================================
 
 function completedRoundsAfter(
   history,
@@ -1417,28 +1985,43 @@ function completedRoundsAfter(
 ) {
 
   const target =
-    issueNumberPart(
+    issueBigInt(
       targetIssue
     );
 
-  if (target === null) {
+
+  if (
+    target === null
+  ) {
     return 0;
   }
 
-  return history.filter(
-    row => {
 
-      const n =
-        issueNumberPart(
-          row.issue
-        );
+  let count = 0;
 
-      return (
-        n !== null &&
-        n > target
+
+  for (
+    const row
+    of history
+  ) {
+
+    const n =
+      issueBigInt(
+        row.issue
       );
+
+
+    if (
+      n !== null &&
+      n > target
+    ) {
+
+      count++;
     }
-  ).length;
+  }
+
+
+  return count;
 }
 
 
@@ -1449,28 +2032,44 @@ async function getCooldownStatus(
   const latest =
     await getLatestPrediction();
 
+
   if (!latest) {
 
     return {
+
       active: false,
+
       completedRounds: 0,
+
       waitRounds: 0,
+
       requiredRounds:
-        COOLDOWN_ROUNDS
+        COOLDOWN_ROUNDS,
+
+      lastPrediction:
+        null
     };
   }
 
 
-  // Previous prediction still pending
+  /*
+   * If prediction target has
+   * not been settled yet.
+   */
+
   if (
     !latest.actual_result
   ) {
 
     return {
+
       active: true,
+
       completedRounds: 0,
+
       waitRounds:
         COOLDOWN_ROUNDS,
+
       requiredRounds:
         COOLDOWN_ROUNDS,
 
@@ -1496,6 +2095,7 @@ async function getCooldownStatus(
 
 
   return {
+
     active:
       remaining > 0,
 
@@ -1518,18 +2118,14 @@ async function getCooldownStatus(
 
 
 // ======================================================
-// SETTLE
+// SETTLE PREDICTIONS
 // ======================================================
 
 async function settlePredictions(
   history
 ) {
 
-  if (!DATABASE_URL) {
-    return;
-  }
-
-  const pending =
+  const result =
     await pool.query(`
       SELECT *
       FROM prediction_records
@@ -1540,13 +2136,15 @@ async function settlePredictions(
 
   for (
     const prediction
-    of pending.rows
+    of result.rows
   ) {
 
     const actual =
       history.find(
         row =>
-          String(row.issue) ===
+          String(
+            row.issue
+          ) ===
           String(
             prediction.target_issue
           )
@@ -1558,12 +2156,12 @@ async function settlePredictions(
     }
 
 
-    const actualType =
+    const actualResult =
       actual.result;
 
 
     const outcome =
-      actualType ===
+      actualResult ===
       prediction.prediction
         ? "WIN"
         : "LOSS";
@@ -1592,7 +2190,7 @@ async function settlePredictions(
 
 
 // ======================================================
-// CREATE NEW PREDICTION
+// CREATE PREDICTION
 // ======================================================
 
 async function createPredictionIfAllowed(
@@ -1600,7 +2198,7 @@ async function createPredictionIfAllowed(
   history
 ) {
 
-  if (!DATABASE_URL) {
+  if (!currentIssue) {
     return null;
   }
 
@@ -1614,48 +2212,46 @@ async function createPredictionIfAllowed(
   if (
     cooldown.active
   ) {
+
     return null;
   }
 
 
-  const targetNumber =
-    issueNumberPart(
+  /*
+   * IMPORTANT:
+   * Do NOT use Number(currentIssue).
+   */
+
+  const targetIssue =
+    nextIssue(
       currentIssue
     );
 
 
-  if (
-    targetNumber === null
-  ) {
+  if (!targetIssue) {
     return null;
   }
 
 
-  const targetIssue =
-    String(
-      targetNumber + 1
-    );
-
+  /*
+   * If this exact target already
+   * has prediction, return it.
+   */
 
   const existing =
-    await pool.query(
-      `
-      SELECT *
-      FROM prediction_records
-      WHERE target_issue = $1
-      LIMIT 1
-      `,
-      [targetIssue]
+    await getPredictionByTarget(
+      targetIssue
     );
 
 
-  if (
-    existing.rows.length
-  ) {
-
-    return existing.rows[0];
+  if (existing) {
+    return existing;
   }
 
+
+  /*
+   * Full fresh analysis.
+   */
 
   const analysis =
     fullAnalysis(
@@ -1663,19 +2259,66 @@ async function createPredictionIfAllowed(
     );
 
 
+  /*
+   * We never leave the prediction
+   * empty when enough history exists.
+   */
+
+  let prediction =
+    analysis.prediction;
+
+
+  let confidence =
+    analysis.confidence;
+
+
+  /*
+   * Safety fallback for 10+ valid results.
+   */
+
   if (
-    !analysis.prediction
+    !prediction
   ) {
-    return null;
+
+    const recent =
+      countAB(
+        history
+          .slice(-10)
+          .map(
+            x =>
+              numberToAB(
+                x.number
+              )
+          )
+      );
+
+
+    if (
+      recent.B >
+      recent.A
+    ) {
+
+      prediction =
+        "BIG";
+
+    } else {
+
+      prediction =
+        "SMALL";
+    }
+
+
+    confidence = 50;
   }
 
 
   return savePrediction({
+
     targetIssue,
-    prediction:
-      analysis.prediction,
-    confidence:
-      analysis.confidence
+
+    prediction,
+
+    confidence
   });
 }
 
@@ -1685,7 +2328,7 @@ async function createPredictionIfAllowed(
 // ======================================================
 
 let stateCache = {
-  timestamp: 0,
+  time: 0,
   state: null
 };
 
@@ -1694,11 +2337,18 @@ async function getLiveState(
   force = false
 ) {
 
+  /*
+   * Very short cache.
+   * This prevents multiple browser
+   * requests from hitting Wingo
+   * simultaneously.
+   */
+
   if (
     !force &&
     stateCache.state &&
     now() -
-      stateCache.timestamp <
+      stateCache.time <
       700
   ) {
 
@@ -1711,27 +2361,40 @@ async function getLiveState(
 
 
   const normalized =
-    normalizeWingo(raw);
+    normalizeWingo(
+      raw
+    );
 
 
   const history =
     normalized.history;
 
 
+  const currentIssue =
+    normalized.currentIssue;
+
+
+  /*
+   * First settle old prediction.
+   */
+
   await settlePredictions(
     history
   );
 
 
-  const currentIssue =
-    normalized.currentIssue;
-
+  /*
+   * Then create a new prediction
+   * if the 5-round cooldown is complete.
+   */
 
   let predictionRecord =
     null;
 
 
-  if (currentIssue) {
+  if (
+    currentIssue
+  ) {
 
     predictionRecord =
       await createPredictionIfAllowed(
@@ -1740,6 +2403,10 @@ async function getLiveState(
       );
   }
 
+
+  /*
+   * Fresh analysis every state cycle.
+   */
 
   const analysis =
     fullAnalysis(
@@ -1753,19 +2420,14 @@ async function getLiveState(
     );
 
 
-  // IMPORTANT:
-  // During cooldown we hide NEW prediction.
-  // Existing settled prediction can still be shown
-  // in lastPrediction.
+  /*
+   * During cooldown, don't show
+   * a new prediction.
+   */
 
-  let modelPrediction =
-    null;
-
-  let targetIssue =
-    null;
-
-  let modelConfidence =
-    0;
+  let prediction = null;
+  let targetIssue = null;
+  let confidence = 0;
 
 
   if (
@@ -1773,13 +2435,13 @@ async function getLiveState(
     !cooldown.active
   ) {
 
-    modelPrediction =
+    prediction =
       predictionRecord.prediction;
 
     targetIssue =
       predictionRecord.target_issue;
 
-    modelConfidence =
+    confidence =
       predictionRecord.confidence;
   }
 
@@ -1808,17 +2470,20 @@ async function getLiveState(
     model: {
 
       version:
-        "OWN-FULL-ANALYSIS-V4",
+        MODEL_VERSION,
 
-      prediction:
-        modelPrediction,
+      prediction,
 
-      confidence:
-        modelConfidence,
+      confidence,
 
       targetIssue,
 
       analysis,
+
+      /*
+       * Kept in API for admin/debug.
+       * Frontend does not need to display it.
+       */
 
       cooldown,
 
@@ -1829,7 +2494,7 @@ async function getLiveState(
 
 
   stateCache = {
-    timestamp: now(),
+    time: now(),
     state
   };
 
@@ -1839,7 +2504,7 @@ async function getLiveState(
 
 
 // ======================================================
-// ACCESS KEY AUTH
+// USER AUTH
 // ======================================================
 
 async function authorizeUser(
@@ -1853,6 +2518,7 @@ async function authorizeUser(
       ]
     );
 
+
   const device =
     safeString(
       req.headers[
@@ -1861,20 +2527,17 @@ async function authorizeUser(
     );
 
 
-  if (!key || !device) {
-    return {
-      ok: false,
-      error:
-        "Access key and device ID required."
-    };
-  }
+  if (
+    !key ||
+    !device
+  ) {
 
-
-  if (!DATABASE_URL) {
     return {
+
       ok: false,
+
       error:
-        "Database unavailable."
+        "Access key or device missing."
     };
   }
 
@@ -1896,7 +2559,9 @@ async function authorizeUser(
   ) {
 
     return {
+
       ok: false,
+
       error:
         "Invalid access key."
     };
@@ -1907,13 +2572,19 @@ async function authorizeUser(
     result.rows[0];
 
 
+  /*
+   * Device binding.
+   */
+
   if (
     row.device_id &&
     row.device_id !== device
   ) {
 
     return {
+
       ok: false,
+
       error:
         "This key is already bound to another device."
     };
@@ -1927,9 +2598,11 @@ async function authorizeUser(
     await pool.query(
       `
       UPDATE access_keys
+
       SET
         device_id = $1,
         last_seen = $2
+
       WHERE id = $3
       `,
       [
@@ -1944,7 +2617,10 @@ async function authorizeUser(
     await pool.query(
       `
       UPDATE access_keys
-      SET last_seen = $1
+
+      SET
+        last_seen = $1
+
       WHERE id = $2
       `,
       [
@@ -1956,11 +2632,14 @@ async function authorizeUser(
 
 
   return {
-    ok: true,
-    key: row.access_key
+    ok: true
   };
 }
 
+
+// ======================================================
+// ADMIN AUTH
+// ======================================================
 
 function adminAuthorized(
   req
@@ -1988,23 +2667,16 @@ function readBody(req) {
 
       let body = "";
 
+
       req.on(
         "data",
         chunk => {
 
           body +=
             chunk.toString();
-
-          if (
-            body.length >
-            100000
-          ) {
-
-            body = "";
-            req.destroy();
-          }
         }
       );
+
 
       req.on(
         "end",
@@ -2077,12 +2749,13 @@ function serveFile(
     }
   );
 
+
   res.end(data);
 }
 
 
 // ======================================================
-// MUSIC RANGE
+// MUSIC
 // ======================================================
 
 function serveMusic(
@@ -2137,9 +2810,12 @@ function serveMusic(
       }
     );
 
-    return fs.createReadStream(
-      filePath
-    ).pipe(res);
+
+    return fs
+      .createReadStream(
+        filePath
+      )
+      .pipe(res);
   }
 
 
@@ -2162,6 +2838,7 @@ function serveMusic(
   const start =
     Number(match[1]);
 
+
   const end =
     match[2]
       ? Number(match[2])
@@ -2182,7 +2859,7 @@ function serveMusic(
   }
 
 
-  const chunkSize =
+  const size =
     end - start + 1;
 
 
@@ -2196,7 +2873,7 @@ function serveMusic(
         "bytes",
 
       "Content-Length":
-        chunkSize,
+        size,
 
       "Content-Type":
         "audio/mpeg"
@@ -2204,18 +2881,20 @@ function serveMusic(
   );
 
 
-  fs.createReadStream(
-    filePath,
-    {
-      start,
-      end
-    }
-  ).pipe(res);
+  fs
+    .createReadStream(
+      filePath,
+      {
+        start,
+        end
+      }
+    )
+    .pipe(res);
 }
 
 
 // ======================================================
-// SERVER
+// HTTP SERVER
 // ======================================================
 
 const server =
@@ -2246,6 +2925,7 @@ const server =
             }
           );
 
+
           return res.end();
         }
 
@@ -2257,9 +2937,9 @@ const server =
           );
 
 
-        // ------------------------------------------------
+        // =================================================
         // HEALTH
-        // ------------------------------------------------
+        // =================================================
 
         if (
           url.pathname ===
@@ -2271,8 +2951,10 @@ const server =
             200,
             {
               ok: true,
+
               service:
-                "DY AI WinGo V4",
+                "DY AI WinGo V5",
+
               time:
                 now()
             }
@@ -2280,14 +2962,15 @@ const server =
         }
 
 
-        // ------------------------------------------------
+        // =================================================
         // USER KEY CHECK
-        // ------------------------------------------------
+        // =================================================
 
         if (
           url.pathname ===
-          "/api/key/check" &&
-          req.method === "GET"
+            "/api/key/check" &&
+          req.method ===
+            "GET"
         ) {
 
           const auth =
@@ -2306,14 +2989,15 @@ const server =
         }
 
 
-        // ------------------------------------------------
+        // =================================================
         // USER STATE
-        // ------------------------------------------------
+        // =================================================
 
         if (
           url.pathname ===
-          "/api/state" &&
-          req.method === "GET"
+            "/api/state" &&
+          req.method ===
+            "GET"
         ) {
 
           const auth =
@@ -2346,14 +3030,15 @@ const server =
         }
 
 
-        // ------------------------------------------------
+        // =================================================
         // HISTORY
-        // ------------------------------------------------
+        // =================================================
 
         if (
           url.pathname ===
-          "/api/history" &&
-          req.method === "GET"
+            "/api/history" &&
+          req.method ===
+            "GET"
         ) {
 
           const state =
@@ -2367,10 +3052,12 @@ const server =
             200,
             {
               ok: true,
-              history:
-                state.history,
+
               currentIssue:
-                state.currentIssue
+                state.currentIssue,
+
+              history:
+                state.history
             }
           );
         }
@@ -2397,6 +3084,7 @@ const server =
               401,
               {
                 ok: false,
+
                 error:
                   "Unauthorized"
               }
@@ -2404,9 +3092,9 @@ const server =
           }
 
 
-          // ----------------------------------------------
+          // ===============================================
           // PING
-          // ----------------------------------------------
+          // ===============================================
 
           if (
             url.pathname ===
@@ -2426,9 +3114,9 @@ const server =
           }
 
 
-          // ----------------------------------------------
+          // ===============================================
           // STATUS
-          // ----------------------------------------------
+          // ===============================================
 
           if (
             url.pathname ===
@@ -2443,23 +3131,11 @@ const server =
               );
 
 
-            let keys = 0;
-
-            if (
-              DATABASE_URL
-            ) {
-
-              const r =
-                await pool.query(
-                  `
-                  SELECT COUNT(*)::int AS count
-                  FROM access_keys
-                  `
-                );
-
-              keys =
-                r.rows[0].count;
-            }
+            const keys =
+              await pool.query(`
+                SELECT COUNT(*)::int AS count
+                FROM access_keys
+              `);
 
 
             return json(
@@ -2467,15 +3143,17 @@ const server =
               200,
               {
                 ...state,
-                keys
+
+                keys:
+                  keys.rows[0].count
               }
             );
           }
 
 
-          // ----------------------------------------------
+          // ===============================================
           // KEYS GET
-          // ----------------------------------------------
+          // ===============================================
 
           if (
             url.pathname ===
@@ -2492,7 +3170,9 @@ const server =
                   device_id,
                   created_at,
                   last_seen
+
                 FROM access_keys
+
                 ORDER BY id DESC
               `);
 
@@ -2502,6 +3182,7 @@ const server =
               200,
               {
                 ok: true,
+
                 keys:
                   result.rows
               }
@@ -2509,9 +3190,9 @@ const server =
           }
 
 
-          // ----------------------------------------------
-          // CREATE KEY
-          // ----------------------------------------------
+          // ===============================================
+          // KEY CREATE
+          // ===============================================
 
           if (
             url.pathname ===
@@ -2538,7 +3219,9 @@ const server =
                 "DY-" +
                 crypto
                   .randomBytes(8)
-                  .toString("hex")
+                  .toString(
+                    "hex"
+                  )
                   .toUpperCase();
             }
 
@@ -2552,6 +3235,7 @@ const server =
                 400,
                 {
                   ok: false,
+
                   error:
                     "Key too short."
                 }
@@ -2569,8 +3253,10 @@ const server =
                     access_key,
                     created_at
                   )
+
                   VALUES
                   ($1,$2)
+
                   RETURNING *
                   `,
                   [
@@ -2585,18 +3271,20 @@ const server =
                 200,
                 {
                   ok: true,
+
                   key:
                     result.rows[0]
                 }
               );
 
-            } catch (error) {
+            } catch {
 
               return json(
                 res,
                 400,
                 {
                   ok: false,
+
                   error:
                     "Key already exists."
                 }
@@ -2605,9 +3293,9 @@ const server =
           }
 
 
-          // ----------------------------------------------
-          // DELETE KEY
-          // ----------------------------------------------
+          // ===============================================
+          // KEY DELETE
+          // ===============================================
 
           if (
             url.pathname ===
@@ -2635,6 +3323,7 @@ const server =
                 400,
                 {
                   ok: false,
+
                   error:
                     "Key required."
                 }
@@ -2661,9 +3350,9 @@ const server =
           }
 
 
-          // ----------------------------------------------
+          // ===============================================
           // RESET DEVICE
-          // ----------------------------------------------
+          // ===============================================
 
           if (
             url.pathname ===
@@ -2687,9 +3376,11 @@ const server =
             await pool.query(
               `
               UPDATE access_keys
+
               SET
                 device_id = NULL,
                 last_seen = 0
+
               WHERE access_key = $1
               `,
               [key]
@@ -2706,9 +3397,9 @@ const server =
           }
 
 
-          // ----------------------------------------------
+          // ===============================================
           // WINGO TEST
-          // ----------------------------------------------
+          // ===============================================
 
           if (
             url.pathname ===
@@ -2721,6 +3412,7 @@ const server =
 
               const raw =
                 await fetchWingoHistory();
+
 
               const normalized =
                 normalizeWingo(
@@ -2746,13 +3438,16 @@ const server =
                 }
               );
 
-            } catch (error) {
+            } catch (
+              error
+            ) {
 
               return json(
                 res,
                 500,
                 {
                   ok: false,
+
                   error:
                     error.message
                 }
@@ -2761,9 +3456,9 @@ const server =
           }
 
 
-          // ----------------------------------------------
+          // ===============================================
           // MODEL TEST
-          // ----------------------------------------------
+          // ===============================================
 
           if (
             url.pathname ===
@@ -2783,8 +3478,15 @@ const server =
               200,
               {
                 ok: true,
+
                 model:
-                  state.model
+                  state.model,
+
+                currentIssue:
+                  state.currentIssue,
+
+                historyCount:
+                  state.historyCount
               }
             );
           }
@@ -2795,6 +3497,7 @@ const server =
             404,
             {
               ok: false,
+
               error:
                 "Admin endpoint not found."
             }
@@ -2802,15 +3505,14 @@ const server =
         }
 
 
-        // ------------------------------------------------
+        // =================================================
         // STATIC
-        // ------------------------------------------------
+        // =================================================
 
         if (
+          url.pathname === "/" ||
           url.pathname ===
-          "/" ||
-          url.pathname ===
-          "/prediction.html"
+            "/prediction.html"
         ) {
 
           return serveFile(
@@ -2852,7 +3554,9 @@ const server =
           "Not Found"
         );
 
-      } catch (error) {
+      } catch (
+        error
+      ) {
 
         console.error(
           "SERVER ERROR:",
@@ -2865,8 +3569,10 @@ const server =
           500,
           {
             ok: false,
+
             error:
               "Internal server error",
+
             message:
               error.message
           }
@@ -2886,23 +3592,27 @@ const server =
 
     await initDB();
 
+
     server.listen(
       PORT,
       "0.0.0.0",
       () => {
 
         console.log(
-          `DY AI WinGo V4 running on port ${PORT}`
+          `DY AI WinGo V5 running on ${PORT}`
         );
       }
     );
 
-  } catch (error) {
+  } catch (
+    error
+  ) {
 
     console.error(
       "STARTUP ERROR:",
       error
     );
+
 
     process.exit(1);
   }
