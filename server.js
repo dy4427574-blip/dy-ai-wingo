@@ -14,7 +14,7 @@ const WINGOBOT_URL =
   "https://api.wingobot.com/v2/30-sec-game-history";
 
 const COOLDOWN_ROUNDS = 5;
-const MODEL_VERSION = "OWN-FULL-ANALYSIS-V5";
+const MODEL_VERSION = "OWN-FULL-ANALYSIS-V6";
 
 
 // ======================================================
@@ -23,6 +23,7 @@ const MODEL_VERSION = "OWN-FULL-ANALYSIS-V5";
 
 const pool = new Pool({
   connectionString: DATABASE_URL,
+
   ssl: DATABASE_URL
     ? { rejectUnauthorized: false }
     : undefined,
@@ -38,11 +39,8 @@ const pool = new Pool({
 async function initDB() {
 
   if (!DATABASE_URL) {
-    throw new Error(
-      "DATABASE_URL is missing"
-    );
+    throw new Error("DATABASE_URL is missing");
   }
-
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS access_keys (
@@ -53,7 +51,6 @@ async function initDB() {
       last_seen BIGINT DEFAULT 0
     )
   `);
-
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS prediction_records (
@@ -69,25 +66,22 @@ async function initDB() {
     )
   `);
 
-
   await pool.query(`
     CREATE INDEX IF NOT EXISTS idx_prediction_target
     ON prediction_records(target_issue)
   `);
-
 
   await pool.query(`
     CREATE INDEX IF NOT EXISTS idx_prediction_created
     ON prediction_records(created_at)
   `);
 
-
   console.log("DATABASE READY");
 }
 
 
 // ======================================================
-// HELPERS
+// BASIC HELPERS
 // ======================================================
 
 function now() {
@@ -102,30 +96,27 @@ function safeString(value) {
 
 function json(res, status, data) {
 
-  const body =
-    JSON.stringify(data);
+  const body = JSON.stringify(data);
 
+  res.writeHead(status, {
+    "Content-Type":
+      "application/json; charset=utf-8",
 
-  res.writeHead(
-    status,
-    {
-      "Content-Type":
-        "application/json; charset=utf-8",
+    "Cache-Control":
+      "no-store, no-cache, must-revalidate",
 
-      "Cache-Control":
-        "no-store",
+    "Pragma":
+      "no-cache",
 
-      "Access-Control-Allow-Origin":
-        "*",
+    "Access-Control-Allow-Origin":
+      "*",
 
-      "Access-Control-Allow-Headers":
-        "Content-Type, X-Access-Key, X-Device-Id, X-Admin-Key",
+    "Access-Control-Allow-Headers":
+      "Content-Type, X-Access-Key, X-Device-Id, X-Admin-Key",
 
-      "Access-Control-Allow-Methods":
-        "GET, POST, DELETE, OPTIONS"
-    }
-  );
-
+    "Access-Control-Allow-Methods":
+      "GET, POST, DELETE, OPTIONS"
+  });
 
   res.end(body);
 }
@@ -138,169 +129,163 @@ function text(
   type = "text/plain"
 ) {
 
-  res.writeHead(
-    status,
-    {
-      "Content-Type":
-        type,
-
-      "Cache-Control":
-        "no-store"
-    }
-  );
+  res.writeHead(status, {
+    "Content-Type": type,
+    "Cache-Control": "no-store"
+  });
 
   res.end(body);
 }
 
 
 // ======================================================
-// IMPORTANT ISSUE FUNCTIONS
-// BIGINT IS USED HERE
+// ISSUE NUMBER SAFE LOGIC
 // ======================================================
 
-function issueBigInt(issue) {
+function issueDigits(issue) {
 
-  const s =
-    safeString(issue);
-
+  const s = safeString(issue);
 
   const digits =
     s.replace(/\D/g, "");
 
+  return digits || null;
+}
+
+
+function issueBigInt(issue) {
+
+  const digits =
+    issueDigits(issue);
 
   if (!digits) {
     return null;
   }
 
-
   try {
-
     return BigInt(digits);
-
   } catch {
-
     return null;
   }
-}
-
-
-function issueString(issue) {
-
-  return safeString(issue);
-}
-
-
-function nextIssue(issue) {
-
-  const s =
-    issueString(issue);
-
-
-  if (!s) {
-    return null;
-  }
-
-
-  /*
-   * Preserve the complete issue string.
-   *
-   * Example:
-   *
-   * 202609111000050262
-   * ->
-   * 202609111000050263
-   *
-   * BigInt prevents JavaScript
-   * Number precision problems.
-   */
-
-  const match =
-    s.match(/(\d+)$/);
-
-
-  if (!match) {
-    return null;
-  }
-
-
-  const suffix =
-    match[1];
-
-
-  const prefix =
-    s.slice(
-      0,
-      s.length -
-      suffix.length
-    );
-
-
-  let next;
-
-  try {
-
-    next =
-      (
-        BigInt(suffix) +
-        1n
-      ).toString();
-
-  } catch {
-
-    return null;
-  }
-
-
-  /*
-   * Preserve leading zero width.
-   */
-
-  if (
-    next.length <
-    suffix.length
-  ) {
-
-    next =
-      next.padStart(
-        suffix.length,
-        "0"
-      );
-  }
-
-
-  return prefix + next;
 }
 
 
 function compareIssues(a, b) {
 
-  const aa =
-    issueBigInt(a);
+  const A = issueBigInt(a);
+  const B = issueBigInt(b);
 
-  const bb =
-    issueBigInt(b);
-
-
-  if (
-    aa === null ||
-    bb === null
-  ) {
+  if (A === null || B === null) {
     return 0;
   }
 
-
-  if (aa < bb) return -1;
-  if (aa > bb) return 1;
+  if (A < B) return -1;
+  if (A > B) return 1;
 
   return 0;
 }
 
 
+/*
+ * Handles:
+ *
+ * 202609111000050282
+ * ->
+ * 202609111000050283
+ *
+ * WITHOUT JavaScript Number precision loss.
+ */
+
+function nextIssue(issue) {
+
+  const s = safeString(issue);
+
+  if (!s) {
+    return null;
+  }
+
+  const match =
+    s.match(/(\d+)$/);
+
+  if (!match) {
+    return null;
+  }
+
+  const suffix = match[1];
+
+  const prefix =
+    s.slice(
+      0,
+      s.length - suffix.length
+    );
+
+  try {
+
+    let next =
+      (BigInt(suffix) + 1n)
+        .toString();
+
+    if (
+      next.length <
+      suffix.length
+    ) {
+      next =
+        next.padStart(
+          suffix.length,
+          "0"
+        );
+    }
+
+    return prefix + next;
+
+  } catch {
+
+    return null;
+  }
+}
+
+
+/*
+ * Handles old records too.
+ *
+ * Example:
+ *
+ * 202609111000050276
+ * 50276
+ *
+ * are treated as the same issue.
+ */
+
+function sameIssue(a, b) {
+
+  const A =
+    issueDigits(a);
+
+  const B =
+    issueDigits(b);
+
+  if (!A || !B) {
+    return false;
+  }
+
+  if (A === B) {
+    return true;
+  }
+
+  if (
+    A.endsWith(B) ||
+    B.endsWith(A)
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+
 function numberToAB(number) {
 
-  const n =
-    Number(number);
-
+  const n = Number(number);
 
   if (
     !Number.isInteger(n) ||
@@ -309,7 +294,6 @@ function numberToAB(number) {
   ) {
     return null;
   }
-
 
   return n >= 5
     ? "B"
@@ -339,29 +323,25 @@ function cleanNumbers(numbers) {
 
 
 // ======================================================
-// WINGOBOT
+// WINGOBOT API
 // ======================================================
 
 async function fetchWingoHistory() {
 
   if (!WINGOBOT_TOKEN) {
-
     throw new Error(
       "WINGOBOT_TOKEN missing"
     );
   }
 
-
   const controller =
     new AbortController();
-
 
   const timeout =
     setTimeout(
       () => controller.abort(),
       8000
     );
-
 
   try {
 
@@ -384,14 +364,12 @@ async function fetchWingoHistory() {
         }
       );
 
-
     if (!response.ok) {
 
       throw new Error(
         `Wingo API HTTP ${response.status}`
       );
     }
-
 
     return await response.json();
 
@@ -405,10 +383,9 @@ async function fetchWingoHistory() {
 function normalizeWingo(data) {
 
   const currentIssue =
-    data?.current?.issueNumber ||
-    data?.currentIssue ||
+    data?.current?.issueNumber ??
+    data?.currentIssue ??
     null;
-
 
   const rows =
     Array.isArray(data?.history)
@@ -418,7 +395,6 @@ function normalizeWingo(data) {
         : Array.isArray(data?.results)
           ? data.results
           : [];
-
 
   const history =
     rows
@@ -430,16 +406,13 @@ function normalizeWingo(data) {
           row?.period ??
           row?.id;
 
-
         const number =
           row?.number ??
           row?.num ??
           row?.result;
 
-
         const n =
           Number(number);
-
 
         if (
           issue === undefined ||
@@ -449,7 +422,6 @@ function normalizeWingo(data) {
         ) {
           return null;
         }
-
 
         return {
 
@@ -477,39 +449,33 @@ function normalizeWingo(data) {
             row?.sum ??
             null
         };
+
       })
       .filter(Boolean);
-
-
-  /*
-   * Remove duplicate issues.
-   */
 
   const unique = [];
   const seen = new Set();
 
-
   for (
-    const row
-    of history
+    const row of history
   ) {
 
-    if (
-      seen.has(
+    const key =
+      issueDigits(
         row.issue
-      )
+      ) ||
+      row.issue;
+
+    if (
+      seen.has(key)
     ) {
       continue;
     }
 
-
-    seen.add(
-      row.issue
-    );
+    seen.add(key);
 
     unique.push(row);
   }
-
 
   unique.sort(
     (a, b) =>
@@ -518,7 +484,6 @@ function normalizeWingo(data) {
         b.issue
       )
   );
-
 
   return {
 
@@ -538,7 +503,7 @@ function normalizeWingo(data) {
 
 
 // ======================================================
-// ANALYSIS
+// ANALYSIS FUNCTIONS
 // ======================================================
 
 function countAB(seq) {
@@ -546,20 +511,16 @@ function countAB(seq) {
   let A = 0;
   let B = 0;
 
-
   for (
-    const x
-    of seq
+    const x of seq
   ) {
 
     if (x === "A") A++;
     if (x === "B") B++;
   }
 
-
   const total =
     A + B;
-
 
   return {
 
@@ -569,12 +530,12 @@ function countAB(seq) {
 
     APercent:
       total
-        ? A / total * 100
+        ? (A / total) * 100
         : 0,
 
     BPercent:
       total
-        ? B / total * 100
+        ? (B / total) * 100
         : 0
   };
 }
@@ -590,15 +551,12 @@ function currentStreak(seq) {
     };
   }
 
-
   const side =
     seq[
       seq.length - 1
     ];
 
-
   let length = 0;
-
 
   for (
     let i = seq.length - 1;
@@ -612,10 +570,8 @@ function currentStreak(seq) {
       break;
     }
 
-
     length++;
   }
-
 
   return {
     side,
@@ -630,15 +586,12 @@ function getRuns(seq) {
     return [];
   }
 
-
   const runs = [];
-
 
   let side =
     seq[0];
 
   let length = 1;
-
 
   for (
     let i = 1;
@@ -659,7 +612,6 @@ function getRuns(seq) {
         length
       });
 
-
       side =
         seq[i];
 
@@ -667,12 +619,10 @@ function getRuns(seq) {
     }
   }
 
-
   runs.push({
     side,
     length
   });
-
 
   return runs;
 }
@@ -682,7 +632,6 @@ function runStats(seq) {
 
   const runs =
     getRuns(seq);
-
 
   if (!runs.length) {
 
@@ -695,24 +644,20 @@ function runStats(seq) {
     };
   }
 
-
   const lengths =
     runs.map(
       x => x.length
     );
-
 
   const sorted =
     [...lengths].sort(
       (a, b) => a - b
     );
 
-
   const middle =
     Math.floor(
       sorted.length / 2
     );
-
 
   const median =
     sorted.length % 2
@@ -722,39 +667,34 @@ function runStats(seq) {
           sorted[middle]
         ) / 2;
 
-
   const frequency = {};
 
-
   for (
-    const n
-    of lengths
+    const n of lengths
   ) {
 
     frequency[n] =
       (frequency[n] || 0) + 1;
   }
 
-
   let common =
     lengths[0];
 
-
   for (
-    const n
-    of Object.keys(frequency)
+    const key of Object.keys(
+      frequency
+    )
   ) {
 
     if (
-      frequency[n] >
+      frequency[key] >
       frequency[common]
     ) {
 
       common =
-        Number(n);
+        Number(key);
     }
   }
-
 
   return {
 
@@ -810,9 +750,7 @@ function switchingStats(seq) {
     };
   }
 
-
   let switches = 0;
-
 
   for (
     let i = 1;
@@ -829,16 +767,13 @@ function switchingStats(seq) {
     }
   }
 
-
   const rate =
     switches /
     (seq.length - 1) *
     100;
 
-
   let classification =
     "STREAK DOMINANT";
-
 
   if (
     rate > 60
@@ -855,10 +790,12 @@ function switchingStats(seq) {
       "BALANCED";
   }
 
-
   return {
+
     switches,
+
     rate,
+
     classification
   };
 }
@@ -873,7 +810,6 @@ function transitions(seq) {
     BB: 0
   };
 
-
   for (
     let i = 1;
     i < seq.length;
@@ -884,7 +820,6 @@ function transitions(seq) {
       seq[i - 1] +
       seq[i];
 
-
     if (
       matrix[key] !== undefined
     ) {
@@ -892,7 +827,6 @@ function transitions(seq) {
       matrix[key]++;
     }
   }
-
 
   const next = {
 
@@ -907,16 +841,13 @@ function transitions(seq) {
     }
   };
 
-
   const afterA =
     matrix.AA +
     matrix.AB;
 
-
   const afterB =
     matrix.BA +
     matrix.BB;
-
 
   if (afterA) {
 
@@ -929,7 +860,6 @@ function transitions(seq) {
       afterA;
   }
 
-
   if (afterB) {
 
     next.afterB.A =
@@ -940,7 +870,6 @@ function transitions(seq) {
       matrix.BB /
       afterB;
   }
-
 
   return {
     matrix,
@@ -956,40 +885,36 @@ function momentumAnalysis(seq) {
   ) {
 
     return {
+
       classification:
         "LOW DATA",
 
       recent: null,
+
       previous: null,
+
       difference: 0
     };
   }
 
-
   const recent =
     seq.slice(-5);
-
 
   const previous =
     seq.slice(-10, -5);
 
-
   const r =
     countAB(recent);
 
-
   const p =
     countAB(previous);
-
 
   const difference =
     r.BPercent -
     p.BPercent;
 
-
   let classification =
     "STABLE";
-
 
   if (
     difference >= 25
@@ -1020,11 +945,14 @@ function momentumAnalysis(seq) {
       "SMALL LEAN";
   }
 
-
   return {
+
     classification,
+
     recent: r,
+
     previous: p,
+
     difference
   };
 }
@@ -1043,9 +971,7 @@ function alternationAnalysis(seq) {
     };
   }
 
-
   let length = 1;
-
 
   for (
     let i = seq.length - 1;
@@ -1061,10 +987,8 @@ function alternationAnalysis(seq) {
       break;
     }
 
-
     length++;
   }
-
 
   return {
 
@@ -1089,7 +1013,6 @@ function repeatingBlocks(seq) {
 
   const result = [];
 
-
   for (
     let size = 2;
     size <= 6;
@@ -1103,12 +1026,10 @@ function repeatingBlocks(seq) {
       continue;
     }
 
-
     const last =
       seq
         .slice(-size)
         .join("");
-
 
     const previous =
       seq
@@ -1117,7 +1038,6 @@ function repeatingBlocks(seq) {
           -size
         )
         .join("");
-
 
     if (
       last === previous
@@ -1130,7 +1050,6 @@ function repeatingBlocks(seq) {
     }
   }
 
-
   return result;
 }
 
@@ -1140,10 +1059,8 @@ function digitAnalysis(numbers) {
   const frequency =
     Array(10).fill(0);
 
-
   for (
-    const n
-    of numbers
+    const n of numbers
   ) {
 
     if (
@@ -1156,10 +1073,8 @@ function digitAnalysis(numbers) {
     }
   }
 
-
   const gaps =
     Array(10).fill(null);
-
 
   for (
     let i = numbers.length - 1;
@@ -1169,7 +1084,6 @@ function digitAnalysis(numbers) {
 
     const n =
       numbers[i];
-
 
     if (
       gaps[n] === null
@@ -1181,7 +1095,6 @@ function digitAnalysis(numbers) {
         i;
     }
   }
-
 
   return {
 
@@ -1208,22 +1121,23 @@ function historicalSequence(seq) {
   ) {
 
     return {
+
       matches: 0,
+
       afterA: 0,
+
       afterB: 0,
+
       support: null
     };
   }
 
-
   const pattern =
     seq.slice(-5);
-
 
   let matches = 0;
   let afterA = 0;
   let afterB = 0;
-
 
   for (
     let i = 5;
@@ -1237,14 +1151,12 @@ function historicalSequence(seq) {
         i
       );
 
-
     if (
       previous.join("") ===
       pattern.join("")
     ) {
 
       matches++;
-
 
       if (
         seq[i] === "A"
@@ -1259,7 +1171,6 @@ function historicalSequence(seq) {
     }
   }
 
-
   return {
 
     matches,
@@ -1272,10 +1183,12 @@ function historicalSequence(seq) {
       matches
         ? {
             A:
-              afterA / matches,
+              afterA /
+              matches,
 
             B:
-              afterB / matches
+              afterB /
+              matches
           }
         : null
   };
@@ -1283,7 +1196,7 @@ function historicalSequence(seq) {
 
 
 // ======================================================
-// FULL AI ANALYSIS
+// FULL MODEL
 // ======================================================
 
 function fullAnalysis(history) {
@@ -1297,7 +1210,6 @@ function fullAnalysis(history) {
         )
     );
 
-
   const numbers =
     cleanNumbers(
       ordered.map(
@@ -1305,19 +1217,22 @@ function fullAnalysis(history) {
       )
     );
 
-
   const seq =
     numbers.map(
       numberToAB
     );
 
-
   const total =
     seq.length;
 
 
+  /*
+   * We need enough history
+   * for a meaningful analysis.
+   */
+
   if (
-    total < 10
+    total < 5
   ) {
 
     return {
@@ -1334,36 +1249,6 @@ function fullAnalysis(history) {
         SMALL: 0
       },
 
-      stats:
-        countAB(seq),
-
-      current:
-        currentStreak(seq),
-
-      switching:
-        switchingStats(seq),
-
-      momentum:
-        momentumAnalysis(seq),
-
-      transition:
-        transitions(seq),
-
-      runs:
-        runStats(seq),
-
-      alternation:
-        alternationAnalysis(seq),
-
-      repeating:
-        repeatingBlocks(seq),
-
-      digits:
-        digitAnalysis(numbers),
-
-      historical:
-        historicalSequence(seq),
-
       dataCount:
         total
     };
@@ -1374,8 +1259,7 @@ function fullAnalysis(history) {
 
 
   for (
-    const size
-    of [
+    const size of [
       5,
       10,
       20,
@@ -1394,7 +1278,6 @@ function fullAnalysis(history) {
 
   const stats =
     countAB(seq);
-
 
   const recent5 =
     windows[5];
@@ -1439,7 +1322,7 @@ function fullAnalysis(history) {
 
 
   // ====================================================
-  // RECENT WINDOWS
+  // 1. RECENT WINDOWS
   // ====================================================
 
   bigScore +=
@@ -1470,7 +1353,7 @@ function fullAnalysis(history) {
 
 
   // ====================================================
-  // GLOBAL FREQUENCY
+  // 2. GLOBAL FREQUENCY
   // ====================================================
 
   bigScore +=
@@ -1483,7 +1366,7 @@ function fullAnalysis(history) {
 
 
   // ====================================================
-  // SWITCHING
+  // 3. SWITCHING
   // ====================================================
 
   if (
@@ -1521,7 +1404,7 @@ function fullAnalysis(history) {
 
 
   // ====================================================
-  // TRANSITION MATRIX
+  // 4. TRANSITION MATRIX
   // ====================================================
 
   if (
@@ -1549,7 +1432,7 @@ function fullAnalysis(history) {
 
 
   // ====================================================
-  // MOMENTUM
+  // 5. MOMENTUM
   // ====================================================
 
   if (
@@ -1589,7 +1472,7 @@ function fullAnalysis(history) {
 
 
   // ====================================================
-  // HISTORICAL 5-PATTERN
+  // 6. HISTORICAL SEQUENCE
   // ====================================================
 
   if (
@@ -1608,7 +1491,7 @@ function fullAnalysis(history) {
 
 
   // ====================================================
-  // ALTERNATION
+  // 7. ALTERNATION
   // ====================================================
 
   if (
@@ -1629,7 +1512,7 @@ function fullAnalysis(history) {
 
 
   // ====================================================
-  // REPEATING BLOCK
+  // 8. REPEATING BLOCK
   // ====================================================
 
   if (
@@ -1641,12 +1524,10 @@ function fullAnalysis(history) {
         repeating.length - 1
       ];
 
-
     const last =
       block.pattern[
         block.pattern.length - 1
       ];
-
 
     if (
       last === "A"
@@ -1662,7 +1543,7 @@ function fullAnalysis(history) {
 
 
   // ====================================================
-  // STREAK STRUCTURE
+  // 9. STREAK STRUCTURE
   // ====================================================
 
   if (
@@ -1673,13 +1554,18 @@ function fullAnalysis(history) {
       current.side === "A"
     ) {
 
-      smallScore +=
+      /*
+       * Reversal WATCH only.
+       * Never treat it as guaranteed.
+       */
+
+      bigScore +=
         Math.min(
           10,
           current.length * 2
         );
 
-      bigScore +=
+      smallScore +=
         Math.min(
           8,
           current.length * 1.5
@@ -1689,21 +1575,21 @@ function fullAnalysis(history) {
 
       bigScore +=
         Math.min(
-          10,
-          current.length * 2
+          8,
+          current.length * 1.5
         );
 
       smallScore +=
         Math.min(
-          8,
-          current.length * 1.5
+          10,
+          current.length * 2
         );
     }
   }
 
 
   // ====================================================
-  // VERY LONG STREAK
+  // 10. VERY LONG STREAK
   // ====================================================
 
   if (
@@ -1724,7 +1610,7 @@ function fullAnalysis(history) {
 
 
   // ====================================================
-  // FINAL DIFFERENCE
+  // FINAL
   // ====================================================
 
   const difference =
@@ -1765,23 +1651,16 @@ function fullAnalysis(history) {
   }
 
 
-  let prediction;
+  let prediction =
+    bigScore >= smallScore
+      ? "BIG"
+      : "SMALL";
 
 
-  if (
-    bigScore >
-    smallScore
-  ) {
-
-    prediction =
-      "BIG";
-
-  } else {
-
-    prediction =
-      "SMALL";
-  }
-
+  /*
+   * Always return a prediction
+   * when >=5 valid results exist.
+   */
 
   let confidence =
     50 +
@@ -1792,10 +1671,16 @@ function fullAnalysis(history) {
 
 
   if (
+    total < 10
+  ) {
+
+    confidence -= 10;
+
+  } else if (
     total < 20
   ) {
 
-    confidence -= 8;
+    confidence -= 7;
 
   } else if (
     total < 30
@@ -1809,7 +1694,7 @@ function fullAnalysis(history) {
     difference < 5
   ) {
 
-    confidence -= 12;
+    confidence -= 8;
   }
 
 
@@ -1852,9 +1737,9 @@ function fullAnalysis(history) {
 
     switching,
 
-    momentum,
-
     transition,
+
+    momentum,
 
     runs,
 
@@ -1888,7 +1773,6 @@ async function getLatestPrediction() {
       LIMIT 1
     `);
 
-
   return (
     result.rows[0] ||
     null
@@ -1915,11 +1799,52 @@ async function getPredictionByTarget(
       ]
     );
 
-
   return (
     result.rows[0] ||
     null
   );
+}
+
+
+/*
+ * Also checks old/short issue
+ * formats to avoid duplicate predictions.
+ */
+
+async function findExistingPrediction(
+  targetIssue
+) {
+
+  const exact =
+    await getPredictionByTarget(
+      targetIssue
+    );
+
+  if (exact) {
+    return exact;
+  }
+
+
+  const recent =
+    await pool.query(`
+      SELECT *
+      FROM prediction_records
+      ORDER BY id DESC
+      LIMIT 50
+    `);
+
+
+  const match =
+    recent.rows.find(
+      row =>
+        sameIssue(
+          row.target_issue,
+          targetIssue
+        )
+    );
+
+
+  return match || null;
 }
 
 
@@ -1936,7 +1861,7 @@ async function savePrediction({
 
 
   const existing =
-    await getPredictionByTarget(
+    await findExistingPrediction(
       target
     );
 
@@ -1957,8 +1882,10 @@ async function savePrediction({
         model_version,
         created_at
       )
+
       VALUES
       ($1,$2,$3,$4,$5)
+
       RETURNING *
       `,
       [
@@ -1972,148 +1899,6 @@ async function savePrediction({
 
 
   return result.rows[0];
-}
-
-
-// ======================================================
-// COOLDOWN
-// ======================================================
-
-function completedRoundsAfter(
-  history,
-  targetIssue
-) {
-
-  const target =
-    issueBigInt(
-      targetIssue
-    );
-
-
-  if (
-    target === null
-  ) {
-    return 0;
-  }
-
-
-  let count = 0;
-
-
-  for (
-    const row
-    of history
-  ) {
-
-    const n =
-      issueBigInt(
-        row.issue
-      );
-
-
-    if (
-      n !== null &&
-      n > target
-    ) {
-
-      count++;
-    }
-  }
-
-
-  return count;
-}
-
-
-async function getCooldownStatus(
-  history
-) {
-
-  const latest =
-    await getLatestPrediction();
-
-
-  if (!latest) {
-
-    return {
-
-      active: false,
-
-      completedRounds: 0,
-
-      waitRounds: 0,
-
-      requiredRounds:
-        COOLDOWN_ROUNDS,
-
-      lastPrediction:
-        null
-    };
-  }
-
-
-  /*
-   * If prediction target has
-   * not been settled yet.
-   */
-
-  if (
-    !latest.actual_result
-  ) {
-
-    return {
-
-      active: true,
-
-      completedRounds: 0,
-
-      waitRounds:
-        COOLDOWN_ROUNDS,
-
-      requiredRounds:
-        COOLDOWN_ROUNDS,
-
-      lastPrediction:
-        latest
-    };
-  }
-
-
-  const completed =
-    completedRoundsAfter(
-      history,
-      latest.target_issue
-    );
-
-
-  const remaining =
-    Math.max(
-      0,
-      COOLDOWN_ROUNDS -
-      completed
-    );
-
-
-  return {
-
-    active:
-      remaining > 0,
-
-    completedRounds:
-      Math.min(
-        COOLDOWN_ROUNDS,
-        completed
-      ),
-
-    waitRounds:
-      remaining,
-
-    requiredRounds:
-      COOLDOWN_ROUNDS,
-
-    lastPrediction:
-      latest
-  };
 }
 
 
@@ -2134,6 +1919,9 @@ async function settlePredictions(
     `);
 
 
+  let settled = 0;
+
+
   for (
     const prediction
     of result.rows
@@ -2142,10 +1930,8 @@ async function settlePredictions(
     const actual =
       history.find(
         row =>
-          String(
-            row.issue
-          ) ===
-          String(
+          sameIssue(
+            row.issue,
             prediction.target_issue
           )
       );
@@ -2185,12 +1971,209 @@ async function settlePredictions(
         prediction.id
       ]
     );
+
+
+    settled++;
   }
+
+
+  return settled;
 }
 
 
 // ======================================================
-// CREATE PREDICTION
+// COUNT COMPLETED ROUNDS
+// ======================================================
+
+function completedRoundsAfter(
+  history,
+  targetIssue
+) {
+
+  /*
+   * First use exact/suffix matching.
+   * This is important for old records.
+   */
+
+  const index =
+    history.findIndex(
+      row =>
+        sameIssue(
+          row.issue,
+          targetIssue
+        )
+    );
+
+
+  if (
+    index !== -1
+  ) {
+
+    /*
+     * History is chronological:
+     * oldest -> newest
+     */
+
+    return Math.max(
+      0,
+      history.length -
+      index -
+      1
+    );
+  }
+
+
+  /*
+   * Fallback for issue formats
+   * that cannot be matched.
+   */
+
+  const target =
+    issueBigInt(
+      targetIssue
+    );
+
+
+  if (
+    target === null
+  ) {
+    return 0;
+  }
+
+
+  let count = 0;
+
+
+  for (
+    const row of history
+  ) {
+
+    const n =
+      issueBigInt(
+        row.issue
+      );
+
+
+    if (
+      n !== null &&
+      n > target
+    ) {
+
+      count++;
+    }
+  }
+
+
+  return count;
+}
+
+
+// ======================================================
+// COOLDOWN STATUS
+// ======================================================
+
+async function getCooldownStatus(
+  history
+) {
+
+  const latest =
+    await getLatestPrediction();
+
+
+  if (!latest) {
+
+    return {
+
+      active: false,
+
+      completedRounds: 0,
+
+      waitRounds: 0,
+
+      requiredRounds:
+        COOLDOWN_ROUNDS,
+
+      lastPrediction:
+        null
+    };
+  }
+
+
+  /*
+   * Pending prediction:
+   *
+   * It is currently the active
+   * prediction and should be shown.
+   *
+   * It is NOT treated as the
+   * 5-round waiting period yet.
+   */
+
+  if (
+    !latest.actual_result
+  ) {
+
+    return {
+
+      active: false,
+
+      pending: true,
+
+      completedRounds: 0,
+
+      waitRounds: 0,
+
+      requiredRounds:
+        COOLDOWN_ROUNDS,
+
+      lastPrediction:
+        latest
+    };
+  }
+
+
+  const completed =
+    completedRoundsAfter(
+      history,
+      latest.target_issue
+    );
+
+
+  const remaining =
+    Math.max(
+      0,
+      COOLDOWN_ROUNDS -
+      completed
+    );
+
+
+  return {
+
+    active:
+      remaining > 0,
+
+    pending: false,
+
+    completedRounds:
+      Math.min(
+        COOLDOWN_ROUNDS,
+        completed
+      ),
+
+    waitRounds:
+      remaining,
+
+    requiredRounds:
+      COOLDOWN_ROUNDS,
+
+    lastPrediction:
+      latest
+  };
+}
+
+
+// ======================================================
+// CREATE NEW PREDICTION
 // ======================================================
 
 async function createPredictionIfAllowed(
@@ -2203,23 +2186,59 @@ async function createPredictionIfAllowed(
   }
 
 
-  const cooldown =
-    await getCooldownStatus(
-      history
-    );
+  /*
+   * Check latest prediction.
+   */
 
+  const latest =
+    await getLatestPrediction();
+
+
+  /*
+   * If latest prediction is still
+   * pending, return it.
+   *
+   * This is the MAIN V6 FIX.
+   */
 
   if (
-    cooldown.active
+    latest &&
+    !latest.actual_result
   ) {
 
-    return null;
+    return latest;
   }
 
 
   /*
-   * IMPORTANT:
-   * Do NOT use Number(currentIssue).
+   * If latest was settled,
+   * count the 5 completed rounds.
+   */
+
+  if (
+    latest &&
+    latest.actual_result
+  ) {
+
+    const completed =
+      completedRoundsAfter(
+        history,
+        latest.target_issue
+      );
+
+
+    if (
+      completed <
+      COOLDOWN_ROUNDS
+    ) {
+
+      return null;
+    }
+  }
+
+
+  /*
+   * Next issue.
    */
 
   const targetIssue =
@@ -2234,12 +2253,11 @@ async function createPredictionIfAllowed(
 
 
   /*
-   * If this exact target already
-   * has prediction, return it.
+   * Prevent duplicate target.
    */
 
   const existing =
-    await getPredictionByTarget(
+    await findExistingPrediction(
       targetIssue
     );
 
@@ -2250,7 +2268,7 @@ async function createPredictionIfAllowed(
 
 
   /*
-   * Full fresh analysis.
+   * FULL fresh analysis.
    */
 
   const analysis =
@@ -2259,67 +2277,48 @@ async function createPredictionIfAllowed(
     );
 
 
-  /*
-   * We never leave the prediction
-   * empty when enough history exists.
-   */
-
-  let prediction =
-    analysis.prediction;
-
-
-  let confidence =
-    analysis.confidence;
-
-
-  /*
-   * Safety fallback for 10+ valid results.
-   */
-
   if (
-    !prediction
+    !analysis.prediction
   ) {
-
-    const recent =
-      countAB(
-        history
-          .slice(-10)
-          .map(
-            x =>
-              numberToAB(
-                x.number
-              )
-          )
-      );
-
-
-    if (
-      recent.B >
-      recent.A
-    ) {
-
-      prediction =
-        "BIG";
-
-    } else {
-
-      prediction =
-        "SMALL";
-    }
-
-
-    confidence = 50;
+    return null;
   }
 
 
-  return savePrediction({
+  console.log(
+    "NEW ANALYSIS",
+    {
+      currentIssue,
+      targetIssue,
+      prediction:
+        analysis.prediction,
+      confidence:
+        analysis.confidence,
+      classification:
+        analysis.classification,
+      data:
+        analysis.dataCount
+    }
+  );
 
-    targetIssue,
 
-    prediction,
+  /*
+   * Save prediction.
+   */
 
-    confidence
-  });
+  const saved =
+    await savePrediction({
+
+      targetIssue,
+
+      prediction:
+        analysis.prediction,
+
+      confidence:
+        analysis.confidence
+    });
+
+
+  return saved;
 }
 
 
@@ -2338,10 +2337,8 @@ async function getLiveState(
 ) {
 
   /*
-   * Very short cache.
-   * This prevents multiple browser
-   * requests from hitting Wingo
-   * simultaneously.
+   * Small cache to prevent
+   * duplicate API calls.
    */
 
   if (
@@ -2375,25 +2372,38 @@ async function getLiveState(
 
 
   /*
-   * First settle old prediction.
+   * Settle old prediction FIRST.
    */
 
-  await settlePredictions(
-    history
-  );
+  const settled =
+    await settlePredictions(
+      history
+    );
 
 
   /*
-   * Then create a new prediction
-   * if the 5-round cooldown is complete.
+   * Create/return current prediction.
    */
 
   let predictionRecord =
-    null;
+    await createPredictionIfAllowed(
+      currentIssue,
+      history
+    );
 
+
+  /*
+   * If a new result was settled,
+   * try again after settlement.
+   *
+   * This ensures the next target
+   * can be created immediately after
+   * cooldown completes.
+   */
 
   if (
-    currentIssue
+    settled > 0 &&
+    !predictionRecord
   ) {
 
     predictionRecord =
@@ -2405,7 +2415,7 @@ async function getLiveState(
 
 
   /*
-   * Fresh analysis every state cycle.
+   * Fresh full analysis.
    */
 
   const analysis =
@@ -2414,15 +2424,15 @@ async function getLiveState(
     );
 
 
-  const cooldown =
-    await getCooldownStatus(
-      history
-    );
-
-
   /*
-   * During cooldown, don't show
-   * a new prediction.
+   * IMPORTANT:
+   *
+   * Do NOT call getCooldownStatus()
+   * and then hide a newly-created
+   * pending prediction.
+   *
+   * Pending prediction must remain
+   * visible.
    */
 
   let prediction = null;
@@ -2431,8 +2441,7 @@ async function getLiveState(
 
 
   if (
-    predictionRecord &&
-    !cooldown.active
+    predictionRecord
   ) {
 
     prediction =
@@ -2444,6 +2453,47 @@ async function getLiveState(
     confidence =
       predictionRecord.confidence;
   }
+
+
+  /*
+   * If create returned null,
+   * check latest DB record.
+   */
+
+  if (
+    !predictionRecord
+  ) {
+
+    const latest =
+      await getLatestPrediction();
+
+
+    if (
+      latest &&
+      !latest.actual_result
+    ) {
+
+      prediction =
+        latest.prediction;
+
+      targetIssue =
+        latest.target_issue;
+
+      confidence =
+        latest.confidence;
+    }
+  }
+
+
+  /*
+   * Only after deciding what to show,
+   * calculate cooldown.
+   */
+
+  const cooldown =
+    await getCooldownStatus(
+      history
+    );
 
 
   const latest =
@@ -2480,11 +2530,6 @@ async function getLiveState(
 
       analysis,
 
-      /*
-       * Kept in API for admin/debug.
-       * Frontend does not need to display it.
-       */
-
       cooldown,
 
       lastPrediction:
@@ -2494,7 +2539,9 @@ async function getLiveState(
 
 
   stateCache = {
+
     time: now(),
+
     state
   };
 
@@ -2573,7 +2620,7 @@ async function authorizeUser(
 
 
   /*
-   * Device binding.
+   * Bind first device.
    */
 
   if (
@@ -2657,7 +2704,7 @@ function adminAuthorized(
 
 
 // ======================================================
-// BODY
+// REQUEST BODY
 // ======================================================
 
 function readBody(req) {
@@ -2745,7 +2792,7 @@ function serveFile(
         contentType,
 
       "Cache-Control":
-        "no-store"
+        "no-store, no-cache, must-revalidate"
     }
   );
 
@@ -2836,7 +2883,9 @@ function serveMusic(
 
 
   const start =
-    Number(match[1]);
+    Number(
+      match[1]
+    );
 
 
   const end =
@@ -2906,6 +2955,10 @@ const server =
 
       try {
 
+        // ================================================
+        // OPTIONS
+        // ================================================
+
         if (
           req.method ===
           "OPTIONS"
@@ -2925,7 +2978,6 @@ const server =
             }
           );
 
-
           return res.end();
         }
 
@@ -2937,9 +2989,9 @@ const server =
           );
 
 
-        // =================================================
+        // ================================================
         // HEALTH
-        // =================================================
+        // ================================================
 
         if (
           url.pathname ===
@@ -2953,7 +3005,10 @@ const server =
               ok: true,
 
               service:
-                "DY AI WinGo V5",
+                "DY AI WinGo V6",
+
+              model:
+                MODEL_VERSION,
 
               time:
                 now()
@@ -2962,9 +3017,9 @@ const server =
         }
 
 
-        // =================================================
-        // USER KEY CHECK
-        // =================================================
+        // ================================================
+        // KEY CHECK
+        // ================================================
 
         if (
           url.pathname ===
@@ -2989,9 +3044,9 @@ const server =
         }
 
 
-        // =================================================
+        // ================================================
         // USER STATE
-        // =================================================
+        // ================================================
 
         if (
           url.pathname ===
@@ -3030,9 +3085,9 @@ const server =
         }
 
 
-        // =================================================
+        // ================================================
         // HISTORY
-        // =================================================
+        // ================================================
 
         if (
           url.pathname ===
@@ -3063,9 +3118,9 @@ const server =
         }
 
 
-        // =================================================
-        // ADMIN
-        // =================================================
+        // ================================================
+        // ADMIN ROUTES
+        // ================================================
 
         if (
           url.pathname.startsWith(
@@ -3092,9 +3147,9 @@ const server =
           }
 
 
-          // ===============================================
-          // PING
-          // ===============================================
+          // ==============================================
+          // ADMIN PING
+          // ==============================================
 
           if (
             url.pathname ===
@@ -3108,15 +3163,19 @@ const server =
               200,
               {
                 ok: true,
-                admin: true
+
+                admin: true,
+
+                model:
+                  MODEL_VERSION
               }
             );
           }
 
 
-          // ===============================================
-          // STATUS
-          // ===============================================
+          // ==============================================
+          // ADMIN STATUS
+          // ==============================================
 
           if (
             url.pathname ===
@@ -3133,7 +3192,8 @@ const server =
 
             const keys =
               await pool.query(`
-                SELECT COUNT(*)::int AS count
+                SELECT
+                  COUNT(*)::int AS count
                 FROM access_keys
               `);
 
@@ -3151,9 +3211,9 @@ const server =
           }
 
 
-          // ===============================================
-          // KEYS GET
-          // ===============================================
+          // ==============================================
+          // GET KEYS
+          // ==============================================
 
           if (
             url.pathname ===
@@ -3190,9 +3250,9 @@ const server =
           }
 
 
-          // ===============================================
-          // KEY CREATE
-          // ===============================================
+          // ==============================================
+          // CREATE KEY
+          // ==============================================
 
           if (
             url.pathname ===
@@ -3293,9 +3353,9 @@ const server =
           }
 
 
-          // ===============================================
-          // KEY DELETE
-          // ===============================================
+          // ==============================================
+          // DELETE KEY
+          // ==============================================
 
           if (
             url.pathname ===
@@ -3350,9 +3410,9 @@ const server =
           }
 
 
-          // ===============================================
+          // ==============================================
           // RESET DEVICE
-          // ===============================================
+          // ==============================================
 
           if (
             url.pathname ===
@@ -3397,9 +3457,9 @@ const server =
           }
 
 
-          // ===============================================
+          // ==============================================
           // WINGO TEST
-          // ===============================================
+          // ==============================================
 
           if (
             url.pathname ===
@@ -3435,6 +3495,7 @@ const server =
                   sample:
                     normalized.history
                       .slice(-5)
+                      .reverse()
                 }
               );
 
@@ -3456,9 +3517,9 @@ const server =
           }
 
 
-          // ===============================================
+          // ==============================================
           // MODEL TEST
-          // ===============================================
+          // ==============================================
 
           if (
             url.pathname ===
@@ -3467,28 +3528,46 @@ const server =
               "GET"
           ) {
 
-            const state =
-              await getLiveState(
-                true
+            try {
+
+              const state =
+                await getLiveState(
+                  true
+                );
+
+
+              return json(
+                res,
+                200,
+                {
+                  ok: true,
+
+                  model:
+                    state.model,
+
+                  currentIssue:
+                    state.currentIssue,
+
+                  historyCount:
+                    state.historyCount
+                }
               );
 
+            } catch (
+              error
+            ) {
 
-            return json(
-              res,
-              200,
-              {
-                ok: true,
+              return json(
+                res,
+                500,
+                {
+                  ok: false,
 
-                model:
-                  state.model,
-
-                currentIssue:
-                  state.currentIssue,
-
-                historyCount:
-                  state.historyCount
-              }
-            );
+                  error:
+                    error.message
+                }
+              );
+            }
           }
 
 
@@ -3505,9 +3584,9 @@ const server =
         }
 
 
-        // =================================================
-        // STATIC
-        // =================================================
+        // ================================================
+        // PREDICTION PAGE
+        // ================================================
 
         if (
           url.pathname === "/" ||
@@ -3523,6 +3602,10 @@ const server =
         }
 
 
+        // ================================================
+        // ADMIN PAGE
+        // ================================================
+
         if (
           url.pathname ===
           "/admin.html"
@@ -3535,6 +3618,10 @@ const server =
           );
         }
 
+
+        // ================================================
+        // MUSIC
+        // ================================================
 
         if (
           url.pathname ===
@@ -3583,7 +3670,7 @@ const server =
 
 
 // ======================================================
-// START
+// START SERVER
 // ======================================================
 
 (async () => {
@@ -3599,8 +3686,9 @@ const server =
       () => {
 
         console.log(
-          `DY AI WinGo V5 running on ${PORT}`
+          `DY AI WinGo V6 running on port ${PORT}`
         );
+
       }
     );
 
@@ -3612,7 +3700,6 @@ const server =
       "STARTUP ERROR:",
       error
     );
-
 
     process.exit(1);
   }
