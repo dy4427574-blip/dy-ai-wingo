@@ -1,75 +1,40 @@
 const http = require("http");
 const https = require("https");
-const fs = require("fs");
-const path = require("path");
 const crypto = require("crypto");
 const { Pool } = require("pg");
 
-/* =========================================================
-   CONFIG
-========================================================= */
-
 const PORT = Number(process.env.PORT || 10000);
+const DATABASE_URL = process.env.DATABASE_URL || "";
+const ADMIN_KEY = process.env.ADMIN_KEY || "dy4427574";
 
-const DATABASE_URL =
-  process.env.DATABASE_URL || "";
+const LIVE_API_URL = process.env.LIVE_API_URL || "";
+const LIVE_API_TOKEN = process.env.LIVE_API_TOKEN || "";
 
-const ADMIN_KEY =
-  process.env.ADMIN_KEY || "dy4427574";
-
-/*
-  Actual Lottery7 API:
-  LIVE_API_URL=https://...
-  LIVE_API_TOKEN=...
-*/
-
-const LIVE_API_URL =
-  process.env.LIVE_API_URL || "";
-
-const LIVE_API_TOKEN =
-  process.env.LIVE_API_TOKEN || "";
-
-/*
-  WingoBot fallback
-*/
-
-const WINGOBOT_TOKEN =
-  process.env.WINGOBOT_TOKEN || "";
-
+const WINGOBOT_TOKEN = process.env.WINGOBOT_TOKEN || "";
 const WINGOBOT_URL =
   "https://api.wingobot.com/v2/30-sec-game-history";
 
-const POLL_MS = 1000;
-const COOLDOWN_ROUNDS = 5;
-const THINKING_MS = 3000;
-
-const MODEL_VERSION =
-  "DY-AI-LIVE-V14";
-
-/* =========================================================
-   DATABASE
-========================================================= */
+const POLL = 1000;
+const COOLDOWN = 5;
+const MODEL = "DY-AI-LIVE-V16";
 
 if (!DATABASE_URL) {
-  console.error(
-    "ERROR: DATABASE_URL is missing"
-  );
+  console.error("DATABASE_URL missing");
   process.exit(1);
 }
 
-const pool = new Pool({
+const db = new Pool({
   connectionString: DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  },
-  max: 10,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 10000
+  ssl: { rejectUnauthorized: false }
 });
 
+/* =========================
+   DATABASE
+========================= */
+
 async function initDB() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS access_keys (
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS access_keys(
       id SERIAL PRIMARY KEY,
       access_key TEXT UNIQUE NOT NULL,
       device_id TEXT,
@@ -78,8 +43,8 @@ async function initDB() {
     )
   `);
 
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS prediction_records (
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS prediction_records(
       id SERIAL PRIMARY KEY,
       target_issue TEXT NOT NULL,
       prediction TEXT NOT NULL,
@@ -91,2339 +56,720 @@ async function initDB() {
       settled_at BIGINT
     )
   `);
-
-  await pool.query(`
-    CREATE INDEX IF NOT EXISTS
-    idx_prediction_target
-    ON prediction_records(target_issue)
-  `);
-
-  await pool.query(`
-    CREATE INDEX IF NOT EXISTS
-    idx_prediction_created
-    ON prediction_records(created_at)
-  `);
-
-  console.log("DATABASE READY");
 }
 
-/* =========================================================
-   BASIC HELPERS
-========================================================= */
+/* =========================
+   HELPERS
+========================= */
 
-function now() {
-  return Date.now();
+const now = () => Date.now();
+
+function issue(v) {
+  if (v === null || v === undefined) return null;
+  const s = String(v).trim();
+  return /^\d+$/.test(s) ? s : null;
 }
 
-function toNumber(v) {
-  if (
-    v === null ||
-    v === undefined ||
-    v === ""
-  ) {
-    return null;
-  }
-
-  const n = Number(v);
-
-  return Number.isFinite(n)
-    ? Math.trunc(n)
-    : null;
+function cmp(a, b) {
+  a = issue(a);
+  b = issue(b);
+  if (!a || !b) return null;
+  if (a.length !== b.length) return a.length > b.length ? 1 : -1;
+  return a === b ? 0 : a > b ? 1 : -1;
 }
 
-function clamp(v, min, max) {
-  return Math.max(
-    min,
-    Math.min(max, v)
-  );
-}
+function nextIssue(v) {
+  v = issue(v);
+  if (!v) return null;
 
-function percent(a, b) {
-  return b
-    ? (a / b) * 100
-    : 0;
-}
-
-function avg(arr) {
-  if (!arr.length) return 0;
-
-  return (
-    arr.reduce(
-      (a, b) => a + b,
-      0
-    ) / arr.length
-  );
-}
-
-function med(arr) {
-  if (!arr.length) return 0;
-
-  const x = [...arr].sort(
-    (a, b) => a - b
-  );
-
-  const m =
-    Math.floor(x.length / 2);
-
-  return x.length % 2
-    ? x[m]
-    : (x[m - 1] + x[m]) / 2;
-}
-
-function opposite(x) {
-  if (x === "BIG") return "SMALL";
-  if (x === "SMALL") return "BIG";
-  return null;
-}
-
-function resultOf(n) {
-  const x = toNumber(n);
-
-  if (
-    x === null ||
-    x < 0 ||
-    x > 9
-  ) {
-    return null;
-  }
-
-  return x >= 5
-    ? "BIG"
-    : "SMALL";
-}
-
-/* =========================================================
-   SAFE ISSUE ID
-========================================================= */
-
-function normalizeIssue(v) {
-  if (
-    v === null ||
-    v === undefined
-  ) {
-    return null;
-  }
-
-  const s =
-    String(v).trim();
-
-  if (!/^\d+$/.test(s)) {
-    return null;
-  }
-
-  return s;
-}
-
-function compareIssues(a, b) {
-  const x =
-    normalizeIssue(a);
-
-  const y =
-    normalizeIssue(b);
-
-  if (!x || !y) return null;
-
-  if (x.length !== y.length) {
-    return x.length > y.length
-      ? 1
-      : -1;
-  }
-
-  if (x === y) return 0;
-
-  return x > y ? 1 : -1;
-}
-
-function incrementIssue(v) {
-  const s =
-    normalizeIssue(v);
-
-  if (!s) return null;
-
-  const a =
-    s.split("");
-
+  const a = v.split("");
   let carry = 1;
 
-  for (
-    let i = a.length - 1;
-    i >= 0;
-    i--
-  ) {
-    const d =
-      Number(a[i]) + carry;
-
-    if (d >= 10) {
+  for (let i = a.length - 1; i >= 0; i--) {
+    let n = Number(a[i]) + carry;
+    if (n >= 10) {
       a[i] = "0";
       carry = 1;
     } else {
-      a[i] = String(d);
+      a[i] = String(n);
       carry = 0;
       break;
     }
   }
 
-  if (carry) {
-    a.unshift("1");
-  }
-
+  if (carry) a.unshift("1");
   return a.join("");
 }
 
-function issueDistance(a, b) {
-  const x =
-    normalizeIssue(a);
-
-  const y =
-    normalizeIssue(b);
-
-  if (
-    !x ||
-    !y ||
-    x.length !== y.length
-  ) {
-    return null;
-  }
+function distance(a, b) {
+  a = issue(a);
+  b = issue(b);
+  if (!a || !b || a.length !== b.length) return null;
 
   try {
-    const d =
-      BigInt(y) - BigInt(x);
-
-    if (
-      d < -1000000n ||
-      d > 1000000n
-    ) {
-      return null;
-    }
-
-    return Number(d);
+    return Number(BigInt(b) - BigInt(a));
   } catch {
     return null;
   }
 }
 
-/* =========================================================
-   HTTP HELPERS
-========================================================= */
+function num(v) {
+  const n = Number(v);
+  return Number.isFinite(n) ? Math.trunc(n) : null;
+}
 
-function sendJSON(
-  res,
-  status,
-  data
-) {
-  const body =
-    JSON.stringify(data);
+function bs(n) {
+  n = num(n);
+  if (n === null || n < 0 || n > 9) return null;
+  return n >= 5 ? "BIG" : "SMALL";
+}
 
-  res.writeHead(status, {
-    "Content-Type":
-      "application/json; charset=utf-8",
-    "Cache-Control":
-      "no-store, no-cache, must-revalidate",
-    "Pragma":
-      "no-cache",
-    "Access-Control-Allow-Origin":
-      "*",
+function avg(a) {
+  return a.length
+    ? a.reduce((x, y) => x + y, 0) / a.length
+    : 0;
+}
+
+function pct(a, b) {
+  return b ? (a / b) * 100 : 0;
+}
+
+/* =========================
+   HTTP
+========================= */
+
+function json(res, code, data) {
+  const body = JSON.stringify(data);
+
+  res.writeHead(code, {
+    "Content-Type": "application/json; charset=utf-8",
+    "Cache-Control": "no-store",
+    "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers":
-      "Content-Type, X-Access-Key, X-Device-Id, X-Admin-Key",
+      "Content-Type,X-Access-Key,X-Device-Id,X-Admin-Key",
     "Access-Control-Allow-Methods":
-      "GET,POST,DELETE,OPTIONS",
-    "Content-Length":
-      Buffer.byteLength(body)
+      "GET,POST,DELETE,OPTIONS"
   });
 
   res.end(body);
 }
 
-function sendText(
-  res,
-  status,
-  body,
-  type = "text/plain"
-) {
-  res.writeHead(status, {
-    "Content-Type":
-      `${type}; charset=utf-8`,
-    "Cache-Control":
-      "no-store"
-  });
+function getJSON(url, headers = {}) {
+  return new Promise((resolve, reject) => {
+    let u;
 
-  res.end(body);
-}
+    try {
+      u = new URL(url);
+    } catch {
+      return reject(new Error("INVALID_URL"));
+    }
 
-function readBody(req) {
-  return new Promise(
-    (resolve, reject) => {
-      let body = "";
+    const client = u.protocol === "https:" ? https : http;
 
-      req.on(
-        "data",
-        chunk => {
-          body +=
-            chunk.toString();
-
-          if (
-            body.length >
-            2 * 1024 * 1024
-          ) {
-            reject(
-              new Error(
-                "REQUEST_TOO_LARGE"
-              )
-            );
-
-            req.destroy();
-          }
+    const req = client.get(
+      u,
+      {
+        headers: {
+          Accept: "application/json",
+          "User-Agent": "DY-AI-LIVE/16.0",
+          ...headers
         }
-      );
+      },
+      r => {
+        let body = "";
 
-      req.on(
-        "end",
-        () => {
-          if (!body) {
-            resolve({});
-            return;
+        r.setEncoding("utf8");
+
+        r.on("data", x => {
+          body += x;
+          if (body.length > 15e6) {
+            req.destroy();
+            reject(new Error("RESPONSE_TOO_LARGE"));
+          }
+        });
+
+        r.on("end", () => {
+          if (r.statusCode < 200 || r.statusCode >= 300) {
+            return reject(
+              new Error("HTTP_" + r.statusCode)
+            );
           }
 
           try {
-            resolve(
-              JSON.parse(body)
-            );
+            resolve(JSON.parse(body));
           } catch {
-            reject(
-              new Error(
-                "INVALID_JSON"
-              )
-            );
+            reject(new Error("INVALID_JSON"));
           }
-        }
-      );
-
-      req.on(
-        "error",
-        reject
-      );
-    }
-  );
-}
-
-/* =========================================================
-   FETCH JSON
-========================================================= */
-
-function fetchJSON(
-  url,
-  headers = {},
-  timeout = 8000
-) {
-  return new Promise(
-    (resolve, reject) => {
-      let u;
-
-      try {
-        u = new URL(url);
-      } catch {
-        reject(
-          new Error(
-            "INVALID_URL"
-          )
-        );
-
-        return;
+        });
       }
+    );
 
-      const client =
-        u.protocol === "https:"
-          ? https
-          : http;
+    req.setTimeout(8000, () => {
+      req.destroy();
+      reject(new Error("API_TIMEOUT"));
+    });
 
-      const req =
-        client.request(
-          u,
-          {
-            method: "GET",
-            headers: {
-              Accept:
-                "application/json",
-              "User-Agent":
-                "DY-AI-LIVE/14.0",
-              ...headers
-            }
-          },
-          response => {
-            let body = "";
-
-            response.setEncoding(
-              "utf8"
-            );
-
-            response.on(
-              "data",
-              chunk => {
-                body += chunk;
-
-                if (
-                  body.length >
-                  15 * 1024 * 1024
-                ) {
-                  req.destroy(
-                    new Error(
-                      "RESPONSE_TOO_LARGE"
-                    )
-                  );
-                }
-              }
-            );
-
-            response.on(
-              "end",
-              () => {
-                if (
-                  response.statusCode <
-                    200 ||
-                  response.statusCode >=
-                    300
-                ) {
-                  reject(
-                    new Error(
-                      `HTTP_${response.statusCode}`
-                    )
-                  );
-
-                  return;
-                }
-
-                try {
-                  resolve(
-                    JSON.parse(body)
-                  );
-                } catch {
-                  reject(
-                    new Error(
-                      "INVALID_API_JSON"
-                    )
-                  );
-                }
-              }
-            );
-          }
-        );
-
-      req.setTimeout(
-        timeout,
-        () => {
-          req.destroy(
-            new Error(
-              "API_TIMEOUT"
-            )
-          );
-        }
-      );
-
-      req.on(
-        "error",
-        reject
-      );
-
-      req.end();
-    }
-  );
+    req.on("error", reject);
+  });
 }
 
-/* =========================================================
-   NORMALIZE API DATA
-========================================================= */
+/* =========================
+   NORMALIZE API
+========================= */
 
-function normalizeRow(row) {
-  if (
-    !row ||
-    typeof row !== "object"
-  ) {
-    return null;
-  }
+function normalizeRow(x) {
+  if (!x || typeof x !== "object") return null;
 
-  const issue =
-    normalizeIssue(
-      row.issueNumber ??
-      row.issue ??
-      row.period ??
-      row.periodId ??
-      row.periodID ??
-      row.drawNumber ??
-      row.draw ??
-      row.id
-    );
+  const id = issue(
+    x.issueNumber ??
+    x.issue ??
+    x.period ??
+    x.periodId ??
+    x.periodID ??
+    x.drawNumber ??
+    x.draw ??
+    x.id
+  );
 
-  const number =
-    toNumber(
-      row.number ??
-      row.resultNumber ??
-      row.result ??
-      row.winNumber ??
-      row.digit ??
-      row.openNumber
-    );
+  const n = num(
+    x.number ??
+    x.resultNumber ??
+    x.result ??
+    x.winNumber ??
+    x.digit ??
+    x.openNumber
+  );
 
-  if (!issue) return null;
-
-  if (
-    number === null ||
-    number < 0 ||
-    number > 9
-  ) {
-    return null;
-  }
+  if (!id || n === null || n < 0 || n > 9) return null;
 
   return {
-    issue,
-    number,
-    result:
-      resultOf(number),
-    colour:
-      row.colour ??
-      row.color ??
-      null,
-    premium:
-      row.premium ??
-      null,
-    sum:
-      toNumber(row.sum)
+    issue: id,
+    number: n,
+    result: bs(n)
   };
 }
 
-function extractRows(payload) {
-  const arrays = [];
+function arrays(payload) {
+  if (Array.isArray(payload)) return [payload];
 
-  if (
-    Array.isArray(payload)
-  ) {
-    arrays.push(payload);
-  }
+  if (!payload || typeof payload !== "object") return [];
 
-  if (
-    payload &&
-    typeof payload ===
-      "object"
-  ) {
-    const candidates = [
-      payload.history,
-      payload.results,
-      payload.records,
-      payload.list,
-      payload.rows,
-      payload.data,
-      payload.data?.history,
-      payload.data?.results,
-      payload.data?.records,
-      payload.data?.list,
-      payload.result?.history,
-      payload.result?.results,
-      payload.result?.records,
-      payload.result?.list
-    ];
+  return [
+    payload.history,
+    payload.results,
+    payload.records,
+    payload.list,
+    payload.rows,
+    payload.data,
+    payload.data?.history,
+    payload.data?.results,
+    payload.data?.records,
+    payload.data?.list,
+    payload.result?.history,
+    payload.result?.results,
+    payload.result?.records,
+    payload.result?.list
+  ].filter(Array.isArray);
+}
 
-    for (
-      const arr of candidates
-    ) {
-      if (
-        Array.isArray(arr)
-      ) {
-        arrays.push(arr);
-      }
-    }
-  }
-
-  for (
-    const arr of arrays
-  ) {
-    const out = [];
-
-    for (
-      const item of arr
-    ) {
-      const row =
-        normalizeRow(item);
-
-      if (row) {
-        out.push(row);
-      }
-    }
-
-    if (out.length) {
-      return out;
-    }
+function rowsFrom(payload) {
+  for (const a of arrays(payload)) {
+    const out = a.map(normalizeRow).filter(Boolean);
+    if (out.length) return clean(out);
   }
 
   return [];
 }
 
-function extractCurrentIssue(
-  payload
-) {
-  const candidates = [
+function clean(rows) {
+  const m = new Map();
+
+  for (const r of rows) {
+    if (r.issue) m.set(r.issue, r);
+  }
+
+  return [...m.values()].sort(
+    (a, b) => cmp(a.issue, b.issue)
+  );
+}
+
+function currentFrom(payload) {
+  const a = [
     payload?.current?.issueNumber,
     payload?.current?.issue,
     payload?.currentIssue,
     payload?.current_issue,
     payload?.data?.current?.issueNumber,
-    payload?.data?.current?.issue,
-    payload?.result?.current?.issueNumber,
-    payload?.result?.current?.issue
+    payload?.data?.current?.issue
   ];
 
-  for (
-    const value of candidates
-  ) {
-    const issue =
-      normalizeIssue(value);
-
-    if (issue) {
-      return issue;
-    }
+  for (const x of a) {
+    const i = issue(x);
+    if (i) return i;
   }
 
   return null;
 }
 
-function cleanRows(rows) {
-  const map =
-    new Map();
+/* =========================
+   LIVE SOURCE
+========================= */
 
-  for (
-    const row of rows
-  ) {
-    if (!row?.issue) {
-      continue;
-    }
+const live = {
+  source: "NONE",
+  current: null,
+  rows: [],
+  fetched: 0,
+  error: null
+};
 
-    map.set(
-      row.issue,
-      row
-    );
-  }
-
-  return [
-    ...map.values()
-  ].sort(
-    (a, b) =>
-      compareIssues(
-        a.issue,
-        b.issue
-      ) || 0
-  );
-}
-
-/* =========================================================
-   LIVE API
-========================================================= */
-
-async function fetchLiveAPI() {
-  if (!LIVE_API_URL) {
-    throw new Error(
-      "LIVE_API_URL_NOT_CONFIGURED"
-    );
-  }
+async function customAPI() {
+  if (!LIVE_API_URL)
+    throw new Error("LIVE_API_URL_NOT_CONFIGURED");
 
   const headers = {};
 
   if (LIVE_API_TOKEN) {
     headers.Authorization =
-      `Bearer ${LIVE_API_TOKEN}`;
-
-    headers["X-API-Key"] =
-      LIVE_API_TOKEN;
+      "Bearer " + LIVE_API_TOKEN;
   }
 
-  const payload =
-    await fetchJSON(
-      LIVE_API_URL,
-      headers
-    );
+  const p = await getJSON(
+    LIVE_API_URL,
+    headers
+  );
 
-  const rows =
-    cleanRows(
-      extractRows(payload)
-    );
+  const rows = rowsFrom(p);
 
-  let currentIssue =
-    extractCurrentIssue(
-      payload
-    );
+  let current = currentFrom(p);
 
-  if (
-    !currentIssue &&
-    rows.length
-  ) {
-    currentIssue =
-      incrementIssue(
-        rows[
-          rows.length - 1
-        ].issue
-      );
-  }
+  if (!current && rows.length)
+    current = nextIssue(rows.at(-1).issue);
 
   return {
-    source:
-      "LOTTERY7_LIVE_API",
-    currentIssue,
-    rows,
-    fetchedAt:
-      now()
+    source: "LOTTERY7_LIVE_API",
+    current,
+    rows
   };
 }
 
-/* =========================================================
-   WINGOBOT
-========================================================= */
+async function wingoAPI() {
+  if (!WINGOBOT_TOKEN)
+    throw new Error("WINGOBOT_TOKEN_NOT_CONFIGURED");
 
-async function fetchWingoBot() {
-  if (!WINGOBOT_TOKEN) {
-    throw new Error(
-      "WINGOBOT_TOKEN_NOT_CONFIGURED"
-    );
-  }
+  const p = await getJSON(
+    WINGOBOT_URL,
+    {
+      Authorization:
+        "Bearer " + WINGOBOT_TOKEN
+    }
+  );
 
-  const payload =
-    await fetchJSON(
-      WINGOBOT_URL,
-      {
-        Authorization:
-          `Bearer ${WINGOBOT_TOKEN}`
-      }
-    );
+  const rows = rowsFrom(p);
 
-  const rows =
-    cleanRows(
-      extractRows(payload)
-    );
+  let current = currentFrom(p);
 
-  let currentIssue =
-    extractCurrentIssue(
-      payload
-    );
-
-  if (
-    !currentIssue &&
-    rows.length
-  ) {
-    currentIssue =
-      incrementIssue(
-        rows[
-          rows.length - 1
-        ].issue
-      );
-  }
+  if (!current && rows.length)
+    current = nextIssue(rows.at(-1).issue);
 
   return {
-    source:
-      "WINGOBOT",
-    currentIssue,
-    rows,
-    fetchedAt:
-      now()
+    source: "WINGOBOT",
+    current,
+    rows
   };
 }
 
-/* =========================================================
-   LIVE CACHE
-========================================================= */
-
-const live = {
-  source: null,
-  currentIssue: null,
-  rows: [],
-  fetchedAt: 0,
-  lastSuccess: 0,
-  lastError: null
-};
-
-async function refreshLive() {
-  /*
-    1. Actual live API first.
-  */
+async function refresh() {
+  let data = null;
 
   if (LIVE_API_URL) {
     try {
-      const data =
-        await fetchLiveAPI();
-
-      if (
-        data.rows.length
-      ) {
-        live.source =
-          data.source;
-
-        live.currentIssue =
-          data.currentIssue;
-
-        live.rows =
-          data.rows;
-
-        live.fetchedAt =
-          data.fetchedAt;
-
-        live.lastSuccess =
-          now();
-
-        live.lastError =
-          null;
-
-        return data;
-      }
-    } catch (err) {
-      live.lastError =
-        "LIVE_API: " +
-        err.message;
-
-      console.error(
-        live.lastError
-      );
+      data = await customAPI();
+    } catch (e) {
+      live.error = "LIVE_API: " + e.message;
     }
   }
 
-  /*
-    2. WingoBot fallback.
-  */
-
-  if (WINGOBOT_TOKEN) {
+  if (!data && WINGOBOT_TOKEN) {
     try {
-      const data =
-        await fetchWingoBot();
-
-      if (
-        data.rows.length
-      ) {
-        live.source =
-          data.source;
-
-        live.currentIssue =
-          data.currentIssue;
-
-        live.rows =
-          data.rows;
-
-        live.fetchedAt =
-          data.fetchedAt;
-
-        live.lastSuccess =
-          now();
-
-        live.lastError =
-          null;
-
-        return data;
-      }
-    } catch (err) {
-      live.lastError =
-        "WINGOBOT: " +
-        err.message;
-
-      console.error(
-        live.lastError
-      );
+      data = await wingoAPI();
+    } catch (e) {
+      live.error = "WINGOBOT: " + e.message;
     }
   }
 
-  return null;
+  if (!data || !data.rows.length) return;
+
+  live.source = data.source;
+  live.current = data.current;
+  live.rows = data.rows;
+  live.fetched = now();
+  live.error = null;
 }
 
-/* =========================================================
-   ANALYSIS: SEQUENCE
-========================================================= */
+/* =========================
+   ANALYSIS
+========================= */
 
-function sequence(rows) {
-  return rows
-    .map(
-      x => x.result
-    )
-    .filter(
-      x =>
-        x === "BIG" ||
-        x === "SMALL"
-    );
+function streak(s) {
+  if (!s.length) return { side: null, length: 0 };
+
+  const side = s.at(-1);
+  let n = 1;
+
+  for (let i = s.length - 2; i >= 0; i--) {
+    if (s[i] !== side) break;
+    n++;
+  }
+
+  return { side, length: n };
 }
 
-/* =========================================================
-   WINDOWS
-========================================================= */
+function runs(s, side) {
+  const a = [];
+  let n = 0;
 
-function windowStats(
-  seq,
-  size
-) {
-  const data =
-    seq.slice(-size);
-
-  let big = 0;
-  let small = 0;
-  let switches = 0;
-
-  for (
-    const x of data
-  ) {
-    if (x === "BIG") {
-      big++;
-    }
-
-    if (x === "SMALL") {
-      small++;
+  for (const x of s) {
+    if (x === side) n++;
+    else if (n) {
+      a.push(n);
+      n = 0;
     }
   }
 
-  for (
-    let i = 1;
-    i < data.length;
-    i++
-  ) {
-    if (
-      data[i] !==
-      data[i - 1]
-    ) {
-      switches++;
-    }
-  }
+  if (n) a.push(n);
 
-  return {
-    size,
-    total:
-      data.length,
-    big,
-    small,
-    bigPct:
-      percent(
-        big,
-        data.length
-      ),
-    smallPct:
-      percent(
-        small,
-        data.length
-      ),
-    switches,
-    switchRate:
-      data.length > 1
-        ? percent(
-            switches,
-            data.length - 1
-          )
-        : 0
-  };
+  return a;
 }
 
-/* =========================================================
-   STREAKS
-========================================================= */
-
-function getStreak(seq) {
-  if (!seq.length) {
-    return {
-      side: null,
-      length: 0
-    };
-  }
-
-  const side =
-    seq[seq.length - 1];
-
-  let length = 1;
-
-  for (
-    let i =
-      seq.length - 2;
-    i >= 0;
-    i--
-  ) {
-    if (
-      seq[i] !== side
-    ) {
-      break;
-    }
-
-    length++;
-  }
-
-  return {
-    side,
-    length
-  };
-}
-
-function getRuns(seq) {
-  const out = [];
-
-  if (!seq.length) {
-    return out;
-  }
-
-  let side = seq[0];
-  let length = 1;
-
-  for (
-    let i = 1;
-    i < seq.length;
-    i++
-  ) {
-    if (
-      seq[i] === side
-    ) {
-      length++;
-    } else {
-      out.push({
-        side,
-        length
-      });
-
-      side =
-        seq[i];
-
-      length = 1;
-    }
-  }
-
-  out.push({
-    side,
-    length
-  });
-
-  return out;
-}
-
-function getRunStats(
-  seq,
-  side
-) {
-  const lengths =
-    getRuns(seq)
-      .filter(
-        x => x.side === side
-      )
-      .map(
-        x => x.length
-      );
-
-  const frequency = {};
-
-  for (
-    const x of lengths
-  ) {
-    frequency[x] =
-      (frequency[x] || 0) +
-      1;
-  }
-
-  let common = 0;
-
-  if (lengths.length) {
-    common =
-      Number(
-        Object.keys(
-          frequency
-        ).sort(
-          (a, b) =>
-            frequency[b] -
-            frequency[a]
-        )[0]
-      );
-  }
-
-  return {
-    average:
-      Number(
-        avg(lengths).toFixed(2)
-      ),
-    median:
-      Number(
-        med(lengths).toFixed(2)
-      ),
-    longest:
-      lengths.length
-        ? Math.max(
-            ...lengths
-          )
-        : 0,
-    common,
-    count:
-      lengths.length
-  };
-}
-
-/* =========================================================
-   ALTERNATION
-========================================================= */
-
-function alternation(seq) {
-  if (seq.length < 2) {
-    return {
-      length: 0,
-      broken: false
-    };
-  }
-
-  let length = 1;
-
-  for (
-    let i =
-      seq.length - 1;
-    i > 0;
-    i--
-  ) {
-    if (
-      seq[i] ===
-      seq[i - 1]
-    ) {
-      break;
-    }
-
-    length++;
-  }
-
-  return {
-    length,
-    broken:
-      length >= 4
-  };
-}
-
-/* =========================================================
-   TRANSITION MATRIX
-========================================================= */
-
-function transitionMatrix(
-  seq
-) {
+function matrix(s) {
   const m = {
-    BIG: {
-      BIG: 0,
-      SMALL: 0
-    },
-
-    SMALL: {
-      BIG: 0,
-      SMALL: 0
-    }
+    BIG: { BIG: 0, SMALL: 0 },
+    SMALL: { BIG: 0, SMALL: 0 }
   };
 
-  for (
-    let i = 1;
-    i < seq.length;
-    i++
-  ) {
-    m[
-      seq[i - 1]
-    ][
-      seq[i]
-    ]++;
-  }
+  for (let i = 1; i < s.length; i++)
+    m[s[i - 1]][s[i]]++;
 
   return m;
 }
 
-function transitionRate(
-  matrix,
-  from,
-  to
-) {
-  if (!matrix[from]) {
-    return 0;
-  }
-
+function trans(m, from, to) {
   const total =
-    matrix[from].BIG +
-    matrix[from].SMALL;
+    m[from].BIG +
+    m[from].SMALL;
 
-  if (!total) {
-    return 0;
-  }
-
-  return percent(
-    matrix[from][to],
-    total
-  );
+  return pct(m[from][to], total);
 }
 
-/* =========================================================
-   MOMENTUM
-========================================================= */
+function analyze(rows) {
+  const s = rows.map(x => x.result);
 
-function getMomentum(seq) {
-  if (seq.length < 10) {
-    return {
-      recentBig: 50,
-      previousBig: 50,
-      delta: 0,
-      state:
-        "LOW_DATA"
-    };
-  }
-
-  const recent =
-    seq.slice(-5);
-
-  const previous =
-    seq.slice(-10, -5);
-
-  const recentBig =
-    percent(
-      recent.filter(
-        x => x === "BIG"
-      ).length,
-      recent.length
-    );
-
-  const previousBig =
-    percent(
-      previous.filter(
-        x => x === "BIG"
-      ).length,
-      previous.length
-    );
-
-  const delta =
-    recentBig -
-    previousBig;
-
-  let state =
-    "STABLE";
-
-  if (delta >= 20) {
-    state =
-      "BIG_MOMENTUM";
-  }
-
-  if (delta <= -20) {
-    state =
-      "SMALL_MOMENTUM";
-  }
-
-  return {
-    recentBig,
-    previousBig,
-    delta,
-    state
-  };
-}
-
-/* =========================================================
-   PATTERN BLOCKS
-========================================================= */
-
-function findBlocks(seq) {
-  const found = [];
-
-  for (
-    let size = 2;
-    size <= 6;
-    size++
-  ) {
-    if (
-      seq.length <
-      size * 2
-    ) {
-      continue;
-    }
-
-    const last =
-      seq
-        .slice(-size)
-        .map(
-          x =>
-            x === "BIG"
-              ? "B"
-              : "S"
-        )
-        .join("");
-
-    const previous =
-      seq
-        .slice(
-          -size * 2,
-          -size
-        )
-        .map(
-          x =>
-            x === "BIG"
-              ? "B"
-              : "S"
-        )
-        .join("");
-
-    if (
-      last === previous
-    ) {
-      found.push({
-        length: size,
-        pattern: last
-      });
-    }
-  }
-
-  return found;
-}
-
-/* =========================================================
-   DIGIT ANALYSIS
-========================================================= */
-
-function digitAnalysis(
-  rows
-) {
-  const frequency =
-    Array(10).fill(0);
-
-  const digits =
-    rows
-      .slice(-100)
-      .map(
-        x => x.number
-      );
-
-  for (
-    const n of digits
-  ) {
-    if (
-      Number.isInteger(n) &&
-      n >= 0 &&
-      n <= 9
-    ) {
-      frequency[n]++;
-    }
-  }
-
-  return {
-    frequency,
-    average:
-      Number(
-        avg(digits).toFixed(2)
-      ),
-    median:
-      Number(
-        med(digits).toFixed(2)
-      ),
-    latest:
-      digits.length
-        ? digits[
-            digits.length - 1
-          ]
-        : null
-  };
-}
-
-/* =========================================================
-   REVERSAL ENGINE
-========================================================= */
-
-function reversalEngine(
-  seq,
-  w30,
-  matrix
-) {
-  const current =
-    getStreak(seq);
-
-  if (!current.side) {
-    return {
-      score: 0,
-      max: 18,
-      watch: false,
-      side: null,
-      components: {}
-    };
-  }
-
-  const run =
-    getRunStats(
-      seq,
-      current.side
-    );
-
-  const other =
-    opposite(
-      current.side
-    );
-
-  const components = {
-    R1: 0,
-    R2: 0,
-    R3: 0,
-    R4: 0,
-    R5: 0,
-    R6: 0
-  };
-
-  /*
-    R1: unusual streak
-  */
-
-  if (
-    current.length >= 3 &&
-    run.average > 0 &&
-    current.length >=
-      run.average * 1.5
-  ) {
-    components.R1 = 3;
-  } else if (
-    current.length >= 3 &&
-    current.length >
-      run.average
-  ) {
-    components.R1 = 2;
-  } else if (
-    current.length >= 2
-  ) {
-    components.R1 = 1;
-  }
-
-  /*
-    R2: transition reversal
-  */
-
-  const switchToOther =
-    transitionRate(
-      matrix,
-      current.side,
-      other
-    );
-
-  if (
-    switchToOther >= 65
-  ) {
-    components.R2 = 3;
-  } else if (
-    switchToOther >= 55
-  ) {
-    components.R2 = 2;
-  } else if (
-    switchToOther >= 45
-  ) {
-    components.R2 = 1;
-  }
-
-  /*
-    R3: recent imbalance
-  */
-
-  const sidePct =
-    current.side === "BIG"
-      ? w30.bigPct
-      : w30.smallPct;
-
-  if (sidePct >= 70) {
-    components.R3 = 3;
-  } else if (
-    sidePct >= 60
-  ) {
-    components.R3 = 2;
-  } else if (
-    sidePct >= 55
-  ) {
-    components.R3 = 1;
-  }
-
-  /*
-    R4: alternation
-  */
-
-  const alt =
-    alternation(seq);
-
-  if (
-    alt.length >= 5 &&
-    current.length === 1
-  ) {
-    components.R4 = 2;
-  } else if (
-    alt.length >= 4
-  ) {
-    components.R4 = 1;
-  }
-
-  /*
-    R5: run anomaly
-  */
-
-  if (
-    current.length >= 3 &&
-    run.common > 0 &&
-    current.length >=
-      run.common + 2
-  ) {
-    components.R5 = 2;
-  } else if (
-    current.length >= 2 &&
-    run.common > 0 &&
-    current.length >
-      run.common
-  ) {
-    components.R5 = 1;
-  }
-
-  /*
-    R6: switching environment
-  */
-
-  if (
-    w30.switchRate >= 60 &&
-    current.length >= 2
-  ) {
-    components.R6 = 2;
-  } else if (
-    w30.switchRate >= 50 &&
-    current.length >= 2
-  ) {
-    components.R6 = 1;
-  }
-
-  const score =
-    Object.values(
-      components
-    ).reduce(
-      (a, b) => a + b,
-      0
-    );
-
-  return {
-    score,
-    max: 18,
-    watch:
-      score >= 8 &&
-      current.length >= 2,
-    side:
-      score >= 8
-        ? other
-        : null,
-    components,
-    current,
-    switchToOther
-  };
-}
-
-/* =========================================================
-   FULL ANALYSIS ENGINE
-========================================================= */
-
-function fullAnalysis(
-  rows
-) {
-  const seq =
-    sequence(rows);
-
-  const total =
-    seq.length;
-
-  if (total < 10) {
+  if (s.length < 10) {
     return {
       prediction: null,
       confidence: 0,
-      signal:
-        "INSUFFICIENT DATA",
-      total,
-      reason:
-        "Need at least 10 valid results"
+      signal: "INSUFFICIENT DATA"
     };
   }
 
-  const windows = {};
+  const w5 = s.slice(-5);
+  const w10 = s.slice(-10);
+  const w20 = s.slice(-20);
+  const w30 = s.slice(-30);
+  const w50 = s.slice(-50);
 
-  for (
-    const size of [
-      5,
-      10,
-      20,
-      30,
-      50,
-      100
-    ]
-  ) {
-    windows[size] =
-      windowStats(
-        seq,
-        Math.min(
-          size,
-          total
-        )
-      );
+  const count = a => ({
+    big: a.filter(x => x === "BIG").length,
+    small: a.filter(x => x === "SMALL").length
+  });
+
+  const c5 = count(w5);
+  const c10 = count(w10);
+  const c20 = count(w20);
+  const c30 = count(w30);
+  const c50 = count(w50);
+
+  const st = streak(s);
+
+  const bigRuns = runs(s, "BIG");
+  const smallRuns = runs(s, "SMALL");
+
+  const bm = avg(bigRuns);
+  const sm = avg(smallRuns);
+
+  const mAll = matrix(s);
+  const m20 = matrix(w20);
+
+  let B = 0;
+  let S = 0;
+
+  /* Recent 5/10/20/30 */
+  B += pct(c5.big, 5) * 0.20;
+  S += pct(c5.small, 5) * 0.20;
+
+  B += pct(c10.big, 10) * 0.15;
+  S += pct(c10.small, 10) * 0.15;
+
+  B += pct(c20.big, 20) * 0.10;
+  S += pct(c20.small, 20) * 0.10;
+
+  B += pct(c30.big, 30) * 0.10;
+  S += pct(c30.small, 30) * 0.10;
+
+  /* Frequency */
+  B += pct(c50.big, 50) * 0.15;
+  S += pct(c50.small, 50) * 0.15;
+
+  /* Streak structure */
+  if (st.side === "BIG") {
+    if (st.length <= bm + 0.5) B += 7;
+    else S += 7;
   }
 
-  const current =
-    getStreak(seq);
+  if (st.side === "SMALL") {
+    if (st.length <= sm + 0.5) S += 7;
+    else B += 7;
+  }
 
-  const w5 =
-    windows[5];
+  /* Switching */
+  let switches = 0;
 
-  const w10 =
-    windows[10];
+  for (let i = 1; i < w30.length; i++)
+    if (w30[i] !== w30[i - 1]) switches++;
 
-  const w20 =
-    windows[20];
+  const switchRate =
+    pct(switches, Math.max(1, w30.length - 1));
 
-  const w30 =
-    windows[30];
+  if (switchRate >= 60) {
+    if (st.side === "BIG") S += 6;
+    else B += 6;
+  } else if (switchRate < 40) {
+    if (st.side === "BIG") B += 5;
+    else S += 5;
+  }
 
-  const w50 =
-    windows[50];
-
-  const allTransitions =
-    transitionMatrix(seq);
-
-  const recentTransitions =
-    transitionMatrix(
-      seq.slice(-20)
-    );
-
-  const momentum =
-    getMomentum(seq);
-
-  const reversal =
-    reversalEngine(
-      seq,
-      w30,
-      allTransitions
-    );
-
-  const alt =
-    alternation(seq);
-
-  const block =
-    findBlocks(seq);
-
-  const digits =
-    digitAnalysis(rows);
-
-  const bigRuns =
-    getRunStats(
-      seq,
+  /* Transition */
+  if (st.side) {
+    B += trans(
+      m20,
+      st.side,
       "BIG"
-    );
+    ) * 0.12;
 
-  const smallRuns =
-    getRunStats(
-      seq,
+    S += trans(
+      m20,
+      st.side,
       "SMALL"
+    ) * 0.12;
+  }
+
+  /* Momentum */
+  const recentBig =
+    pct(
+      w5.filter(x => x === "BIG").length,
+      5
     );
 
-  let big = 0;
-  let small = 0;
-
-  /*
-    1. RECENT WINDOWS 20%
-  */
-
-  const weights = [
-    [5, 0.35],
-    [10, 0.30],
-    [20, 0.20],
-    [30, 0.15]
-  ];
-
-  for (
-    const [
-      size,
-      weight
-    ] of weights
-  ) {
-    const w =
-      windows[size];
-
-    big +=
-      (w.bigPct / 100) *
-      20 *
-      weight;
-
-    small +=
-      (w.smallPct / 100) *
-      20 *
-      weight;
-  }
-
-  /*
-    2. FREQUENCY 15%
-  */
-
-  big +=
-    (w50.bigPct / 100) *
-    15;
-
-  small +=
-    (w50.smallPct / 100) *
-    15;
-
-  /*
-    3. STREAK STRUCTURE 10%
-  */
-
-  if (
-    current.side === "BIG"
-  ) {
-    if (
-      current.length <=
-      bigRuns.average + 0.5
-    ) {
-      big += 6;
-    } else {
-      small += 6;
-    }
-  }
-
-  if (
-    current.side === "SMALL"
-  ) {
-    if (
-      current.length <=
-      smallRuns.average + 0.5
-    ) {
-      small += 6;
-    } else {
-      big += 6;
-    }
-  }
-
-  /*
-    4. SWITCHING 10%
-  */
-
-  if (
-    w30.switchRate >= 60
-  ) {
-    if (
-      current.side === "BIG"
-    ) {
-      small += 7;
-      big += 3;
-    } else {
-      big += 7;
-      small += 3;
-    }
-  } else if (
-    w30.switchRate < 40
-  ) {
-    if (
-      current.length <= 2
-    ) {
-      if (
-        current.side === "BIG"
-      ) {
-        big += 7;
-      } else {
-        small += 7;
-      }
-    } else {
-      if (
-        current.side === "BIG"
-      ) {
-        small += 5;
-      } else {
-        big += 5;
-      }
-    }
-  } else {
-    big +=
-      (w30.bigPct / 100) *
-      5;
-
-    small +=
-      (w30.smallPct / 100) *
-      5;
-  }
-
-  /*
-    5. TRANSITION MATRIX 15%
-  */
-
-  if (current.side) {
-    const nextBig =
-      transitionRate(
-        recentTransitions,
-        current.side,
-        "BIG"
-      );
-
-    const nextSmall =
-      transitionRate(
-        recentTransitions,
-        current.side,
-        "SMALL"
-      );
-
-    big +=
-      (nextBig / 100) *
-      15;
-
-    small +=
-      (nextSmall / 100) *
-      15;
-  }
-
-  /*
-    6. MOMENTUM 10%
-  */
-
-  if (
-    momentum.state ===
-    "BIG_MOMENTUM"
-  ) {
-    big += 7;
-    small += 3;
-  } else if (
-    momentum.state ===
-    "SMALL_MOMENTUM"
-  ) {
-    small += 7;
-    big += 3;
-  } else {
-    big +=
-      (momentum.recentBig / 100) *
-      10;
-
-    small +=
-      ((100 -
-        momentum.recentBig) /
-        100) *
-      10;
-  }
-
-  /*
-    7. PATTERN 10%
-  */
-
-  if (block.length) {
-    const last =
-      block[
-        block.length - 1
-      ];
-
-    const tail =
-      seq
-        .slice(-last.length)
-        .map(
-          x =>
-            x === "BIG"
-              ? "B"
-              : "S"
-        )
-        .join("");
-
-    if (
-      tail === last.pattern
-    ) {
-      const before =
-        seq[
-          seq.length -
-          last.length -
-          1
-        ];
-
-      if (
-        before === "BIG"
-      ) {
-        big += 3;
-      }
-
-      if (
-        before === "SMALL"
-      ) {
-        small += 3;
-      }
-    }
-  }
-
-  /*
-    8. DIGIT 5%
-  */
-
-  const lastDigits =
-    rows
-      .slice(-20)
-      .map(
-        x => x.number
-      );
-
-  const digitBig =
-    lastDigits.filter(
-      n => n >= 5
-    ).length;
-
-  const digitSmall =
-    lastDigits.filter(
-      n => n <= 4
-    ).length;
-
-  big +=
-    (percent(
-      digitBig,
-      lastDigits.length
-    ) / 100) *
-    5;
-
-  small +=
-    (percent(
-      digitSmall,
-      lastDigits.length
-    ) / 100) *
-    5;
-
-  /*
-    9. REVERSAL 5%
-  */
-
-  if (reversal.watch) {
-    if (
-      reversal.side === "BIG"
-    ) {
-      big +=
-        (reversal.score / 18) *
-        5;
-    }
-
-    if (
-      reversal.side === "SMALL"
-    ) {
-      small +=
-        (reversal.score / 18) *
-        5;
-    }
-  }
-
-  /*
-    NORMALIZE
-  */
-
-  const rawTotal =
-    big + small;
-
-  let bigPct =
-    rawTotal
-      ? (big / rawTotal) * 100
-      : 50;
-
-  let smallPct =
-    rawTotal
-      ? (small / rawTotal) * 100
-      : 50;
-
-  /*
-    ANTI-STUCK.
-    Extreme streak gets opposite pressure.
-  */
-
-  if (
-    current.length >= 4
-  ) {
-    if (
-      current.side === "BIG"
-    ) {
-      smallPct += 5;
-      bigPct -= 5;
-    } else {
-      bigPct += 5;
-      smallPct -= 5;
-    }
-  }
-
-  /*
-    Extreme last-5 imbalance.
-  */
-
-  if (
-    w5.bigPct >= 80
-  ) {
-    smallPct += 3;
-    bigPct -= 3;
-  }
-
-  if (
-    w5.smallPct >= 80
-  ) {
-    bigPct += 3;
-    smallPct -= 3;
-  }
-
-  bigPct =
-    clamp(
-      bigPct,
-      0,
-      100
+  const oldBig =
+    pct(
+      s.slice(-10, -5)
+        .filter(x => x === "BIG").length,
+      5
     );
 
-  smallPct =
-    clamp(
-      smallPct,
-      0,
-      100
-    );
+  const delta =
+    recentBig - oldBig;
 
-  /*
-    CONFLICT PENALTY
-  */
-
-  const difference =
-    Math.abs(
-      bigPct -
-      smallPct
-    );
-
-  let penalty = 0;
-
-  if (
-    difference < 6
-  ) {
-    penalty += 15;
-  } else if (
-    difference < 10
-  ) {
-    penalty += 8;
+  if (delta >= 20) {
+    B += 6;
+    S += 2;
+  } else if (delta <= -20) {
+    S += 6;
+    B += 2;
   }
 
-  /*
-    SAMPLE PENALTY
-  */
-
-  if (
-    total < 20
-  ) {
-    penalty += 15;
-  } else if (
-    total < 30
-  ) {
-    penalty += 8;
+  /* Reversal pressure */
+  if (st.length >= 4) {
+    if (st.side === "BIG") S += 5;
+    else B += 5;
   }
+
+  if (c5.big >= 4) {
+    S += 3;
+    B -= 1;
+  }
+
+  if (c5.small >= 4) {
+    B += 3;
+    S -= 1;
+  }
+
+  const total = Math.max(1, B + S);
+
+  let bp = (B / total) * 100;
+  let sp = (S / total) * 100;
+
+  bp = Math.max(0, Math.min(100, bp));
+  sp = Math.max(0, Math.min(100, sp));
+
+  const diff = Math.abs(bp - sp);
 
   let confidence =
     Math.round(
-      clamp(
-        50 +
-          difference *
-            0.85 -
-          penalty,
+      Math.max(
         50,
-        94
+        Math.min(
+          94,
+          50 + diff * 0.9
+        )
       )
     );
 
-  /*
-    CLASSIFICATION
-  */
-
-  let signal =
-    "NO CLEAR SIGNAL";
-
-  if (
-    difference < 5
-  ) {
-    signal =
-      "MIXED / CONFLICTING";
-  } else if (
-    reversal.watch &&
-    reversal.score >= 10
-  ) {
-    signal =
-      "REVERSAL WATCH";
-  } else if (
-    difference >= 25 &&
-    confidence >= 75
-  ) {
-    signal =
-      "STRONG HISTORICAL BIAS";
-  } else if (
-    difference >= 12
-  ) {
-    signal =
-      "MODERATE HISTORICAL BIAS";
-  } else {
-    signal =
-      "WEAK HISTORICAL BIAS";
-  }
-
-  /*
-    FINAL SIGNAL ONLY IF EVIDENCE EXISTS.
-  */
-
   let prediction = null;
 
-  if (
-    total >= 10 &&
-    difference >= 6 &&
-    confidence >= 55
-  ) {
+  if (diff >= 6 && confidence >= 55) {
     prediction =
-      bigPct >= smallPct
+      bp >= sp
         ? "BIG"
         : "SMALL";
   }
 
+  let signal = "NO CLEAR SIGNAL";
+
+  if (diff < 6)
+    signal = "MIXED / CONFLICTING";
+  else if (diff < 12)
+    signal = "WEAK HISTORICAL BIAS";
+  else if (diff < 25)
+    signal = "MODERATE HISTORICAL BIAS";
+  else
+    signal = "STRONG HISTORICAL BIAS";
+
   return {
     prediction,
-
     confidence,
-
     signal,
 
-    total,
-
     scores: {
-      BIG:
-        Number(
-          bigPct.toFixed(2)
-        ),
-      SMALL:
-        Number(
-          smallPct.toFixed(2)
-        )
+      BIG: Number(bp.toFixed(2)),
+      SMALL: Number(sp.toFixed(2))
     },
 
-    currentStreak:
-      current,
+    streak: st,
 
-    momentum,
+    switchRate:
+      Number(switchRate.toFixed(2)),
 
-    switching: {
-      last5:
-        w5.switchRate,
-      last10:
-        w10.switchRate,
-      last20:
-        w20.switchRate,
-      last30:
-        w30.switchRate,
-      last50:
-        w50.switchRate
+    momentum: {
+      recentBig,
+      previousBig: oldBig,
+      delta
     },
 
-    transitions: {
-      all:
-        allTransitions,
-      recent20:
-        recentTransitions
-    },
+    transition: mAll,
 
-    reversal,
+    sample: s.length,
 
-    alternation:
-      alt,
-
-    patterns:
-      block,
-
-    runs: {
-      BIG:
-        bigRuns,
-      SMALL:
-        smallRuns
-    },
-
-    digit:
-      digits,
-
-    windows,
-
-    modelVersion:
-      MODEL_VERSION,
-
-    thinkingMs:
-      THINKING_MS,
-
-    generatedAt:
-      now()
+    generatedAt: now()
   };
 }
 
-/* =========================================================
-   DATABASE PREDICTIONS
-========================================================= */
+/* =========================
+   PREDICTION DB
+========================= */
 
-async function getPending() {
-  const r =
-    await pool.query(`
-      SELECT *
-      FROM prediction_records
-      WHERE actual_result IS NULL
-      ORDER BY id DESC
-      LIMIT 1
-    `);
-
-  return r.rows[0] || null;
-}
-
-async function getLatestPrediction() {
-  const r =
-    await pool.query(`
-      SELECT *
-      FROM prediction_records
-      ORDER BY id DESC
-      LIMIT 1
-    `);
+async function pending() {
+  const r = await db.query(`
+    SELECT *
+    FROM prediction_records
+    WHERE actual_result IS NULL
+    ORDER BY id DESC
+    LIMIT 1
+  `);
 
   return r.rows[0] || null;
 }
 
-async function getPredictions(
-  limit = 100
-) {
-  const r =
-    await pool.query(
-      `
-      SELECT *
-      FROM prediction_records
-      ORDER BY id DESC
-      LIMIT $1
-      `,
-      [limit]
-    );
+async function latestPrediction() {
+  const r = await db.query(`
+    SELECT *
+    FROM prediction_records
+    ORDER BY id DESC
+    LIMIT 1
+  `);
 
-  return r.rows;
+  return r.rows[0] || null;
 }
 
-/* =========================================================
-   SETTLE PREDICTION
-========================================================= */
+async function settle(rows) {
+  const p = await pending();
+  if (!p) return;
 
-async function settlePrediction(
-  rows
-) {
-  const pending =
-    await getPending();
+  const found =
+    rows.find(x => x.issue === p.target_issue);
 
-  if (!pending) {
-    return null;
-  }
+  if (!found) return;
 
-  const target =
-    normalizeIssue(
-      pending.target_issue
-    );
-
-  if (!target) {
-    return null;
-  }
-
-  const actualRow =
-    rows.find(
-      x =>
-        x.issue ===
-        target
-    );
-
-  if (!actualRow) {
-    return null;
-  }
-
-  const actual =
-    resultOf(
-      actualRow.number
-    );
-
-  if (!actual) {
-    return null;
-  }
-
-  const prediction =
-    pending.prediction;
-
-  if (
-    prediction !== "BIG" &&
-    prediction !== "SMALL"
-  ) {
-    return null;
-  }
+  const actual = found.result;
 
   const outcome =
-    prediction === actual
+    actual === p.prediction
       ? "WIN"
       : "LOSS";
 
-  await pool.query(
+  await db.query(
     `
     UPDATE prediction_records
     SET
-      actual_number = $1,
-      actual_result = $2,
-      settled_at = $3
-    WHERE id = $4
+      actual_number=$1,
+      actual_result=$2,
+      settled_at=$3
+    WHERE id=$4
       AND actual_result IS NULL
     `,
     [
-      actualRow.number,
+      found.number,
       outcome,
       now(),
-      pending.id
+      p.id
     ]
   );
-
-  console.log(
-    `[SETTLED] ${target} ${prediction} ${actual} ${outcome}`
-  );
-
-  return outcome;
 }
 
-/* =========================================================
-   STALE PREDICTION
-========================================================= */
+async function skipOld(latestIssue) {
+  const p = await pending();
+  if (!p) return;
 
-async function cleanupStale(
-  latestIssue
-) {
-  const pending =
-    await getPending();
-
-  if (!pending) {
-    return false;
-  }
-
-  const comparison =
-    compareIssues(
-      pending.target_issue,
+  const d =
+    distance(
+      p.target_issue,
       latestIssue
     );
 
-  if (
-    comparison === null
-  ) {
-    return false;
-  }
-
-  if (
-    comparison <= 0
-  ) {
-    /*
-      Old target with no result available.
-      Never count it as LOSS.
-    */
-
-    await pool.query(
+  if (d !== null && d >= 0) {
+    await db.query(
       `
       UPDATE prediction_records
       SET
-        actual_result = 'SKIPPED',
-        settled_at = $1
-      WHERE id = $2
+        actual_result='SKIPPED',
+        settled_at=$1
+      WHERE id=$2
         AND actual_result IS NULL
       `,
       [
         now(),
-        pending.id
+        p.id
       ]
     );
-
-    console.log(
-      `[SKIPPED] stale target ${pending.target_issue}`
-    );
-
-    return true;
   }
-
-  return false;
 }
 
-/* =========================================================
-   COOLDOWN
-========================================================= */
+async function cooldown(latestIssue) {
+  const p =
+    await latestPrediction();
 
-async function cooldown(
-  latestCompleted
-) {
-  const last =
-    await getLatestPrediction();
-
-  if (!last) {
+  if (!p || !p.actual_result) {
     return {
       active: false,
       completed: 0,
@@ -2431,26 +777,7 @@ async function cooldown(
     };
   }
 
-  /*
-    Pending is NOT cooldown.
-  */
-
-  if (!last.actual_result) {
-    return {
-      active: false,
-      completed: 0,
-      remaining: 0
-    };
-  }
-
-  /*
-    Skipped is NOT cooldown.
-  */
-
-  if (
-    last.actual_result ===
-    "SKIPPED"
-  ) {
+  if (p.actual_result === "SKIPPED") {
     return {
       active: false,
       completed: 0,
@@ -2459,15 +786,12 @@ async function cooldown(
   }
 
   const d =
-    issueDistance(
-      last.target_issue,
-      latestCompleted
+    distance(
+      p.target_issue,
+      latestIssue
     );
 
-  if (
-    d === null ||
-    d < 0
-  ) {
+  if (d === null || d < 0) {
     return {
       active: false,
       completed: 0,
@@ -2475,72 +799,84 @@ async function cooldown(
     };
   }
 
-  if (
-    d <
-    COOLDOWN_ROUNDS
-  ) {
-    return {
-      active: true,
-      completed: d,
-      remaining:
-        COOLDOWN_ROUNDS - d,
-      lastPredictionIssue:
-        last.target_issue
-    };
-  }
-
   return {
-    active: false,
+    active: d < COOLDOWN,
     completed: d,
-    remaining: 0,
-    lastPredictionIssue:
-      last.target_issue
+    remaining: Math.max(0, COOLDOWN - d)
   };
 }
 
-/* =========================================================
-   CREATE PREDICTION
-========================================================= */
+/* =========================
+   MODEL WORKER
+========================= */
 
-async function insertPrediction(
-  target,
-  analysis
-) {
-  if (
-    !target ||
-    !analysis ||
-    !analysis.prediction
-  ) {
-    return null;
-  }
+let busy = false;
 
-  const pending =
-    await getPending();
+const runtime = {
+  analysis: null,
+  analysisAt: 0,
+  predictionIssue: null
+};
 
-  if (pending) {
-    return pending;
-  }
+async function modelWorker() {
+  if (busy) return;
 
-  const latest =
-    live.rows[
-      live.rows.length - 1
-    ];
+  busy = true;
 
-  if (!latest) {
-    return null;
-  }
+  try {
+    const rows = live.rows;
 
-  const cd =
-    await cooldown(
-      latest.issue
-    );
+    if (!rows.length) return;
 
-  if (cd.active) {
-    return null;
-  }
+    const latest = rows.at(-1);
 
-  const r =
-    await pool.query(
+    await settle(rows);
+    await skipOld(latest.issue);
+
+    const p = await pending();
+
+    if (p) return;
+
+    const cd =
+      await cooldown(
+        latest.issue
+      );
+
+    if (cd.active) return;
+
+    const analysis =
+      analyze(rows);
+
+    runtime.analysis =
+      analysis;
+
+    runtime.analysisAt =
+      now();
+
+    if (!analysis.prediction) return;
+
+    const target =
+      nextIssue(
+        latest.issue
+      );
+
+    if (!target) return;
+
+    const duplicate =
+      await db.query(
+        `
+        SELECT id
+        FROM prediction_records
+        WHERE target_issue=$1
+        LIMIT 1
+        `,
+        [target]
+      );
+
+    if (duplicate.rows.length)
+      return;
+
+    await db.query(
       `
       INSERT INTO prediction_records
       (
@@ -2550,526 +886,247 @@ async function insertPrediction(
         model_version,
         created_at
       )
-      VALUES
-      ($1,$2,$3,$4,$5)
-      RETURNING *
+      VALUES($1,$2,$3,$4,$5)
       `,
       [
-        String(target),
+        target,
         analysis.prediction,
         analysis.confidence,
-        MODEL_VERSION,
+        MODEL,
         now()
       ]
     );
 
-  return r.rows[0] || null;
-}
+    runtime.predictionIssue =
+      target;
 
-/* =========================================================
-   RUNTIME
-========================================================= */
-
-let modelBusy = false;
-
-const runtime = {
-  lastAnalysis: null,
-  lastAnalysisAt: 0,
-  lastPredictionIssue: null,
-  lastPredictionAt: 0
-};
-
-/* =========================================================
-   MODEL WORKER
-========================================================= */
-
-async function runModel() {
-  if (modelBusy) {
-    return;
-  }
-
-  modelBusy = true;
-
-  try {
-    const rows =
-      cleanRows(
-        live.rows
-      );
-
-    if (!rows.length) {
-      return;
-    }
-
-    const latest =
-      rows[
-        rows.length - 1
-      ];
-
-    /*
-      First settle old prediction.
-    */
-
-    await settlePrediction(
-      rows
+    console.log(
+      "PREDICTION:",
+      target,
+      analysis.prediction,
+      analysis.confidence + "%"
     );
 
-    /*
-      Then remove stale prediction.
-    */
-
-    await cleanupStale(
-      latest.issue
-    );
-
-    /*
-      If pending exists,
-      don't create another.
-    */
-
-    const pending =
-      await getPending();
-
-    if (pending) {
-      return;
-    }
-
-    /*
-      Check cooldown.
-    */
-
-    const cd =
-      await cooldown(
-        latest.issue
-      );
-
-    if (cd.active) {
-      return;
-    }
-
-    /*
-      Target = next issue.
-    */
-
-    const target =
-      incrementIssue(
-        latest.issue
-      );
-
-    if (!target) {
-      return;
-    }
-
-    /*
-      Full analysis.
-    */
-
-    const analysis =
-      fullAnalysis(rows);
-
-    runtime.lastAnalysis =
-      analysis;
-
-    runtime.lastAnalysisAt =
-      now();
-
-    /*
-      Never force weak prediction.
-    */
-
-    if (
-      !analysis.prediction ||
-      analysis.confidence < 55
-    ) {
-      return;
-    }
-
-    /*
-      Duplicate target protection.
-    */
-
-    const duplicate =
-      await pool.query(
-        `
-        SELECT id
-        FROM prediction_records
-        WHERE target_issue = $1
-        LIMIT 1
-        `,
-        [target]
-      );
-
-    if (
-      duplicate.rows.length
-    ) {
-      return;
-    }
-
-    /*
-      Insert.
-    */
-
-    const prediction =
-      await insertPrediction(
-        target,
-        analysis
-      );
-
-    if (prediction) {
-      runtime.lastPredictionIssue =
-        target;
-
-      runtime.lastPredictionAt =
-        now();
-
-      console.log(
-        `[PREDICTION] ${target} => ${analysis.prediction} | ${analysis.confidence}%`
-      );
-    }
-
-  } catch (err) {
+  } catch (e) {
     console.error(
-      "MODEL ERROR:",
-      err.message
+      "MODEL:",
+      e.message
     );
   } finally {
-    modelBusy = false;
+    busy = false;
   }
 }
 
-/* =========================================================
+/* =========================
    ACCESS KEY
-========================================================= */
+========================= */
 
-async function validateAccess(
-  req
-) {
-  const accessKey =
+async function auth(req) {
+  const key =
     String(
-      req.headers[
-        "x-access-key"
-      ] || ""
+      req.headers["x-access-key"] || ""
     ).trim();
 
-  const deviceId =
+  const device =
     String(
-      req.headers[
-        "x-device-id"
-      ] || ""
+      req.headers["x-device-id"] || ""
     ).trim();
 
-  if (!accessKey) {
+  if (!key)
     return {
       ok: false,
-      error:
-        "ACCESS_KEY_REQUIRED"
+      error: "ACCESS_KEY_REQUIRED"
     };
-  }
 
-  if (!deviceId) {
+  if (!device)
     return {
       ok: false,
-      error:
-        "DEVICE_ID_REQUIRED"
+      error: "DEVICE_ID_REQUIRED"
     };
-  }
 
   const r =
-    await pool.query(
+    await db.query(
       `
       SELECT *
       FROM access_keys
-      WHERE access_key = $1
+      WHERE access_key=$1
       LIMIT 1
       `,
-      [accessKey]
+      [key]
     );
 
-  const key =
-    r.rows[0];
+  const k = r.rows[0];
 
-  if (!key) {
+  if (!k)
     return {
       ok: false,
-      error:
-        "INVALID_ACCESS_KEY"
+      error: "INVALID_ACCESS_KEY"
     };
-  }
 
-  /*
-    First browser binds key.
-  */
-
-  if (!key.device_id) {
-    await pool.query(
+  if (!k.device_id) {
+    await db.query(
       `
       UPDATE access_keys
-      SET
-        device_id = $1,
-        last_seen = $2
-      WHERE id = $3
+      SET device_id=$1,last_seen=$2
+      WHERE id=$3
       `,
       [
-        deviceId,
+        device,
         now(),
-        key.id
+        k.id
       ]
     );
 
-    return {
-      ok: true
-    };
+    return { ok: true };
   }
 
   if (
-    String(key.device_id) !==
-    String(deviceId)
+    String(k.device_id) !==
+    device
   ) {
     return {
       ok: false,
-      error:
-        "DEVICE_MISMATCH"
+      error: "DEVICE_MISMATCH"
     };
   }
 
-  await pool.query(
+  await db.query(
     `
     UPDATE access_keys
-    SET last_seen = $1
-    WHERE id = $2
+    SET last_seen=$1
+    WHERE id=$2
     `,
     [
       now(),
-      key.id
+      k.id
     ]
   );
 
-  return {
-    ok: true
-  };
+  return { ok: true };
 }
 
-/* =========================================================
-   ADMIN
-========================================================= */
-
-function isAdmin(req) {
+function admin(req) {
   return (
     String(
-      req.headers[
-        "x-admin-key"
-      ] || ""
-    ).trim() ===
-    ADMIN_KEY
+      req.headers["x-admin-key"] || ""
+    ) === ADMIN_KEY
   );
 }
 
-function generateKey() {
-  return (
-    "DY-" +
-    crypto
-      .randomBytes(10)
-      .toString("hex")
-      .toUpperCase()
-  );
-}
-
-/* =========================================================
+/* =========================
    STATE
-========================================================= */
+========================= */
 
-async function buildState() {
-  const rows =
-    cleanRows(
-      live.rows
-    );
+async function state() {
+  const rows = live.rows;
+  const last = rows.at(-1) || null;
 
-  const latest =
-    rows[
-      rows.length - 1
-    ] || null;
-
-  if (latest) {
-    await settlePrediction(
-      rows
-    );
-
-    await cleanupStale(
-      latest.issue
-    );
+  if (last) {
+    await settle(rows);
+    await skipOld(last.issue);
   }
 
-  const pending =
-    await getPending();
+  const p = await pending();
 
   const cd =
     await cooldown(
-      latest?.issue ||
-      null
+      last?.issue || null
     );
-
-  let prediction = null;
-  let targetIssue = null;
-  let confidence = 0;
-  let status = "WAITING";
-
-  /*
-    IMPORTANT:
-    Pending prediction is always shown.
-  */
-
-  if (pending) {
-    prediction =
-      pending.prediction;
-
-    targetIssue =
-      pending.target_issue;
-
-    confidence =
-      Number(
-        pending.confidence ||
-        0
-      );
-
-    status = "PENDING";
-  } else if (cd.active) {
-    status = "COOLDOWN";
-  } else {
-    status = "ANALYSING";
-  }
-
-  /*
-    LAST 30
-  */
-
-  const historyRows =
-    rows
-      .slice(-30)
-      .reverse();
 
   const predictions =
-    await getPredictions(
-      100
-    );
+    await db.query(`
+      SELECT *
+      FROM prediction_records
+      ORDER BY id DESC
+      LIMIT 200
+    `);
 
-  const map =
-    new Map();
+  const map = new Map();
 
-  for (
-    const p of predictions
-  ) {
+  for (const x of predictions.rows)
     map.set(
-      String(
-        p.target_issue
-      ),
-      p
+      String(x.target_issue),
+      x
     );
-  }
 
   const history =
-    historyRows.map(
-      row => {
+    rows
+      .slice(-30)
+      .reverse()
+      .map(x => {
         const p =
           map.get(
-            String(
-              row.issue
-            )
+            String(x.issue)
           );
 
         return {
-          issue:
-            row.issue,
-
-          number:
-            row.number,
-
-          result:
-            row.result,
-
+          issue: x.issue,
+          number: x.number,
+          result: x.result,
           prediction:
-            p?.prediction ||
-            null,
-
+            p?.prediction || null,
           confidence:
             p
-              ? Number(
-                  p.confidence ||
-                  0
-                )
+              ? Number(p.confidence || 0)
               : null,
-
           outcome:
-            p?.actual_result ||
-            null,
-
-          predictionId:
-            p?.id ||
-            null
+            p?.actual_result || null
         };
-      }
-    );
+      });
 
   return {
     ok: true,
 
     source: {
-      name:
-        live.source ||
-        "NONE",
-
+      name: live.source,
       currentIssue:
-        live.currentIssue,
-
-      latestCompletedIssue:
-        latest?.issue ||
-        null,
-
-      latestCompletedNumber:
-        latest?.number ??
-        null,
-
-      fetchedAt:
-        live.fetchedAt,
-
+        live.current ||
+        (last
+          ? nextIssue(last.issue)
+          : null),
+      latestIssue:
+        last?.issue || null,
+      latestNumber:
+        last?.number ?? null,
+      latestResult:
+        last?.result || null,
+      fetchedAt: live.fetched,
       ageMs:
-        live.fetchedAt
-          ? now() -
-            live.fetchedAt
+        live.fetched
+          ? now() - live.fetched
           : null,
-
+      error: live.error,
       healthy:
-        Boolean(
-          live.lastSuccess
-        ),
-
-      error:
-        live.lastError
-    },
-
-    current: {
-      issue:
-        live.currentIssue ||
-        (
-          latest
-            ? incrementIssue(
-                latest.issue
-              )
-            : null
-        )
+        Boolean(live.fetched)
     },
 
     model: {
-      prediction,
-      targetIssue,
-      confidence,
-      status,
-      version:
-        MODEL_VERSION,
-      thinkingMs:
-        THINKING_MS,
-      lastAnalysisAt:
-        runtime.lastAnalysisAt,
+      prediction:
+        p?.prediction || null,
+
+      targetIssue:
+        p?.target_issue || null,
+
+      confidence:
+        p
+          ? Number(p.confidence || 0)
+          : 0,
+
+      status:
+        p
+          ? "PREDICTION_READY"
+          : cd.active
+            ? "WAITING"
+            : "ANALYSING",
+
+      signal:
+        runtime.analysis?.signal ||
+        null,
+
       analysis:
-        runtime.lastAnalysis
+        runtime.analysis || null,
+
+      version: MODEL
     },
 
     cooldown: cd,
@@ -3078,1235 +1135,958 @@ async function buildState() {
   };
 }
 
-/* =========================================================
-   ADMIN STATUS
-========================================================= */
+/* =========================
+   FRONTEND
+========================= */
 
-async function adminStatus() {
-  const keys =
-    await pool.query(`
-      SELECT
-        COUNT(*)::int AS total,
-        COUNT(*) FILTER (
-          WHERE device_id IS NOT NULL
-        )::int AS bound,
-        COUNT(*) FILTER (
-          WHERE device_id IS NULL
-        )::int AS unused
-      FROM access_keys
-    `);
+const HTML = `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+content="width=device-width,initial-scale=1">
 
-  const predictions =
-    await pool.query(`
-      SELECT
-        COUNT(*)::int AS total,
+<title>DY AI WinGo</title>
 
-        COUNT(*) FILTER (
-          WHERE actual_result = 'WIN'
-        )::int AS wins,
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;
+ background:#05080d;
+ color:white;
+ font-family:Arial,sans-serif
+}
+.wrap{
+ max-width:720px;
+ margin:auto;
+ padding:12px
+}
+.card{
+ background:linear-gradient(145deg,#10151d,#070a0f);
+ border:1px solid #27313d;
+ border-radius:24px;
+ padding:20px;
+ margin-bottom:14px;
+ box-shadow:0 0 25px #0008
+}
+.logo{
+ font-size:28px;
+ font-weight:900;
+ letter-spacing:2px
+}
+.logo b{color:#ff9841}
+.sub{
+ color:#687486;
+ letter-spacing:4px;
+ font-size:10px;
+ margin-top:7px
+}
+.center{text-align:center}
+.label{
+ color:#687486;
+ font-size:11px;
+ letter-spacing:3px
+}
+.period-title{
+ color:#6d798b;
+ font-size:10px;
+ letter-spacing:2px;
+ margin-top:20px
+}
+.period{
+ margin-top:7px;
+ font-weight:900;
+ font-size:17px;
+ word-break:break-all
+}
+.pred{
+ margin:20px 0 8px;
+ font-size:52px;
+ font-weight:1000;
+ letter-spacing:3px
+}
+.big{
+ color:#ff9841;
+ text-shadow:0 0 20px #ff9841
+}
+.small{
+ color:#58a8ff;
+ text-shadow:0 0 20px #58a8ff
+}
+.wait{color:#758194}
+.conf{font-weight:bold}
+.signal{
+ color:#788496;
+ font-size:11px;
+ margin-top:10px
+}
+.grid{
+ display:grid;
+ grid-template-columns:repeat(3,1fr);
+ gap:9px;
+ margin-top:15px
+}
+.box{
+ background:#080c12;
+ border:1px solid #232d39;
+ border-radius:16px;
+ padding:13px 6px;
+ text-align:center
+}
+.box small{
+ display:block;
+ color:#657184;
+ font-size:8px;
+ letter-spacing:1px;
+ margin-bottom:8px
+}
+.box strong{
+ font-size:12px;
+ word-break:break-all
+}
+.online{color:#4ee38a}
+.offline{color:#ff6262}
+.head,.row{
+ display:grid;
+ grid-template-columns:1.65fr .55fr .7fr .5fr;
+ gap:5px;
+ padding:12px 5px;
+ border-bottom:1px solid #18202a;
+ font-size:10px;
+ align-items:center
+}
+.head{
+ color:#687486;
+ font-size:8px
+}
+.row:last-child{border:0}
+.issue{word-break:break-all}
+.rb{color:#ff9841}
+.rs{color:#58a8ff}
+.win{color:#4ee38a;font-weight:bold}
+.loss{color:#ff6262;font-weight:bold}
+.skip{color:#7c8796}
+.login input{
+ width:100%;
+ background:#080c12;
+ color:white;
+ border:1px solid #303b49;
+ padding:15px;
+ border-radius:14px;
+ outline:none
+}
+button{
+ width:100%;
+ border:0;
+ padding:15px;
+ border-radius:14px;
+ margin-top:10px;
+ background:#ff9841;
+ font-weight:900
+}
+#app{display:none}
+</style>
+</head>
 
-        COUNT(*) FILTER (
-          WHERE actual_result = 'LOSS'
-        )::int AS losses,
+<body>
+<div class="wrap">
 
-        COUNT(*) FILTER (
-          WHERE actual_result = 'SKIPPED'
-        )::int AS skipped,
+<div class="card">
+ <div class="logo">DY <b>AI</b> WinGo</div>
+ <div class="sub">30 SECOND ANALYSIS ENGINE</div>
+</div>
 
-        COUNT(*) FILTER (
-          WHERE actual_result IS NULL
-        )::int AS pending
-      FROM prediction_records
-    `);
+<div id="login" class="card center">
+ <h3>ACCESS KEY</h3>
+ <input id="key" placeholder="Enter access key">
+ <button onclick="login()">ENTER</button>
+ <p id="msg"></p>
+</div>
 
-  return {
-    ok: true,
+<div id="app">
 
-    keys:
-      keys.rows[0],
+<div class="card center">
+ <div class="label">NEXT PREDICTION</div>
 
-    predictions:
-      predictions.rows[0],
+ <div class="period-title">
+ PREDICTION PERIOD ID
+ </div>
 
-    live: {
-      source:
-        live.source,
+ <div id="target" class="period">--</div>
 
-      currentIssue:
-        live.currentIssue,
+ <div id="pred" class="pred wait">--</div>
 
-      latestCompletedIssue:
-        live.rows.length
-          ? live.rows[
-              live.rows.length - 1
-            ].issue
-          : null,
+ <div id="conf" class="conf">
+ Confidence --
+ </div>
 
-      rows:
-        live.rows.length,
+ <div id="signal" class="signal">
+ Waiting for analysis
+ </div>
+</div>
 
-      fetchedAt:
-        live.fetchedAt,
+<div class="card">
+ <h3>LIVE RESULT</h3>
 
-      ageMs:
-        live.fetchedAt
-          ? now() -
-            live.fetchedAt
-          : null,
+ <div class="grid">
 
-      healthy:
-        Boolean(
-          live.lastSuccess
-        ),
+  <div class="box">
+   <small>CURRENT ISSUE</small>
+   <strong id="current">--</strong>
+  </div>
 
-      error:
-        live.lastError
-    },
+  <div class="box">
+   <small>LAST NUMBER</small>
+   <strong id="number">--</strong>
+  </div>
 
-    model: {
-      version:
-        MODEL_VERSION,
+  <div class="box">
+   <small>RESULT</small>
+   <strong id="result">--</strong>
+  </div>
 
-      lastPredictionIssue:
-        runtime.lastPredictionIssue,
+ </div>
 
-      lastPredictionAt:
-        runtime.lastPredictionAt,
+ <p id="connection" class="center">
+ Connecting...
+ </p>
+</div>
 
-      lastAnalysisAt:
-        runtime.lastAnalysisAt
-    }
-  };
+<div class="card">
+ <div style="display:flex;justify-content:space-between">
+  <h3>LIVE HISTORY</h3>
+  <span style="color:#687486">LAST 30</span>
+ </div>
+
+ <div class="head">
+  <div>ISSUE</div>
+  <div>NUMBER</div>
+  <div>RESULT</div>
+  <div>W/L</div>
+ </div>
+
+ <div id="history"></div>
+</div>
+
+</div>
+</div>
+
+<script>
+let key =
+ localStorage.getItem("dy_key") || "";
+
+let device =
+ localStorage.getItem("dy_device");
+
+if(!device){
+ device =
+  crypto.randomUUID ?
+  crypto.randomUUID() :
+  "d-"+Date.now()+"-"+Math.random();
+
+ localStorage.setItem(
+  "dy_device",
+  device
+ );
 }
 
-/* =========================================================
-   STATIC FILES
-========================================================= */
+const $ = id =>
+ document.getElementById(id);
 
-const MIME = {
-  ".html":
-    "text/html",
-  ".css":
-    "text/css",
-  ".js":
-    "application/javascript",
-  ".json":
-    "application/json",
-  ".png":
-    "image/png",
-  ".jpg":
-    "image/jpeg",
-  ".jpeg":
-    "image/jpeg",
-  ".gif":
-    "image/gif",
-  ".svg":
-    "image/svg+xml",
-  ".ico":
-    "image/x-icon",
-  ".webp":
-    "image/webp",
-  ".mp3":
-    "audio/mpeg",
-  ".wav":
-    "audio/wav"
-};
+let lastTarget = null;
 
-function serveStatic(
-  req,
-  res,
-  pathname
-) {
-  let file;
+async function login(){
+ const k =
+  $("key").value.trim();
 
-  if (
-    pathname === "/" ||
-    pathname === ""
-  ) {
-    file =
-      path.join(
-        process.cwd(),
-        "prediction.html"
-      );
-  } else {
-    const clean =
-      pathname
-        .replace(/^\/+/, "")
-        .replace(/\.\./g, "");
+ if(!k){
+  $("msg").textContent =
+   "Enter access key";
+  return;
+ }
 
-    file =
-      path.join(
-        process.cwd(),
-        clean
-      );
-  }
-
-  if (!fs.existsSync(file)) {
-    sendText(
-      res,
-      404,
-      "Not Found"
-    );
-
-    return;
-  }
-
-  const ext =
-    path.extname(file)
-      .toLowerCase();
-
-  const type =
-    MIME[ext] ||
-    "application/octet-stream";
-
-  /*
-    MP3 range support.
-  */
-
-  if (ext === ".mp3") {
-    const stat =
-      fs.statSync(file);
-
-    const total =
-      stat.size;
-
-    const range =
-      req.headers.range;
-
-    if (range) {
-      const match =
-        /bytes=(\d*)-(\d*)/.exec(
-          range
-        );
-
-      if (match) {
-        const start =
-          match[1]
-            ? Number(
-                match[1]
-              )
-            : 0;
-
-        const end =
-          match[2]
-            ? Number(
-                match[2]
-              )
-            : total - 1;
-
-        const safeStart =
-          clamp(
-            start,
-            0,
-            total - 1
-          );
-
-        const safeEnd =
-          clamp(
-            end,
-            safeStart,
-            total - 1
-          );
-
-        const length =
-          safeEnd -
-          safeStart +
-          1;
-
-        res.writeHead(
-          206,
-          {
-            "Content-Type":
-              type,
-
-            "Content-Range":
-              `bytes ${safeStart}-${safeEnd}/${total}`,
-
-            "Accept-Ranges":
-              "bytes",
-
-            "Content-Length":
-              length
-          }
-        );
-
-        fs.createReadStream(
-          file,
-          {
-            start:
-              safeStart,
-            end:
-              safeEnd
-          }
-        ).pipe(res);
-
-        return;
-      }
+ try{
+  const r =
+   await fetch(
+    "/api/key/check",
+    {
+     headers:{
+      "X-Access-Key":k,
+      "X-Device-Id":device
+     },
+     cache:"no-store"
     }
+   );
 
-    res.writeHead(
-      200,
-      {
-        "Content-Type":
-          type,
+  const d =
+   await r.json();
 
-        "Content-Length":
-          total,
-
-        "Accept-Ranges":
-          "bytes"
-      }
-    );
-
-    fs.createReadStream(
-      file
-    ).pipe(res);
-
-    return;
+  if(!d.ok){
+   $("msg").textContent =
+    d.error || "Access denied";
+   return;
   }
 
-  fs.readFile(
-    file,
-    (err, data) => {
-      if (err) {
-        sendText(
-          res,
-          500,
-          "FILE_READ_ERROR"
-        );
+  key=k;
 
-        return;
-      }
-
-      res.writeHead(
-        200,
-        {
-          "Content-Type":
-            `${type}; charset=utf-8`,
-          "Cache-Control":
-            "no-cache"
-        }
-      );
-
-      res.end(data);
-    }
+  localStorage.setItem(
+   "dy_key",
+   key
   );
+
+  $("login").style.display="none";
+  $("app").style.display="block";
+
+  load();
+
+ }catch(e){
+  $("msg").textContent =
+   "Server error";
+ }
 }
 
-/* =========================================================
+async function autoLogin(){
+ if(!key)return;
+
+ try{
+  const r =
+   await fetch(
+    "/api/key/check",
+    {
+     headers:{
+      "X-Access-Key":key,
+      "X-Device-Id":device
+     },
+     cache:"no-store"
+    }
+   );
+
+  const d =
+   await r.json();
+
+  if(d.ok){
+   $("login").style.display="none";
+   $("app").style.display="block";
+   load();
+  }
+ }catch(e){}
+}
+
+async function load(){
+ try{
+  const r =
+   await fetch(
+    "/api/state?t="+Date.now(),
+    {
+     headers:{
+      "X-Access-Key":key,
+      "X-Device-Id":device
+     },
+     cache:"no-store"
+    }
+   );
+
+  const d =
+   await r.json();
+
+  if(!d.ok)return;
+
+  const s=d.source||{};
+  const m=d.model||{};
+
+  $("current").textContent =
+   s.currentIssue || "--";
+
+  $("number").textContent =
+   s.latestNumber ?? "--";
+
+  $("result").textContent =
+   s.latestResult || "--";
+
+  $("target").textContent =
+   m.targetIssue || "--";
+
+  if(m.prediction==="BIG"){
+   $("pred").textContent="BIG";
+   $("pred").className="pred big";
+  }
+  else if(m.prediction==="SMALL"){
+   $("pred").textContent="SMALL";
+   $("pred").className="pred small";
+  }
+  else{
+   $("pred").textContent="--";
+   $("pred").className="pred wait";
+  }
+
+  $("conf").textContent =
+   m.prediction ?
+   "Confidence "+m.confidence+"%" :
+   "Confidence --";
+
+  $("signal").textContent =
+   m.signal ||
+   "Waiting for analysis";
+
+  const age=s.ageMs;
+
+  if(
+   s.healthy &&
+   (age===null || age<5000)
+  ){
+   $("connection").textContent =
+    "● LIVE • "+(s.name||"API");
+
+   $("connection").className =
+    "center online";
+  }
+  else if(s.healthy){
+   $("connection").textContent =
+    "API connected • updating";
+
+   $("connection").className =
+    "center";
+  }
+  else{
+   $("connection").textContent =
+    "Waiting for live API";
+
+   $("connection").className =
+    "center offline";
+  }
+
+  renderHistory(
+   d.history||[]
+  );
+
+ }catch(e){
+  $("connection").textContent =
+   "Connection error";
+ }
+}
+
+function renderHistory(a){
+ $("history").innerHTML =
+  a.map(x=>{
+
+   const rc =
+    x.result==="BIG" ?
+    "rb" :
+    "rs";
+
+   let out="--";
+   let oc="";
+
+   if(x.outcome==="WIN"){
+    out="WIN";
+    oc="win";
+   }
+
+   if(x.outcome==="LOSS"){
+    out="LOSS";
+    oc="loss";
+   }
+
+   if(x.outcome==="SKIPPED"){
+    out="SKIP";
+    oc="skip";
+   }
+
+   return \`
+    <div class="row">
+     <div class="issue">\${esc(x.issue)}</div>
+     <div>\${x.number ?? "--"}</div>
+     <div class="\${rc}">
+      \${x.result || "--"}
+     </div>
+     <div class="\${oc}">
+      \${out}
+     </div>
+    </div>
+   \`;
+  }).join("");
+}
+
+function esc(x){
+ return String(x)
+  .replace(/&/g,"&amp;")
+  .replace(/</g,"&lt;")
+  .replace(/>/g,"&gt;")
+  .replace(/"/g,"&quot;")
+  .replace(/'/g,"&#039;");
+}
+
+setInterval(()=>{
+ if(key)load();
+},1000);
+
+autoLogin();
+</script>
+</body>
+</html>
+`;
+
+/* =========================
    SERVER
-========================================================= */
+========================= */
 
 const server =
   http.createServer(
-    async (
-      req,
-      res
-    ) => {
+    async (req, res) => {
+
       try {
-        /*
-          CORS
-        */
 
-        if (
-          req.method ===
-          "OPTIONS"
-        ) {
-          res.writeHead(
-            204,
-            {
-              "Access-Control-Allow-Origin":
-                "*",
-
-              "Access-Control-Allow-Headers":
-                "Content-Type, X-Access-Key, X-Device-Id, X-Admin-Key",
-
-              "Access-Control-Allow-Methods":
-                "GET,POST,DELETE,OPTIONS"
-            }
-          );
-
-          res.end();
-
-          return;
+        if(req.method === "OPTIONS"){
+          res.writeHead(204,{
+            "Access-Control-Allow-Origin":"*",
+            "Access-Control-Allow-Headers":
+              "Content-Type,X-Access-Key,X-Device-Id,X-Admin-Key",
+            "Access-Control-Allow-Methods":
+              "GET,POST,DELETE,OPTIONS"
+          });
+          return res.end();
         }
 
-        const url =
+        const u =
           new URL(
             req.url,
-            `http://${req.headers.host || "localhost"}`
+            "http://" +
+            (req.headers.host || "localhost")
           );
 
-        const pathname =
-          url.pathname;
+        const p=u.pathname;
 
-        /* ===============================================
-           HEALTH
-        =============================================== */
+        /* HOME */
 
-        if (
-          pathname ===
-            "/health"
-        ) {
-          sendJSON(
+        if(p === "/" || p === "/prediction.html"){
+          res.writeHead(200,{
+            "Content-Type":
+              "text/html; charset=utf-8",
+            "Cache-Control":"no-cache"
+          });
+
+          return res.end(HTML);
+        }
+
+        /* HEALTH */
+
+        if(p === "/health"){
+          return json(res,200,{
+            ok:true,
+            model:MODEL,
+            source:live.source,
+            currentIssue:live.current,
+            latestIssue:
+              live.rows.at(-1)?.issue || null,
+            rows:live.rows.length
+          });
+        }
+
+        /* KEY CHECK */
+
+        if(
+          p === "/api/key/check" &&
+          req.method === "GET"
+        ){
+          const a =
+            await auth(req);
+
+          return json(
+            res,
+            a.ok ? 200 : 401,
+            a
+          );
+        }
+
+        /* STATE */
+
+        if(
+          p === "/api/state" &&
+          req.method === "GET"
+        ){
+          const a =
+            await auth(req);
+
+          if(!a.ok)
+            return json(res,401,a);
+
+          return json(
             res,
             200,
-            {
-              ok: true,
-              service:
-                "DY AI WinGo",
-              version:
-                MODEL_VERSION,
-              uptime:
-                process.uptime(),
-              time:
-                now()
-            }
+            await state()
           );
-
-          return;
         }
 
-        /* ===============================================
-           KEY CHECK
-        =============================================== */
+        /* ADMIN STATUS */
 
-        if (
-          pathname ===
-            "/api/key/check" &&
-          req.method ===
-            "GET"
-        ) {
-          const auth =
-            await validateAccess(
-              req
-            );
+        if(
+          p === "/api/admin/status"
+        ){
+          if(!admin(req))
+            return json(res,401,{
+              ok:false,
+              error:"ADMIN_AUTH_REQUIRED"
+            });
 
-          sendJSON(
-            res,
-            auth.ok
-              ? 200
-              : 401,
-            auth
-          );
-
-          return;
-        }
-
-        /* ===============================================
-           STATE
-        =============================================== */
-
-        if (
-          pathname ===
-            "/api/state" &&
-          req.method ===
-            "GET"
-        ) {
-          const auth =
-            await validateAccess(
-              req
-            );
-
-          if (!auth.ok) {
-            sendJSON(
-              res,
-              401,
-              auth
-            );
-
-            return;
-          }
-
-          sendJSON(
-            res,
-            200,
-            await buildState()
-          );
-
-          return;
-        }
-
-        /* ===============================================
-           HISTORY
-        =============================================== */
-
-        if (
-          pathname ===
-            "/api/history" &&
-          req.method ===
-            "GET"
-        ) {
-          const auth =
-            await validateAccess(
-              req
-            );
-
-          if (!auth.ok) {
-            sendJSON(
-              res,
-              401,
-              auth
-            );
-
-            return;
-          }
-
-          sendJSON(
-            res,
-            200,
-            {
-              ok: true,
-              history:
-                await getPredictions(
-                  100
-                )
-            }
-          );
-
-          return;
-        }
-
-        /* ===============================================
-           ADMIN AUTH
-        =============================================== */
-
-        if (
-          pathname.startsWith(
-            "/api/admin/"
-          )
-        ) {
-          if (!isAdmin(req)) {
-            sendJSON(
-              res,
-              401,
-              {
-                ok: false,
-                error:
-                  "ADMIN_AUTH_REQUIRED"
-              }
-            );
-
-            return;
-          }
-        }
-
-        /* ===============================================
-           ADMIN STATUS
-        =============================================== */
-
-        if (
-          pathname ===
-            "/api/admin/status" &&
-          req.method ===
-            "GET"
-        ) {
-          sendJSON(
-            res,
-            200,
-            await adminStatus()
-          );
-
-          return;
-        }
-
-        /* ===============================================
-           ADMIN PING
-        =============================================== */
-
-        if (
-          pathname ===
-            "/api/admin/ping" &&
-          req.method ===
-            "GET"
-        ) {
-          sendJSON(
-            res,
-            200,
-            {
-              ok: true,
-              admin: true,
-              time:
-                now()
-            }
-          );
-
-          return;
-        }
-
-        /* ===============================================
-           LIVE API TEST
-        =============================================== */
-
-        if (
-          pathname ===
-            "/api/admin/live-test" &&
-          req.method ===
-            "GET"
-        ) {
-          if (!LIVE_API_URL) {
-            sendJSON(
-              res,
-              400,
-              {
-                ok: false,
-                error:
-                  "LIVE_API_URL_NOT_CONFIGURED"
-              }
-            );
-
-            return;
-          }
-
-          try {
-            const data =
-              await fetchLiveAPI();
-
-            sendJSON(
-              res,
-              200,
-              {
-                ok: true,
-                source:
-                  data.source,
-                currentIssue:
-                  data.currentIssue,
-                rows:
-                  data.rows.length,
-                latest:
-                  data.rows.length
-                    ? data.rows[
-                        data.rows.length -
-                          1
-                      ]
-                    : null
-              }
-            );
-          } catch (err) {
-            sendJSON(
-              res,
-              500,
-              {
-                ok: false,
-                error:
-                  err.message
-              }
-            );
-          }
-
-          return;
-        }
-
-        /* ===============================================
-           WINGOBOT TEST
-        =============================================== */
-
-        if (
-          pathname ===
-            "/api/admin/wingo-test" &&
-          req.method ===
-            "GET"
-        ) {
-          try {
-            const data =
-              await fetchWingoBot();
-
-            sendJSON(
-              res,
-              200,
-              {
-                ok: true,
-                source:
-                  data.source,
-                currentIssue:
-                  data.currentIssue,
-                rows:
-                  data.rows.length,
-                latest:
-                  data.rows.length
-                    ? data.rows[
-                        data.rows.length -
-                          1
-                      ]
-                    : null
-              }
-            );
-          } catch (err) {
-            sendJSON(
-              res,
-              500,
-              {
-                ok: false,
-                error:
-                  err.message
-              }
-            );
-          }
-
-          return;
-        }
-
-        /* ===============================================
-           MODEL TEST
-        =============================================== */
-
-        if (
-          pathname ===
-            "/api/admin/model-test" &&
-          req.method ===
-            "GET"
-        ) {
-          sendJSON(
-            res,
-            200,
-            {
-              ok: true,
-              analysis:
-                fullAnalysis(
-                  cleanRows(
-                    live.rows
-                  )
-                )
-            }
-          );
-
-          return;
-        }
-
-        /* ===============================================
-           ADMIN PREDICTIONS
-        =============================================== */
-
-        if (
-          pathname ===
-            "/api/admin/predictions" &&
-          req.method ===
-            "GET"
-        ) {
-          sendJSON(
-            res,
-            200,
-            {
-              ok: true,
-              predictions:
-                await getPredictions(
-                  200
-                )
-            }
-          );
-
-          return;
-        }
-
-        /* ===============================================
-           ADMIN KEYS - GET
-        =============================================== */
-
-        if (
-          pathname ===
-            "/api/admin/keys" &&
-          req.method ===
-            "GET"
-        ) {
-          const r =
-            await pool.query(`
+          const k =
+            await db.query(`
               SELECT
-                id,
-                access_key,
-                device_id,
-                created_at,
-                last_seen
+               COUNT(*)::int total,
+               COUNT(*) FILTER(
+                WHERE device_id IS NULL
+               )::int unused
+              FROM access_keys
+            `);
+
+          const pr =
+            await db.query(`
+              SELECT
+               COUNT(*)::int total,
+               COUNT(*) FILTER(
+                WHERE actual_result='WIN'
+               )::int wins,
+               COUNT(*) FILTER(
+                WHERE actual_result='LOSS'
+               )::int losses,
+               COUNT(*) FILTER(
+                WHERE actual_result IS NULL
+               )::int pending
+              FROM prediction_records
+            `);
+
+          return json(res,200,{
+            ok:true,
+            keys:k.rows[0],
+            predictions:pr.rows[0],
+            live:{
+              source:live.source,
+              currentIssue:live.current,
+              latestIssue:
+                live.rows.at(-1)?.issue || null,
+              rows:live.rows.length,
+              ageMs:
+                live.fetched
+                  ? now()-live.fetched
+                  : null,
+              error:live.error
+            }
+          });
+        }
+
+        /* ADMIN LIVE TEST */
+
+        if(
+          p === "/api/admin/live-test"
+        ){
+          if(!admin(req))
+            return json(res,401,{
+              ok:false,
+              error:"ADMIN_AUTH_REQUIRED"
+            });
+
+          try{
+            const x =
+              LIVE_API_URL ?
+              await customAPI() :
+              await wingoAPI();
+
+            return json(res,200,{
+              ok:true,
+              source:x.source,
+              currentIssue:x.current,
+              latest:x.rows.at(-1)||null,
+              rows:x.rows.length
+            });
+          }catch(e){
+            return json(res,500,{
+              ok:false,
+              error:e.message
+            });
+          }
+        }
+
+        /* ADMIN MODEL TEST */
+
+        if(
+          p === "/api/admin/model-test"
+        ){
+          if(!admin(req))
+            return json(res,401,{
+              ok:false,
+              error:"ADMIN_AUTH_REQUIRED"
+            });
+
+          return json(res,200,{
+            ok:true,
+            analysis:
+              analyze(live.rows)
+          });
+        }
+
+        /* ADMIN PREDICTIONS */
+
+        if(
+          p === "/api/admin/predictions"
+        ){
+          if(!admin(req))
+            return json(res,401,{
+              ok:false,
+              error:"ADMIN_AUTH_REQUIRED"
+            });
+
+          const r =
+            await db.query(`
+              SELECT *
+              FROM prediction_records
+              ORDER BY id DESC
+              LIMIT 200
+            `);
+
+          return json(res,200,{
+            ok:true,
+            predictions:r.rows
+          });
+        }
+
+        /* CREATE KEY */
+
+        if(
+          p === "/api/admin/keys" &&
+          req.method === "POST"
+        ){
+          if(!admin(req))
+            return json(res,401,{
+              ok:false,
+              error:"ADMIN_AUTH_REQUIRED"
+            });
+
+          const key =
+            "DY-" +
+            crypto
+              .randomBytes(8)
+              .toString("hex")
+              .toUpperCase();
+
+          const r =
+            await db.query(
+              `
+              INSERT INTO access_keys
+              (access_key,created_at)
+              VALUES($1,$2)
+              RETURNING *
+              `,
+              [key,now()]
+            );
+
+          return json(res,200,{
+            ok:true,
+            key:r.rows[0]
+          });
+        }
+
+        /* LIST KEYS */
+
+        if(
+          p === "/api/admin/keys" &&
+          req.method === "GET"
+        ){
+          if(!admin(req))
+            return json(res,401,{
+              ok:false,
+              error:"ADMIN_AUTH_REQUIRED"
+            });
+
+          const r =
+            await db.query(`
+              SELECT
+               id,
+               access_key,
+               device_id,
+               created_at,
+               last_seen
               FROM access_keys
               ORDER BY id DESC
             `);
 
-          sendJSON(
-            res,
-            200,
-            {
-              ok: true,
-              keys:
-                r.rows
-            }
-          );
-
-          return;
+          return json(res,200,{
+            ok:true,
+            keys:r.rows
+          });
         }
 
-        /* ===============================================
-           ADMIN KEYS - CREATE
-        =============================================== */
+        /* RESET DEVICE */
 
-        if (
-          pathname ===
-            "/api/admin/keys" &&
-          req.method ===
-            "POST"
-        ) {
-          let body;
-
-          try {
-            body =
-              await readBody(
-                req
-              );
-          } catch (err) {
-            sendJSON(
-              res,
-              400,
-              {
-                ok: false,
-                error:
-                  err.message
-              }
-            );
-
-            return;
-          }
-
-          const requested =
-            String(
-              body.access_key ||
-              body.key ||
-              ""
-            ).trim();
-
-          const accessKey =
-            requested ||
-            generateKey();
-
-          if (
-            accessKey.length < 4
-          ) {
-            sendJSON(
-              res,
-              400,
-              {
-                ok: false,
-                error:
-                  "KEY_TOO_SHORT"
-              }
-            );
-
-            return;
-          }
-
-          try {
-            const r =
-              await pool.query(
-                `
-                INSERT INTO access_keys
-                (
-                  access_key,
-                  created_at
-                )
-                VALUES
-                ($1,$2)
-                RETURNING *
-                `,
-                [
-                  accessKey,
-                  now()
-                ]
-              );
-
-            sendJSON(
-              res,
-              200,
-              {
-                ok: true,
-                key:
-                  r.rows[0]
-              }
-            );
-          } catch (err) {
-            if (
-              err.code ===
-              "23505"
-            ) {
-              sendJSON(
-                res,
-                409,
-                {
-                  ok: false,
-                  error:
-                    "KEY_ALREADY_EXISTS"
-                }
-              );
-            } else {
-              throw err;
-            }
-          }
-
-          return;
-        }
-
-        /* ===============================================
-           ADMIN KEYS - DELETE
-        =============================================== */
-
-        if (
-          pathname ===
-            "/api/admin/keys" &&
-          req.method ===
-            "DELETE"
-        ) {
-          const id =
-            url.searchParams.get(
-              "id"
-            );
+        if(
+          p === "/api/admin/reset-device" &&
+          req.method === "POST"
+        ){
+          if(!admin(req))
+            return json(res,401,{
+              ok:false,
+              error:"ADMIN_AUTH_REQUIRED"
+            });
 
           const key =
-            url.searchParams.get(
-              "key"
-            );
+            new URL(
+              req.url,
+              "http://localhost"
+            ).searchParams.get("key");
 
-          if (
-            !id &&
-            !key
-          ) {
-            sendJSON(
-              res,
-              400,
-              {
-                ok: false,
-                error:
-                  "ID_OR_KEY_REQUIRED"
-              }
-            );
+          if(!key)
+            return json(res,400,{
+              ok:false,
+              error:"KEY_REQUIRED"
+            });
 
-            return;
-          }
-
-          if (id) {
-            await pool.query(
-              `
-              DELETE FROM access_keys
-              WHERE id = $1
-              `,
-              [id]
-            );
-          } else {
-            await pool.query(
-              `
-              DELETE FROM access_keys
-              WHERE access_key = $1
-              `,
-              [key]
-            );
-          }
-
-          sendJSON(
-            res,
-            200,
-            {
-              ok: true
-            }
+          await db.query(
+            `
+            UPDATE access_keys
+            SET device_id=NULL
+            WHERE access_key=$1
+            `,
+            [key]
           );
 
-          return;
+          return json(res,200,{
+            ok:true
+          });
         }
 
-        /* ===============================================
-           RESET DEVICE
-        =============================================== */
+        return json(res,404,{
+          ok:false,
+          error:"NOT_FOUND"
+        });
 
-        if (
-          pathname ===
-            "/api/admin/reset-device" &&
-          req.method ===
-            "POST"
-        ) {
-          let body;
+      } catch(e) {
 
-          try {
-            body =
-              await readBody(
-                req
-              );
-          } catch (err) {
-            sendJSON(
-              res,
-              400,
-              {
-                ok: false,
-                error:
-                  err.message
-              }
-            );
-
-            return;
-          }
-
-          const id =
-            body.id;
-
-          const key =
-            body.access_key ||
-            body.key;
-
-          if (
-            !id &&
-            !key
-          ) {
-            sendJSON(
-              res,
-              400,
-              {
-                ok: false,
-                error:
-                  "ID_OR_KEY_REQUIRED"
-              }
-            );
-
-            return;
-          }
-
-          if (id) {
-            await pool.query(
-              `
-              UPDATE access_keys
-              SET device_id = NULL
-              WHERE id = $1
-              `,
-              [id]
-            );
-          } else {
-            await pool.query(
-              `
-              UPDATE access_keys
-              SET device_id = NULL
-              WHERE access_key = $1
-              `,
-              [key]
-            );
-          }
-
-          sendJSON(
-            res,
-            200,
-            {
-              ok: true
-            }
-          );
-
-          return;
-        }
-
-        /* ===============================================
-           STATIC
-        =============================================== */
-
-        serveStatic(
-          req,
-          res,
-          pathname
-        );
-
-      } catch (err) {
         console.error(
           "SERVER ERROR:",
-          err
+          e
         );
 
-        if (
-          !res.headersSent
-        ) {
-          sendJSON(
-            res,
-            500,
-            {
-              ok: false,
-              error:
-                "INTERNAL_SERVER_ERROR",
-              message:
-                err.message
-            }
-          );
-        } else {
-          res.end();
-        }
+        return json(res,500,{
+          ok:false,
+          error:"SERVER_ERROR",
+          message:e.message
+        });
       }
     }
   );
 
-/* =========================================================
-   LIVE WORKER
-========================================================= */
+/* =========================
+   WORKER
+========================= */
 
-let workerBusy = false;
+let worker = false;
 
-async function liveWorker() {
-  if (workerBusy) {
-    return;
-  }
+async function tick(){
 
-  workerBusy = true;
+  if(worker)return;
 
-  try {
-    await refreshLive();
+  worker=true;
 
-    if (
-      live.rows.length
-    ) {
-      await runModel();
-    }
-  } catch (err) {
+  try{
+    await refresh();
+
+    if(live.rows.length)
+      await modelWorker();
+
+  }catch(e){
     console.error(
-      "WORKER ERROR:",
-      err.message
+      "WORKER:",
+      e.message
     );
-  } finally {
-    workerBusy = false;
   }
+
+  worker=false;
 }
 
-/* =========================================================
+/* =========================
    START
-========================================================= */
+========================= */
 
-async function start() {
+async function start(){
+
   await initDB();
 
   server.listen(
     PORT,
     "0.0.0.0",
-    () => {
+    ()=>{
       console.log(
         "================================"
       );
 
       console.log(
-        `DY AI SERVER : ${PORT}`
+        "DY AI WIN GO LIVE"
       );
 
       console.log(
-        `MODEL : ${MODEL_VERSION}`
+        "MODEL:",
+        MODEL
       );
 
       console.log(
-        `POLL : ${POLL_MS}ms`
+        "PORT:",
+        PORT
       );
 
       console.log(
-        `COOLDOWN : ${COOLDOWN_ROUNDS}`
+        "POLL:",
+        POLL,
+        "ms"
       );
 
       console.log(
-        `LIVE API : ${
-          LIVE_API_URL
-            ? "CONFIGURED"
-            : "NOT CONFIGURED"
-        }`
+        "LIVE API:",
+        LIVE_API_URL
+          ? "YES"
+          : "NO"
       );
 
       console.log(
-        `WINGOBOT : ${
-          WINGOBOT_TOKEN
-            ? "CONFIGURED"
-            : "NOT CONFIGURED"
-        }`
+        "WINGOBOT:",
+        WINGOBOT_TOKEN
+          ? "YES"
+          : "NO"
       );
 
       console.log(
         "================================"
       );
 
-      /*
-        Initial live request.
-      */
-
-      liveWorker();
-
-      /*
-        Continue live polling.
-      */
+      tick();
 
       setInterval(
-        liveWorker,
-        POLL_MS
+        tick,
+        POLL
       );
     }
-  );
-}
-
-/* =========================================================
-   SHUTDOWN
-========================================================= */
-
-async function shutdown(
-  signal
-) {
-  console.log(
-    `${signal} received`
-  );
-
-  try {
-    await pool.end();
-  } catch (err) {
-    console.error(
-      "DB CLOSE:",
-      err.message
-    );
-  }
-
-  server.close(
-    () => {
-      process.exit(0);
-    }
-  );
-
-  setTimeout(
-    () => {
-      process.exit(1);
-    },
-    5000
   );
 }
 
 process.on(
   "SIGTERM",
-  () =>
-    shutdown("SIGTERM")
+  async ()=>{
+    await db.end();
+    process.exit(0);
+  }
 );
 
 process.on(
   "SIGINT",
-  () =>
-    shutdown("SIGINT")
-);
-
-process.on(
-  "unhandledRejection",
-  err => {
-    console.error(
-      "UNHANDLED REJECTION:",
-      err
-    );
+  async ()=>{
+    await db.end();
+    process.exit(0);
   }
 );
 
-process.on(
-  "uncaughtException",
-  err => {
-    console.error(
-      "UNCAUGHT EXCEPTION:",
-      err
-    );
-  }
-);
+start().catch(e=>{
+  console.error(
+    "STARTUP FAILED:",
+    e
+  );
 
-/* =========================================================
-   RUN
-========================================================= */
-
-start().catch(
-  err => {
-    console.error(
-      "STARTUP FAILED:",
-      err
-    );
-
-    process.exit(1);
-  }
-);
+  process.exit(1);
+});
