@@ -1,6 +1,8 @@
 {
   "name": "dy-ai-wingo",
   "version": "1.0.0",
+  "description": "DY AI Wingo 1 Minute Prediction",
+  "private": true,
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
