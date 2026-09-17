@@ -7,594 +7,209 @@
 
 <meta
   name="viewport"
-  content="width=device-width, initial-scale=1.0"
+  content="width=device-width,initial-scale=1"
 >
 
-<title>DY AI Admin Panel</title>
+<title>DY AI Admin</title>
 
 <style>
 
-*{
-  box-sizing:border-box;
-  margin:0;
-  padding:0;
-}
-
 body{
-
+  margin:0;
   min-height:100vh;
-
-  background:
-    radial-gradient(
-      circle at top,
-      #111827,
-      #05070d 50%,
-      #020308
-    );
-
+  background:#05070d;
   color:#fff;
-
-  font-family:
-    Arial,
-    Helvetica,
-    sans-serif;
-
+  font-family:Arial,sans-serif;
 }
 
-
-.container{
-
-  width:100%;
-
-  max-width:520px;
-
-  margin:auto;
-
-  padding:20px;
-
-}
-
-
-.header{
-
-  text-align:center;
-
-  margin:25px 0;
-
-}
-
-
-.header h1{
-
-  font-size:27px;
-
-  font-weight:900;
-
-}
-
-
-.header p{
-
-  margin-top:8px;
-
-  font-size:11px;
-
-  opacity:.5;
-
-}
-
-
-.card{
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(18,24,38,.98),
-      rgba(7,10,18,.98)
-    );
-
-  border:
-    1px solid
-    rgba(120,140,180,.2);
-
+.box{
+  width:calc(100% - 30px);
+  max-width:500px;
+  margin:50px auto;
+  background:#0d111c;
+  border:1px solid #20283b;
   border-radius:20px;
-
-  padding:20px;
-
-  margin-bottom:15px;
-
+  padding:22px;
 }
 
-
-.label{
-
-  font-size:11px;
-
-  letter-spacing:1px;
-
-  opacity:.55;
-
-  margin-bottom:9px;
-
+h2{
+  text-align:center;
 }
 
-
-input{
-
+input,
+button{
   width:100%;
-
   padding:14px;
-
-  border-radius:12px;
-
-  border:
-    1px solid
-    #30394c;
-
+  margin-top:12px;
+  border-radius:11px;
+  border:1px solid #30394d;
   background:#080b13;
-
-  color:#fff;
-
-  outline:none;
-
-  font-size:14px;
-
+  color:white;
+  box-sizing:border-box;
 }
-
-
-input:focus{
-
-  border-color:#667da5;
-
-}
-
 
 button{
-
-  width:100%;
-
-  padding:14px;
-
-  margin-top:12px;
-
-  border:0;
-
-  border-radius:12px;
-
-  background:#ffffff;
-
+  background:white;
   color:#05070d;
-
-  font-size:14px;
-
   font-weight:900;
-
   cursor:pointer;
-
 }
-
-
-button:active{
-
-  transform:scale(.98);
-
-}
-
-
-.result{
-
-  margin-top:15px;
-
-  padding:14px;
-
-  border-radius:12px;
-
-  text-align:center;
-
-  font-weight:800;
-
-  font-size:13px;
-
-}
-
-
-.success{
-
-  background:
-    rgba(50,255,130,.08);
-
-  border:
-    1px solid
-    rgba(50,255,130,.2);
-
-  color:#62ff9a;
-
-}
-
-
-.error{
-
-  background:
-    rgba(255,70,70,.08);
-
-  border:
-    1px solid
-    rgba(255,70,70,.2);
-
-  color:#ff6b6b;
-
-}
-
-
-.info{
-
-  background:
-    rgba(100,140,255,.08);
-
-  border:
-    1px solid
-    rgba(100,140,255,.2);
-
-  color:#9db5ff;
-
-}
-
 
 .stat{
-
   display:flex;
-
-  justify-content:
-    space-between;
-
-  align-items:center;
-
+  justify-content:space-between;
+  gap:10px;
   padding:13px 0;
-
-  border-bottom:
-    1px solid
-    rgba(255,255,255,.06);
-
+  border-bottom:1px solid #202534;
   font-size:13px;
-
 }
-
-
-.stat:last-child{
-
-  border-bottom:0;
-
-}
-
 
 .value{
-
   font-weight:900;
-
+  text-align:right;
+  word-break:break-all;
 }
 
-
-.live{
-
-  color:#62ff9a;
-
+.good{
+  color:#58ff91;
 }
-
 
 .bad{
-
-  color:#ff6b6b;
-
+  color:#ff5c5c;
 }
 
-
-.footer{
-
-  text-align:center;
-
-  margin-top:20px;
-
-  font-size:10px;
-
-  opacity:.35;
-
+#panel{
+  display:none;
 }
 
 </style>
 
 </head>
 
-
 <body>
 
+<div class="box">
 
-<div class="container">
+<h2>
+DY AI ADMIN
+</h2>
 
 
-  <!-- HEADER -->
+<div id="login">
 
-  <div class="header">
+<input
+  id="key"
+  type="password"
+  placeholder="Admin Key"
+>
 
-    <h1>
-      DY AI ADMIN
-    </h1>
 
-    <p>
-      LIVE PREDICTION CONTROL PANEL
-    </p>
+<button
+  onclick="login()"
+>
+LOGIN
+</button>
 
-  </div>
 
-
-
-  <!-- LOGIN -->
-
-  <div
-    id="loginCard"
-    class="card"
-  >
-
-    <div class="label">
-      ADMIN KEY
-    </div>
-
-
-    <input
-      id="adminKey"
-      type="password"
-      placeholder="Enter admin key"
-      autocomplete="off"
-    >
-
-
-    <button
-      onclick="login()"
-    >
-      LOGIN
-    </button>
-
-
-    <div
-      id="loginResult"
-    >
-    </div>
-
-  </div>
-
-
-
-  <!-- PANEL -->
-
-  <div
-    id="panel"
-    style="display:none"
-  >
-
-
-    <!-- SOURCE STATUS -->
-
-    <div class="card">
-
-      <div class="label">
-        API STATUS
-      </div>
-
-
-      <div class="stat">
-
-        <span>
-          Source
-        </span>
-
-        <span
-          id="source"
-          class="value"
-        >
-          --
-        </span>
-
-      </div>
-
-
-      <div class="stat">
-
-        <span>
-          Method
-        </span>
-
-        <span
-          id="method"
-          class="value"
-        >
-          --
-        </span>
-
-      </div>
-
-
-      <div class="stat">
-
-        <span>
-          Token
-        </span>
-
-        <span
-          id="token"
-          class="value"
-        >
-          --
-        </span>
-
-      </div>
-
-
-      <div class="stat">
-
-        <span>
-          Server
-        </span>
-
-        <span
-          id="serverStatus"
-          class="value"
-        >
-          --
-        </span>
-
-      </div>
-
-    </div>
-
-
-
-    <!-- LIVE DATA -->
-
-    <div class="card">
-
-      <div class="label">
-        LIVE DATA
-      </div>
-
-
-      <div class="stat">
-
-        <span>
-          Current Period
-        </span>
-
-        <span
-          id="currentPeriod"
-          class="value"
-        >
-          --
-        </span>
-
-      </div>
-
-
-      <div class="stat">
-
-        <span>
-          Prediction Period
-        </span>
-
-        <span
-          id="nextPeriod"
-          class="value"
-        >
-          --
-        </span>
-
-      </div>
-
-
-      <div class="stat">
-
-        <span>
-          Analysis
-        </span>
-
-        <span
-          id="analysis"
-          class="value"
-        >
-          --
-        </span>
-
-      </div>
-
-
-      <div class="stat">
-
-        <span>
-          Prediction
-        </span>
-
-        <span
-          id="prediction"
-          class="value"
-        >
-          --
-        </span>
-
-      </div>
-
-    </div>
-
-
-
-    <!-- REFRESH -->
-
-    <div class="card">
-
-      <div class="label">
-        CONTROL
-      </div>
-
-
-      <button
-        onclick="refreshNow()"
-      >
-        REFRESH STATUS
-      </button>
-
-
-      <button
-        onclick="logout()"
-      >
-        LOGOUT
-      </button>
-
-    </div>
-
-
-  </div>
-
-
-
-  <div class="footer">
-    DY AI • Server-side API configuration
-  </div>
-
+<div
+  id="message"
+>
+</div>
 
 </div>
 
 
+<div id="panel">
+
+<div class="stat">
+<span>API Status</span>
+<span
+id="apiStatus"
+class="value"
+>--</span>
+</div>
+
+<div class="stat">
+<span>Token</span>
+<span
+id="token"
+class="value"
+>--</span>
+</div>
+
+<div class="stat">
+<span>Current Period</span>
+<span
+id="current"
+class="value"
+>--</span>
+</div>
+
+<div class="stat">
+<span>Prediction Period</span>
+<span
+id="next"
+class="value"
+>--</span>
+</div>
+
+<div class="stat">
+<span>Analysis</span>
+<span
+id="analysis"
+class="value"
+>--</span>
+</div>
+
+<div class="stat">
+<span>Prediction</span>
+<span
+id="prediction"
+class="value"
+>--</span>
+</div>
+
+
+<button
+onclick="loadStatus()"
+>
+REFRESH
+</button>
+
+
+<button
+onclick="logout()"
+>
+LOGOUT
+</button>
+
+</div>
+
+</div>
+
 
 <script>
-
-/* =====================================================
-   LOGIN
-===================================================== */
 
 async function login(){
 
   const key =
-    document
-      .getElementById(
-        "adminKey"
-      )
-      .value
-      .trim();
+    document.getElementById(
+      "key"
+    ).value.trim();
 
 
-  const result =
-    document
-      .getElementById(
-        "loginResult"
-      );
+  const message =
+    document.getElementById(
+      "message"
+    );
 
 
   if(!key){
 
-    result.className =
-      "result error";
-
-    result.textContent =
+    message.textContent =
       "Enter admin key";
 
     return;
-
   }
 
 
@@ -603,9 +218,7 @@ async function login(){
     const response =
       await fetch(
         "/api/admin/check?key=" +
-        encodeURIComponent(
-          key
-        ) +
+        encodeURIComponent(key) +
         "&_=" +
         Date.now(),
         {
@@ -618,70 +231,47 @@ async function login(){
       await response.json();
 
 
-    if(
-      data.success
-    ){
+    if(data.success){
 
       sessionStorage.setItem(
         "dy_admin",
         "1"
       );
 
-
-      document
-        .getElementById(
-          "loginCard"
-        )
-        .style.display =
+      document.getElementById(
+        "login"
+      ).style.display =
         "none";
 
-
-      document
-        .getElementById(
-          "panel"
-        )
-        .style.display =
+      document.getElementById(
+        "panel"
+      ).style.display =
         "block";
-
 
       loadStatus();
 
-    }
+    }else{
 
-    else{
-
-      result.className =
-        "result error";
-
-      result.textContent =
+      message.textContent =
         "INVALID ADMIN KEY";
 
     }
 
-  }
+  }catch{
 
-  catch(error){
-
-    result.className =
-      "result error";
-
-    result.textContent =
-      "SERVER CONNECTION ERROR";
+    message.textContent =
+      "SERVER ERROR";
 
   }
 
 }
 
 
-/* =====================================================
-   LOAD STATUS
-===================================================== */
-
 async function loadStatus(){
 
   try{
 
-    const healthResponse =
+    const h =
       await fetch(
         "/api/health?_=" +
         Date.now(),
@@ -692,74 +282,52 @@ async function loadStatus(){
 
 
     const health =
-      await healthResponse.json();
+      await h.json();
 
 
-    document
-      .getElementById(
-        "source"
-      )
-      .textContent =
-      health.source ||
+    const api =
+      document.getElementById(
+        "apiStatus"
+      );
+
+
+    api.textContent =
+      health.sourceStatus ||
       "--";
 
 
-    document
-      .getElementById(
-        "method"
-      )
-      .textContent =
-      health.method ||
-      "--";
+    api.className =
+      "value " +
+      (
+        health.sourceStatus ===
+        "LIVE"
+          ? "good"
+          : "bad"
+      );
 
 
     const token =
-      document
-        .getElementById(
-          "token"
-        );
+      document.getElementById(
+        "token"
+      );
 
 
     token.textContent =
       health.tokenConfigured
         ? "CONFIGURED"
-        : "NOT CONFIGURED";
+        : "MISSING";
 
 
     token.className =
       "value " +
       (
         health.tokenConfigured
-          ? "live"
+          ? "good"
           : "bad"
       );
 
 
-    const serverStatus =
-      document
-        .getElementById(
-          "serverStatus"
-        );
-
-
-    serverStatus.textContent =
-      health.status ||
-      "--";
-
-
-    serverStatus.className =
-      "value " +
-      (
-        health.status ===
-        "LIVE"
-          ? "live"
-          : "bad"
-      );
-
-
-    /* LIVE STATE */
-
-    const stateResponse =
+    const r =
       await fetch(
         "/api/state?_=" +
         Date.now(),
@@ -769,105 +337,50 @@ async function loadStatus(){
       );
 
 
-    const state =
-      await stateResponse.json();
+    const data =
+      await r.json();
 
 
-    document
-      .getElementById(
-        "currentPeriod"
-      )
-      .textContent =
-      state.currentPeriod ||
-      "--";
+    document.getElementById(
+      "current"
+    ).textContent =
+      data.currentPeriod || "--";
 
 
-    document
-      .getElementById(
-        "nextPeriod"
-      )
-      .textContent =
-      state.nextPeriod ||
-      "--";
+    document.getElementById(
+      "next"
+    ).textContent =
+      data.predictionPeriod || "--";
 
 
-    const analysis =
-      state.analysis ||
-      {};
+    const a =
+      data.analysis || {};
 
 
-    document
-      .getElementById(
-        "analysis"
-      )
-      .textContent =
-      analysis.active
+    document.getElementById(
+      "analysis"
+    ).textContent =
+      a.active
         ? "RUNNING " +
-          analysis.remaining +
+          a.remaining +
           "s"
         : "READY";
 
 
-    document
-      .getElementById(
-        "prediction"
-      )
-      .textContent =
-      analysis.prediction ||
+    document.getElementById(
+      "prediction"
+    ).textContent =
+      a.prediction ||
       "WAITING";
 
+  }catch{
 
-  }
-
-  catch(error){
-
-    document
-      .getElementById(
-        "serverStatus"
-      )
-      .textContent =
+    document.getElementById(
+      "apiStatus"
+    ).textContent =
       "ERROR";
 
   }
-
-}
-
-
-/* =====================================================
-   REFRESH
-===================================================== */
-
-function refreshNow(){
-
-  loadStatus();
-
-}
-
-
-/* =====================================================
-   AUTO REFRESH
-===================================================== */
-
-let autoRefresh =
-  null;
-
-
-function startAutoRefresh(){
-
-  if(autoRefresh){
-
-    clearInterval(
-      autoRefresh
-    );
-
-  }
-
-
-  autoRefresh =
-    setInterval(
-      loadStatus,
-      1000
-    );
 
 }
 
@@ -878,15 +391,10 @@ function logout(){
     "dy_admin"
   );
 
-
   location.reload();
 
 }
 
-
-/* =====================================================
-   AUTO LOGIN SESSION
-===================================================== */
 
 if(
   sessionStorage.getItem(
@@ -894,35 +402,39 @@ if(
   ) === "1"
 ){
 
-  document
-    .getElementById(
-      "loginCard"
-    )
-    .style.display =
+  document.getElementById(
+    "login"
+  ).style.display =
     "none";
 
-
-  document
-    .getElementById(
-      "panel"
-    )
-    .style.display =
+  document.getElementById(
+    "panel"
+  ).style.display =
     "block";
-
 
   loadStatus();
 
 }
 
 
-/* =====================================================
-   START
-===================================================== */
+setInterval(
+  () => {
 
-startAutoRefresh();
+    if(
+      sessionStorage.getItem(
+        "dy_admin"
+      ) === "1"
+    ){
+
+      loadStatus();
+
+    }
+
+  },
+  1000
+);
 
 </script>
-
 
 </body>
 
