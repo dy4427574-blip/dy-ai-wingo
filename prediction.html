@@ -2,8 +2,13 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>DY AI WinGo Prediction</title>
+
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"
+>
+
+<title>DY AI • WinGo 1 Minute</title>
 
 <style>
 *{
@@ -12,309 +17,374 @@
   padding:0;
 }
 
+html,body{
+  width:100%;
+  min-height:100%;
+}
+
 body{
   background:#050711;
   color:#fff;
   font-family:Arial,sans-serif;
+  overflow-x:hidden;
 }
 
 .app{
+  width:100%;
   max-width:720px;
   margin:auto;
-  padding:14px;
+  padding:15px;
 }
+
+/* HEADER */
 
 .header{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  padding:10px 3px 20px;
+  padding:12px 3px 22px;
 }
 
 .logo{
-  font-size:29px;
+  font-size:31px;
   font-weight:900;
-  letter-spacing:4px;
+  letter-spacing:6px;
 }
 
-.sub{
-  color:#69748e;
+.subtitle{
+  margin-top:5px;
+  color:#69748f;
   font-size:9px;
   letter-spacing:3px;
-  margin-top:4px;
-}
-
-.live{
-  display:flex;
-  align-items:center;
-  gap:7px;
-  font-size:9px;
   font-weight:bold;
 }
 
-.dot{
-  width:9px;
-  height:9px;
-  border-radius:50%;
-  background:#35ef99;
-  box-shadow:0 0 14px #35ef99;
+.liveBox{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:10px;
+  font-weight:bold;
 }
 
-.off{
-  background:#ff4e67;
-  box-shadow:0 0 14px #ff4e67;
+.liveDot{
+  width:11px;
+  height:11px;
+  border-radius:50%;
+  background:#ff4965;
+  box-shadow:0 0 18px #ff4965;
 }
+
+.liveDot.online{
+  background:#32f49a;
+  box-shadow:0 0 18px #32f49a;
+}
+
+/* ERROR */
 
 .error{
   display:none;
-  padding:12px;
+  padding:13px;
   margin-bottom:14px;
-  border-radius:14px;
-  background:#260f18;
-  border:1px solid #642337;
-  color:#ff8395;
+  border-radius:15px;
+  background:#2a1019;
+  border:1px solid #743047;
+  color:#ff8499;
   font-size:10px;
-  word-break:break-word;
+  line-height:1.5;
 }
 
+/* CARD */
+
 .card{
-  background:#0c111f;
-  border:1px solid #202a42;
-  border-radius:22px;
-  padding:19px;
-  margin-bottom:14px;
+  background:#0d1220;
+  border:1px solid #202a43;
+  border-radius:24px;
+  padding:21px;
+  margin-bottom:15px;
+  box-shadow:
+    0 10px 35px rgba(0,0,0,.18);
 }
 
 .label{
-  color:#707b96;
+  color:#707b97;
   font-size:9px;
-  font-weight:bold;
   letter-spacing:3px;
+  font-weight:bold;
 }
 
+/* PERIOD */
+
 .period{
-  margin-top:13px;
-  font-size:24px;
+  margin-top:16px;
+  font-size:25px;
   font-weight:900;
+  letter-spacing:1px;
   word-break:break-all;
 }
 
 .next{
-  color:#69748e;
-  font-size:9px;
-  margin-top:6px;
+  margin-top:8px;
+  color:#707b97;
+  font-size:10px;
+  letter-spacing:.5px;
 }
 
-.result{
+/* LATEST */
+
+.resultBox{
+  margin-top:20px;
   display:flex;
   align-items:center;
-  gap:18px;
-  margin-top:18px;
+  gap:20px;
 }
 
-.number{
-  width:86px;
-  height:86px;
+.numberCircle{
+  width:94px;
+  height:94px;
+  min-width:94px;
   border-radius:50%;
-  background:#03060c;
+  background:#03060d;
   border:1px solid #293650;
   display:flex;
-  align-items:center;
   justify-content:center;
-  font-size:40px;
+  align-items:center;
+  font-size:43px;
+  font-weight:900;
+  box-shadow:0 0 30px rgba(0,0,0,.35);
+}
+
+.resultType{
+  font-size:24px;
   font-weight:900;
 }
 
-.type{
-  font-size:23px;
-  font-weight:900;
+.resultIssue{
+  color:#707b97;
+  font-size:10px;
+  margin-top:8px;
+  word-break:break-all;
 }
 
-.issue{
-  color:#68738e;
-  font-size:9px;
-  margin-top:6px;
-}
+/* AI */
 
-.ai{
+.aiCard{
   text-align:center;
+  padding-top:23px;
+  padding-bottom:23px;
 }
 
-.ai-title{
-  color:#7d88a2;
+.aiTitle{
+  color:#8993ad;
   font-size:10px;
   letter-spacing:3px;
+  font-weight:bold;
 }
 
 .prediction{
-  margin:15px 0 5px;
-  font-size:43px;
+  margin-top:18px;
+  margin-bottom:9px;
+  font-size:45px;
+  line-height:1.05;
   font-weight:1000;
-  letter-spacing:3px;
+  letter-spacing:5px;
 }
 
-.BIG{
+.predBig{
   color:#42ddff;
   text-shadow:0 0 22px rgba(66,221,255,.45);
 }
 
-.SMALL{
+.predSmall{
   color:#c18cff;
   text-shadow:0 0 22px rgba(193,140,255,.45);
 }
 
-.SKIP{
-  color:#7b849a;
+.predSkip{
+  color:#78839c;
 }
 
-.WAIT{
-  color:#ffc45b;
+.predWait{
+  color:#ffc45d;
 }
 
-.ANALYZING{
+.predAnalyze{
   color:#42ddff;
-  animation:pulse .8s infinite;
+  animation:blink .8s infinite;
 }
 
-@keyframes pulse{
-  50%{opacity:.35}
+@keyframes blink{
+  0%,100%{
+    opacity:1;
+  }
+  50%{
+    opacity:.3;
+  }
 }
 
-.clock{
-  min-height:35px;
+.analysisTimer{
+  min-height:34px;
+  color:#42ddff;
   font-size:28px;
   font-weight:900;
-  color:#42ddff;
 }
 
 .target{
-  color:#68738e;
-  font-size:9px;
+  color:#727d98;
+  font-size:10px;
+  word-break:break-all;
 }
 
-.conf{
+/* CONFIDENCE */
+
+.confTop{
   display:flex;
   justify-content:space-between;
-  margin:18px 0 7px;
-  color:#727d97;
-  font-size:8px;
+  margin-top:21px;
+  margin-bottom:7px;
+  color:#78839d;
+  font-size:9px;
   letter-spacing:2px;
 }
 
-.bar{
-  height:7px;
-  background:#050810;
+.confBar{
+  width:100%;
+  height:8px;
+  background:#05080e;
   border-radius:20px;
   overflow:hidden;
 }
 
-.fill{
+.confFill{
   width:0%;
   height:100%;
+  border-radius:20px;
   background:linear-gradient(
     90deg,
     #527cff,
     #42e0ff
   );
-  transition:.3s;
+  transition:width .4s ease;
 }
 
 .status{
-  margin-top:12px;
-  color:#77829d;
+  margin-top:13px;
+  color:#78839d;
   font-size:10px;
-  line-height:1.5;
+  line-height:1.6;
 }
+
+/* ANALYSIS */
 
 .grid{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:9px;
-  margin-top:15px;
+  gap:11px;
+  margin-top:17px;
 }
 
 .stat{
   background:#070b14;
-  border:1px solid #151e31;
-  border-radius:15px;
-  padding:14px;
+  border:1px solid #151e32;
+  border-radius:17px;
+  padding:16px;
 }
 
-.stat-name{
-  color:#68738e;
+.statName{
+  color:#69748f;
   font-size:8px;
   letter-spacing:2px;
+  font-weight:bold;
 }
 
-.stat-value{
-  margin-top:7px;
-  font-size:21px;
+.statValue{
+  margin-top:8px;
+  font-size:23px;
   font-weight:900;
 }
 
-.stat-sub{
-  margin-top:4px;
-  color:#5f6982;
-  font-size:8px;
+.statSub{
+  color:#606b84;
+  font-size:9px;
+  margin-top:5px;
 }
 
-.signals{
+.signalBox{
   margin-top:13px;
-  padding:12px;
   background:#070b14;
-  border-radius:14px;
+  border:1px solid #151e32;
+  border-radius:17px;
+  padding:14px;
 }
 
 .signal{
   display:flex;
   justify-content:space-between;
-  padding:6px 0;
+  padding:7px 0;
   font-size:9px;
 }
 
-.signal span:first-child{
-  color:#66718b;
+.signalLeft{
+  color:#69748f;
 }
 
-.signal span:last-child{
-  color:#d1d7e4;
+.signalRight{
+  color:#d3d9e7;
+  font-weight:bold;
 }
+
+/* PATTERN */
 
 .pattern{
   display:flex;
   flex-wrap:wrap;
   gap:5px;
-  margin-top:13px;
+  margin-top:14px;
 }
 
 .pill{
-  padding:6px 8px;
+  padding:7px 9px;
   border-radius:8px;
-  font-size:7px;
+  font-size:8px;
   font-weight:bold;
 }
 
-.pill.big{
-  background:#10343f;
+.pillBig{
+  background:#10323d;
   color:#42ddff;
 }
 
-.pill.small{
-  background:#28183d;
+.pillSmall{
+  background:#29183e;
   color:#c18cff;
 }
 
-.hrow{
+/* HISTORY */
+
+.historyHead,
+.historyRow{
   display:grid;
-  grid-template-columns:1.5fr .5fr .7fr;
+  grid-template-columns:1.55fr .35fr .7fr;
+  gap:7px;
+  align-items:center;
+}
+
+.historyHead{
+  margin-top:14px;
   padding:9px 0;
+  color:#68738e;
+  font-size:7px;
+  letter-spacing:1px;
+}
+
+.historyRow{
+  padding:11px 0;
   border-bottom:1px solid #151e30;
   font-size:9px;
 }
 
-.head{
-  color:#68738e;
-  font-size:7px;
+.historyPeriod{
+  word-break:break-all;
 }
 
 .bigText{
@@ -327,12 +397,47 @@ body{
   font-weight:bold;
 }
 
+.empty{
+  padding:18px 0;
+  color:#68738e;
+  font-size:10px;
+}
+
+/* FOOTER */
+
 .footer{
+  padding:8px 0 30px;
   text-align:center;
-  color:#4e5870;
+  color:#4d5770;
   font-size:8px;
   letter-spacing:2px;
-  padding:10px 0 25px;
+}
+
+/* MOBILE */
+
+@media(max-width:420px){
+
+  .app{
+    padding:13px;
+  }
+
+  .logo{
+    font-size:28px;
+  }
+
+  .period{
+    font-size:23px;
+  }
+
+  .prediction{
+    font-size:41px;
+  }
+
+  .numberCircle{
+    width:88px;
+    height:88px;
+    min-width:88px;
+  }
 }
 </style>
 </head>
@@ -341,30 +446,61 @@ body{
 
 <div class="app">
 
+  <!-- HEADER -->
+
   <div class="header">
+
     <div>
       <div class="logo">DY AI</div>
-      <div class="sub">WINGO 1 MINUTE</div>
+
+      <div class="subtitle">
+        WINGO 1 MINUTE
+      </div>
     </div>
 
-    <div class="live">
-      <span id="dot" class="dot off"></span>
-      <span id="liveText">CONNECTING</span>
+    <div class="liveBox">
+
+      <span
+        id="liveDot"
+        class="liveDot"
+      ></span>
+
+      <span id="liveText">
+        OFFLINE
+      </span>
+
     </div>
+
   </div>
 
-  <div id="error" class="error"></div>
+
+  <!-- ERROR -->
+
+  <div
+    id="errorBox"
+    class="error"
+  ></div>
 
 
   <!-- CURRENT PERIOD -->
 
   <div class="card">
 
-    <div class="label">CURRENT PERIOD</div>
+    <div class="label">
+      CURRENT PERIOD
+    </div>
 
-    <div id="current" class="period">—</div>
+    <div
+      id="currentPeriod"
+      class="period"
+    >
+      —
+    </div>
 
-    <div id="next" class="next">
+    <div
+      id="nextPeriod"
+      class="next"
+    >
       NEXT PERIOD: —
     </div>
 
@@ -375,20 +511,35 @@ body{
 
   <div class="card">
 
-    <div class="label">LATEST RESULT</div>
+    <div class="label">
+      LATEST RESULT
+    </div>
 
-    <div class="result">
+    <div class="resultBox">
 
-      <div id="number" class="number">
+      <div
+        id="latestNumber"
+        class="numberCircle"
+      >
         —
       </div>
 
       <div>
-        <div id="type" class="type">—</div>
 
-        <div id="issue" class="issue">
-          Waiting...
+        <div
+          id="latestType"
+          class="resultType"
+        >
+          —
         </div>
+
+        <div
+          id="latestIssue"
+          class="resultIssue"
+        >
+          Waiting for live data...
+        </div>
+
       </div>
 
     </div>
@@ -396,50 +547,77 @@ body{
   </div>
 
 
-  <!-- PREDICTION -->
+  <!-- AI PREDICTION -->
 
-  <div class="card ai">
+  <div class="card aiCard">
 
-    <div class="ai-title">
+    <div class="aiTitle">
       🎯 AI PREMIUM PREDICTION
     </div>
 
+
     <div
       id="prediction"
-      class="prediction WAIT"
+      class="prediction predWait"
     >
       WAIT
     </div>
 
-    <div
-      id="clock"
-      class="clock"
-    ></div>
+
+    <!-- 4 SECOND TIMER -->
 
     <div
-      id="target"
+      id="analysisTimer"
+      class="analysisTimer"
+    ></div>
+
+
+    <div
+      id="targetPeriod"
       class="target"
     >
       TARGET PERIOD: —
     </div>
 
-    <div class="conf">
-      <span>AI CONFIDENCE</span>
-      <span id="confidence">0%</span>
+
+    <!-- CONFIDENCE -->
+
+    <div class="confTop">
+
+      <span>
+        AI CONFIDENCE
+      </span>
+
+      <span
+        id="confidence"
+      >
+        0%
+      </span>
+
     </div>
 
-    <div class="bar">
-      <div id="fill" class="fill"></div>
+
+    <div class="confBar">
+
+      <div
+        id="confidenceFill"
+        class="confFill"
+      ></div>
+
     </div>
 
-    <div id="status" class="status">
+
+    <div
+      id="predictionStatus"
+      class="status"
+    >
       Waiting for live data...
     </div>
 
   </div>
 
 
-  <!-- AI ANALYSIS -->
+  <!-- REAL PATTERN -->
 
   <div class="card">
 
@@ -447,76 +625,193 @@ body{
       REAL PATTERN ANALYSIS
     </div>
 
+
     <div class="grid">
 
       <div class="stat">
-        <div class="stat-name">BIG</div>
-        <div id="bigPercent" class="stat-value">0%</div>
-        <div id="bigCount" class="stat-sub">
+
+        <div class="statName">
+          BIG
+        </div>
+
+        <div
+          id="bigPercent"
+          class="statValue"
+        >
+          0%
+        </div>
+
+        <div
+          id="bigCount"
+          class="statSub"
+        >
           0 results
         </div>
+
       </div>
 
+
       <div class="stat">
-        <div class="stat-name">SMALL</div>
-        <div id="smallPercent" class="stat-value">0%</div>
-        <div id="smallCount" class="stat-sub">
+
+        <div class="statName">
+          SMALL
+        </div>
+
+        <div
+          id="smallPercent"
+          class="statValue"
+        >
+          0%
+        </div>
+
+        <div
+          id="smallCount"
+          class="statSub"
+        >
           0 results
         </div>
+
       </div>
 
+
       <div class="stat">
-        <div class="stat-name">STREAK</div>
-        <div id="streak" class="stat-value">—</div>
-        <div id="streakSub" class="stat-sub">
+
+        <div class="statName">
+          CURRENT STREAK
+        </div>
+
+        <div
+          id="streakType"
+          class="statValue"
+        >
+          —
+        </div>
+
+        <div
+          id="streakCount"
+          class="statSub"
+        >
           0 rounds
         </div>
+
       </div>
 
+
       <div class="stat">
-        <div class="stat-name">PATTERN MATCH</div>
-        <div id="matches" class="stat-value">0</div>
-        <div class="stat-sub">
+
+        <div class="statName">
+          PATTERN MATCH
+        </div>
+
+        <div
+          id="patternMatches"
+          class="statValue"
+        >
+          0
+        </div>
+
+        <div class="statSub">
           Historical matches
         </div>
+
       </div>
 
     </div>
 
 
-    <div id="pattern" class="pattern"></div>
+    <!-- LAST 10 PATTERN -->
+
+    <div
+      id="pattern"
+      class="pattern"
+    ></div>
 
 
-    <div class="signals">
+    <!-- AI SIGNALS -->
+
+    <div class="signalBox">
 
       <div class="signal">
-        <span>RECENCY</span>
-        <span id="recent">0</span>
+        <span class="signalLeft">
+          RECENCY
+        </span>
+
+        <span
+          id="signalRecent"
+          class="signalRight"
+        >
+          0
+        </span>
       </div>
 
-      <div class="signal">
-        <span>TRANSITION</span>
-        <span id="transition">0</span>
-      </div>
 
       <div class="signal">
-        <span>SEQUENCE</span>
-        <span id="patternSignal">0</span>
+        <span class="signalLeft">
+          TRANSITION
+        </span>
+
+        <span
+          id="signalTransition"
+          class="signalRight"
+        >
+          0
+        </span>
       </div>
 
-      <div class="signal">
-        <span>DIRECTION</span>
-        <span id="direction">0</span>
-      </div>
 
       <div class="signal">
-        <span>AGREEMENT</span>
-        <span id="agreement">0%</span>
+        <span class="signalLeft">
+          SEQUENCE
+        </span>
+
+        <span
+          id="signalPattern"
+          class="signalRight"
+        >
+          0
+        </span>
       </div>
 
+
       <div class="signal">
-        <span>MODEL QUALITY</span>
-        <span id="quality">—</span>
+        <span class="signalLeft">
+          DIRECTION
+        </span>
+
+        <span
+          id="signalDirection"
+          class="signalRight"
+        >
+          0
+        </span>
+      </div>
+
+
+      <div class="signal">
+        <span class="signalLeft">
+          AGREEMENT
+        </span>
+
+        <span
+          id="signalAgreement"
+          class="signalRight"
+        >
+          0%
+        </span>
+      </div>
+
+
+      <div class="signal">
+        <span class="signalLeft">
+          MODEL QUALITY
+        </span>
+
+        <span
+          id="modelQuality"
+          class="signalRight"
+        >
+          —
+        </span>
       </div>
 
     </div>
@@ -532,22 +827,37 @@ body{
       LAST 30 LIVE RESULTS
     </div>
 
-    <div
-      class="hrow head"
-      style="margin-top:12px"
-    >
-      <div>PERIOD</div>
-      <div>NO.</div>
-      <div>RESULT</div>
+
+    <div class="historyHead">
+
+      <div>
+        PERIOD
+      </div>
+
+      <div>
+        NO.
+      </div>
+
+      <div>
+        RESULT
+      </div>
+
     </div>
 
-    <div id="history"></div>
+
+    <div id="history">
+
+      <div class="empty">
+        Waiting for live results...
+      </div>
+
+    </div>
 
   </div>
 
 
   <div class="footer">
-    DY AI • LIVE 1 MINUTE
+    DY AI • WINGO 1 MINUTE • LIVE
   </div>
 
 </div>
@@ -556,7 +866,7 @@ body{
 <script>
 
 /* =====================================================
-   SETTINGS
+   CONFIG
 ===================================================== */
 
 const ACCESS_KEY =
@@ -577,21 +887,17 @@ function getDeviceId(){
 
   let id =
     localStorage.getItem(
-      "dy_device_id"
+      "dy_ai_device_id"
     );
 
   if(!id){
 
     id =
-      "dy-" +
-      Date.now() +
-      "-" +
-      Math.random()
-        .toString(36)
-        .substring(2);
+      "DY-" +
+      crypto.randomUUID();
 
     localStorage.setItem(
-      "dy_device_id",
+      "dy_ai_device_id",
       id
     );
   }
@@ -601,33 +907,44 @@ function getDeviceId(){
 
 
 /* =====================================================
-   STATE
+   GLOBAL STATE
 ===================================================== */
 
-let state = null;
+let appState = null;
 
-let lastTarget = null;
-
-let analysisRunning = false;
+let analysisActive = false;
 
 let analysisTarget = null;
 
 let analysisTimer = null;
+
+let lastCurrentPeriod = null;
 
 
 /* =====================================================
    ELEMENT
 ===================================================== */
 
-function setText(
+function $(id){
+
+  return document.getElementById(id);
+
+}
+
+
+/* =====================================================
+   TEXT
+===================================================== */
+
+function text(
   id,
   value
 ){
 
-  const el =
-    document.getElementById(id);
+  const el = $(id);
 
   if(el){
+
     el.textContent =
       value == null
         ? "—"
@@ -645,25 +962,25 @@ function setLive(
 ){
 
   const dot =
-    document.getElementById(
-      "dot"
-    );
+    $("liveDot");
 
   const label =
-    document.getElementById(
-      "liveText"
-    );
+    $("liveText");
 
   if(online){
 
-    dot.classList.remove("off");
+    dot.classList.add(
+      "online"
+    );
 
     label.textContent =
       "LIVE";
 
   }else{
 
-    dot.classList.add("off");
+    dot.classList.remove(
+      "online"
+    );
 
     label.textContent =
       "OFFLINE";
@@ -675,19 +992,20 @@ function setLive(
    ERROR
 ===================================================== */
 
-function setError(
+function showError(
   message
 ){
 
   const box =
-    document.getElementById(
-      "error"
-    );
+    $("errorBox");
 
   if(!message){
 
     box.style.display =
       "none";
+
+    box.textContent =
+      "";
 
     return;
   }
@@ -701,170 +1019,37 @@ function setError(
 
 
 /* =====================================================
-   4 SECOND ANALYSIS
+   HTML ESCAPE
 ===================================================== */
 
-function startFourSecondAnalysis(
-  target
+function escapeHtml(
+  value
 ){
 
-  if(
-    analysisRunning
-  ){
-    return;
-  }
-
-  if(
-    analysisTarget ===
-    target
-  ){
-    return;
-  }
-
-
-  analysisRunning =
-    true;
-
-  analysisTarget =
-    target;
-
-
-  let remaining =
-    ANALYSIS_SECONDS;
-
-
-  const prediction =
-    document.getElementById(
-      "prediction"
-    );
-
-
-  prediction.className =
-    "prediction ANALYZING";
-
-  prediction.textContent =
-    "ANALYZING";
-
-
-  setText(
-    "target",
-    "TARGET PERIOD: " +
-    target
+  return String(
+    value ?? ""
+  )
+  .replaceAll(
+    "&",
+    "&amp;"
+  )
+  .replaceAll(
+    "<",
+    "&lt;"
+  )
+  .replaceAll(
+    ">",
+    "&gt;"
+  )
+  .replaceAll(
+    '"',
+    "&quot;"
+  )
+  .replaceAll(
+    "'",
+    "&#039;"
   );
 
-
-  setText(
-    "clock",
-    remaining + "s"
-  );
-
-
-  setText(
-    "confidence",
-    "—"
-  );
-
-
-  document
-    .getElementById("fill")
-    .style.width =
-    "0%";
-
-
-  setText(
-    "status",
-    "🧠 Starting AI analysis..."
-  );
-
-
-  if(
-    analysisTimer
-  ){
-    clearInterval(
-      analysisTimer
-    );
-  }
-
-
-  analysisTimer =
-    setInterval(
-      function(){
-
-        remaining--;
-
-
-        if(
-          remaining === 3
-        ){
-
-          setText(
-            "status",
-            "🔎 Checking recent transitions..."
-          );
-        }
-
-
-        if(
-          remaining === 2
-        ){
-
-          setText(
-            "status",
-            "📊 Matching historical sequences..."
-          );
-        }
-
-
-        if(
-          remaining === 1
-        ){
-
-          setText(
-            "status",
-            "🧠 Combining AI signals..."
-          );
-        }
-
-
-        if(
-          remaining > 0
-        ){
-
-          setText(
-            "clock",
-            remaining + "s"
-          );
-
-          return;
-        }
-
-
-        clearInterval(
-          analysisTimer
-        );
-
-        analysisTimer =
-          null;
-
-        analysisRunning =
-          false;
-
-
-        setText(
-          "clock",
-          ""
-        );
-
-
-        /*
-          Fresh state fetch.
-        */
-
-        loadState();
-
-      },
-      1000
-    );
 }
 
 
@@ -872,33 +1057,33 @@ function startFourSecondAnalysis(
    PREDICTION DISPLAY
 ===================================================== */
 
-function renderPrediction(
+function displayPrediction(
   p
 ){
 
-  if(
-    analysisRunning
-  ){
-    return;
-  }
-
-
-  const el =
-    document.getElementById(
-      "prediction"
-    );
-
-
   if(!p){
 
-    el.className =
-      "prediction WAIT";
+    setPrediction(
+      "WAIT",
+      "predWait"
+    );
 
-    el.textContent =
-      "WAIT";
+    text(
+      "targetPeriod",
+      "TARGET PERIOD: —"
+    );
 
-    setText(
-      "status",
+    text(
+      "confidence",
+      "0%"
+    );
+
+    $("confidenceFill")
+      .style.width =
+      "0%";
+
+    text(
+      "predictionStatus",
       "Waiting..."
     );
 
@@ -907,7 +1092,7 @@ function renderPrediction(
 
 
   /* -----------------------------------------------
-     4 ROUND SKIP
+     COOLDOWN / EXACT 4 SKIP
   ------------------------------------------------ */
 
   if(
@@ -915,79 +1100,56 @@ function renderPrediction(
     "COOLDOWN"
   ){
 
-    el.className =
-      "prediction SKIP";
-
-    el.textContent =
-      "SKIP";
+    stopAnalysis();
 
 
-    setText(
-      "clock",
-      ""
+    setPrediction(
+      "SKIP",
+      "predSkip"
     );
 
 
-    setText(
-      "target",
+    text(
+      "targetPeriod",
       "TARGET PERIOD: " +
-      p.targetPeriod
+      (
+        p.targetPeriod ||
+        "—"
+      )
     );
 
 
-    setText(
+    text(
       "confidence",
-      "—"
+      "0%"
     );
 
 
-    document
-      .getElementById("fill")
+    $("confidenceFill")
       .style.width =
       "0%";
 
 
-    setText(
-      "status",
+    const round =
+      Number(
+        p.skipRound || 0
+      );
+
+
+    const remaining =
+      Number(
+        p.skipRemaining || 0
+      );
+
+
+    text(
+      "predictionStatus",
 
       "⏭️ SKIP ROUND " +
-      p.skipRound +
-      " / 4 • " +
-      p.skipRemaining +
+      round +
+      "/4 • " +
+      remaining +
       " REMAINING"
-    );
-
-
-    return;
-  }
-
-
-  /* -----------------------------------------------
-     WAIT FOR ANALYSIS
-  ------------------------------------------------ */
-
-  if(
-    p.status ===
-    "WAIT_ANALYSIS"
-  ){
-
-    el.className =
-      "prediction WAIT";
-
-    el.textContent =
-      "WAIT";
-
-
-    setText(
-      "target",
-      "TARGET PERIOD: " +
-      p.targetPeriod
-    );
-
-
-    setText(
-      "status",
-      "⏱️ 4-second analysis window"
     );
 
 
@@ -1004,29 +1166,64 @@ function renderPrediction(
     "MODEL_SKIP"
   ){
 
-    el.className =
-      "prediction SKIP";
-
-    el.textContent =
-      "SKIP";
+    stopAnalysis();
 
 
-    setText(
-      "target",
-      "TARGET PERIOD: " +
-      p.targetPeriod
+    setPrediction(
+      "SKIP",
+      "predSkip"
     );
 
 
-    setText(
+    text(
+      "targetPeriod",
+      "TARGET PERIOD: " +
+      (
+        p.targetPeriod ||
+        "—"
+      )
+    );
+
+
+    text(
       "confidence",
       "0%"
     );
 
 
-    setText(
-      "status",
-      "⚠️ Signals are conflicting"
+    $("confidenceFill")
+      .style.width =
+      "0%";
+
+
+    text(
+      "predictionStatus",
+      "⚠️ AI signals are conflicting"
+    );
+
+
+    return;
+  }
+
+
+  /* -----------------------------------------------
+     SERVER WAIT ANALYSIS
+  ------------------------------------------------ */
+
+  if(
+    p.status ===
+    "WAIT_ANALYSIS"
+  ){
+
+    const target =
+      String(
+        p.targetPeriod ||
+        ""
+      );
+
+
+    startFourSecondAnalysis(
+      target
     );
 
 
@@ -1038,95 +1235,378 @@ function renderPrediction(
      REAL PREDICTION
   ------------------------------------------------ */
 
-  const result =
-    String(
-      p.result ||
-      "SKIP"
-    ).toUpperCase();
+  if(
+    p.result ===
+    "BIG" ||
+    p.result ===
+    "SMALL"
+  ){
 
+    stopAnalysis();
+
+
+    if(
+      p.result ===
+      "BIG"
+    ){
+
+      setPrediction(
+        "BIG",
+        "predBig"
+      );
+
+    }else{
+
+      setPrediction(
+        "SMALL",
+        "predSmall"
+      );
+    }
+
+
+    text(
+      "targetPeriod",
+      "TARGET PERIOD: " +
+      (
+        p.targetPeriod ||
+        "—"
+      )
+    );
+
+
+    const confidence =
+      Number(
+        p.confidence || 0
+      );
+
+
+    text(
+      "confidence",
+      confidence + "%"
+    );
+
+
+    $("confidenceFill")
+      .style.width =
+      Math.max(
+        0,
+        Math.min(
+          100,
+          confidence
+        )
+      ) + "%";
+
+
+    if(
+      p.status ===
+      "WIN"
+    ){
+
+      text(
+        "predictionStatus",
+        "✅ WIN • Actual: " +
+        (
+          p.actualNumber ??
+          "—"
+        )
+      );
+
+    }else if(
+      p.status ===
+      "LOSS"
+    ){
+
+      text(
+        "predictionStatus",
+        "❌ LOSS • Actual: " +
+        (
+          p.actualNumber ??
+          "—"
+        )
+      );
+
+    }else{
+
+      text(
+        "predictionStatus",
+        "⏳ PREDICTION PENDING"
+      );
+    }
+
+
+    return;
+  }
+
+
+  /* -----------------------------------------------
+     NORMAL WAIT
+  ------------------------------------------------ */
+
+  stopAnalysis();
+
+
+  setPrediction(
+    "WAIT",
+    "predWait"
+  );
+
+
+  text(
+    "targetPeriod",
+    "TARGET PERIOD: " +
+    (
+      p.targetPeriod ||
+      "—"
+    )
+  );
+
+
+  text(
+    "confidence",
+    "0%"
+  );
+
+
+  $("confidenceFill")
+    .style.width =
+    "0%";
+
+
+  text(
+    "predictionStatus",
+    "Waiting..."
+  );
+}
+
+
+/* =====================================================
+   SET PREDICTION
+===================================================== */
+
+function setPrediction(
+  value,
+  className
+){
+
+  const el =
+    $("prediction");
+
+  el.className =
+    "prediction " +
+    className;
 
   el.textContent =
-    result;
+    value;
+}
 
+
+/* =====================================================
+   4 SECOND ANALYSIS
+===================================================== */
+
+function startFourSecondAnalysis(
+  target
+){
 
   if(
-    result === "BIG"
+    !target
   ){
-
-    el.className =
-      "prediction BIG";
-
-  }else if(
-    result === "SMALL"
-  ){
-
-    el.className =
-      "prediction SMALL";
-
-  }else{
-
-    el.className =
-      "prediction SKIP";
+    return;
   }
 
 
-  setText(
-    "target",
+  /*
+    Same target already running.
+  */
+
+  if(
+    analysisActive &&
+    analysisTarget ===
+    target
+  ){
+
+    return;
+  }
+
+
+  /*
+    New target.
+  */
+
+  stopAnalysis();
+
+
+  analysisActive =
+    true;
+
+  analysisTarget =
+    target;
+
+
+  let remaining =
+    ANALYSIS_SECONDS;
+
+
+  setPrediction(
+    "ANALYZING",
+    "predAnalyze"
+  );
+
+
+  text(
+    "targetPeriod",
     "TARGET PERIOD: " +
-    p.targetPeriod
+    target
   );
 
 
-  const confidence =
-    Number(
-      p.confidence || 0
-    );
+  text(
+    "analysisTimer",
+    remaining + "s"
+  );
 
 
-  setText(
+  text(
     "confidence",
-    confidence + "%"
+    "—"
   );
 
 
-  document
-    .getElementById("fill")
+  $("confidenceFill")
     .style.width =
-    Math.min(
-      confidence,
-      100
-    ) + "%";
+    "0%";
 
+
+  text(
+    "predictionStatus",
+    "🧠 Starting real pattern analysis..."
+  );
+
+
+  analysisTimer =
+    setInterval(
+      function(){
+
+        remaining--;
+
+
+        if(
+          remaining === 3
+        ){
+
+          text(
+            "analysisTimer",
+            "3s"
+          );
+
+          text(
+            "predictionStatus",
+            "🔎 Checking recent transitions..."
+          );
+        }
+
+
+        else if(
+          remaining === 2
+        ){
+
+          text(
+            "analysisTimer",
+            "2s"
+          );
+
+          text(
+            "predictionStatus",
+            "📊 Matching historical sequences..."
+          );
+        }
+
+
+        else if(
+          remaining === 1
+        ){
+
+          text(
+            "analysisTimer",
+            "1s"
+          );
+
+          text(
+            "predictionStatus",
+            "🧠 Combining AI signals..."
+          );
+        }
+
+
+        else if(
+          remaining <= 0
+        ){
+
+          clearInterval(
+            analysisTimer
+          );
+
+          analysisTimer =
+            null;
+
+          analysisActive =
+            false;
+
+          text(
+            "analysisTimer",
+            ""
+          );
+
+          text(
+            "predictionStatus",
+            "🎯 Finalizing prediction..."
+          );
+
+
+          /*
+            Ask server for fresh
+            prediction immediately.
+          */
+
+          loadState();
+        }
+
+      },
+      1000
+    );
+}
+
+
+/* =====================================================
+   STOP ANALYSIS
+===================================================== */
+
+function stopAnalysis(){
 
   if(
-    p.status ===
-    "WIN"
+    analysisTimer
   ){
 
-    setText(
-      "status",
-      "✅ WIN • Actual number: " +
-      p.actualNumber
+    clearInterval(
+      analysisTimer
     );
 
-  }else if(
-    p.status ===
-    "LOSS"
-  ){
-
-    setText(
-      "status",
-      "❌ LOSS • Actual number: " +
-      p.actualNumber
-    );
-
-  }else{
-
-    setText(
-      "status",
-      "⏳ PREDICTION PENDING"
-    );
+    analysisTimer =
+      null;
   }
+
+
+  analysisActive =
+    false;
+
+  analysisTarget =
+    null;
+
+
+  text(
+    "analysisTimer",
+    ""
+  );
 }
 
 
@@ -1135,16 +1615,17 @@ function renderPrediction(
 ===================================================== */
 
 function renderModel(
-  m
+  model
 ){
 
-  if(!m){
+  if(!model){
     return;
   }
 
 
   const counts =
-    m.counts || {};
+    model.counts ||
+    {};
 
 
   const big =
@@ -1152,176 +1633,229 @@ function renderModel(
       counts.big || 0
     );
 
+
   const small =
     Number(
       counts.small || 0
     );
 
+
   const total =
     big + small;
 
 
-  const bigPercent =
-    total
-      ? Math.round(
-          big / total * 100
-        )
-      : 0;
+  let bigPercent =
+    0;
+
+  let smallPercent =
+    0;
 
 
-  const smallPercent =
-    total
-      ? Math.round(
-          small / total * 100
-        )
-      : 0;
+  if(total > 0){
+
+    bigPercent =
+      Math.round(
+        big /
+        total *
+        100
+      );
+
+    smallPercent =
+      Math.round(
+        small /
+        total *
+        100
+      );
+  }
 
 
-  setText(
+  text(
     "bigPercent",
     bigPercent + "%"
   );
 
 
-  setText(
+  text(
     "smallPercent",
     smallPercent + "%"
   );
 
 
-  setText(
+  text(
     "bigCount",
     big + " results"
   );
 
 
-  setText(
+  text(
     "smallCount",
     small + " results"
   );
 
 
-  const latest =
-    state &&
-    state.recentResults &&
-    state.recentResults[0];
-
-
-  setText(
-    "streak",
-    latest
-      ? latest.result
-      : "—"
-  );
-
-
-  setText(
-    "streakSub",
-    Number(
-      m.streak || 0
+  text(
+    "streakCount",
+    (
+      model.streak ||
+      0
     ) +
     " rounds"
   );
 
 
-  setText(
-    "matches",
-    m.matches || 0
+  if(
+    appState &&
+    appState.recentResults &&
+    appState.recentResults.length
+  ){
+
+    text(
+      "streakType",
+      appState
+        .recentResults[0]
+        .result || "—"
+    );
+
+  }else{
+
+    text(
+      "streakType",
+      "—"
+    );
+  }
+
+
+  text(
+    "patternMatches",
+    model.matches ||
+    0
   );
 
 
   const signals =
-    m.signals || {};
+    model.signals ||
+    {};
 
 
-  setText(
-    "recent",
-    signals.recent ?? "0"
+  text(
+    "signalRecent",
+    signals.recent ??
+    "0"
   );
 
 
-  setText(
-    "transition",
-    signals.transition ?? "0"
+  text(
+    "signalTransition",
+    signals.transition ??
+    "0"
   );
 
 
-  setText(
-    "patternSignal",
-    signals.pattern ?? "0"
+  text(
+    "signalPattern",
+    signals.pattern ??
+    "0"
   );
 
 
-  setText(
-    "direction",
-    signals.direction ?? "0"
+  text(
+    "signalDirection",
+    signals.direction ??
+    "0"
   );
 
 
-  setText(
-    "agreement",
+  const agreement =
+    Number(
+      model.agreement || 0
+    );
+
+
+  text(
+    "signalAgreement",
     Math.round(
-      Number(
-        m.agreement || 0
-      ) * 100
+      agreement * 100
     ) + "%"
   );
 
 
-  setText(
-    "quality",
-    m.quality || "—"
+  text(
+    "modelQuality",
+    model.quality ||
+    "—"
   );
 
 
-  /* Last 10 pattern */
+  renderPattern();
+}
+
+
+/* =====================================================
+   PATTERN
+===================================================== */
+
+function renderPattern(){
 
   const box =
-    document.getElementById(
-      "pattern"
-    );
+    $("pattern");
 
-  box.innerHTML = "";
+
+  box.innerHTML =
+    "";
 
 
   if(
-    state &&
-    Array.isArray(
-      state.recentResults
+    !appState ||
+    !Array.isArray(
+      appState.recentResults
     )
   ){
 
-    state.recentResults
-      .slice(0,10)
-      .reverse()
-      .forEach(
-        row => {
+    return;
+  }
 
-          const span =
-            document.createElement(
-              "span"
-            );
 
+  appState
+    .recentResults
+    .slice(
+      0,
+      10
+    )
+    .reverse()
+    .forEach(
+      row => {
+
+        const span =
+          document.createElement(
+            "span"
+          );
+
+
+        if(
+          row.result ===
+          "BIG"
+        ){
 
           span.className =
-            "pill " +
-            (
-              row.result === "BIG"
-                ? "big"
-                : "small"
-            );
+            "pill pillBig";
 
+        }else{
 
-          span.textContent =
-            row.result;
-
-
-          box.appendChild(
-            span
-          );
+          span.className =
+            "pill pillSmall";
         }
-      );
-  }
+
+
+        span.textContent =
+          row.result;
+
+
+        box.appendChild(
+          span
+        );
+
+      }
+    );
 }
 
 
@@ -1334,24 +1868,20 @@ function renderHistory(
 ){
 
   const box =
-    document.getElementById(
-      "history"
-    );
+    $("history");
 
-  box.innerHTML = "";
+
+  box.innerHTML =
+    "";
 
 
   if(
     !Array.isArray(rows) ||
-    !rows.length
+    rows.length === 0
   ){
 
     box.innerHTML = `
-      <div style="
-        padding:15px 0;
-        color:#68738e;
-        font-size:9px;
-      ">
+      <div class="empty">
         Waiting for live results...
       </div>
     `;
@@ -1360,167 +1890,191 @@ function renderHistory(
   }
 
 
-  rows.forEach(
-    row => {
+  rows
+    .slice(
+      0,
+      30
+    )
+    .forEach(
+      row => {
 
-      const result =
-        String(
-          row.result || ""
-        ).toUpperCase();
+        const div =
+          document.createElement(
+            "div"
+          );
 
 
-      const div =
-        document.createElement(
-          "div"
+        div.className =
+          "historyRow";
+
+
+        const result =
+          String(
+            row.result ||
+            ""
+          ).toUpperCase();
+
+
+        const resultClass =
+          result ===
+          "BIG"
+            ? "bigText"
+            : "smallText";
+
+
+        div.innerHTML = `
+
+          <div class="historyPeriod">
+            ${escapeHtml(
+              row.issueNumber
+            )}
+          </div>
+
+          <div>
+            ${escapeHtml(
+              row.number
+            )}
+          </div>
+
+          <div class="${resultClass}">
+            ${escapeHtml(
+              result
+            )}
+          </div>
+
+        `;
+
+
+        box.appendChild(
+          div
         );
 
-
-      div.className =
-        "hrow";
-
-
-      div.innerHTML = `
-        <div>
-          ${escapeHtml(
-            row.issueNumber
-          )}
-        </div>
-
-        <div>
-          ${escapeHtml(
-            row.number
-          )}
-        </div>
-
-        <div class="${
-          result === "BIG"
-            ? "bigText"
-            : "smallText"
-        }">
-          ${escapeHtml(
-            result
-          )}
-        </div>
-      `;
-
-
-      box.appendChild(
-        div
-      );
-    }
-  );
+      }
+    );
 }
 
 
 /* =====================================================
-   ESCAPE
+   RENDER STATE
 ===================================================== */
 
-function escapeHtml(
-  value
+function renderState(
+  data
 ){
 
-  return String(
-    value ?? ""
-  )
-  .replaceAll("&","&amp;")
-  .replaceAll("<","&lt;")
-  .replaceAll(">","&gt;")
-  .replaceAll('"',"&quot;")
-  .replaceAll("'","&#039;");
-}
+  appState =
+    data;
 
 
-/* =====================================================
-   ANALYSIS TRIGGER
-===================================================== */
-
-function checkAnalysis(){
-
-  if(!state){
-    return;
-  }
-
-  if(!state.live){
-    return;
-  }
-
-  if(analysisRunning){
-    return;
-  }
-
-
-  const p =
-    state.prediction;
-
-
-  /*
-    NEVER start 4-second analysis
-    during 4-round cooldown.
-  */
-
-  if(
-    p &&
-    p.status ===
-    "COOLDOWN"
-  ){
-
-    return;
-  }
-
-
-  /*
-    Server says analysis window.
-  */
-
-  if(
-    p &&
-    p.status ===
-    "WAIT_ANALYSIS"
-  ){
-
-    const second =
-      new Date()
-        .getSeconds();
-
-
-    if(
-      second >= 56
-    ){
-
-      startFourSecondAnalysis(
-        String(
-          p.targetPeriod
-        )
-      );
-    }
-
-    return;
-  }
-
-
-  /*
-    Fallback.
-  */
-
-  const second =
-    new Date()
-      .getSeconds();
+  setLive(
+    Boolean(
+      data.live
+    )
+  );
 
 
   if(
-    second >= 56 &&
-    state.nextPeriod &&
-    lastTarget !==
-      state.nextPeriod
+    data.live
   ){
 
-    startFourSecondAnalysis(
-      String(
-        state.nextPeriod
-      )
+    showError("");
+
+  }else{
+
+    showError(
+      data.liveError ||
+      "Waiting for live WingoBot data..."
     );
   }
+
+
+  /* PERIOD */
+
+  text(
+    "currentPeriod",
+    data.currentPeriod ||
+    "—"
+  );
+
+
+  text(
+    "nextPeriod",
+
+    "NEXT PERIOD: " +
+    (
+      data.nextPeriod ||
+      "—"
+    )
+  );
+
+
+  /* LATEST RESULT */
+
+  if(
+    data.latestResult
+  ){
+
+    text(
+      "latestNumber",
+      data.latestResult.number
+    );
+
+
+    text(
+      "latestType",
+      data.latestResult.result
+    );
+
+
+    text(
+      "latestIssue",
+
+      "Period: " +
+      data.latestResult.issueNumber
+    );
+
+  }else{
+
+    text(
+      "latestNumber",
+      "—"
+    );
+
+
+    text(
+      "latestType",
+      "—"
+    );
+
+
+    text(
+      "latestIssue",
+      "Waiting for live data..."
+    );
+  }
+
+
+  /* MODEL */
+
+  renderModel(
+    data.model
+  );
+
+
+  /* HISTORY */
+
+  renderHistory(
+    data.recentResults
+  );
+
+
+  /*
+    Prediction rendering.
+  */
+
+  displayPrediction(
+    data.prediction
+  );
 }
 
 
@@ -1552,136 +2106,66 @@ async function loadState(){
       await fetch(
         url,
         {
-          cache:
-            "no-store"
+          method:"GET",
+
+          cache:"no-store",
+
+          headers:{
+            "Cache-Control":
+              "no-cache"
+          }
         }
       );
 
 
-    const data =
-      await response.json();
+    let data;
 
 
-    if(!response.ok){
+    try{
+
+      data =
+        await response.json();
+
+    }catch{
+
+      throw new Error(
+        "Invalid server response"
+      );
+    }
+
+
+    if(
+      !response.ok
+    ){
 
       setLive(false);
 
-      setError(
+
+      showError(
         data.error ||
-        "Access key error"
+        "Invalid access key"
       );
+
+
+      /*
+        Stop prediction UI.
+      */
+
+      stopAnalysis();
+
+
+      setPrediction(
+        "WAIT",
+        "predWait"
+      );
+
 
       return;
     }
 
 
-    state =
-      data;
-
-
-    setLive(
-      Boolean(
-        data.live
-      )
-    );
-
-
-    if(
-      data.live
-    ){
-
-      setError("");
-
-    }else{
-
-      setError(
-        data.liveError ||
-        "Waiting for live API..."
-      );
-    }
-
-
-    setText(
-      "current",
-      data.currentPeriod ||
-      "—"
-    );
-
-
-    setText(
-      "next",
-      "NEXT PERIOD: " +
-      (
-        data.nextPeriod ||
-        "—"
-      )
-    );
-
-
-    if(
-      data.latestResult
-    ){
-
-      setText(
-        "number",
-        data.latestResult.number
-      );
-
-      setText(
-        "type",
-        data.latestResult.result
-      );
-
-      setText(
-        "issue",
-        "Period: " +
-        data.latestResult.issueNumber
-      );
-
-    }else{
-
-      setText(
-        "number",
-        "—"
-      );
-
-      setText(
-        "type",
-        "—"
-      );
-
-      setText(
-        "issue",
-        "Waiting..."
-      );
-    }
-
-
-    /*
-      Remember target.
-    */
-
-    if(
-      data.nextPeriod
-    ){
-
-      lastTarget =
-        String(
-          data.nextPeriod
-        );
-    }
-
-
-    renderPrediction(
-      data.prediction
-    );
-
-    renderModel(
-      data.model
-    );
-
-    renderHistory(
-      data.recentResults
+    renderState(
+      data
     );
 
 
@@ -1689,11 +2173,85 @@ async function loadState(){
 
     setLive(false);
 
-    setError(
+
+    showError(
       "Connection error: " +
       error.message
     );
+
   }
+
+}
+
+
+/* =====================================================
+   PERIOD CHANGE DETECTION
+===================================================== */
+
+function detectPeriodChange(){
+
+  if(
+    !appState ||
+    !appState.currentPeriod
+  ){
+
+    return;
+  }
+
+
+  const current =
+    String(
+      appState.currentPeriod
+    );
+
+
+  if(
+    lastCurrentPeriod === null
+  ){
+
+    lastCurrentPeriod =
+      current;
+
+    return;
+  }
+
+
+  if(
+    current !==
+    lastCurrentPeriod
+  ){
+
+    /*
+      New game round arrived.
+
+      Do NOT manually create a prediction.
+      Server controls the exact 4-round
+      skip cycle.
+    */
+
+    lastCurrentPeriod =
+      current;
+
+    stopAnalysis();
+
+    text(
+      "analysisTimer",
+      ""
+    );
+  }
+}
+
+
+/* =====================================================
+   ONE SECOND UPDATE
+===================================================== */
+
+async function tick(){
+
+  await loadState();
+
+  detectPeriodChange();
+
 }
 
 
@@ -1701,26 +2259,12 @@ async function loadState(){
    START
 ===================================================== */
 
-loadState();
+tick();
 
-
-/*
-  Update every 1 second.
-*/
 
 setInterval(
-  loadState,
+  tick,
   UPDATE_INTERVAL
-);
-
-
-/*
-  Check analysis window.
-*/
-
-setInterval(
-  checkAnalysis,
-  200
 );
 
 </script>
