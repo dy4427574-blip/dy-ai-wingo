@@ -9,23 +9,15 @@ const PORT = Number(process.env.PORT || 10000);
 const API_URL =
   "https://api.wingobot.com/v2/1-min-game-history";
 
-const WINGOBOT_TOKEN =
+const TOKEN =
   String(process.env.WINGOBOT_TOKEN || "").trim();
 
 const ADMIN_KEY =
   String(process.env.ADMIN_KEY || "dy4427574").trim();
 
-
-/* =====================================================
-   STATE
-===================================================== */
-
 let state = {
-  success: false,
-
   currentPeriod: null,
   predictionPeriod: null,
-
   history: [],
   stats: null,
 
@@ -44,67 +36,41 @@ let state = {
 
 let lastPredictionPeriod = null;
 let analysisTimer = null;
-let requestRunning = false;
+let fetching = false;
 
 
-/* =====================================================
-   CACHE CONTROL
-===================================================== */
+/* =========================
+   RESPONSE
+========================= */
 
 function noCache(res) {
-
   res.setHeader(
     "Cache-Control",
-    "no-store, no-cache, must-revalidate, proxy-revalidate"
+    "no-store, no-cache, must-revalidate"
   );
-
-  res.setHeader(
-    "Pragma",
-    "no-cache"
-  );
-
-  res.setHeader(
-    "Expires",
-    "0"
-  );
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
 }
 
-
-/* =====================================================
-   JSON
-===================================================== */
-
-function sendJSON(res, data, status = 200) {
-
+function json(res, data, code = 200) {
   noCache(res);
 
-  res.writeHead(status, {
-    "Content-Type":
-      "application/json; charset=utf-8"
+  res.writeHead(code, {
+    "Content-Type": "application/json; charset=utf-8"
   });
 
-  res.end(
-    JSON.stringify(data)
-  );
+  res.end(JSON.stringify(data));
 }
 
-
-/* =====================================================
-   HTML
-===================================================== */
-
-function sendHTML(res, filename) {
-
-  const filePath =
-    path.join(__dirname, filename);
+function page(res, file) {
+  const filePath = path.join(__dirname, file);
 
   if (!fs.existsSync(filePath)) {
-
-    return sendJSON(
+    return json(
       res,
       {
         success: false,
-        error: filename + " not found"
+        error: `${file} not found`
       },
       404
     );
@@ -113,66 +79,49 @@ function sendHTML(res, filename) {
   noCache(res);
 
   res.writeHead(200, {
-    "Content-Type":
-      "text/html; charset=utf-8"
+    "Content-Type": "text/html; charset=utf-8"
   });
 
-  res.end(
-    fs.readFileSync(filePath)
-  );
+  res.end(fs.readFileSync(filePath));
 }
 
 
-/* =====================================================
-   NUMBER → BIG / SMALL
-===================================================== */
+/* =========================
+   BIG / SMALL
+========================= */
 
 function getSize(number) {
-
   const n = Number(number);
 
-  if (
-    !Number.isInteger(n) ||
-    n < 0 ||
-    n > 9
-  ) {
+  if (!Number.isInteger(n) || n < 0 || n > 9) {
     return null;
   }
 
-  return n <= 4
-    ? "SMALL"
-    : "BIG";
+  return n <= 4 ? "SMALL" : "BIG";
 }
 
 
-/* =====================================================
-   EXACT WINGOBOT HISTORY
-===================================================== */
+/* =========================
+   API HISTORY
+========================= */
 
 function normalizeHistory(history) {
-
   if (!Array.isArray(history)) {
     return [];
   }
 
   return history
     .map(row => {
-
-      if (!row) {
-        return null;
-      }
-
-      const issueNumber =
-        row.issueNumber ??
-        row.period ??
-        row.issue ??
+      const period =
+        row?.issueNumber ??
+        row?.period ??
+        row?.issue ??
         null;
 
-      const number =
-        Number(row.number);
+      const number = Number(row?.number);
 
       if (
-        issueNumber === null ||
+        period === null ||
         !Number.isInteger(number) ||
         number < 0 ||
         number > 9
@@ -181,277 +130,139 @@ function normalizeHistory(history) {
       }
 
       return {
-
-        issueNumber:
-          String(issueNumber),
-
-        number:
-          number,
-
-        size:
-          getSize(number),
-
-        colour:
-          row.colour ??
-          row.color ??
-          null,
-
-        premium:
-          row.premium ??
-          null,
-
-        sum:
-          row.sum ??
-          null
-
+        issueNumber: String(period),
+        number,
+        size: getSize(number),
+        colour: row.colour ?? null,
+        premium: row.premium ?? null,
+        sum: row.sum ?? null
       };
-
     })
     .filter(Boolean);
 }
 
 
-/* =====================================================
-   PERIOD NUMBER
-===================================================== */
+/* =========================
+   PERIOD
+========================= */
 
-function toBigIntPeriod(value) {
+function nextPeriod(period) {
+  if (!period) return null;
 
-  if (
-    value === null ||
-    value === undefined
-  ) {
-    return null;
-  }
+  const text = String(period);
 
-  const s =
-    String(value);
-
-  if (!/^\d+$/.test(s)) {
+  if (!/^\d+$/.test(text)) {
     return null;
   }
 
   try {
-    return BigInt(s);
+    return (BigInt(text) + 1n)
+      .toString()
+      .padStart(text.length, "0");
   } catch {
     return null;
   }
 }
 
 
-/* =====================================================
-   NEXT PERIOD
-===================================================== */
+/* =========================
+   WINGOBOT REQUEST
+========================= */
 
-function getNextPeriod(currentPeriod, history) {
-
-  const current =
-    toBigIntPeriod(
-      currentPeriod
-    );
-
-  if (current !== null) {
-
-    const source =
-      String(currentPeriod);
-
-    return (
-      current + 1n
-    )
-      .toString()
-      .padStart(
-        source.length,
-        "0"
-      );
-  }
-
-
-  if (
-    Array.isArray(history) &&
-    history.length
-  ) {
-
-    const latest =
-      String(
-        history[0].issueNumber
-      );
-
-    const n =
-      toBigIntPeriod(
-        latest
-      );
-
-    if (n !== null) {
-
-      return (
-        n + 1n
-      )
-        .toString()
-        .padStart(
-          latest.length,
-          "0"
-        );
-    }
-  }
-
-
-  return null;
-}
-
-
-/* =====================================================
-   WINGOBOT API
-===================================================== */
-
-async function getWingoData() {
-
-  if (!WINGOBOT_TOKEN) {
-
+async function fetchWingo() {
+  if (!TOKEN) {
     throw new Error(
-      "WINGOBOT_TOKEN is not configured in Render"
+      "WINGOBOT_TOKEN missing in Render"
     );
   }
-
 
   const url =
     API_URL +
     "?_=" +
     Date.now();
 
+  const response = await fetch(url, {
+    method: "GET",
+    cache: "no-store",
 
-  const response =
-    await fetch(
-      url,
-      {
-        method: "GET",
+    headers: {
+      "Authorization": `Bearer ${TOKEN}`,
+      "Accept": "application/json",
+      "Cache-Control": "no-cache",
+      "Pragma": "no-cache",
+      "User-Agent": "DY-AI-Wingo/1.0"
+    }
+  });
 
-        cache: "no-store",
-
-        headers: {
-
-          "Authorization":
-            "Bearer " +
-            WINGOBOT_TOKEN,
-
-          "Accept":
-            "application/json",
-
-          "Cache-Control":
-            "no-cache",
-
-          "Pragma":
-            "no-cache",
-
-          "User-Agent":
-            "DY-AI-Wingo/1.0"
-
-        }
-      }
-    );
-
-
-  const text =
-    await response.text();
-
+  const text = await response.text();
 
   if (!response.ok) {
-
     throw new Error(
-      "HTTP " +
-      response.status
+      `HTTP ${response.status}`
     );
   }
-
 
   let data;
 
   try {
-
-    data =
-      JSON.parse(text);
-
+    data = JSON.parse(text);
   } catch {
-
     throw new Error(
-      "Invalid JSON returned by WingoBot"
+      "WingoBot returned invalid JSON"
     );
   }
-
 
   if (data.success !== true) {
-
     throw new Error(
       data.error ||
-      "WingoBot success=false"
+      "WingoBot returned success=false"
     );
   }
-
 
   return data;
 }
 
 
-/* =====================================================
-   ANALYSIS ENGINE
-===================================================== */
+/* =========================
+   ANALYSIS
+========================= */
 
-function analysisEngine(history) {
-
+function analyze(history) {
   if (
     !Array.isArray(history) ||
     history.length < 10
   ) {
-
     return "NO CLEAR SIGNAL";
   }
 
+  const rows = history.slice(0, 20);
 
-  const rows =
-    history.slice(0, 20);
+  const sizes = rows.map(
+    x => x.size
+  );
 
-
-  const sizes =
-    rows.map(
-      row => row.size
-    );
-
-
-  let bigScore = 0;
-  let smallScore = 0;
+  let big = 0;
+  let small = 0;
 
 
-  /* --------------------------------
-     RECENCY
-  -------------------------------- */
+  /* RECENCY */
 
-  sizes
-    .slice(0, 10)
-    .forEach(
-      (value, index) => {
+  sizes.slice(0, 10).forEach(
+    (value, index) => {
 
-        const weight =
-          10 - index;
+      const weight = 10 - index;
 
-        if (value === "BIG") {
-
-          bigScore +=
-            weight;
-
-        } else if (
-          value === "SMALL"
-        ) {
-
-          smallScore +=
-            weight;
-        }
-
+      if (value === "BIG") {
+        big += weight;
+      } else {
+        small += weight;
       }
-    );
+
+    }
+  );
 
 
-  /* --------------------------------
-     STREAK
-  -------------------------------- */
+  /* STREAK */
 
   let streak = 1;
 
@@ -460,166 +271,90 @@ function analysisEngine(history) {
     i < sizes.length;
     i++
   ) {
-
     if (
       sizes[i] === sizes[0]
     ) {
-
       streak++;
-
     } else {
-
       break;
     }
   }
 
-
   if (streak >= 3) {
 
-    if (
-      sizes[0] === "BIG"
-    ) {
-
-      bigScore += 4;
-      smallScore += 1;
-
+    if (sizes[0] === "BIG") {
+      big += 4;
+      small += 1;
     } else {
-
-      smallScore += 4;
-      bigScore += 1;
-
+      small += 4;
+      big += 1;
     }
+
   }
 
 
-  /* --------------------------------
-     ALTERNATION
-  -------------------------------- */
+  /* ALTERNATION */
 
-  let alternating = 0;
+  let alternate = 0;
 
   for (
     let i = 0;
-    i < Math.min(
-      9,
-      sizes.length - 1
-    );
+    i < Math.min(9, sizes.length - 1);
     i++
   ) {
-
     if (
-      sizes[i] !==
-      sizes[i + 1]
+      sizes[i] !== sizes[i + 1]
     ) {
-
-      alternating++;
+      alternate++;
     }
   }
 
-
-  if (
-    alternating >= 7
-  ) {
-
+  if (alternate >= 7) {
     return "NO CLEAR SIGNAL";
   }
 
 
-  /* --------------------------------
-     LAST 3
-  -------------------------------- */
+  /* LAST 3 */
 
   const p3 =
-    sizes
-      .slice(0, 3)
-      .join("");
+    sizes.slice(0, 3).join("");
+
+  if (p3 === "BBB") small += 3;
+  if (p3 === "SSS") big += 3;
+  if (p3 === "BSB") small += 2;
+  if (p3 === "SBS") big += 2;
 
 
-  if (p3 === "BBB") {
-    smallScore += 3;
-  }
-
-  if (p3 === "SSS") {
-    bigScore += 3;
-  }
-
-  if (p3 === "BSB") {
-    smallScore += 2;
-  }
-
-  if (p3 === "SBS") {
-    bigScore += 2;
-  }
-
-
-  /* --------------------------------
-     LAST 5
-  -------------------------------- */
+  /* LAST 5 */
 
   const p5 =
-    sizes
-      .slice(0, 5)
-      .join("");
+    sizes.slice(0, 5).join("");
+
+  if (p5 === "BSBSB") small += 2;
+  if (p5 === "SBSBS") big += 2;
 
 
-  if (p5 === "BSBSB") {
-    smallScore += 2;
-  }
+  /* REPEATED BLOCK */
 
-  if (p5 === "SBSBS") {
-    bigScore += 2;
-  }
+  const a =
+    sizes.slice(0, 3).join("");
 
-  if (p5 === "BBBSS") {
-    bigScore += 1;
-  }
+  const b =
+    sizes.slice(3, 6).join("");
 
-  if (p5 === "SSSBB") {
-    smallScore += 1;
-  }
+  if (a && a === b) {
 
-
-  /* --------------------------------
-     REPEATED BLOCK
-  -------------------------------- */
-
-  const block1 =
-    sizes
-      .slice(0, 3)
-      .join("");
-
-  const block2 =
-    sizes
-      .slice(3, 6)
-      .join("");
-
-
-  if (
-    block1 &&
-    block1 === block2
-  ) {
-
-    if (
-      block1 === "BBB"
-    ) {
-
-      smallScore += 2;
-
+    if (a === "BBB") {
+      small += 2;
     }
 
-    if (
-      block1 === "SSS"
-    ) {
-
-      bigScore += 2;
-
+    if (a === "SSS") {
+      big += 2;
     }
   }
 
 
-  /* --------------------------------
-     SHORT / LONG
-  -------------------------------- */
+  /* SHORT / LONG */
 
   const short =
     sizes.slice(0, 5);
@@ -627,265 +362,170 @@ function analysisEngine(history) {
   const long =
     sizes.slice(0, 15);
 
-
   const shortBig =
-    short.filter(
-      x => x === "BIG"
-    ).length;
+    short.filter(x => x === "BIG").length;
 
   const shortSmall =
-    short.filter(
-      x => x === "SMALL"
-    ).length;
-
+    short.filter(x => x === "SMALL").length;
 
   const longBig =
-    long.filter(
-      x => x === "BIG"
-    ).length;
+    long.filter(x => x === "BIG").length;
 
   const longSmall =
-    long.filter(
-      x => x === "SMALL"
-    ).length;
-
+    long.filter(x => x === "SMALL").length;
 
   if (
     shortBig > shortSmall &&
     longBig > longSmall
   ) {
-
-    bigScore += 3;
+    big += 3;
   }
-
 
   if (
     shortSmall > shortBig &&
     longSmall > longBig
   ) {
-
-    smallScore += 3;
+    small += 3;
   }
 
 
-  /* --------------------------------
-     0 / 5 BOUNDARY
-  -------------------------------- */
+  /* 0 / 5 */
 
-  const boundaryCount =
-    rows
-      .map(
-        row => row.number
-      )
-      .filter(
-        n =>
-          n === 0 ||
-          n === 5
-      )
-      .length;
+  const boundary =
+    rows.filter(
+      x =>
+        x.number === 0 ||
+        x.number === 5
+    ).length;
 
-
-  if (
-    boundaryCount >= 3
-  ) {
-
-    bigScore -= 1;
-    smallScore -= 1;
+  if (boundary >= 3) {
+    big -= 1;
+    small -= 1;
   }
 
-
-  /* --------------------------------
-     FINAL
-  -------------------------------- */
 
   const difference =
-    Math.abs(
-      bigScore -
-      smallScore
-    );
+    Math.abs(big - small);
 
-
-  if (
-    difference < 4
-  ) {
-
+  if (difference < 4) {
     return "NO CLEAR SIGNAL";
   }
 
-
-  return (
-    bigScore >
-    smallScore
-  )
+  return big > small
     ? "BIG"
     : "SMALL";
 }
 
 
-/* =====================================================
-   FINAL PREDICTION
-===================================================== */
+/* =========================
+   PREDICTION
+========================= */
 
-function getPrediction(history) {
+function prediction(history) {
 
-  const engine =
-    analysisEngine(
-      history
-    );
-
+  const result =
+    analyze(history);
 
   /*
-     Opposite-output logic
+    Opposite layer
   */
 
-  if (
-    engine === "BIG"
-  ) {
-
+  if (result === "BIG") {
     return "SMALL";
   }
 
-
-  if (
-    engine === "SMALL"
-  ) {
-
+  if (result === "SMALL") {
     return "BIG";
   }
-
 
   return "NO CLEAR SIGNAL";
 }
 
 
-/* =====================================================
+/* =========================
    5 SECOND ANALYSIS
-===================================================== */
+========================= */
 
-function startFiveSecondAnalysis(
-  targetPeriod,
+function startAnalysis(
+  period,
   history
 ) {
 
   if (analysisTimer) {
-
-    clearInterval(
-      analysisTimer
-    );
-
-    analysisTimer = null;
+    clearInterval(analysisTimer);
   }
-
 
   let seconds = 5;
 
-
   state.analysis = {
-
     active: true,
-
     remaining: 5,
-
-    targetPeriod:
-      targetPeriod,
-
-    prediction:
-      "ANALYZING",
-
-    message:
-      "ANALYZING PATTERN..."
-
+    targetPeriod: period,
+    prediction: "ANALYZING",
+    message: "ANALYZING PATTERN..."
   };
 
 
   const messages = {
-
-    4:
-      "CHECKING RECENT RESULTS...",
-
-    3:
-      "COMPARING SEQUENCES...",
-
-    2:
-      "VALIDATING SIGNAL...",
-
-    1:
-      "FINALIZING PREDICTION..."
-
+    4: "CHECKING RECENT RESULTS...",
+    3: "COMPARING SEQUENCES...",
+    2: "VALIDATING SIGNAL...",
+    1: "FINALIZING PREDICTION..."
   };
 
 
   analysisTimer =
-    setInterval(
-      () => {
+    setInterval(() => {
 
-        seconds--;
+      seconds--;
 
+      if (seconds > 0) {
 
-        if (
-          seconds > 0
-        ) {
+        state.analysis.remaining =
+          seconds;
 
-          state.analysis.remaining =
-            seconds;
+        state.analysis.message =
+          messages[seconds];
 
-          state.analysis.message =
-            messages[seconds];
-
-          return;
-        }
+        return;
+      }
 
 
-        clearInterval(
-          analysisTimer
-        );
+      clearInterval(
+        analysisTimer
+      );
 
-        analysisTimer = null;
+      analysisTimer = null;
 
 
-        state.analysis = {
+      state.analysis = {
+        active: false,
+        remaining: 0,
+        targetPeriod: period,
+        prediction:
+          prediction(history),
+        message:
+          "PREDICTION READY"
+      };
 
-          active: false,
-
-          remaining: 0,
-
-          targetPeriod:
-            targetPeriod,
-
-          prediction:
-            getPrediction(
-              history
-            ),
-
-          message:
-            "PREDICTION READY"
-
-        };
-
-      },
-      1000
-    );
+    }, 1000);
 }
 
 
-/* =====================================================
+/* =========================
    UPDATE API
-===================================================== */
+========================= */
 
-async function updateAPI() {
+async function update() {
 
-  if (requestRunning) {
-    return;
-  }
+  if (fetching) return;
 
-
-  requestRunning = true;
-
+  fetching = true;
 
   try {
 
     const data =
-      await getWingoData();
+      await fetchWingo();
 
 
     const history =
@@ -895,87 +535,64 @@ async function updateAPI() {
 
 
     if (!history.length) {
-
       throw new Error(
-        "API returned empty history"
+        "History is empty"
       );
     }
 
 
     /*
-       EXACT FIELD FROM YOUR API
+      EXACT API FIELD
     */
 
-    const currentPeriod =
-      data.current &&
-      data.current.issueNumber
+    const current =
+      data.current?.issueNumber
         ? String(
             data.current.issueNumber
           )
-        : history[0]
-            .issueNumber;
+        : history[0].issueNumber;
 
 
-    const predictionPeriod =
-      getNextPeriod(
-        currentPeriod,
-        history
-      );
-
-
-    state.success =
-      true;
+    const next =
+      nextPeriod(current);
 
 
     state.currentPeriod =
-      currentPeriod;
-
+      current;
 
     state.predictionPeriod =
-      predictionPeriod;
-
+      next;
 
     state.history =
-      history.slice(
-        0,
-        30
-      );
-
+      history.slice(0, 30);
 
     state.stats =
-      data.stats ||
-      null;
-
+      data.stats || null;
 
     state.lastUpdate =
       Date.now();
 
-
     state.lastError =
       null;
-
 
     state.sourceStatus =
       "LIVE";
 
 
     /*
-       NEW PERIOD
-       → START 5 SECOND ANALYSIS
+      NEW PERIOD
     */
 
     if (
-      predictionPeriod &&
-      predictionPeriod !==
-        lastPredictionPeriod
+      next &&
+      next !== lastPredictionPeriod
     ) {
 
       lastPredictionPeriod =
-        predictionPeriod;
+        next;
 
-
-      startFiveSecondAnalysis(
-        predictionPeriod,
+      startAnalysis(
+        next,
         state.history
       );
     }
@@ -983,39 +600,34 @@ async function updateAPI() {
 
   } catch (error) {
 
-    state.success =
-      false;
+    state.sourceStatus =
+      "ERROR";
 
     state.lastError =
       error.message;
 
-    state.sourceStatus =
-      "ERROR";
-
   } finally {
 
-    requestRunning =
-      false;
+    fetching = false;
   }
 }
 
 
-/* =====================================================
+/* =========================
    EVERY SECOND
-===================================================== */
+========================= */
 
-updateAPI();
-
+update();
 
 setInterval(
-  updateAPI,
+  update,
   1000
 );
 
 
-/* =====================================================
+/* =========================
    SERVER
-===================================================== */
+========================= */
 
 const server =
   http.createServer(
@@ -1024,28 +636,23 @@ const server =
       const url =
         new URL(
           req.url,
-          `http://${
-            req.headers.host ||
-            "localhost"
-          }`
+          `http://${req.headers.host || "localhost"}`
         );
 
 
-      /* ==============================
-         STATE
-      ============================== */
+      /* STATE */
 
       if (
         url.pathname ===
         "/api/state"
       ) {
 
-        return sendJSON(
+        return json(
           res,
           {
-
             success:
-              state.success,
+              state.sourceStatus ===
+              "LIVE",
 
             currentPeriod:
               state.currentPeriod,
@@ -1073,60 +680,46 @@ const server =
 
             error:
               state.lastError
-
           }
         );
       }
 
 
-      /* ==============================
-         HISTORY
-      ============================== */
+      /* HISTORY */
 
       if (
         url.pathname ===
         "/api/history"
       ) {
 
-        return sendJSON(
+        return json(
           res,
           {
-
             success: true,
-
             history:
               state.history
-
           }
         );
       }
 
 
-      /* ==============================
-         HEALTH
-      ============================== */
+      /* HEALTH */
 
       if (
         url.pathname ===
         "/api/health"
       ) {
 
-        return sendJSON(
+        return json(
           res,
           {
-
             ok: true,
 
             api:
               API_URL,
 
-            method:
-              "GET",
-
             tokenConfigured:
-              Boolean(
-                WINGOBOT_TOKEN
-              ),
+              Boolean(TOKEN),
 
             sourceStatus:
               state.sourceStatus,
@@ -1134,17 +727,14 @@ const server =
             lastUpdate:
               state.lastUpdate,
 
-            lastError:
+            error:
               state.lastError
-
           }
         );
       }
 
 
-      /* ==============================
-         ADMIN
-      ============================== */
+      /* ADMIN */
 
       if (
         url.pathname ===
@@ -1156,73 +746,59 @@ const server =
             "key"
           ) || "";
 
-
-        return sendJSON(
+        return json(
           res,
           {
-
             success:
-              key ===
-              ADMIN_KEY
-
+              key === ADMIN_KEY
           }
         );
       }
 
 
-      /* ==============================
-         PREDICTION
-      ============================== */
+      /* PREDICTION */
 
       if (
         url.pathname === "/" ||
         url.pathname ===
-          "/prediction"
+        "/prediction"
       ) {
 
-        return sendHTML(
+        return page(
           res,
           "prediction.html"
         );
       }
 
 
-      /* ==============================
-         ADMIN PAGE
-      ============================== */
+      /* ADMIN PAGE */
 
       if (
-        url.pathname ===
-        "/admin"
+        url.pathname === "/admin"
       ) {
 
-        return sendHTML(
+        return page(
           res,
           "admin.html"
         );
       }
 
 
-      /* ==============================
-         MUSIC
-      ============================== */
+      /* MUSIC */
 
       if (
         url.pathname ===
         "/music.mp3"
       ) {
 
-        const musicPath =
+        const music =
           path.join(
             __dirname,
             "music.mp3"
           );
 
-
         if (
-          !fs.existsSync(
-            musicPath
-          )
+          !fs.existsSync(music)
         ) {
 
           res.writeHead(404);
@@ -1232,7 +808,6 @@ const server =
           );
         }
 
-
         res.writeHead(
           200,
           {
@@ -1241,45 +816,27 @@ const server =
           }
         );
 
-
         return fs
-          .createReadStream(
-            musicPath
-          )
+          .createReadStream(music)
           .pipe(res);
       }
 
 
-      /* ==============================
-         404
-      ============================== */
+      res.writeHead(404);
 
-      res.writeHead(
-        404,
-        {
-          "Content-Type":
-            "text/plain"
-        }
-      );
+      res.end("Not Found");
 
-      res.end(
-        "Not Found"
-      );
     }
   );
 
 
-/* =====================================================
+/* =========================
    START
-===================================================== */
+========================= */
 
 server.listen(
   PORT,
   () => {
-
-    console.log(
-      "================================"
-    );
 
     console.log(
       "DY AI WINGO STARTED"
@@ -1297,21 +854,17 @@ server.listen(
 
     console.log(
       "TOKEN:",
-      WINGOBOT_TOKEN
+      TOKEN
         ? "CONFIGURED"
-        : "NOT CONFIGURED"
+        : "MISSING"
     );
 
     console.log(
-      "POLL: EVERY 1 SECOND"
+      "POLL: 1 SECOND"
     );
 
     console.log(
       "ANALYSIS: 5 SECONDS"
-    );
-
-    console.log(
-      "================================"
     );
 
   }
