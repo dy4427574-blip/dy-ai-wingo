@@ -1,7 +1,7 @@
 {
   "name": "dy-ai-wingo",
   "version": "4.0.0",
-  "description": "DY AI Wingo 1 Minute Dashboard",
+  "description": "DY AI WinGo 1 Minute Live Dashboard",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
