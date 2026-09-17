@@ -2,319 +2,428 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DY AI WinGo 30S</title>
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+>
+
+<title>DY AI WinGo</title>
 
 <style>
 *{
   box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+
+html,body{
   margin:0;
   padding:0;
+  min-height:100%;
 }
 
 body{
-  background:#080b10;
+  background:
+    radial-gradient(circle at 50% -10%,#202a3c 0%,#090d14 38%,#030507 75%);
   color:#fff;
   font-family:Arial,Helvetica,sans-serif;
   min-height:100vh;
+  padding:10px;
 }
 
 .app{
   width:100%;
-  max-width:520px;
+  max-width:720px;
   margin:auto;
-  padding:12px;
+}
+
+/* HEADER */
+
+.card{
+  background:
+    linear-gradient(145deg,rgba(18,24,34,.98),rgba(6,9,14,.98));
+  border:1px solid rgba(148,163,184,.20);
+  border-radius:22px;
+  box-shadow:0 15px 45px rgba(0,0,0,.30);
+  margin-bottom:12px;
 }
 
 .header{
-  background:linear-gradient(135deg,#151b25,#0d1118);
-  border:1px solid #242c38;
-  border-radius:20px;
-  padding:18px;
-  margin-bottom:12px;
-  box-shadow:0 10px 35px rgba(0,0,0,.35);
+  padding:23px 20px;
 }
 
 .logo{
-  font-size:24px;
-  font-weight:900;
-  letter-spacing:1px;
+  font-size:28px;
+  font-weight:1000;
+  letter-spacing:2px;
 }
 
 .logo span{
-  color:#ff9a42;
+  color:#ff963f;
 }
 
-.sub{
-  margin-top:5px;
-  color:#737d8c;
-  font-size:11px;
-  letter-spacing:1.5px;
+.subtitle{
+  color:#7d8999;
+  font-size:10px;
+  letter-spacing:4px;
+  margin-top:8px;
 }
+
+/* LOGIN */
 
 .login{
-  background:#11161e;
-  border:1px solid #252e3b;
-  border-radius:18px;
-  padding:16px;
-  margin-bottom:12px;
+  padding:18px;
 }
 
-input{
+.input{
   width:100%;
-  height:48px;
-  background:#080c12;
-  border:1px solid #303947;
-  border-radius:12px;
+  height:54px;
+  border-radius:15px;
+  border:1px solid #344050;
+  background:#05090f;
   color:#fff;
-  padding:0 14px;
+  padding:0 15px;
   outline:none;
-  font-size:14px;
-}
-
-button{
-  width:100%;
-  height:48px;
-  margin-top:10px;
-  border:0;
-  border-radius:12px;
-  background:linear-gradient(135deg,#ff9a42,#ff6f2c);
-  color:#fff;
-  font-weight:800;
   font-size:15px;
 }
 
-.status{
+.input:focus{
+  border-color:#ff963f;
+}
+
+.btn{
+  width:100%;
+  height:53px;
+  margin-top:11px;
+  border:0;
+  border-radius:15px;
+  background:linear-gradient(135deg,#ff9b43,#ff6d2c);
+  color:#111;
+  font-weight:1000;
+  font-size:14px;
+  cursor:pointer;
+}
+
+.message{
+  min-height:20px;
   text-align:center;
-  margin-top:9px;
-  font-size:12px;
-  color:#778292;
-}
-
-.card{
-  background:linear-gradient(145deg,#0d1219,#090d13);
-  border:1px solid #252d38;
-  border-radius:22px;
-  padding:22px 18px;
-  margin-bottom:12px;
-  box-shadow:0 10px 35px rgba(0,0,0,.25);
-}
-
-.card-title{
-  color:#778292;
-  text-align:center;
-  font-size:11px;
-  letter-spacing:2px;
-  font-weight:800;
-}
-
-.target{
-  text-align:center;
-  color:#929baa;
-  font-size:13px;
-  margin-top:12px;
-  word-break:break-all;
-}
-
-.prediction{
-  text-align:center;
-  font-size:52px;
-  font-weight:900;
-  margin-top:22px;
-  letter-spacing:2px;
-}
-
-.big{
-  color:#ff963d;
-  text-shadow:0 0 22px rgba(255,150,61,.35);
-}
-
-.small{
-  color:#53adff;
-  text-shadow:0 0 22px rgba(83,173,255,.35);
-}
-
-.confidence{
-  text-align:center;
-  margin-top:12px;
-  color:#b8c0cc;
-  font-size:13px;
-}
-
-.analysis{
-  text-align:center;
-  margin-top:13px;
-  color:#747f8e;
-  font-size:11px;
-  letter-spacing:1px;
-  font-weight:800;
-}
-
-.thinking{
-  display:none;
-  text-align:center;
-  margin-top:20px;
-}
-
-.thinking-text{
-  color:#ff963d;
-  font-size:13px;
-  font-weight:800;
-  letter-spacing:2px;
-}
-
-.dots{
   margin-top:10px;
+  font-size:12px;
+  color:#ff6868;
 }
 
-.dot{
-  display:inline-block;
-  width:6px;
-  height:6px;
-  background:#ff963d;
-  border-radius:50%;
-  margin:0 3px;
-  animation:blink 1s infinite;
+/* APP */
+
+#app{
+  display:none;
 }
 
-.dot:nth-child(2){animation-delay:.2s}
-.dot:nth-child(3){animation-delay:.4s}
+/* STATUS */
 
-@keyframes blink{
-  0%,100%{opacity:.2}
-  50%{opacity:1}
+.status-card{
+  padding:15px;
 }
 
-.live-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr 1fr;
+.status-line{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
   gap:10px;
 }
 
-.live-box{
-  background:#080c11;
-  border:1px solid #202833;
-  border-radius:14px;
-  padding:14px 10px;
-  min-width:0;
-}
-
-.live-label{
-  color:#687383;
+.badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:7px 10px;
+  border-radius:10px;
+  background:#0a1119;
+  color:#8995a5;
   font-size:9px;
-  letter-spacing:.7px;
-  margin-bottom:9px;
+  font-weight:900;
+  letter-spacing:1px;
 }
 
-.live-value{
+.badge.live{
+  color:#48e594;
+  background:rgba(34,197,94,.08);
+}
+
+.badge.error{
+  color:#ff6969;
+  background:rgba(239,68,68,.08);
+}
+
+.dot{
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:currentColor;
+}
+
+.issue-box{
+  margin-top:13px;
+  display:grid;
+  grid-template-columns:1fr;
+  gap:8px;
+}
+
+.issue-row{
+  background:#070c12;
+  border:1px solid #1c2732;
+  border-radius:12px;
+  padding:11px;
+}
+
+.issue-label{
+  color:#6f7c8c;
+  font-size:9px;
+  letter-spacing:1px;
+}
+
+.issue-value{
+  margin-top:5px;
+  color:#e7edf5;
   font-size:13px;
   font-weight:800;
   word-break:break-all;
 }
 
-.live-big{
-  color:#ff963d;
+/* PREDICTION */
+
+.prediction-card{
+  padding:25px 15px;
+  text-align:center;
 }
 
-.live-small{
-  color:#53adff;
+.pred-label{
+  color:#7e8a9a;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:2px;
 }
 
-.history-head{
+.prediction{
+  min-height:62px;
+  margin-top:7px;
+  font-size:47px;
+  line-height:1.1;
+  font-weight:1000;
+  letter-spacing:3px;
+  color:#ff963f;
+}
+
+.prediction.small{
+  color:#63a8ff;
+}
+
+.prediction.wait{
+  color:#8c98a8;
+  font-size:32px;
+}
+
+.target{
+  color:#a5afbc;
+  font-size:11px;
+  margin-top:8px;
+  word-break:break-all;
+}
+
+.confidence{
+  margin-top:11px;
+  color:#c1cad4;
+  font-size:12px;
+}
+
+.analysis-status{
+  margin-top:10px;
+  color:#ff963f;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:1px;
+  min-height:15px;
+}
+
+/* THINKING */
+
+.thinking{
+  display:inline-flex;
+  align-items:center;
+  gap:9px;
+  font-size:24px;
+}
+
+.thinking span{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#ff963f;
+  animation:pulse .7s infinite;
+}
+
+@keyframes pulse{
+  50%{
+    opacity:.2;
+    transform:scale(.55);
+  }
+}
+
+/* STATS */
+
+.section{
+  padding:15px;
+}
+
+.section-title{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  margin-bottom:14px;
+  gap:10px;
+  margin-bottom:12px;
 }
 
-.history-title{
+.section-title strong{
   font-size:14px;
-  font-weight:900;
 }
 
-.last{
-  color:#697483;
-  font-size:10px;
+.grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:9px;
+}
+
+.stat{
+  background:#060b11;
+  border:1px solid #1c2732;
+  border-radius:13px;
+  padding:13px;
+}
+
+.stat-label{
+  color:#718093;
+  font-size:9px;
   letter-spacing:1px;
 }
 
+.stat-value{
+  margin-top:6px;
+  font-size:16px;
+  font-weight:1000;
+}
+
+.orange{
+  color:#ff963f;
+}
+
+.blue{
+  color:#63a8ff;
+}
+
+.green{
+  color:#45e38f;
+}
+
+.red{
+  color:#ff6464;
+}
+
+/* TABLE */
+
 .table-wrap{
+  width:100%;
   overflow-x:auto;
+  border:1px solid #1b2631;
+  border-radius:13px;
 }
 
 table{
   width:100%;
+  min-width:620px;
   border-collapse:collapse;
-  min-width:450px;
+  background:#05090e;
 }
 
 th{
   text-align:left;
-  color:#687383;
+  padding:11px;
+  background:#0a1017;
+  color:#778496;
   font-size:9px;
-  letter-spacing:.7px;
-  padding:10px 7px;
-  border-bottom:1px solid #252d37;
+  letter-spacing:1px;
 }
 
 td{
-  padding:12px 7px;
+  padding:11px;
+  border-top:1px solid #16202a;
+  color:#d9e1e9;
   font-size:11px;
-  border-bottom:1px solid #171d25;
+  white-space:nowrap;
 }
 
-.issue{
-  color:#b8c0ca;
-  font-family:monospace;
+.big{
+  color:#ff963f;
+  font-weight:1000;
 }
 
-.result-big{
-  color:#ff963d;
-  font-weight:800;
-}
-
-.result-small{
-  color:#53adff;
-  font-weight:800;
+.small{
+  color:#63a8ff;
+  font-weight:1000;
 }
 
 .win{
-  color:#31dc88;
-  font-weight:900;
+  color:#43e18d;
+  font-weight:1000;
 }
 
 .loss{
-  color:#ff5d69;
-  font-weight:900;
+  color:#ff6464;
+  font-weight:1000;
 }
 
 .pending{
-  color:#8d98a8;
+  color:#ffae5e;
+  font-weight:1000;
+}
+
+.skipped{
+  color:#788493;
+  font-weight:1000;
 }
 
 .empty{
   text-align:center;
-  color:#687383;
+  color:#697585;
   padding:25px;
-  font-size:12px;
 }
 
-.error{
-  color:#ff6873;
+/* FOOTER */
+
+.footer{
+  text-align:center;
+  color:#596575;
+  font-size:9px;
+  line-height:1.5;
+  padding:12px 5px 20px;
 }
 
-@media(max-width:360px){
+@media(max-width:430px){
+
+  body{
+    padding:7px;
+  }
+
+  .logo{
+    font-size:24px;
+  }
+
   .prediction{
-    font-size:44px;
+    font-size:42px;
   }
 
-  .live-grid{
-    gap:6px;
+  .grid{
+    gap:7px;
   }
 
-  .live-box{
-    padding:12px 7px;
-  }
 }
 </style>
 </head>
@@ -323,145 +432,273 @@ td{
 
 <div class="app">
 
-  <div class="header">
-    <div class="logo">DY <span>AI</span> WinGo</div>
-    <div class="sub">30 SECOND ANALYSIS ENGINE</div>
+  <!-- HEADER -->
+  <div class="card header">
+    <div class="logo">
+      DY <span>AI</span> WinGo
+    </div>
+
+    <div class="subtitle">
+      30 SECOND ANALYSIS ENGINE
+    </div>
   </div>
 
-  <div class="login" id="loginBox">
+
+  <!-- LOGIN -->
+  <div
+    id="loginBox"
+    class="card login"
+  >
+
     <input
-      id="keyInput"
+      id="accessKey"
+      class="input"
       type="text"
-      placeholder="Enter access key"
       autocomplete="off"
+      placeholder="ENTER ACCESS KEY"
     >
-    <button onclick="login()">LOGIN</button>
-    <div class="status" id="loginStatus"></div>
+
+    <button
+      id="loginBtn"
+      class="btn"
+      onclick="login()"
+    >
+      LOGIN
+    </button>
+
+    <div
+      id="loginMessage"
+      class="message"
+    ></div>
+
   </div>
 
-  <div id="dashboard" style="display:none">
+
+  <!-- MAIN APP -->
+  <div id="app">
+
+    <!-- LIVE -->
+    <div class="card status-card">
+
+      <div class="status-line">
+
+        <div
+          id="liveBadge"
+          class="badge"
+        >
+          <span class="dot"></span>
+          CONNECTING
+        </div>
+
+        <div
+          id="sourceBadge"
+          class="badge"
+        >
+          —
+        </div>
+
+      </div>
+
+
+      <div class="issue-box">
+
+        <div class="issue-row">
+
+          <div class="issue-label">
+            LATEST COMPLETED ISSUE
+          </div>
+
+          <div
+            id="latestIssue"
+            class="issue-value"
+          >
+            —
+          </div>
+
+        </div>
+
+
+        <div class="issue-row">
+
+          <div class="issue-label">
+            NEXT ISSUE
+          </div>
+
+          <div
+            id="nextIssue"
+            class="issue-value"
+          >
+            —
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
 
     <!-- PREDICTION -->
-    <div class="card">
+    <div class="card prediction-card">
 
-      <div class="card-title">NEXT PREDICTION</div>
-
-      <div class="target" id="targetIssue">
-        Syncing...
-      </div>
-
-      <div class="thinking" id="thinking">
-        <div class="thinking-text">AI ANALYSING</div>
-        <div class="dots">
-          <span class="dot"></span>
-          <span class="dot"></span>
-          <span class="dot"></span>
-        </div>
+      <div class="pred-label">
+        NEXT PREDICTION
       </div>
 
       <div
-        class="prediction"
         id="prediction"
-        style="display:none"
+        class="prediction wait"
       >
-        --
+        WAIT
       </div>
 
       <div
-        class="confidence"
+        id="target"
+        class="target"
+      >
+        Waiting for live data...
+      </div>
+
+      <div
         id="confidence"
+        class="confidence"
       >
-        --
+        —
       </div>
 
       <div
-        class="analysis"
-        id="analysis"
-      >
-        WAITING FOR LIVE DATA
+        id="analysisStatus"
+        class="analysis-status"
+      ></div>
+
+    </div>
+
+
+    <!-- ANALYSIS -->
+    <div class="card section">
+
+      <div class="section-title">
+
+        <strong>
+          🧠 AI ANALYSIS
+        </strong>
+
+        <div
+          id="classification"
+          class="badge"
+        >
+          —
+        </div>
+
+      </div>
+
+
+      <div class="grid">
+
+        <div class="stat">
+          <div class="stat-label">
+            BIG %
+          </div>
+
+          <div
+            id="bigPct"
+            class="stat-value orange"
+          >
+            —
+          </div>
+        </div>
+
+
+        <div class="stat">
+          <div class="stat-label">
+            SMALL %
+          </div>
+
+          <div
+            id="smallPct"
+            class="stat-value blue"
+          >
+            —
+          </div>
+        </div>
+
+
+        <div class="stat">
+          <div class="stat-label">
+            CURRENT STREAK
+          </div>
+
+          <div
+            id="streak"
+            class="stat-value"
+          >
+            —
+          </div>
+        </div>
+
+
+        <div class="stat">
+          <div class="stat-label">
+            SWITCH RATE
+          </div>
+
+          <div
+            id="switchRate"
+            class="stat-value"
+          >
+            —
+          </div>
+        </div>
+
       </div>
 
     </div>
 
 
-    <!-- LIVE RESULT -->
-    <div class="card">
+    <!-- RESULTS -->
+    <div class="card section">
 
-      <div class="history-head">
-        <div class="history-title">LIVE RESULT</div>
-      </div>
+      <div class="section-title">
 
-      <div class="live-grid">
+        <strong>
+          📊 LIVE RESULTS
+        </strong>
 
-        <div class="live-box">
-          <div class="live-label">CURRENT ISSUE</div>
-          <div
-            class="live-value"
-            id="currentIssue"
-          >
-            --
-          </div>
-        </div>
-
-        <div class="live-box">
-          <div class="live-label">LAST NUMBER</div>
-          <div
-            class="live-value"
-            id="lastNumber"
-          >
-            --
-          </div>
-        </div>
-
-        <div class="live-box">
-          <div class="live-label">RESULT</div>
-          <div
-            class="live-value"
-            id="lastResult"
-          >
-            --
-          </div>
+        <div class="badge">
+          LAST 30
         </div>
 
       </div>
 
-    </div>
-
-
-    <!-- HISTORY -->
-    <div class="card">
-
-      <div class="history-head">
-        <div class="history-title">LIVE HISTORY</div>
-        <div class="last">LAST 30</div>
-      </div>
 
       <div class="table-wrap">
 
         <table>
 
           <thead>
+
             <tr>
               <th>ISSUE</th>
               <th>NUMBER</th>
               <th>RESULT</th>
-              <th>AI</th>
-              <th>W/L</th>
             </tr>
+
           </thead>
 
-          <tbody id="historyBody">
-            <tr>
-              <td colspan="5" class="empty">
-                Loading...
-              </td>
-            </tr>
-          </tbody>
+          <tbody
+            id="resultsBody"
+          ></tbody>
 
         </table>
 
       </div>
 
+    </div>
+
+
+    <div class="footer">
+      DY AI uses historical/statistical analysis.
+      Results are not guaranteed.
     </div>
 
   </div>
@@ -471,815 +708,899 @@ td{
 
 <script>
 
-const API = "";
+/* =====================================================
+   CONFIG
+===================================================== */
 
-let accessKey =
-  localStorage.getItem("dy_ai_access_key") || "";
+const KEY_STORAGE =
+  "DY_AI_ACCESS_KEY";
 
-let deviceId =
-  localStorage.getItem("dy_ai_device_id");
+const DEVICE_STORAGE =
+  "DY_AI_DEVICE_ID";
 
-if(!deviceId){
 
-  if(window.crypto && crypto.randomUUID){
-    deviceId = crypto.randomUUID();
-  }else{
-    deviceId =
-      "dev-" +
-      Date.now().toString(36) +
+let ACCESS_KEY = "";
+
+let lastPredictionTarget = "";
+
+let thinkingTarget = "";
+
+let thinkingTimer = null;
+
+
+/* =====================================================
+   DEVICE
+===================================================== */
+
+function getDeviceId(){
+
+  let id =
+    localStorage.getItem(
+      DEVICE_STORAGE
+    );
+
+  if(id){
+    return id;
+  }
+
+  try{
+
+    if(
+      window.crypto &&
+      crypto.randomUUID
+    ){
+
+      id =
+        crypto.randomUUID();
+
+    }else{
+
+      id =
+        "device-" +
+        Date.now() +
+        "-" +
+        Math.random()
+          .toString(36)
+          .slice(2);
+
+    }
+
+  }catch(e){
+
+    id =
+      "device-" +
+      Date.now() +
       "-" +
-      Math.random().toString(36).slice(2);
+      Math.random()
+        .toString(36)
+        .slice(2);
+
   }
 
   localStorage.setItem(
-    "dy_ai_device_id",
-    deviceId
+    DEVICE_STORAGE,
+    id
   );
+
+  return id;
 }
 
-let lastTargetIssue = null;
-let thinkingTarget = null;
-let thinkingTimer = null;
-let firstLoad = true;
 
-
-/* -----------------------------
-   HELPERS
------------------------------ */
+/* =====================================================
+   ESCAPE HTML
+===================================================== */
 
 function esc(value){
 
-  return String(value ?? "")
-    .replace(/&/g,"&amp;")
-    .replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;")
-    .replace(/'/g,"&#039;");
+  return String(
+    value ?? ""
+  )
+  .replaceAll(
+    "&",
+    "&amp;"
+  )
+  .replaceAll(
+    "<",
+    "&lt;"
+  )
+  .replaceAll(
+    ">",
+    "&gt;"
+  )
+  .replaceAll(
+    '"',
+    "&quot;"
+  )
+  .replaceAll(
+    "'",
+    "&#039;"
+  );
+
 }
 
 
-function headers(){
-
-  return {
-    "X-Access-Key": accessKey,
-    "X-Device-Id": deviceId,
-    "Cache-Control": "no-cache"
-  };
-
-}
-
-
-/* -----------------------------
+/* =====================================================
    LOGIN
------------------------------ */
+===================================================== */
 
 async function login(){
 
   const input =
-    document.getElementById("keyInput");
+    document.getElementById(
+      "accessKey"
+    );
 
-  const status =
-    document.getElementById("loginStatus");
+  const msg =
+    document.getElementById(
+      "loginMessage"
+    );
+
+  const btn =
+    document.getElementById(
+      "loginBtn"
+    );
 
   const key =
     input.value.trim();
 
   if(!key){
 
-    status.textContent =
-      "Please enter access key";
+    msg.textContent =
+      "Access key enter karo.";
 
     return;
   }
 
-  status.textContent =
-    "Checking key...";
+  btn.disabled = true;
 
-  try{
+  btn.textContent =
+    "CHECKING...";
 
-    const res =
-      await fetch(
-        API + "/api/key/check",
-        {
-          method:"GET",
-          headers:{
-            "X-Access-Key":key,
-            "X-Device-Id":deviceId,
-            "Cache-Control":"no-cache"
-          },
-          cache:"no-store"
-        }
-      );
-
-    const data =
-      await res.json();
-
-    if(!res.ok || !data.ok){
-
-      status.textContent =
-        data.message ||
-        "Invalid access key";
-
-      return;
-    }
-
-    accessKey = key;
-
-    localStorage.setItem(
-      "dy_ai_access_key",
-      accessKey
-    );
-
-    document.getElementById(
-      "loginBox"
-    ).style.display="none";
-
-    document.getElementById(
-      "dashboard"
-    ).style.display="block";
-
-    firstLoad = true;
-
-    await loadState();
-
-    startPolling();
-
-  }catch(err){
-
-    status.textContent =
-      "Server connection error";
-
-  }
-
-}
-
-
-/* -----------------------------
-   AUTO LOGIN
------------------------------ */
-
-async function autoLogin(){
-
-  if(!accessKey) return;
-
-  try{
-
-    const res =
-      await fetch(
-        API + "/api/key/check",
-        {
-          headers:headers(),
-          cache:"no-store"
-        }
-      );
-
-    const data =
-      await res.json();
-
-    if(!res.ok || !data.ok){
-
-      localStorage.removeItem(
-        "dy_ai_access_key"
-      );
-
-      return;
-    }
-
-    document.getElementById(
-      "loginBox"
-    ).style.display="none";
-
-    document.getElementById(
-      "dashboard"
-    ).style.display="block";
-
-    await loadState();
-
-    startPolling();
-
-  }catch(e){
-
-    // server may still be starting
-
-  }
-
-}
-
-
-/* -----------------------------
-   THINKING EFFECT
------------------------------ */
-
-function showThinking(target){
-
-  clearTimeout(thinkingTimer);
-
-  thinkingTarget = target;
-
-  document.getElementById(
-    "thinking"
-  ).style.display="block";
-
-  document.getElementById(
-    "prediction"
-  ).style.display="none";
-
-  thinkingTimer =
-    setTimeout(()=>{
-
-      thinkingTarget = null;
-
-      document.getElementById(
-        "thinking"
-      ).style.display="none";
-
-      loadState();
-
-    },3000);
-
-}
-
-
-/* -----------------------------
-   PREDICTION
------------------------------ */
-
-function renderPrediction(model){
-
-  const prediction =
-    document.getElementById("prediction");
-
-  const confidence =
-    document.getElementById("confidence");
-
-  const analysis =
-    document.getElementById("analysis");
-
-  if(!model){
-
-    prediction.style.display="none";
-
-    confidence.textContent="";
-
-    analysis.textContent =
-      "WAITING FOR LIVE DATA";
-
-    return;
-  }
-
-  const value =
-    String(
-      model.prediction ||
-      model.result ||
-      ""
-    ).toUpperCase();
-
-  const target =
-    model.targetIssue ||
-    model.target_issue ||
+  msg.textContent =
     "";
 
-  if(!value || !target){
+  try{
 
-    prediction.style.display="none";
+    const response =
+      await fetch(
+        "/api/key/check?t=" +
+        Date.now(),
+        {
+          method:"POST",
 
-    confidence.textContent="";
+          headers:{
+            "Content-Type":
+              "application/json"
+          },
 
-    analysis.textContent =
-      "SYNCING LIVE DATA";
+          cache:"no-store",
 
-    return;
+          body:
+            JSON.stringify({
+              key:key,
+              deviceId:
+                getDeviceId()
+            })
+        }
+      );
+
+    const data =
+      await response.json();
+
+    if(
+      !response.ok ||
+      !data.ok ||
+      !data.valid
+    ){
+
+      throw new Error(
+        data.error ||
+        "INVALID_ACCESS_KEY"
+      );
+    }
+
+    ACCESS_KEY =
+      key;
+
+    localStorage.setItem(
+      KEY_STORAGE,
+      key
+    );
+
+    document
+      .getElementById(
+        "loginBox"
+      )
+      .style.display =
+      "none";
+
+    document
+      .getElementById(
+        "app"
+      )
+      .style.display =
+      "block";
+
+    await update();
+
+  }catch(error){
+
+    ACCESS_KEY = "";
+
+    msg.textContent =
+      error.message ===
+      "INVALID_ACCESS_KEY"
+        ? "Invalid access key"
+        : error.message;
+
+  }finally{
+
+    btn.disabled = false;
+
+    btn.textContent =
+      "LOGIN";
+
   }
+
+}
+
+
+/* =====================================================
+   STATE
+===================================================== */
+
+async function getState(){
+
+  if(!ACCESS_KEY){
+
+    throw new Error(
+      "NOT_LOGGED_IN"
+    );
+  }
+
+  const response =
+    await fetch(
+      "/api/state?t=" +
+      Date.now(),
+      {
+        method:"GET",
+
+        cache:"no-store",
+
+        headers:{
+          "X-Access-Key":
+            ACCESS_KEY,
+
+          "X-Device-Id":
+            getDeviceId()
+        }
+      }
+    );
+
+  const data =
+    await response.json();
 
   if(
-    thinkingTarget === target
+    response.status === 401 ||
+    response.status === 403
   ){
 
-    return;
+    throw new Error(
+      data.error ||
+      "ACCESS_DENIED"
+    );
   }
 
-  prediction.textContent =
-    value;
+  if(!response.ok){
 
-  prediction.className =
-    "prediction " +
-    (
-      value === "BIG"
-        ? "big"
-        : value === "SMALL"
-          ? "small"
-          : ""
+    throw new Error(
+      data.error ||
+      "STATE_ERROR"
+    );
+  }
+
+  return data;
+}
+
+
+/* =====================================================
+   UPDATE
+===================================================== */
+
+async function update(){
+
+  try{
+
+    const data =
+      await getState();
+
+    render(data);
+
+  }catch(error){
+
+    console.log(
+      "STATE:",
+      error
     );
 
-  prediction.style.display="block";
+    const badge =
+      document.getElementById(
+        "liveBadge"
+      );
 
-  const conf =
-    model.confidence;
+    badge.className =
+      "badge error";
 
-  confidence.textContent =
-    conf !== undefined &&
-    conf !== null
-      ? "Confidence " + esc(conf) + "%"
-      : "";
+    badge.innerHTML =
+      '<span class="dot"></span> SYNC ERROR';
 
-  analysis.textContent =
-    String(
-      model.classification ||
-      model.analysis ||
-      model.reason ||
-      "FULL AI ANALYSIS"
-    ).toUpperCase();
+  }
 
 }
 
 
-/* -----------------------------
-   LIVE RESULT
------------------------------ */
+/* =====================================================
+   RENDER
+===================================================== */
 
-function renderLive(data){
+function render(data){
 
-  const current =
-    data.currentIssue ||
-    data.current_issue ||
-    data.current?.issueNumber ||
-    "--";
+  const analysis =
+    data.analysis || {};
 
-  document.getElementById(
-    "currentIssue"
-  ).textContent = current;
+  const prediction =
+    data.prediction;
 
-  const history =
-    Array.isArray(data.history)
-      ? data.history
-      : [];
 
-  if(!history.length){
+  /* LIVE */
 
+  const liveBadge =
     document.getElementById(
-      "lastNumber"
-    ).textContent="--";
+      "liveBadge"
+    );
 
-    document.getElementById(
-      "lastResult"
-    ).textContent="--";
 
-    return;
+  if(data.liveError){
+
+    liveBadge.className =
+      "badge error";
+
+    liveBadge.innerHTML =
+      '<span class="dot"></span> LIVE ERROR';
+
+  }else{
+
+    liveBadge.className =
+      "badge live";
+
+    liveBadge.innerHTML =
+      '<span class="dot"></span> LIVE';
+
   }
 
-  const latest =
-    history
-      .slice()
-      .sort(
-        (a,b)=>
-          compareIssue(
-            b.issueNumber ||
-            b.issue ||
-            b.targetIssue,
 
-            a.issueNumber ||
-            a.issue ||
-            a.targetIssue
-          )
-      )[0];
-
-  if(!latest) return;
-
-  const number =
-    latest.number ??
-    latest.resultNumber ??
-    latest.actual_number ??
-    "--";
-
-  const result =
-    getSide(number);
-
-  document.getElementById(
-    "lastNumber"
-  ).textContent = number;
-
-  const resultEl =
-    document.getElementById(
-      "lastResult"
-    );
-
-  resultEl.textContent =
-    result;
-
-  resultEl.className =
-    "live-value " +
-    (
-      result === "BIG"
-        ? "live-big"
-        : result === "SMALL"
-          ? "live-small"
-          : ""
-    );
-
-}
-
-
-/* -----------------------------
-   HISTORY
------------------------------ */
-
-function renderHistory(data){
-
-  const body =
-    document.getElementById(
-      "historyBody"
-    );
-
-  const history =
-    Array.isArray(data.history)
-      ? data.history
-      : [];
-
-  if(!history.length){
-
-    body.innerHTML =
-      `<tr>
-        <td colspan="5" class="empty">
-          No live history
-        </td>
-      </tr>`;
-
-    return;
-  }
-
-  const predictionRecords =
-    Array.isArray(
-      data.predictions
+  document
+    .getElementById(
+      "sourceBadge"
     )
-      ? data.predictions
-      : [];
-
-  const rows =
-    history
-      .slice()
-      .sort(
-        (a,b)=>
-          compareIssue(
-            b.issueNumber ||
-            b.issue,
-
-            a.issueNumber ||
-            a.issue
-          )
-      )
-      .slice(0,30);
-
-  body.innerHTML =
-    rows.map(row=>{
-
-      const issue =
-        String(
-          row.issueNumber ||
-          row.issue ||
-          ""
-        );
-
-      const number =
-        row.number ??
-        row.resultNumber ??
-        row.actual_number ??
-        "";
-
-      const result =
-        getSide(number);
-
-      const record =
-        findPrediction(
-          predictionRecords,
-          issue
-        );
-
-      let ai = "—";
-      let wl = "—";
-      let wlClass = "";
-
-      if(record){
-
-        ai =
-          String(
-            record.prediction ||
-            ""
-          ).toUpperCase();
-
-        const actual =
-          String(
-            record.actual_result ||
-            record.actualResult ||
-            ""
-          ).toUpperCase();
-
-        if(
-          actual === "WIN" ||
-          actual === "LOSS"
-        ){
-
-          wl = actual;
-
-          wlClass =
-            actual === "WIN"
-              ? "win"
-              : "loss";
-
-        }else{
-
-          wl="—";
-          wlClass="pending";
-
-        }
-
-      }
-
-      const resultClass =
-        result === "BIG"
-          ? "result-big"
-          : "result-small";
-
-      return `
-        <tr>
-
-          <td class="issue">
-            ${esc(issue)}
-          </td>
-
-          <td>
-            ${esc(number)}
-          </td>
-
-          <td class="${resultClass}">
-            ${esc(result)}
-          </td>
-
-          <td>
-            ${esc(ai || "—")}
-          </td>
-
-          <td class="${wlClass}">
-            ${esc(wl)}
-          </td>
-
-        </tr>
-      `;
-
-    }).join("");
-
-}
+    .textContent =
+    data.source ||
+    "NONE";
 
 
-/* -----------------------------
-   FIND PREDICTION
------------------------------ */
+  document
+    .getElementById(
+      "latestIssue"
+    )
+    .textContent =
+    data.currentIssue ||
+    "—";
 
-function findPrediction(records, issue){
 
-  if(!Array.isArray(records))
-    return null;
+  document
+    .getElementById(
+      "nextIssue"
+    )
+    .textContent =
+    data.nextIssue ||
+    "—";
 
-  return records.find(r=>{
+
+  /* PREDICTION */
+
+  const predictionEl =
+    document.getElementById(
+      "prediction"
+    );
+
+  const targetEl =
+    document.getElementById(
+      "target"
+    );
+
+  const confidenceEl =
+    document.getElementById(
+      "confidence"
+    );
+
+  const analysisStatus =
+    document.getElementById(
+      "analysisStatus"
+    );
+
+
+  if(
+    prediction &&
+    (
+      prediction.prediction ===
+      "BIG" ||
+      prediction.prediction ===
+      "SMALL"
+    )
+  ){
 
     const target =
       String(
-        r.target_issue ||
-        r.targetIssue ||
-        ""
+        prediction.targetIssue
       );
-
-    return target === String(issue);
-
-  }) || null;
-
-}
-
-
-/* -----------------------------
-   SIDE
------------------------------ */
-
-function getSide(number){
-
-  const n =
-    parseInt(number,10);
-
-  if(!Number.isInteger(n))
-    return "—";
-
-  if(n >= 0 && n <= 4)
-    return "SMALL";
-
-  if(n >= 5 && n <= 9)
-    return "BIG";
-
-  return "—";
-
-}
-
-
-/* -----------------------------
-   ISSUE COMPARISON
-   IMPORTANT:
-   NEVER convert issue IDs to Number
------------------------------ */
-
-function normalizeIssue(value){
-
-  if(value === null ||
-     value === undefined)
-    return "";
-
-  return String(value)
-    .trim()
-    .replace(/^0+/,"") || "0";
-
-}
-
-
-function compareIssue(a,b){
-
-  const A =
-    normalizeIssue(a);
-
-  const B =
-    normalizeIssue(b);
-
-  if(A.length !== B.length)
-    return A.length - B.length;
-
-  if(A === B)
-    return 0;
-
-  return A > B ? 1 : -1;
-
-}
-
-
-/* -----------------------------
-   LOAD STATE
------------------------------ */
-
-async function loadState(){
-
-  try{
-
-    const res =
-      await fetch(
-        API + "/api/state?t=" +
-        Date.now(),
-        {
-          headers:headers(),
-          cache:"no-store"
-        }
-      );
-
-    if(res.status === 401 ||
-       res.status === 403){
-
-      localStorage.removeItem(
-        "dy_ai_access_key"
-      );
-
-      location.reload();
-
-      return;
-    }
-
-    const data =
-      await res.json();
-
-    if(!res.ok || !data.ok){
-
-      document.getElementById(
-        "analysis"
-      ).textContent =
-        data.message ||
-        "SYNC ERROR";
-
-      return;
-    }
-
-    const model =
-      data.model || {};
-
-    const target =
-      model.targetIssue ||
-      model.target_issue ||
-      null;
 
 
     /*
-      IMPORTANT:
-
-      Sirf NEW target par
-      3-second visual thinking.
-
-      Polling ko block nahi karte.
+       New prediction target:
+       show 3 sec AI thinking.
     */
 
     if(
-      target &&
-      target !== lastTargetIssue &&
-      !firstLoad
+      target !==
+      thinkingTarget
     ){
 
-      lastTargetIssue =
+      thinkingTarget =
         target;
 
-      showThinking(target);
+      startThinking(
+        target,
+        prediction.prediction
+      );
 
-    }else if(
-      target &&
-      firstLoad
-    ){
+    }else{
 
-      lastTargetIssue =
-        target;
+      if(
+        prediction.prediction ===
+        "SMALL"
+      ){
+
+        predictionEl.className =
+          "prediction small";
+
+      }else{
+
+        predictionEl.className =
+          "prediction";
+
+      }
+
+      predictionEl.textContent =
+        prediction.prediction;
 
     }
 
 
-    renderLive(data);
-
-    renderHistory(data);
-
-
-    if(
-      thinkingTarget !== target
-    ){
-
-      renderPrediction(model);
-
-    }
+    targetEl.textContent =
+      "Target Issue: " +
+      target;
 
 
-    firstLoad = false;
+    confidenceEl.textContent =
+      "AI Confidence: " +
+      (
+        prediction.confidence ||
+        0
+      ) +
+      "%";
 
-  }catch(err){
+  }else{
 
-    document.getElementById(
-      "analysis"
-    ).textContent =
-      "CONNECTING...";
+    predictionEl.className =
+      "prediction wait";
+
+    predictionEl.textContent =
+      "WAIT";
+
+    targetEl.textContent =
+      "Waiting for next signal...";
+
+    confidenceEl.textContent =
+      "Full analysis required";
+
+    analysisStatus.textContent =
+      data.liveError
+        ? "SYNCING LIVE DATA..."
+        : "ANALYSING...";
+  }
+
+
+  /* ANALYSIS */
+
+  document
+    .getElementById(
+      "classification"
+    )
+    .textContent =
+    analysis.classification ||
+    "—";
+
+
+  document
+    .getElementById(
+      "bigPct"
+    )
+    .textContent =
+    analysis.bigPct !==
+      undefined
+      ? analysis.bigPct + "%"
+      : "—";
+
+
+  document
+    .getElementById(
+      "smallPct"
+    )
+    .textContent =
+    analysis.smallPct !==
+      undefined
+      ? analysis.smallPct + "%"
+      : "—";
+
+
+  if(
+    analysis.streak
+  ){
+
+    document
+      .getElementById(
+        "streak"
+      )
+      .textContent =
+      (
+        analysis.streak.current ||
+        "—"
+      ) +
+      " × " +
+      (
+        analysis.streak.currentLength ||
+        0
+      );
 
   }
 
-}
+
+  document
+    .getElementById(
+      "switchRate"
+    )
+    .textContent =
+    analysis.switchRate !==
+      undefined
+      ? analysis.switchRate + "%"
+      : "—";
 
 
-/* -----------------------------
-   POLLING
------------------------------ */
-
-let pollStarted = false;
-
-function startPolling(){
-
-  if(pollStarted)
-    return;
-
-  pollStarted = true;
-
-  /*
-    Fast UI refresh.
-    Backend prediction logic remains server-side.
-  */
-
-  setInterval(
-    loadState,
-    1000
+  renderResults(
+    data.last30 ||
+    []
   );
 
 }
 
 
-/* -----------------------------
-   ENTER KEY LOGIN
------------------------------ */
+/* =====================================================
+   3 SECOND THINKING
+===================================================== */
+
+function startThinking(
+  target,
+  finalPrediction
+){
+
+  const el =
+    document.getElementById(
+      "prediction"
+    );
+
+  const status =
+    document.getElementById(
+      "analysisStatus"
+    );
+
+
+  if(thinkingTimer){
+
+    clearTimeout(
+      thinkingTimer
+    );
+
+  }
+
+
+  el.className =
+    "prediction";
+
+  el.innerHTML =
+    `
+      <span class="thinking">
+        <span></span>
+        AI
+      </span>
+    `;
+
+  status.textContent =
+    "FULL ANALYSIS...";
+
+
+  thinkingTimer =
+    setTimeout(
+      () => {
+
+        if(
+          finalPrediction ===
+          "SMALL"
+        ){
+
+          el.className =
+            "prediction small";
+
+        }else{
+
+          el.className =
+            "prediction";
+
+        }
+
+        el.textContent =
+          finalPrediction;
+
+        status.textContent =
+          "ANALYSIS COMPLETE";
+
+      },
+      3000
+    );
+
+}
+
+
+/* =====================================================
+   RESULTS
+===================================================== */
+
+function renderResults(
+  rows
+){
+
+  const body =
+    document.getElementById(
+      "resultsBody"
+    );
+
+
+  if(
+    !rows ||
+    !rows.length
+  ){
+
+    body.innerHTML =
+      `
+      <tr>
+        <td
+          colspan="3"
+          class="empty"
+        >
+          Waiting for live results...
+        </td>
+      </tr>
+      `;
+
+    return;
+
+  }
+
+
+  body.innerHTML =
+    rows
+      .map(
+        row => {
+
+          const cls =
+            row.result ===
+            "BIG"
+              ? "big"
+              : "small";
+
+
+          return `
+            <tr>
+
+              <td>
+                ${esc(row.issue)}
+              </td>
+
+              <td>
+                ${esc(row.number)}
+              </td>
+
+              <td class="${cls}">
+                ${esc(row.result)}
+              </td>
+
+            </tr>
+          `;
+
+        }
+      )
+      .join("");
+
+}
+
+
+/* =====================================================
+   AUTO LOGIN
+===================================================== */
+
+async function autoLogin(){
+
+  const saved =
+    localStorage.getItem(
+      KEY_STORAGE
+    );
+
+
+  if(!saved){
+    return;
+  }
+
+
+  ACCESS_KEY =
+    saved;
+
+
+  try{
+
+    const response =
+      await fetch(
+        "/api/key/check?t=" +
+        Date.now(),
+        {
+
+          method:"POST",
+
+          headers:{
+            "Content-Type":
+              "application/json"
+          },
+
+          cache:"no-store",
+
+          body:
+            JSON.stringify({
+
+              key:saved,
+
+              deviceId:
+                getDeviceId()
+
+            })
+
+        }
+      );
+
+
+    const data =
+      await response.json();
+
+
+    if(
+      !response.ok ||
+      !data.valid
+    ){
+
+      throw new Error(
+        "ACCESS_DENIED"
+      );
+
+    }
+
+
+    document
+      .getElementById(
+        "loginBox"
+      )
+      .style.display =
+      "none";
+
+
+    document
+      .getElementById(
+        "app"
+      )
+      .style.display =
+      "block";
+
+
+    await update();
+
+
+  }catch(error){
+
+    ACCESS_KEY =
+      "";
+
+    localStorage.removeItem(
+      KEY_STORAGE
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   ENTER KEY
+===================================================== */
 
 document
-  .getElementById("keyInput")
+  .getElementById(
+    "accessKey"
+  )
   .addEventListener(
     "keydown",
     function(e){
 
-      if(e.key === "Enter")
+      if(
+        e.key ===
+        "Enter"
+      ){
+
         login();
+
+      }
 
     }
   );
 
 
-/* -----------------------------
+/* =====================================================
+   FAST LIVE POLLING
+===================================================== */
+
+setInterval(
+  function(){
+
+    if(
+      ACCESS_KEY
+    ){
+
+      update();
+
+    }
+
+  },
+  1000
+);
+
+
+/* =====================================================
    START
------------------------------ */
+===================================================== */
 
-if(accessKey){
+window.addEventListener(
+  "load",
+  function(){
 
-  autoLogin();
+    autoLogin();
 
-}
+  }
+);
 
 </script>
 
