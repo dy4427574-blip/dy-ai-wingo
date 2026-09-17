@@ -27,9 +27,11 @@ const WINGOBOT_TOKEN = String(
   .replace(/\r|\n/g, "")
   .trim();
 
-const MODEL_VERSION = String(
-  process.env.MODEL || "DY-AI-1MIN-V20"
-).trim();
+const MODEL_VERSION =
+  String(
+    process.env.MODEL ||
+    "DY-AI-1MIN-V22"
+  ).trim();
 
 const POLL_MS = 1000;
 const ANALYSIS_MS = 4000;
@@ -40,8 +42,11 @@ let pool = null;
 
 if (process.env.DATABASE_URL) {
   pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
+    connectionString:
+      process.env.DATABASE_URL,
+    ssl: {
+      rejectUnauthorized: false
+    },
     max: 5,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 5000
@@ -59,10 +64,10 @@ const live = {
   ok: false,
   currentIssue: null,
   history: [],
-  fetched: 0,
   updated: 0,
   error: null,
-  lastFetch: 0,
+  fetched: 0,
+  lastIssue: null,
   lastIssueChange: 0
 };
 
@@ -73,8 +78,13 @@ const analysis = {
   endsAt: 0
 };
 
-let fetchRunning = false;
-let engineRunning = false;
+let fetching = false;
+let engineBusy = false;
+
+
+/* =========================================================
+   BASIC
+========================================================= */
 
 function now() {
   return Date.now();
@@ -83,7 +93,11 @@ function now() {
 function resultType(number) {
   const n = Number(number);
 
-  if (!Number.isFinite(n)) {
+  if (
+    !Number.isInteger(n) ||
+    n < 0 ||
+    n > 9
+  ) {
     return null;
   }
 
@@ -109,7 +123,7 @@ function issueDiff(current, previous) {
   return Number(a - b);
 }
 
-function makeKey() {
+function createKey() {
   return (
     "DY-" +
     crypto
@@ -119,225 +133,15 @@ function makeKey() {
   );
 }
 
-function cleanNumber(value) {
-  if (
-    typeof value === "object" &&
-    value !== null
-  ) {
-    value =
-      value.number ??
-      value.value ??
-      value.result ??
-      value.openNumber ??
-      value.open_num;
-  }
 
-  const n = Number(value);
-
-  if (
-    !Number.isInteger(n) ||
-    n < 0 ||
-    n > 9
-  ) {
-    return null;
-  }
-
-  return n;
-}
-
-function normalizeHistory(raw) {
-  let arr = [];
-
-  if (Array.isArray(raw)) {
-    arr = raw;
-  } else if (
-    raw &&
-    Array.isArray(raw.data)
-  ) {
-    arr = raw.data;
-  } else if (
-    raw &&
-    raw.data &&
-    Array.isArray(raw.data.list)
-  ) {
-    arr = raw.data.list;
-  } else if (
-    raw &&
-    Array.isArray(raw.history)
-  ) {
-    arr = raw.history;
-  } else if (
-    raw &&
-    Array.isArray(raw.results)
-  ) {
-    arr = raw.results;
-  } else if (
-    raw &&
-    Array.isArray(raw.list)
-  ) {
-    arr = raw.list;
-  }
-
-  const output = [];
-
-  for (const item of arr) {
-    if (
-      typeof item === "number" ||
-      typeof item === "string"
-    ) {
-      const n = cleanNumber(item);
-
-      if (n !== null) {
-        output.push({
-          issue: null,
-          number: n,
-          result: resultType(n)
-        });
-      }
-
-      continue;
-    }
-
-    if (
-      !item ||
-      typeof item !== "object"
-    ) {
-      continue;
-    }
-
-    const n = cleanNumber(
-      item.number ??
-      item.openNumber ??
-      item.open_num ??
-      item.num ??
-      item.value ??
-      item.result
-    );
-
-    if (n === null) {
-      continue;
-    }
-
-    const issue =
-      item.issue ??
-      item.period ??
-      item.periodNumber ??
-      item.period_id ??
-      item.draw ??
-      item.id ??
-      null;
-
-    output.push({
-      issue:
-        issue === null
-          ? null
-          : String(issue),
-      number: n,
-      result: resultType(n)
-    });
-  }
-
-  const seen = new Set();
-
-  return output.filter(item => {
-    const id =
-      `${item.issue}|${item.number}`;
-
-    if (seen.has(id)) {
-      return false;
-    }
-
-    seen.add(id);
-    return true;
-  });
-}
-
-async function fetchWingo() {
-  if (!WINGOBOT_TOKEN) {
-    throw new Error(
-      "WINGOBOT_TOKEN is missing in Render Environment"
-    );
-  }
-
-  const controller =
-    new AbortController();
-
-  const timeout = setTimeout(
-    () => controller.abort(),
-    REQUEST_TIMEOUT
-  );
-
-  try {
-    const response = await fetch(
-      WINGOBOT_URL,
-      {
-        method: "GET",
-        headers: {
-          Authorization:
-            `Bearer ${WINGOBOT_TOKEN}`,
-          Accept:
-            "application/json"
-        },
-        signal: controller.signal
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(
-        `WingoBot HTTP ${response.status}`
-      );
-    }
-
-    const json =
-      await response.json();
-
-    const history =
-      normalizeHistory(json);
-
-    if (!history.length) {
-      throw new Error(
-        "WingoBot returned no usable history"
-      );
-    }
-
-    let currentIssue =
-      json.currentIssue ??
-      json.current_issue ??
-      json.issue ??
-      json.period ??
-      json.periodNumber ??
-      null;
-
-    if (currentIssue !== null) {
-      currentIssue =
-        String(currentIssue);
-    }
-
-    if (!currentIssue) {
-      const found =
-        history.find(
-          x => x.issue
-        );
-
-      if (found) {
-        currentIssue =
-          found.issue;
-      }
-    }
-
-    return {
-      currentIssue,
-      history,
-      raw: json
-    };
-
-  } finally {
-    clearTimeout(timeout);
-  }
-}
+/* =========================================================
+   DATABASE
+========================================================= */
 
 async function initDB() {
+
   if (!pool) {
+
     if (
       !memory.keys.has(
         DEFAULT_ACCESS_KEY
@@ -385,42 +189,444 @@ async function initDB() {
 
   const check =
     await pool.query(
-      `SELECT id
-       FROM access_keys
-       WHERE access_key=$1
-       LIMIT 1`,
+      `
+      SELECT id
+      FROM access_keys
+      WHERE access_key=$1
+      LIMIT 1
+      `,
       [DEFAULT_ACCESS_KEY]
     );
 
   if (!check.rows.length) {
+
     await pool.query(
-      `INSERT INTO access_keys
-       (access_key,device_id,created_at,last_seen)
-       VALUES($1,NULL,$2,0)`,
-      [DEFAULT_ACCESS_KEY, now()]
+      `
+      INSERT INTO access_keys
+      (
+        access_key,
+        device_id,
+        created_at,
+        last_seen
+      )
+      VALUES($1,NULL,$2,0)
+      `,
+      [
+        DEFAULT_ACCESS_KEY,
+        now()
+      ]
     );
   }
 }
 
-async function dbQuery(sql, params = []) {
-  if (!pool) {
+
+/* =========================================================
+   NUMBER / HISTORY PARSER
+========================================================= */
+
+function cleanNumber(value) {
+
+  if (
+    value &&
+    typeof value === "object"
+  ) {
+    value =
+      value.number ??
+      value.value ??
+      value.openNumber ??
+      value.open_num ??
+      value.winNumber ??
+      value.win_number ??
+      value.num;
+  }
+
+  const n = Number(value);
+
+  if (
+    !Number.isInteger(n) ||
+    n < 0 ||
+    n > 9
+  ) {
     return null;
   }
 
-  return pool.query(sql, params);
+  return n;
 }
+
+
+function normalizeHistory(raw) {
+
+  let arrays = [
+    raw,
+    raw?.data,
+    raw?.result,
+    raw?.list,
+    raw?.history,
+    raw?.results,
+    raw?.records,
+
+    raw?.data?.data,
+    raw?.data?.result,
+    raw?.data?.list,
+    raw?.data?.history,
+    raw?.data?.records,
+
+    raw?.result?.data,
+    raw?.result?.list,
+    raw?.result?.history,
+    raw?.result?.records
+  ];
+
+  let arr = [];
+
+  for (
+    const candidate of arrays
+  ) {
+
+    if (
+      Array.isArray(candidate)
+    ) {
+      arr = candidate;
+      break;
+    }
+  }
+
+  const output = [];
+
+  for (
+    const item of arr
+  ) {
+
+    if (
+      typeof item === "number" ||
+      typeof item === "string"
+    ) {
+
+      const number =
+        cleanNumber(item);
+
+      if (
+        number !== null
+      ) {
+        output.push({
+          issue: null,
+          number,
+          result:
+            resultType(number)
+        });
+      }
+
+      continue;
+    }
+
+    if (
+      !item ||
+      typeof item !== "object"
+    ) {
+      continue;
+    }
+
+    const number =
+      cleanNumber(
+        item.number ??
+        item.openNumber ??
+        item.open_num ??
+        item.num ??
+        item.value ??
+        item.result ??
+        item.winNumber ??
+        item.win_number
+      );
+
+    if (
+      number === null
+    ) {
+      continue;
+    }
+
+    const issue =
+      item.issue ??
+      item.period ??
+      item.periodNumber ??
+      item.period_number ??
+      item.period_id ??
+      item.periodId ??
+      item.issueNumber ??
+      item.issue_number ??
+      item.draw ??
+      item.round ??
+      item.roundNumber ??
+      item.round_number;
+
+    output.push({
+      issue:
+        issue === undefined ||
+        issue === null
+          ? null
+          : String(issue),
+
+      number,
+
+      result:
+        resultType(number)
+    });
+  }
+
+  const unique = [];
+  const seen = new Set();
+
+  for (
+    const item of output
+  ) {
+
+    const key =
+      String(item.issue) +
+      "|" +
+      item.number;
+
+    if (
+      seen.has(key)
+    ) {
+      continue;
+    }
+
+    seen.add(key);
+    unique.push(item);
+  }
+
+  return unique;
+}
+
+
+/* =========================================================
+   CURRENT PERIOD
+========================================================= */
+
+function findCurrentIssue(obj) {
+
+  if (
+    !obj ||
+    typeof obj !== "object"
+  ) {
+    return null;
+  }
+
+  const direct =
+    obj.currentIssue ??
+    obj.current_issue ??
+    obj.currentPeriod ??
+    obj.current_period ??
+    obj.currentPeriodNumber ??
+    obj.current_period_number;
+
+  if (
+    direct !== undefined &&
+    direct !== null &&
+    String(direct).trim()
+  ) {
+    return String(direct).trim();
+  }
+
+  const nested = [
+    obj.current,
+    obj.game,
+    obj.data?.current,
+    obj.data?.game,
+    obj.result?.current,
+    obj.result?.game
+  ];
+
+  for (
+    const item of nested
+  ) {
+
+    if (
+      !item ||
+      typeof item !== "object"
+    ) {
+      continue;
+    }
+
+    const issue =
+      item.issue ??
+      item.period ??
+      item.periodNumber ??
+      item.period_number ??
+      item.issueNumber ??
+      item.issue_number;
+
+    if (
+      issue !== undefined &&
+      issue !== null &&
+      String(issue).trim()
+    ) {
+      return String(issue).trim();
+    }
+  }
+
+  return null;
+}
+
+
+function deriveCurrentIssue(
+  history
+) {
+
+  const issues =
+    history
+      .map(
+        x =>
+          issueBigInt(x.issue)
+      )
+      .filter(
+        x => x !== null
+      );
+
+  if (!issues.length) {
+    return null;
+  }
+
+  let latest =
+    issues[0];
+
+  for (
+    const issue of issues
+  ) {
+    if (
+      issue > latest
+    ) {
+      latest = issue;
+    }
+  }
+
+  /*
+    Latest history result = completed round.
+    Current round = latest + 1.
+  */
+
+  return (
+    latest + 1n
+  ).toString();
+}
+
+
+/* =========================================================
+   WINGOBOT
+========================================================= */
+
+async function fetchWingo() {
+
+  if (!WINGOBOT_TOKEN) {
+    throw new Error(
+      "WINGOBOT_TOKEN_MISSING"
+    );
+  }
+
+  const controller =
+    new AbortController();
+
+  const timer =
+    setTimeout(
+      () =>
+        controller.abort(),
+      REQUEST_TIMEOUT
+    );
+
+  try {
+
+    const response =
+      await fetch(
+        WINGOBOT_URL,
+        {
+          method: "GET",
+
+          headers: {
+            Authorization:
+              `Bearer ${WINGOBOT_TOKEN}`,
+
+            Accept:
+              "application/json"
+          },
+
+          signal:
+            controller.signal
+        }
+      );
+
+    if (!response.ok) {
+      throw new Error(
+        `WINGOBOT_HTTP_${response.status}`
+      );
+    }
+
+    const raw =
+      await response.json();
+
+    const history =
+      normalizeHistory(raw);
+
+    if (
+      !history.length
+    ) {
+      throw new Error(
+        "HISTORY_NOT_FOUND"
+      );
+    }
+
+    let currentIssue =
+      findCurrentIssue(raw);
+
+    /*
+      Fallback:
+      latest completed issue + 1
+    */
+
+    if (!currentIssue) {
+      currentIssue =
+        deriveCurrentIssue(
+          history
+        );
+    }
+
+    if (!currentIssue) {
+      throw new Error(
+        "CURRENT_PERIOD_NOT_FOUND"
+      );
+    }
+
+    return {
+      currentIssue,
+      history,
+      raw
+    };
+
+  } finally {
+
+    clearTimeout(timer);
+
+  }
+}
+
+
+/* =========================================================
+   ACCESS KEY
+========================================================= */
 
 async function checkKey(
   key,
   deviceId
 ) {
+
   key =
     String(key || "").trim();
 
   deviceId =
     String(deviceId || "").trim();
 
-  if (!key || !deviceId) {
+  if (
+    !key ||
+    !deviceId
+  ) {
     return {
       ok: false,
       error:
@@ -429,13 +635,15 @@ async function checkKey(
   }
 
   if (!pool) {
+
     const item =
       memory.keys.get(key);
 
     if (!item) {
       return {
         ok: false,
-        error: "INVALID_KEY"
+        error:
+          "INVALID_KEY"
       };
     }
 
@@ -450,30 +658,35 @@ async function checkKey(
       };
     }
 
-    item.device_id = deviceId;
-    item.last_seen = now();
+    item.device_id =
+      deviceId;
+
+    item.last_seen =
+      now();
 
     return {
-      ok: true,
-      key: item.access_key,
-      deviceId,
-      bound: true
+      ok: true
     };
   }
 
   const result =
     await pool.query(
-      `SELECT *
-       FROM access_keys
-       WHERE access_key=$1
-       LIMIT 1`,
+      `
+      SELECT *
+      FROM access_keys
+      WHERE access_key=$1
+      LIMIT 1
+      `,
       [key]
     );
 
-  if (!result.rows.length) {
+  if (
+    !result.rows.length
+  ) {
     return {
       ok: false,
-      error: "INVALID_KEY"
+      error:
+        "INVALID_KEY"
     };
   }
 
@@ -492,10 +705,12 @@ async function checkKey(
   }
 
   await pool.query(
-    `UPDATE access_keys
-     SET device_id=$1,
-         last_seen=$2
-     WHERE id=$3`,
+    `
+    UPDATE access_keys
+    SET device_id=$1,
+        last_seen=$2
+    WHERE id=$3
+    `,
     [
       deviceId,
       now(),
@@ -504,42 +719,42 @@ async function checkKey(
   );
 
   return {
-    ok: true,
-    key: item.access_key,
-    deviceId,
-    bound: true
+    ok: true
   };
 }
 
-async function verifyAccess(req) {
-  const key =
-    req.headers["x-access-key"] ||
-    req.headers["authorization"]
-      ?.replace(
-        /^Bearer\s+/i,
-        ""
-      );
 
-  const deviceId =
-    req.headers["x-device-id"];
+async function verifyAccess(req) {
 
   return checkKey(
-    key,
-    deviceId
+    req.headers[
+      "x-access-key"
+    ],
+    req.headers[
+      "x-device-id"
+    ]
   );
 }
+
+
+/* =========================================================
+   AI ANALYSIS
+========================================================= */
 
 function weightedSignal(
   results,
   count
 ) {
+
   const data =
     results.slice(
       0,
       count
     );
 
-  if (!data.length) {
+  if (
+    !data.length
+  ) {
     return 0;
   }
 
@@ -551,13 +766,16 @@ function weightedSignal(
     i < data.length;
     i++
   ) {
+
     const w =
       count - i;
 
     score +=
-      (data[i] === "BIG"
-        ? 1
-        : -1) * w;
+      (
+        data[i] === "BIG"
+          ? 1
+          : -1
+      ) * w;
 
     weight += w;
   }
@@ -567,37 +785,54 @@ function weightedSignal(
     : 0;
 }
 
-function streakSignal(results) {
-  if (!results.length) {
+
+function streakSignal(
+  results
+) {
+
+  if (
+    !results.length
+  ) {
     return 0;
   }
 
   const first =
     results[0];
 
-  let count = 0;
+  let streak = 0;
 
-  for (const x of results) {
-    if (x !== first) {
+  for (
+    const item of results
+  ) {
+
+    if (
+      item !== first
+    ) {
       break;
     }
 
-    count++;
+    streak++;
   }
 
-  if (count >= 5) {
+  if (
+    streak >= 5
+  ) {
     return first === "BIG"
       ? -0.35
       : 0.35;
   }
 
-  if (count === 4) {
+  if (
+    streak === 4
+  ) {
     return first === "BIG"
       ? -0.22
       : 0.22;
   }
 
-  if (count === 3) {
+  if (
+    streak === 3
+  ) {
     return first === "BIG"
       ? -0.12
       : 0.12;
@@ -606,40 +841,41 @@ function streakSignal(results) {
   return 0;
 }
 
-function transitionSignal(results) {
-  if (results.length < 2) {
+
+function transitionSignal(
+  results
+) {
+
+  if (
+    results.length < 2
+  ) {
     return 0;
   }
 
-  const last =
-    results[0];
-
-  const previous =
-    results[1];
-
   if (
-    last === "BIG" &&
-    previous === "BIG"
+    results[0] ===
+    results[1]
   ) {
-    return 0.08;
+    return results[0] ===
+      "BIG"
+      ? 0.08
+      : -0.08;
   }
 
-  if (
-    last === "SMALL" &&
-    previous === "SMALL"
-  ) {
-    return -0.08;
-  }
-
-  if (last === "BIG") {
-    return 0.04;
-  }
-
-  return -0.04;
+  return results[0] ===
+    "BIG"
+    ? 0.04
+    : -0.04;
 }
 
-function patternSignal(results) {
-  if (results.length < 7) {
+
+function patternSignal(
+  results
+) {
+
+  if (
+    results.length < 10
+  ) {
     return 0;
   }
 
@@ -656,19 +892,22 @@ function patternSignal(results) {
     i < results.length;
     i++
   ) {
+
     const old =
       results
         .slice(i, i + 5)
         .join("");
 
-    if (old !== pattern) {
+    if (
+      old !== pattern
+    ) {
       continue;
     }
 
-    const next =
-      results[i - 1];
-
-    if (next === "BIG") {
+    if (
+      results[i - 1] ===
+      "BIG"
+    ) {
       big++;
     } else {
       small++;
@@ -688,56 +927,80 @@ function patternSignal(results) {
   );
 }
 
-function numberSignal(numbers) {
-  if (!numbers.length) {
+
+function numberSignal(
+  numbers
+) {
+
+  if (
+    !numbers.length
+  ) {
     return 0;
   }
 
   let score = 0;
-  let totalWeight = 0;
+  let weight = 0;
 
   for (
     let i = 0;
     i < numbers.length;
     i++
   ) {
-    const n =
-      numbers[i];
 
     const w =
       numbers.length - i;
 
-    if (n >= 7) {
+    const n =
+      numbers[i];
+
+    if (
+      n >= 7
+    ) {
       score +=
         0.10 * w;
-    } else if (n <= 2) {
+    }
+
+    if (
+      n <= 2
+    ) {
       score -=
         0.10 * w;
     }
 
-    totalWeight += w;
+    weight += w;
   }
 
-  if (!totalWeight) {
+  if (!weight) {
     return 0;
   }
 
   return (
     score /
-    (totalWeight * 0.10)
+    (weight * 0.10)
   );
 }
 
-function entropy(results) {
-  if (!results.length) {
+
+function entropy(
+  results
+) {
+
+  if (
+    !results.length
+  ) {
     return 0;
   }
 
   let big = 0;
   let small = 0;
 
-  for (const x of results) {
-    if (x === "BIG") {
+  for (
+    const x of results
+  ) {
+
+    if (
+      x === "BIG"
+    ) {
       big++;
     } else {
       small++;
@@ -755,12 +1018,16 @@ function entropy(results) {
 
   let e = 0;
 
-  if (pb > 0) {
+  if (
+    pb > 0
+  ) {
     e -=
       pb * Math.log2(pb);
   }
 
-  if (ps > 0) {
+  if (
+    ps > 0
+  ) {
     e -=
       ps * Math.log2(ps);
   }
@@ -768,37 +1035,45 @@ function entropy(results) {
   return e;
 }
 
-function analyzeAI(history) {
-  const data =
-    history
-      .filter(
-        x =>
-          Number.isInteger(
-            x.number
-          )
-      )
-      .slice(
-        0,
-        100
-      );
 
-  if (data.length < 10) {
+function analyzeAI(
+  history
+) {
+
+  const data =
+    history.filter(
+      x =>
+        Number.isInteger(
+          x.number
+        )
+    );
+
+  if (
+    data.length < 10
+  ) {
     return {
       prediction: null,
       confidence: 0,
-      quality: "INSUFFICIENT",
+      quality:
+        "INSUFFICIENT",
       sampleSize:
         data.length
     };
   }
 
+  const recent =
+    data.slice(
+      0,
+      50
+    );
+
   const results =
-    data.map(
+    recent.map(
       x => x.result
     );
 
   const numbers =
-    data.map(
+    recent.map(
       x => x.number
     );
 
@@ -830,7 +1105,9 @@ function analyzeAI(history) {
     );
 
   const streak =
-    streakSignal(results);
+    streakSignal(
+      results
+    );
 
   const transition =
     transitionSignal(
@@ -842,8 +1119,10 @@ function analyzeAI(history) {
       results
     );
 
-  const numbersSignal =
-    numberSignal(numbers);
+  const number =
+    numberSignal(
+      numbers
+    );
 
   const e =
     entropy(
@@ -864,6 +1143,7 @@ function analyzeAI(history) {
     );
     i++
   ) {
+
     if (
       results[i] !==
       results[i - 1]
@@ -879,19 +1159,23 @@ function analyzeAI(history) {
     );
 
   let score =
-      short * 0.30 +
-      medium * 0.18 +
-      long * 0.10 +
-      streak * 0.12 +
-      transition * 0.10 +
-      pattern * 0.12 +
-      numbersSignal * 0.08;
+    short * 0.30 +
+    medium * 0.18 +
+    long * 0.10 +
+    streak * 0.12 +
+    transition * 0.10 +
+    pattern * 0.12 +
+    number * 0.08;
 
-  if (switchRate > 0.70) {
+  if (
+    switchRate > 0.70
+  ) {
     score *= 0.85;
   }
 
-  if (e > 0.98) {
+  if (
+    e > 0.98
+  ) {
     score *= 0.75;
   }
 
@@ -909,21 +1193,16 @@ function analyzeAI(history) {
       ? "BIG"
       : "SMALL";
 
-  const strength =
-    Math.abs(score);
-
   let confidence =
     50 +
     Math.round(
-      strength * 42
+      Math.abs(score) * 42
     );
 
-  if (e > 0.98) {
+  if (
+    e > 0.98
+  ) {
     confidence -= 7;
-  }
-
-  if (data.length < 15) {
-    confidence -= 5;
   }
 
   confidence =
@@ -938,75 +1217,61 @@ function analyzeAI(history) {
   let quality =
     "MEDIUM";
 
-  if (confidence >= 75) {
-    quality = "HIGH";
+  if (
+    confidence >= 75
+  ) {
+    quality =
+      "HIGH";
   } else if (
     confidence < 62
   ) {
-    quality = "LOW";
+    quality =
+      "LOW";
   }
 
   return {
     prediction,
     confidence,
     quality,
+
     score:
       Number(
         score.toFixed(4)
       ),
+
     entropy:
       Number(
         e.toFixed(4)
       ),
+
     switchRate:
       Number(
         switchRate.toFixed(4)
       ),
+
     sampleSize:
       data.length,
+
     model:
-      MODEL_VERSION,
-    signals: {
-      short:
-        Number(
-          short.toFixed(4)
-        ),
-      medium:
-        Number(
-          medium.toFixed(4)
-        ),
-      long:
-        Number(
-          long.toFixed(4)
-        ),
-      streak:
-        Number(
-          streak.toFixed(4)
-        ),
-      transition:
-        Number(
-          transition.toFixed(4)
-        ),
-      pattern:
-        Number(
-          pattern.toFixed(4)
-        ),
-      number:
-        Number(
-          numbersSignal.toFixed(4)
-        )
-    }
+      MODEL_VERSION
   };
 }
+
+
+/* =========================================================
+   PREDICTION DATABASE
+========================================================= */
 
 async function getPrediction(
   issue
 ) {
+
   if (!issue) {
     return null;
   }
 
   if (!pool) {
+
     return (
       memory.predictions
         .filter(
@@ -1015,7 +1280,7 @@ async function getPrediction(
             String(issue)
         )
         .sort(
-          (a, b) =>
+          (a,b) =>
             b.created_at -
             a.created_at
         )[0] ||
@@ -1025,11 +1290,13 @@ async function getPrediction(
 
   const result =
     await pool.query(
-      `SELECT *
-       FROM prediction_records
-       WHERE target_issue=$1
-       ORDER BY id DESC
-       LIMIT 1`,
+      `
+      SELECT *
+      FROM prediction_records
+      WHERE target_issue=$1
+      ORDER BY id DESC
+      LIMIT 1
+      `,
       [String(issue)]
     );
 
@@ -1039,12 +1306,15 @@ async function getPrediction(
   );
 }
 
+
 async function getLastPrediction() {
+
   if (!pool) {
+
     return (
       [...memory.predictions]
         .sort(
-          (a, b) =>
+          (a,b) =>
             b.created_at -
             a.created_at
         )[0] ||
@@ -1053,12 +1323,12 @@ async function getLastPrediction() {
   }
 
   const result =
-    await pool.query(
-      `SELECT *
-       FROM prediction_records
-       ORDER BY id DESC
-       LIMIT 1`
-    );
+    await pool.query(`
+      SELECT *
+      FROM prediction_records
+      ORDER BY id DESC
+      LIMIT 1
+    `);
 
   return (
     result.rows[0] ||
@@ -1066,10 +1336,12 @@ async function getLastPrediction() {
   );
 }
 
+
 async function savePrediction(
   issue,
   ai
 ) {
+
   const existing =
     await getPrediction(
       issue
@@ -1079,28 +1351,37 @@ async function savePrediction(
     return existing;
   }
 
-  const row = {
-    id:
-      memory.predictionId++,
-    target_issue:
-      String(issue),
-    prediction:
-      ai.prediction,
-    confidence:
-      ai.confidence,
-    model_version:
-      MODEL_VERSION,
-    actual_number:
-      null,
-    actual_result:
-      null,
-    created_at:
-      now(),
-    settled_at:
-      null
-  };
-
   if (!pool) {
+
+    const row = {
+      id:
+        memory.predictionId++,
+
+      target_issue:
+        String(issue),
+
+      prediction:
+        ai.prediction,
+
+      confidence:
+        ai.confidence,
+
+      model_version:
+        MODEL_VERSION,
+
+      actual_number:
+        null,
+
+      actual_result:
+        null,
+
+      created_at:
+        now(),
+
+      settled_at:
+        null
+    };
+
     memory.predictions.push(
       row
     );
@@ -1110,38 +1391,42 @@ async function savePrediction(
 
   const result =
     await pool.query(
-      `INSERT INTO prediction_records
-       (
-         target_issue,
-         prediction,
-         confidence,
-         model_version,
-         created_at
-       )
-       VALUES($1,$2,$3,$4,$5)
-       RETURNING *`,
+      `
+      INSERT INTO prediction_records
+      (
+        target_issue,
+        prediction,
+        confidence,
+        model_version,
+        created_at
+      )
+      VALUES($1,$2,$3,$4,$5)
+      RETURNING *
+      `,
       [
-        row.target_issue,
-        row.prediction,
-        row.confidence,
-        row.model_version,
-        row.created_at
+        String(issue),
+        ai.prediction,
+        ai.confidence,
+        MODEL_VERSION,
+        now()
       ]
     );
 
   return result.rows[0];
 }
 
+
 async function settlePredictions() {
-  if (!live.history.length) {
-    return;
-  }
 
-  const map =
-    new Map();
+  const map = new Map();
 
-  for (const item of live.history) {
-    if (item.issue) {
+  for (
+    const item of live.history
+  ) {
+
+    if (
+      item.issue
+    ) {
       map.set(
         String(item.issue),
         item.number
@@ -1149,34 +1434,39 @@ async function settlePredictions() {
     }
   }
 
-  if (!map.size) {
+  if (
+    !map.size
+  ) {
     return;
   }
 
   if (!pool) {
+
     for (
-      const p of memory.predictions
+      const p of
+        memory.predictions
     ) {
+
       if (
-        p.actual_result === null &&
+        p.actual_result ===
+        null &&
         map.has(
-          String(
-            p.target_issue
-          )
+          p.target_issue
         )
       ) {
-        const n =
+
+        const number =
           map.get(
-            String(
-              p.target_issue
-            )
+            p.target_issue
           );
 
         p.actual_number =
-          n;
+          number;
 
         p.actual_result =
-          resultType(n);
+          resultType(
+            number
+          );
 
         p.settled_at =
           now();
@@ -1186,11 +1476,9 @@ async function settlePredictions() {
     return;
   }
 
-  const rows =
+  const result =
     await pool.query(`
-      SELECT
-        id,
-        target_issue
+      SELECT id,target_issue
       FROM prediction_records
       WHERE actual_result IS NULL
       ORDER BY id DESC
@@ -1198,9 +1486,10 @@ async function settlePredictions() {
     `);
 
   for (
-    const p of rows.rows
+    const p of result.rows
   ) {
-    const n =
+
+    const number =
       map.get(
         String(
           p.target_issue
@@ -1208,20 +1497,22 @@ async function settlePredictions() {
       );
 
     if (
-      n === undefined
+      number === undefined
     ) {
       continue;
     }
 
     await pool.query(
-      `UPDATE prediction_records
-       SET actual_number=$1,
-           actual_result=$2,
-           settled_at=$3
-       WHERE id=$4`,
+      `
+      UPDATE prediction_records
+      SET actual_number=$1,
+          actual_result=$2,
+          settled_at=$3
+      WHERE id=$4
+      `,
       [
-        n,
-        resultType(n),
+        number,
+        resultType(number),
         now(),
         p.id
       ]
@@ -1229,18 +1520,29 @@ async function settlePredictions() {
   }
 }
 
+
+/* =========================================================
+   SKIP ENGINE
+========================================================= */
+
 async function getCycle(
   currentIssue
 ) {
+
   const last =
     await getLastPrediction();
 
   if (!last) {
+
     return {
-      mode: "PREDICT",
+      mode:
+        "PREDICT",
+
       skipRound: 0,
+
       skipTotal:
         SKIP_ROUNDS,
+
       skipRemaining: 0
     };
   }
@@ -1254,21 +1556,33 @@ async function getCycle(
   if (
     diff === null
   ) {
+
     return {
-      mode: "PREDICT",
+      mode:
+        "PREDICT",
+
       skipRound: 0,
+
       skipTotal:
         SKIP_ROUNDS,
+
       skipRemaining: 0
     };
   }
 
-  if (diff <= 0) {
+  if (
+    diff <= 0
+  ) {
+
     return {
-      mode: "PREDICTED",
+      mode:
+        "PREDICTED",
+
       skipRound: 0,
+
       skipTotal:
         SKIP_ROUNDS,
+
       skipRemaining: 0
     };
   }
@@ -1277,12 +1591,17 @@ async function getCycle(
     diff >= 1 &&
     diff <= SKIP_ROUNDS
   ) {
+
     return {
-      mode: "SKIP",
+      mode:
+        "SKIP",
+
       skipRound:
         diff,
+
       skipTotal:
         SKIP_ROUNDS,
+
       skipRemaining:
         SKIP_ROUNDS -
         diff +
@@ -1291,40 +1610,46 @@ async function getCycle(
   }
 
   return {
-    mode: "PREDICT",
+    mode:
+      "PREDICT",
+
     skipRound: 0,
+
     skipTotal:
       SKIP_ROUNDS,
+
     skipRemaining: 0
   };
 }
 
+
 function resetAnalysis() {
-  analysis.active =
-    false;
 
-  analysis.issue =
-    null;
-
-  analysis.startedAt =
-    0;
-
-  analysis.endsAt =
-    0;
+  analysis.active = false;
+  analysis.issue = null;
+  analysis.startedAt = 0;
+  analysis.endsAt = 0;
 }
 
+
+/* =========================================================
+   ENGINE
+========================================================= */
+
 async function engineTick() {
+
   if (
-    engineRunning ||
+    engineBusy ||
     !live.ok ||
     !live.currentIssue
   ) {
     return;
   }
 
-  engineRunning = true;
+  engineBusy = true;
 
   try {
+
     const issue =
       String(
         live.currentIssue
@@ -1336,7 +1661,9 @@ async function engineTick() {
       );
 
     if (existing) {
+
       resetAnalysis();
+
       return;
     }
 
@@ -1345,11 +1672,18 @@ async function engineTick() {
         issue
       );
 
+    /*
+      4 SKIP ROUNDS:
+      NO ANALYSIS
+    */
+
     if (
       cycle.mode ===
       "SKIP"
     ) {
+
       resetAnalysis();
+
       return;
     }
 
@@ -1357,16 +1691,22 @@ async function engineTick() {
       cycle.mode !==
       "PREDICT"
     ) {
+
       resetAnalysis();
+
       return;
     }
+
+    /*
+      START IMMEDIATELY
+    */
 
     if (
       !analysis.active ||
       analysis.issue !== issue
     ) {
-      analysis.active =
-        true;
+
+      analysis.active = true;
 
       analysis.issue =
         issue;
@@ -1378,8 +1718,16 @@ async function engineTick() {
         now() +
         ANALYSIS_MS;
 
+      console.log(
+        `[AI] START ${issue}`
+      );
+
       return;
     }
+
+    /*
+      WAIT 4 SEC
+    */
 
     if (
       now() <
@@ -1396,13 +1744,20 @@ async function engineTick() {
     if (
       !ai.prediction
     ) {
+
       resetAnalysis();
+
       return;
     }
 
-    await savePrediction(
-      issue,
-      ai
+    const saved =
+      await savePrediction(
+        issue,
+        ai
+      );
+
+    console.log(
+      `[AI] ${issue} => ${saved.prediction} ${saved.confidence}%`
     );
 
     resetAnalysis();
@@ -1410,25 +1765,34 @@ async function engineTick() {
     await settlePredictions();
 
   } catch (error) {
+
     console.error(
-      "ENGINE:",
+      "[ENGINE]",
       error.message
     );
+
   } finally {
-    engineRunning =
-      false;
+
+    engineBusy = false;
+
   }
 }
 
+
+/* =========================================================
+   LIVE API
+========================================================= */
+
 async function refreshLive() {
-  if (fetchRunning) {
+
+  if (fetching) {
     return;
   }
 
-  fetchRunning =
-    true;
+  fetching = true;
 
   try {
+
     const data =
       await fetchWingo();
 
@@ -1436,68 +1800,73 @@ async function refreshLive() {
       live.currentIssue;
 
     live.currentIssue =
-      data.currentIssue;
+      String(
+        data.currentIssue
+      );
 
     live.history =
       data.history;
 
-    live.ok =
-      true;
-
-    live.error =
-      null;
-
-    live.updated =
-      now();
-
-    live.lastFetch =
-      now();
-
+    live.ok = true;
+    live.error = null;
+    live.updated = now();
     live.fetched++;
 
     if (
       previous &&
-      live.currentIssue &&
-      String(previous) !==
-        String(
-          live.currentIssue
-        )
+      previous !==
+        live.currentIssue
     ) {
+
+      live.lastIssue =
+        previous;
+
       live.lastIssueChange =
         now();
 
       resetAnalysis();
+
+      console.log(
+        `[LIVE] NEW ROUND ${live.currentIssue}`
+      );
     }
 
     await settlePredictions();
 
   } catch (error) {
-    live.ok =
-      false;
+
+    live.ok = false;
 
     live.error =
       error.message;
 
     live.updated =
       now();
+
   } finally {
-    fetchRunning =
-      false;
+
+    fetching = false;
+
   }
 }
 
+
+/* =========================================================
+   STATE
+========================================================= */
+
 async function predictionView() {
+
   const issue =
     live.currentIssue;
 
   if (!issue) {
+
     return {
       result: "WAIT",
       status: "WAITING",
       prediction: null,
-      issue: null,
-      message:
-        "Waiting for live data"
+      issue: null
     };
   }
 
@@ -1507,21 +1876,28 @@ async function predictionView() {
     );
 
   if (existing) {
+
     return {
       result:
         existing.prediction,
+
       status:
         "PREDICTED",
+
       prediction:
         existing.prediction,
+
       confidence:
         Number(
           existing.confidence ||
           0
         ),
+
       issue,
+
       model:
         existing.model_version,
+
       analysis: {
         active: false,
         elapsed:
@@ -1537,18 +1913,32 @@ async function predictionView() {
       issue
     );
 
+  /*
+    SKIP:
+    NO ANALYSIS
+  */
+
   if (
     cycle.mode ===
     "SKIP"
   ) {
+
     resetAnalysis();
 
     return {
-      result: "SKIP",
-      status: "COOLDOWN",
-      prediction: null,
+      result:
+        "SKIP",
+
+      status:
+        "COOLDOWN",
+
+      prediction:
+        null,
+
       issue,
+
       cycle,
+
       analysis: {
         active: false,
         elapsed: 0,
@@ -1558,13 +1948,17 @@ async function predictionView() {
     };
   }
 
+  /*
+    START 4 SEC
+  */
+
   if (
     !analysis.active ||
     analysis.issue !==
       String(issue)
   ) {
-    analysis.active =
-      true;
+
+    analysis.active = true;
 
     analysis.issue =
       String(issue);
@@ -1597,14 +1991,21 @@ async function predictionView() {
   if (
     remaining > 0
   ) {
+
     return {
       result:
         "ANALYZING",
+
       status:
         "ANALYZING",
-      prediction: null,
+
+      prediction:
+        null,
+
       issue,
+
       cycle,
+
       analysis: {
         active: true,
         elapsed,
@@ -1622,22 +2023,30 @@ async function predictionView() {
     );
 
   if (after) {
+
     return {
       result:
         after.prediction,
+
       status:
         "PREDICTED",
+
       prediction:
         after.prediction,
+
       confidence:
         Number(
           after.confidence ||
           0
         ),
+
       issue,
+
+      cycle,
+
       model:
         after.model_version,
-      cycle,
+
       analysis: {
         active: false,
         elapsed:
@@ -1651,11 +2060,17 @@ async function predictionView() {
   return {
     result:
       "ANALYZING",
+
     status:
       "ANALYZING",
-    prediction: null,
+
+    prediction:
+      null,
+
     issue,
+
     cycle,
+
     analysis: {
       active: true,
       elapsed:
@@ -1666,22 +2081,21 @@ async function predictionView() {
   };
 }
 
+
 async function buildState() {
+
   const prediction =
     await predictionView();
 
-  let ai = null;
-
-  if (
+  const ai =
     live.history.length >= 10
-  ) {
-    ai =
-      analyzeAI(
-        live.history
-      );
-  }
+      ? analyzeAI(
+          live.history
+        )
+      : null;
 
   return {
+
     ok: true,
 
     currentPeriod:
@@ -1697,12 +2111,16 @@ async function buildState() {
       ? {
           model:
             ai.model,
+
           confidence:
             ai.confidence,
+
           quality:
             ai.quality,
+
           sampleSize:
             ai.sampleSize,
+
           score:
             ai.score
         }
@@ -1720,10 +2138,15 @@ async function buildState() {
       ),
 
     source: {
-      ok: live.ok,
-      error: live.error,
+      ok:
+        live.ok,
+
+      error:
+        live.error,
+
       updated:
         live.updated,
+
       fetched:
         live.fetched
     },
@@ -1731,158 +2154,58 @@ async function buildState() {
     analysisSession: {
       active:
         analysis.active,
+
       issue:
         analysis.issue,
+
       startedAt:
         analysis.startedAt,
+
       endsAt:
         analysis.endsAt,
+
       duration:
         ANALYSIS_MS
-    },
-
-    timing: {
-      pollMs:
-        POLL_MS,
-      analysisMs:
-        ANALYSIS_MS,
-      skipRounds:
-        SKIP_ROUNDS
     }
   };
 }
 
-async function readBody(req) {
-  return new Promise(
-    (resolve, reject) => {
-      let body = "";
 
-      req.on(
-        "data",
-        chunk => {
-          body += chunk;
-
-          if (
-            body.length >
-            2000000
-          ) {
-            reject(
-              new Error(
-                "REQUEST_TOO_LARGE"
-              )
-            );
-
-            req.destroy();
-          }
-        }
-      );
-
-      req.on(
-        "end",
-        () => {
-          if (!body) {
-            return resolve({});
-          }
-
-          try {
-            resolve(
-              JSON.parse(body)
-            );
-          } catch {
-            resolve({});
-          }
-        }
-      );
-
-      req.on(
-        "error",
-        reject
-      );
-    }
-  );
-}
-
-function json(
-  res,
-  status,
-  data
-) {
-  const body =
-    JSON.stringify(data);
-
-  res.writeHead(
-    status,
-    {
-      "Content-Type":
-        "application/json; charset=utf-8",
-      "Cache-Control":
-        "no-store",
-      "Access-Control-Allow-Origin":
-        "*",
-      "Access-Control-Allow-Headers":
-        "Content-Type,X-Access-Key,X-Device-ID,X-Admin-Key,Authorization",
-      "Access-Control-Allow-Methods":
-        "GET,POST,OPTIONS"
-    }
-  );
-
-  res.end(body);
-}
-
-function adminAuth(req) {
-  const url =
-    new URL(
-      req.url,
-      "http://localhost"
-    );
-
-  const key =
-    req.headers[
-      "x-admin-key"
-    ] ||
-    req.headers[
-      "authorization"
-    ]?.replace(
-      /^Bearer\s+/i,
-      ""
-    ) ||
-    url.searchParams.get(
-      "key"
-    );
-
-  return (
-    String(
-      key || ""
-    ).trim() ===
-    ADMIN_KEY
-  );
-}
+/* =========================================================
+   ADMIN FUNCTIONS
+========================================================= */
 
 async function listKeys() {
+
   if (!pool) {
     return [
       ...memory.keys.values()
     ];
   }
 
-  const r =
+  const result =
     await pool.query(`
       SELECT *
       FROM access_keys
       ORDER BY id DESC
     `);
 
-  return r.rows;
+  return result.rows;
 }
 
-async function createKey(custom) {
+
+async function createAccessKey(
+  customKey
+) {
+
   const key =
     String(
-      custom || ""
+      customKey || ""
     ).trim() ||
-    makeKey();
+    createKey();
 
   if (!pool) {
+
     if (
       memory.keys.has(key)
     ) {
@@ -1894,12 +2217,16 @@ async function createKey(custom) {
     const item = {
       id:
         memory.keyId++,
+
       access_key:
         key,
+
       device_id:
         null,
+
       created_at:
         now(),
+
       last_seen: 0
     };
 
@@ -1911,34 +2238,40 @@ async function createKey(custom) {
     return item;
   }
 
-  const r =
+  const result =
     await pool.query(
-      `INSERT INTO access_keys
-       (
-         access_key,
-         device_id,
-         created_at,
-         last_seen
-       )
-       VALUES($1,NULL,$2,0)
-       RETURNING *`,
+      `
+      INSERT INTO access_keys
+      (
+        access_key,
+        device_id,
+        created_at,
+        last_seen
+      )
+      VALUES($1,NULL,$2,0)
+      RETURNING *
+      `,
       [
         key,
         now()
       ]
     );
 
-  return r.rows[0];
+  return result.rows[0];
 }
 
-async function resetKey(
+
+async function resetDevice(
   key
 ) {
+
   key =
-    String(key || "")
-      .trim();
+    String(
+      key || ""
+    ).trim();
 
   if (!pool) {
+
     const item =
       memory.keys.get(key);
 
@@ -1948,40 +2281,44 @@ async function resetKey(
       );
     }
 
-    item.device_id =
-      null;
-
-    item.last_seen =
-      0;
+    item.device_id = null;
+    item.last_seen = 0;
 
     return item;
   }
 
-  const r =
+  const result =
     await pool.query(
-      `UPDATE access_keys
-       SET device_id=NULL,
-           last_seen=0
-       WHERE access_key=$1
-       RETURNING *`,
+      `
+      UPDATE access_keys
+      SET device_id=NULL,
+          last_seen=0
+      WHERE access_key=$1
+      RETURNING *
+      `,
       [key]
     );
 
-  if (!r.rows.length) {
+  if (
+    !result.rows.length
+  ) {
     throw new Error(
       "KEY_NOT_FOUND"
     );
   }
 
-  return r.rows[0];
+  return result.rows[0];
 }
 
-async function deleteKey(
+
+async function deleteAccessKey(
   key
 ) {
+
   key =
-    String(key || "")
-      .trim();
+    String(
+      key || ""
+    ).trim();
 
   if (
     key ===
@@ -1993,12 +2330,12 @@ async function deleteKey(
   }
 
   if (!pool) {
-    const ok =
-      memory.keys.delete(
-        key
-      );
 
-    if (!ok) {
+    if (
+      !memory.keys.delete(
+        key
+      )
+    ) {
       throw new Error(
         "KEY_NOT_FOUND"
       );
@@ -2007,14 +2344,18 @@ async function deleteKey(
     return true;
   }
 
-  const r =
+  const result =
     await pool.query(
-      `DELETE FROM access_keys
-       WHERE access_key=$1`,
+      `
+      DELETE FROM access_keys
+      WHERE access_key=$1
+      `,
       [key]
     );
 
-  if (!r.rowCount) {
+  if (
+    !result.rowCount
+  ) {
     throw new Error(
       "KEY_NOT_FOUND"
     );
@@ -2023,19 +2364,22 @@ async function deleteKey(
   return true;
 }
 
+
 async function listPredictions() {
+
   if (!pool) {
+
     return [
       ...memory.predictions
     ]
       .sort(
-        (a, b) =>
+        (a,b) =>
           b.id - a.id
       )
-      .slice(0, 200);
+      .slice(0,200);
   }
 
-  const r =
+  const result =
     await pool.query(`
       SELECT *
       FROM prediction_records
@@ -2043,78 +2387,12 @@ async function listPredictions() {
       LIMIT 200
     `);
 
-  return r.rows;
+  return result.rows;
 }
 
-async function modelTest() {
-  const data =
-    live.history
-      .filter(
-        x =>
-          Number.isInteger(
-            x.number
-          )
-      );
-
-  if (data.length < 20) {
-    return {
-      ok: false,
-      error:
-        "Need at least 20 results"
-    };
-  }
-
-  let total = 0;
-  let correct = 0;
-
-  for (
-    let i =
-      data.length - 1;
-    i >= 10;
-    i--
-  ) {
-    const previous =
-      data.slice(i);
-
-    const ai =
-      analyzeAI(
-        previous
-      );
-
-    if (
-      !ai.prediction
-    ) {
-      continue;
-    }
-
-    total++;
-
-    if (
-      ai.prediction ===
-      data[i - 1].result
-    ) {
-      correct++;
-    }
-  }
-
-  return {
-    ok: true,
-    total,
-    correct,
-    accuracy:
-      total
-        ? Number(
-            (
-              (correct /
-                total) *
-              100
-            ).toFixed(2)
-          )
-        : 0
-  };
-}
 
 async function adminStatus() {
+
   const keys =
     await listKeys();
 
@@ -2134,27 +2412,20 @@ async function adminStatus() {
         x.actual_result
     ).length;
 
-  const losses =
-    settled.filter(
-      x =>
-        x.prediction &&
-        x.actual_result &&
-        x.prediction !==
-          x.actual_result
-    ).length;
-
   return {
+
     ok: true,
-    serverTime:
-      now(),
 
     live: {
       ok:
         live.ok,
+
       currentIssue:
         live.currentIssue,
+
       history:
         live.history.length,
+
       error:
         live.error
     },
@@ -2162,10 +2433,13 @@ async function adminStatus() {
     analysis: {
       active:
         analysis.active,
+
       issue:
         analysis.issue,
+
       startedAt:
         analysis.startedAt,
+
       endsAt:
         analysis.endsAt
     },
@@ -2173,18 +2447,25 @@ async function adminStatus() {
     stats: {
       keys:
         keys.length,
+
       predictions:
         predictions.length,
+
       settled:
         settled.length,
+
       wins,
-      losses,
+
+      losses:
+        settled.length -
+        wins,
+
       accuracy:
         settled.length
           ? Number(
               (
-                (wins /
-                  settled.length) *
+                wins /
+                settled.length *
                 100
               ).toFixed(2)
             )
@@ -2193,66 +2474,200 @@ async function adminStatus() {
   };
 }
 
-function serveFile(
+
+/* =========================================================
+   HTTP
+========================================================= */
+
+function sendJson(
+  res,
+  status,
+  data
+) {
+
+  const body =
+    JSON.stringify(data);
+
+  res.writeHead(
+    status,
+    {
+      "Content-Type":
+        "application/json; charset=utf-8",
+
+      "Cache-Control":
+        "no-store",
+
+      "Access-Control-Allow-Origin":
+        "*",
+
+      "Access-Control-Allow-Headers":
+        "Content-Type,X-Access-Key,X-Device-ID,X-Admin-Key,Authorization",
+
+      "Access-Control-Allow-Methods":
+        "GET,POST,OPTIONS"
+    }
+  );
+
+  res.end(body);
+}
+
+
+function sendFile(
   res,
   filename
 ) {
-  const safe =
-    path.basename(
-      filename
-    );
 
-  const file =
+  const full =
     path.join(
       __dirname,
-      safe
+      path.basename(
+        filename
+      )
     );
 
   if (
-    !fs.existsSync(file)
+    !fs.existsSync(full)
   ) {
+
     res.writeHead(404);
+
     return res.end(
       "File not found"
     );
   }
 
-  const ext =
-    path.extname(
-      file
-    ).toLowerCase();
+  let type =
+    "application/octet-stream";
 
-  const types = {
-    ".html":
-      "text/html; charset=utf-8",
-    ".css":
-      "text/css; charset=utf-8",
-    ".js":
-      "application/javascript; charset=utf-8",
-    ".mp3":
-      "audio/mpeg"
-  };
+  if (
+    filename.endsWith(
+      ".html"
+    )
+  ) {
+    type =
+      "text/html; charset=utf-8";
+  }
+
+  if (
+    filename.endsWith(
+      ".css"
+    )
+  ) {
+    type =
+      "text/css; charset=utf-8";
+  }
+
+  if (
+    filename.endsWith(
+      ".js"
+    )
+  ) {
+    type =
+      "application/javascript; charset=utf-8";
+  }
 
   res.writeHead(
     200,
     {
       "Content-Type":
-        types[ext] ||
-        "application/octet-stream",
+        type,
+
       "Cache-Control":
         "no-cache"
     }
   );
 
   fs.createReadStream(
-    file
+    full
   ).pipe(res);
 }
+
+
+function readBody(req) {
+
+  return new Promise(
+    (resolve,reject) => {
+
+      let body = "";
+
+      req.on(
+        "data",
+        chunk => {
+
+          body += chunk;
+
+          if (
+            body.length >
+            2000000
+          ) {
+
+            reject(
+              new Error(
+                "REQUEST_TOO_LARGE"
+              )
+            );
+
+            req.destroy();
+          }
+        }
+      );
+
+      req.on(
+        "end",
+        () => {
+
+          if (!body) {
+            return resolve({});
+          }
+
+          try {
+
+            resolve(
+              JSON.parse(body)
+            );
+
+          } catch {
+
+            resolve({});
+
+          }
+        }
+      );
+
+      req.on(
+        "error",
+        reject
+      );
+    }
+  );
+}
+
+
+function isAdmin(req) {
+
+  const key =
+    req.headers[
+      "x-admin-key"
+    ];
+
+  return (
+    String(
+      key || ""
+    ).trim() ===
+    ADMIN_KEY
+  );
+}
+
+
+/* =========================================================
+   ROUTER
+========================================================= */
 
 async function router(
   req,
   res
 ) {
+
   const url =
     new URL(
       req.url,
@@ -2262,17 +2677,21 @@ async function router(
   const p =
     url.pathname;
 
+
   if (
     req.method ===
     "OPTIONS"
   ) {
+
     res.writeHead(
       204,
       {
         "Access-Control-Allow-Origin":
           "*",
+
         "Access-Control-Allow-Headers":
           "Content-Type,X-Access-Key,X-Device-ID,X-Admin-Key,Authorization",
+
         "Access-Control-Allow-Methods":
           "GET,POST,OPTIONS"
       }
@@ -2281,21 +2700,30 @@ async function router(
     return res.end();
   }
 
+
+  /* HEALTH */
+
   if (
     p === "/health"
   ) {
-    return json(
+
+    return sendJson(
       res,
       200,
       {
         ok: true,
         service:
-          "DY AI WinGo",
-        time:
-          now()
+          "DY AI WINGO",
+        live:
+          live.ok,
+        currentIssue:
+          live.currentIssue
       }
     );
   }
+
+
+  /* KEY */
 
   if (
     p ===
@@ -2303,35 +2731,27 @@ async function router(
     req.method ===
       "POST"
   ) {
-    try {
-      const body =
-        await readBody(req);
 
-      const result =
-        await checkKey(
-          body.key,
-          body.deviceId
-        );
+    const body =
+      await readBody(req);
 
-      return json(
-        res,
-        result.ok
-          ? 200
-          : 403,
-        result
+    const result =
+      await checkKey(
+        body.key,
+        body.deviceId
       );
-    } catch (e) {
-      return json(
-        res,
-        500,
-        {
-          ok: false,
-          error:
-            e.message
-        }
-      );
-    }
+
+    return sendJson(
+      res,
+      result.ok
+        ? 200
+        : 403,
+      result
+    );
   }
+
+
+  /* STATE */
 
   if (
     p ===
@@ -2339,51 +2759,44 @@ async function router(
     req.method ===
       "GET"
   ) {
+
     const auth =
-      await verifyAccess(
-        req
-      );
+      await verifyAccess(req);
 
     if (!auth.ok) {
-      return json(
+
+      return sendJson(
         res,
         403,
         auth
       );
     }
 
-    try {
-      return json(
-        res,
-        200,
-        await buildState()
-      );
-    } catch (e) {
-      return json(
-        res,
-        500,
-        {
-          ok: false,
-          error:
-            e.message
-        }
-      );
-    }
+    return sendJson(
+      res,
+      200,
+      await buildState()
+    );
   }
+
+
+  /* ADMIN */
 
   if (
     p.startsWith(
       "/api/admin/"
     )
   ) {
+
     if (
-      !adminAuth(req)
+      !isAdmin(req)
     ) {
-      return json(
+
+      return sendJson(
         res,
         401,
         {
-          ok: false,
+          ok:false,
           error:
             "ADMIN_UNAUTHORIZED"
         }
@@ -2391,22 +2804,25 @@ async function router(
     }
 
     try {
+
       if (
         p ===
           "/api/admin/keys" &&
         req.method ===
           "GET"
       ) {
-        return json(
+
+        return sendJson(
           res,
           200,
           {
-            ok: true,
+            ok:true,
             keys:
               await listKeys()
           }
         );
       }
+
 
       if (
         p ===
@@ -2414,23 +2830,23 @@ async function router(
         req.method ===
           "POST"
       ) {
+
         const body =
           await readBody(req);
 
-        const item =
-          await createKey(
-            body.key
-          );
-
-        return json(
+        return sendJson(
           res,
           200,
           {
-            ok: true,
-            key: item
+            ok:true,
+            key:
+              await createAccessKey(
+                body.key
+              )
           }
         );
       }
+
 
       if (
         p ===
@@ -2438,23 +2854,23 @@ async function router(
         req.method ===
           "POST"
       ) {
+
         const body =
           await readBody(req);
 
-        const item =
-          await resetKey(
-            body.key
-          );
-
-        return json(
+        return sendJson(
           res,
           200,
           {
-            ok: true,
-            key: item
+            ok:true,
+            key:
+              await resetDevice(
+                body.key
+              )
           }
         );
       }
+
 
       if (
         p ===
@@ -2462,88 +2878,80 @@ async function router(
         req.method ===
           "POST"
       ) {
+
         const body =
           await readBody(req);
 
-        await deleteKey(
+        await deleteAccessKey(
           body.key
         );
 
-        return json(
+        return sendJson(
           res,
           200,
           {
-            ok: true
+            ok:true
           }
         );
       }
 
-      if (
-        p ===
-          "/api/admin/predictions" &&
-        req.method ===
-          "GET"
-      ) {
-        return json(
-          res,
-          200,
-          {
-            ok: true,
-            predictions:
-              await listPredictions()
-          }
-        );
-      }
 
       if (
         p ===
-          "/api/admin/status" &&
-        req.method ===
-          "GET"
+          "/api/admin/status"
       ) {
-        return json(
+
+        return sendJson(
           res,
           200,
           await adminStatus()
         );
       }
 
-      if (
-        p ===
-          "/api/admin/model-test" &&
-        req.method ===
-          "GET"
-      ) {
-        return json(
-          res,
-          200,
-          await modelTest()
-        );
-      }
 
       if (
         p ===
-          "/api/admin/live-test" &&
-        req.method ===
-          "GET"
+          "/api/admin/predictions"
       ) {
-        const data =
-          await fetchWingo();
 
-        return json(
+        return sendJson(
           res,
           200,
           {
-            ok: true,
+            ok:true,
+            predictions:
+              await listPredictions()
+          }
+        );
+      }
+
+
+      if (
+        p ===
+          "/api/admin/live-test"
+      ) {
+
+        const data =
+          await fetchWingo();
+
+        return sendJson(
+          res,
+          200,
+          {
+            ok:true,
+
             currentIssue:
               data.currentIssue,
-            count:
+
+            historyCount:
               data.history.length,
+
             history:
               data.history.slice(
                 0,
                 20
               ),
+
             ai:
               analyzeAI(
                 data.history
@@ -2552,129 +2960,131 @@ async function router(
         );
       }
 
-      if (
-        p ===
-          "/api/admin/ping"
-      ) {
-        return json(
-          res,
-          200,
-          {
-            ok: true,
-            admin: true,
-            time:
-              now()
-          }
-        );
-      }
 
-      return json(
+      return sendJson(
         res,
         404,
         {
-          ok: false,
+          ok:false,
           error:
             "ADMIN_ROUTE_NOT_FOUND"
         }
       );
 
-    } catch (e) {
-      return json(
+    } catch(error) {
+
+      return sendJson(
         res,
         500,
         {
-          ok: false,
+          ok:false,
           error:
-            e.message
+            error.message
         }
       );
     }
   }
 
+
+  /* FRONTEND */
+
   if (
     p === "/" ||
-    p ===
-      "/prediction.html"
+    p === "/prediction.html"
   ) {
-    return serveFile(
+
+    return sendFile(
       res,
       "prediction.html"
     );
   }
 
+
   if (
-    p ===
-      "/admin.html"
+    p === "/admin.html"
   ) {
-    return serveFile(
+
+    return sendFile(
       res,
       "admin.html"
     );
   }
 
-  if (
-    p ===
-      "/music.mp3"
-  ) {
-    return serveFile(
-      res,
-      "music.mp3"
-    );
-  }
 
-  return json(
+  return sendJson(
     res,
     404,
     {
-      ok: false,
+      ok:false,
       error:
         "NOT_FOUND"
     }
   );
 }
 
+
+/* =========================================================
+   SERVER
+========================================================= */
+
 const server =
   http.createServer(
-    (req, res) => {
+    (req,res) => {
+
       router(
         req,
         res
-      ).catch(error => {
-        console.error(
-          "ROUTER:",
-          error
-        );
+      ).catch(
+        error => {
 
-        if (
-          !res.headersSent
-        ) {
-          json(
-            res,
-            500,
-            {
-              ok: false,
-              error:
-                "SERVER_ERROR"
-            }
+          console.error(
+            "SERVER ERROR:",
+            error
           );
+
+          if (
+            !res.headersSent
+          ) {
+
+            sendJson(
+              res,
+              500,
+              {
+                ok:false,
+                error:
+                  "SERVER_ERROR"
+              }
+            );
+          }
         }
-      });
+      );
     }
   );
 
+
+/* =========================================================
+   START
+========================================================= */
+
 async function start() {
+
   await initDB();
 
   server.listen(
     PORT,
     "0.0.0.0",
     () => {
+
       console.log(
         "================================"
       );
 
       console.log(
         " DY AI WINGO 1 MINUTE"
+      );
+
+      console.log(
+        " SERVER READY"
       );
 
       console.log(
@@ -2689,31 +3099,21 @@ async function start() {
 
       console.log(
         " API POLL:",
-        POLL_MS,
-        "ms"
+        POLL_MS + "ms"
       );
 
       console.log(
         " ANALYSIS:",
-        ANALYSIS_MS,
-        "ms"
+        ANALYSIS_MS + "ms"
       );
 
       console.log(
         " SKIP:",
-        SKIP_ROUNDS,
-        "rounds"
+        SKIP_ROUNDS
       );
 
       console.log(
-        " DATABASE:",
-        pool
-          ? "POSTGRESQL"
-          : "MEMORY"
-      );
-
-      console.log(
-        " WINGOBOT TOKEN:",
+        " TOKEN:",
         WINGOBOT_TOKEN
           ? "SET"
           : "MISSING"
@@ -2729,35 +3129,35 @@ async function start() {
 
   setInterval(
     async () => {
+
       await refreshLive();
+
       await engineTick();
+
     },
     POLL_MS
   );
 
   setInterval(
     async () => {
+
       await engineTick();
+
     },
     250
   );
 }
 
-process.on(
-  "unhandledRejection",
+
+start().catch(
   error => {
+
     console.error(
-      "UNHANDLED:",
+      "STARTUP ERROR:",
       error
     );
+
+    process.exit(1);
+
   }
 );
-
-start().catch(error => {
-  console.error(
-    "START ERROR:",
-    error
-  );
-
-  process.exit(1);
-});
