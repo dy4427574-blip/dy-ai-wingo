@@ -1,181 +1,630 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0">
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0"
+>
 
 <title>DY AI Prediction</title>
 
 <style>
+
+/* =========================
+   RESET
+========================= */
+
 *{
   box-sizing:border-box;
+  margin:0;
+  padding:0;
 }
+
+
+/* =========================
+   BODY
+========================= */
 
 body{
-  margin:0;
+
   min-height:100vh;
-  background:#05070d;
-  color:#fff;
-  font-family:Arial,sans-serif;
+
+  background:
+    radial-gradient(
+      circle at top,
+      #111827 0%,
+      #05070d 45%,
+      #020308 100%
+    );
+
+  color:#ffffff;
+
+  font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
+
 }
+
+
+/* =========================
+   MAIN
+========================= */
 
 .container{
-  max-width:500px;
+
+  width:100%;
+
+  max-width:520px;
+
   margin:auto;
+
   padding:18px;
+
 }
+
+
+/* =========================
+   HEADER
+========================= */
 
 .header{
+
   text-align:center;
+
   margin-bottom:18px;
+
 }
+
 
 .header h1{
-  margin:0;
-  font-size:25px;
+
+  font-size:27px;
+
+  font-weight:900;
+
+  letter-spacing:1px;
+
 }
+
+
+.header p{
+
+  margin-top:7px;
+
+  font-size:11px;
+
+  opacity:.55;
+
+}
+
 
 .status{
-  margin-top:8px;
+
+  margin-top:9px;
+
   font-size:12px;
-  opacity:.7;
+
+  font-weight:700;
+
 }
+
+
+.status.live{
+
+  color:#55ff91;
+
+}
+
+
+.status.error{
+
+  color:#ff5757;
+
+}
+
+
+.status.delay{
+
+  color:#ffb454;
+
+}
+
+
+/* =========================
+   CARD
+========================= */
 
 .card{
-  background:#0d111c;
-  border:1px solid #20283b;
-  border-radius:18px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(18,24,38,.98),
+      rgba(8,11,19,.98)
+    );
+
+  border:
+    1px solid
+    rgba(100,120,160,.22);
+
+  border-radius:20px;
+
   padding:20px;
-  margin-bottom:15px;
+
+  margin-bottom:14px;
+
+  box-shadow:
+    0 12px 35px
+    rgba(0,0,0,.25);
+
 }
+
+
+/* =========================
+   LABEL
+========================= */
 
 .label{
-  font-size:12px;
-  opacity:.6;
-  margin-bottom:8px;
+
+  font-size:11px;
+
+  font-weight:800;
+
+  letter-spacing:1px;
+
+  opacity:.55;
+
+  margin-bottom:10px;
+
 }
+
+
+/* =========================
+   PERIOD
+========================= */
 
 .period{
-  font-size:20px;
-  font-weight:bold;
-  word-break:break-all;
+
+  font-size:19px;
+
+  font-weight:900;
+
+  letter-spacing:.5px;
+
+  word-break:
+    break-all;
+
 }
 
-.analysis{
-  text-align:center;
-  min-height:125px;
+
+/* =========================
+   ANALYSIS
+========================= */
+
+.analysis-card{
+
+  min-height:155px;
+
   display:flex;
+
   flex-direction:column;
+
+  align-items:center;
+
   justify-content:center;
+
+  text-align:center;
+
 }
 
-.analysisText{
+
+.analysis-text{
+
   font-size:14px;
+
+  font-weight:800;
+
   letter-spacing:1px;
+
   opacity:.8;
+
 }
+
 
 .count{
-  font-size:55px;
-  font-weight:bold;
+
+  font-size:58px;
+
+  font-weight:900;
+
   margin-top:8px;
+
+  line-height:1;
+
 }
+
+
+.loader{
+
+  width:45px;
+
+  height:45px;
+
+  border-radius:50%;
+
+  border:
+    3px solid
+    rgba(255,255,255,.12);
+
+  border-top-color:#ffffff;
+
+  animation:
+    spin .8s linear infinite;
+
+  margin-top:15px;
+
+}
+
+
+@keyframes spin{
+
+  to{
+
+    transform:
+      rotate(360deg);
+
+  }
+
+}
+
+
+/* =========================
+   PREDICTION
+========================= */
+
+.prediction-card{
+
+  text-align:center;
+
+}
+
 
 .prediction{
-  text-align:center;
-  font-size:38px;
-  font-weight:900;
-  padding:25px 10px;
+
+  min-height:95px;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  font-size:39px;
+
+  font-weight:1000;
+
+  letter-spacing:1px;
+
 }
 
-.wait{
-  opacity:.5;
-  font-size:20px;
+
+.prediction.big{
+
+  color:#58ff91;
+
 }
+
+
+.prediction.small{
+
+  color:#5db5ff;
+
+}
+
+
+.prediction.clear{
+
+  color:#ffbd55;
+
+}
+
+
+.prediction.wait{
+
+  opacity:.45;
+
+  font-size:22px;
+
+}
+
+
+/* =========================
+   HISTORY
+========================= */
 
 .history{
-  max-height:380px;
+
+  max-height:390px;
+
   overflow-y:auto;
+
 }
 
-.row{
-  display:flex;
-  justify-content:space-between;
-  padding:12px 4px;
-  border-bottom:1px solid #1b2130;
+
+.history::-webkit-scrollbar{
+
+  width:4px;
+
+}
+
+
+.history::-webkit-scrollbar-thumb{
+
+  background:#30394d;
+
+  border-radius:10px;
+
+}
+
+
+.history-row{
+
+  display:grid;
+
+  grid-template-columns:
+    minmax(0,1fr)
+    45px
+    75px;
+
+  gap:8px;
+
+  align-items:center;
+
+  padding:13px 3px;
+
+  border-bottom:
+    1px solid
+    rgba(255,255,255,.06);
+
   font-size:13px;
+
 }
 
-.big{
-  font-weight:bold;
+
+.history-period{
+
+  overflow:hidden;
+
+  text-overflow:ellipsis;
+
+  white-space:nowrap;
+
 }
 
-.small{
-  font-weight:bold;
+
+.history-number{
+
+  text-align:center;
+
+  font-size:16px;
+
+  font-weight:900;
+
 }
 
-.error{
-  color:#ff6868;
+
+.history-size{
+
+  text-align:right;
+
+  font-size:12px;
+
+  font-weight:900;
+
 }
 
-.live{
-  color:#70ff9a;
+
+.history-size.big{
+
+  color:#58ff91;
+
 }
 
-.delayed{
-  color:#ffb454;
+
+.history-size.small{
+
+  color:#5db5ff;
+
 }
+
+
+.empty{
+
+  text-align:center;
+
+  padding:25px 0;
+
+  opacity:.45;
+
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+
+@media(max-width:380px){
+
+  .container{
+
+    padding:13px;
+
+  }
+
+  .card{
+
+    padding:17px;
+
+  }
+
+  .period{
+
+    font-size:16px;
+
+  }
+
+  .prediction{
+
+    font-size:32px;
+
+  }
+
+}
+
 </style>
+
 </head>
+
 
 <body>
 
+
 <div class="container">
 
+
+  <!-- =========================
+       HEADER
+  ========================== -->
+
   <div class="header">
-    <h1>DY AI PREDICTION</h1>
-    <div id="status" class="status">
-      Connecting...
-    </div>
-  </div>
 
-  <div class="card">
-    <div class="label">CURRENT PERIOD</div>
-    <div id="currentPeriod" class="period">--</div>
-  </div>
+    <h1>
+      DY AI PREDICTION
+    </h1>
 
-  <div class="card">
-    <div class="label">PREDICTION PERIOD</div>
-    <div id="nextPeriod" class="period">--</div>
-  </div>
+    <p>
+      LIVE WIN GO 1 MIN ANALYSIS
+    </p>
 
-  <div class="card analysis">
-
-    <div id="analysisText"
-         class="analysisText">
-      WAITING FOR NEW PERIOD
+    <div
+      id="status"
+      class="status"
+    >
+      ● CONNECTING...
     </div>
 
-    <div id="count"
-         class="count">
+  </div>
+
+
+
+  <!-- =========================
+       CURRENT PERIOD
+  ========================== -->
+
+  <div class="card">
+
+    <div class="label">
+      CURRENT PERIOD
+    </div>
+
+    <div
+      id="currentPeriod"
+      class="period"
+    >
       --
     </div>
 
   </div>
 
+
+
+  <!-- =========================
+       PREDICTION PERIOD
+  ========================== -->
+
   <div class="card">
+
+    <div class="label">
+      PREDICTION PERIOD
+    </div>
+
+    <div
+      id="nextPeriod"
+      class="period"
+    >
+      --
+    </div>
+
+  </div>
+
+
+
+  <!-- =========================
+       5 SECOND ANALYSIS
+  ========================== -->
+
+  <div
+    class="card analysis-card"
+  >
+
+    <div
+      id="analysisText"
+      class="analysis-text"
+    >
+      WAITING FOR NEW PERIOD...
+    </div>
+
+
+    <div
+      id="count"
+      class="count"
+    >
+    </div>
+
+
+    <div
+      id="loader"
+      class="loader"
+      style="display:none"
+    >
+    </div>
+
+  </div>
+
+
+
+  <!-- =========================
+       PREDICTION
+  ========================== -->
+
+  <div
+    class="card prediction-card"
+  >
 
     <div class="label">
       PREDICTION
     </div>
 
-    <div id="prediction"
-         class="prediction wait">
+
+    <div
+      id="prediction"
+      class="prediction wait"
+    >
       WAITING
     </div>
 
   </div>
+
+
+
+  <!-- =========================
+       HISTORY
+  ========================== -->
 
   <div class="card">
 
@@ -183,126 +632,449 @@ body{
       HISTORY
     </div>
 
-    <div id="history"
-         class="history">
-      Loading...
+
+    <div
+      id="history"
+      class="history"
+    >
+
+      <div class="empty">
+        Loading...
+      </div>
+
     </div>
 
   </div>
 
+
 </div>
+
+
 
 <script>
 
-let lastTargetPeriod = null;
+/* =====================================================
+   HTML ESCAPE
+===================================================== */
+
+function escapeHTML(value){
+
+  return String(
+    value ?? ""
+  )
+
+  .replaceAll(
+    "&",
+    "&amp;"
+  )
+
+  .replaceAll(
+    "<",
+    "&lt;"
+  )
+
+  .replaceAll(
+    ">",
+    "&gt;"
+  )
+
+  .replaceAll(
+    '"',
+    "&quot;"
+  )
+
+  .replaceAll(
+    "'",
+    "&#039;"
+  );
+
+}
+
+
+/* =====================================================
+   RENDER HISTORY
+===================================================== */
+
+function renderHistory(
+  rows
+){
+
+  const box =
+    document.getElementById(
+      "history"
+    );
+
+
+  if(
+    !Array.isArray(rows) ||
+    rows.length === 0
+  ){
+
+    box.innerHTML = `
+      <div class="empty">
+        No history available
+      </div>
+    `;
+
+    return;
+
+  }
+
+
+  box.innerHTML =
+    rows.map(
+      row => {
+
+        const size =
+          row.size ||
+          (
+            Number(row.number) <= 4
+              ? "SMALL"
+              : "BIG"
+          );
+
+
+        const sizeClass =
+          size === "BIG"
+            ? "big"
+            : "small";
+
+
+        return `
+
+          <div class="history-row">
+
+            <div
+              class="history-period"
+            >
+              ${escapeHTML(
+                row.issueNumber
+              )}
+            </div>
+
+
+            <div
+              class="history-number"
+            >
+              ${escapeHTML(
+                row.number
+              )}
+            </div>
+
+
+            <div
+              class="history-size ${sizeClass}"
+            >
+              ${size}
+            </div>
+
+          </div>
+
+        `;
+
+      }
+    ).join("");
+
+}
+
+
+/* =====================================================
+   UPDATE STATUS
+===================================================== */
+
+function updateStatus(
+  data
+){
+
+  const status =
+    document.getElementById(
+      "status"
+    );
+
+
+  if(
+    data.sourceStatus ===
+    "LIVE"
+  ){
+
+    status.textContent =
+      "● LIVE API";
+
+    status.className =
+      "status live";
+
+    return;
+
+  }
+
+
+  if(
+    data.sourceStatus ===
+    "ERROR"
+  ){
+
+    status.textContent =
+      "● API ERROR";
+
+    status.className =
+      "status error";
+
+    return;
+
+  }
+
+
+  status.textContent =
+    "● DATA DELAYED";
+
+  status.className =
+    "status delay";
+
+}
+
+
+/* =====================================================
+   UPDATE ANALYSIS UI
+===================================================== */
+
+function updateAnalysis(
+  analysis
+){
+
+  const text =
+    document.getElementById(
+      "analysisText"
+    );
+
+
+  const count =
+    document.getElementById(
+      "count"
+    );
+
+
+  const loader =
+    document.getElementById(
+      "loader"
+    );
+
+
+  if(
+    analysis &&
+    analysis.active
+  ){
+
+    text.textContent =
+      analysis.message ||
+      "ANALYZING...";
+
+
+    count.textContent =
+      analysis.remaining ||
+      "";
+
+
+    loader.style.display =
+      "block";
+
+
+    return;
+
+  }
+
+
+  text.textContent =
+    analysis?.message ||
+    "WAITING FOR NEW PERIOD...";
+
+
+  count.textContent =
+    "";
+
+
+  loader.style.display =
+    "none";
+
+}
+
+
+/* =====================================================
+   UPDATE PREDICTION UI
+===================================================== */
+
+function updatePrediction(
+  analysis
+){
+
+  const box =
+    document.getElementById(
+      "prediction"
+    );
+
+
+  if(
+    !analysis ||
+    analysis.active
+  ){
+
+    box.textContent =
+      "ANALYZING...";
+
+    box.className =
+      "prediction wait";
+
+    return;
+
+  }
+
+
+  const prediction =
+    analysis.prediction ||
+    "WAITING";
+
+
+  box.textContent =
+    prediction;
+
+
+  if(
+    prediction === "BIG"
+  ){
+
+    box.className =
+      "prediction big";
+
+  }
+
+  else if(
+    prediction === "SMALL"
+  ){
+
+    box.className =
+      "prediction small";
+
+  }
+
+  else if(
+    prediction ===
+    "NO CLEAR SIGNAL"
+  ){
+
+    box.className =
+      "prediction clear";
+
+  }
+
+  else{
+
+    box.className =
+      "prediction wait";
+
+  }
+
+}
+
+
+/* =====================================================
+   LOAD LIVE STATE
+===================================================== */
+
+let requestRunning =
+  false;
+
 
 async function loadState(){
 
+  if(
+    requestRunning
+  ){
+
+    return;
+
+  }
+
+
+  requestRunning =
+    true;
+
+
   try{
 
-    const response = await fetch(
-      "/api/state?_=" + Date.now(),
-      {
-        cache:"no-store"
-      }
-    );
+    const response =
+      await fetch(
+        "/api/state?_=" +
+        Date.now(),
+        {
+          method:"GET",
+          cache:"no-store"
+        }
+      );
 
-    const data = await response.json();
 
-    if(!data.success){
-      throw new Error("API error");
+    if(
+      !response.ok
+    ){
+
+      throw new Error(
+        "HTTP " +
+        response.status
+      );
+
     }
+
+
+    const data =
+      await response.json();
+
+
+    if(
+      !data.success
+    ){
+
+      throw new Error(
+        data.error ||
+        "State API error"
+      );
+
+    }
+
 
     /* PERIOD */
 
     document.getElementById(
       "currentPeriod"
     ).textContent =
-      data.currentPeriod || "--";
+      data.currentPeriod ||
+      "--";
+
 
     document.getElementById(
       "nextPeriod"
     ).textContent =
-      data.nextPeriod || "--";
+      data.nextPeriod ||
+      "--";
+
 
     /* STATUS */
 
-    const status =
-      document.getElementById("status");
+    updateStatus(
+      data
+    );
 
-    if(data.sourceStatus === "LIVE"){
-
-      status.textContent =
-        "● LIVE API";
-
-      status.className =
-        "status live";
-
-    }else{
-
-      status.textContent =
-        "● DATA DELAYED";
-
-      status.className =
-        "status delayed";
-
-    }
-
-    if(data.error){
-
-      status.textContent =
-        "● API ERROR: " + data.error;
-
-      status.className =
-        "status error";
-    }
 
     /* ANALYSIS */
 
-    const analysis =
-      data.analysis || {};
+    updateAnalysis(
+      data.analysis
+    );
 
-    document.getElementById(
-      "analysisText"
-    ).textContent =
-      analysis.message ||
-      "WAITING FOR NEW PERIOD";
-
-    document.getElementById(
-      "count"
-    ).textContent =
-      analysis.active
-        ? analysis.remaining
-        : "";
 
     /* PREDICTION */
 
-    const prediction =
-      document.getElementById(
-        "prediction"
-      );
+    updatePrediction(
+      data.analysis
+    );
 
-    if(analysis.active){
-
-      prediction.textContent =
-        "ANALYZING...";
-
-      prediction.className =
-        "prediction wait";
-
-    }else{
-
-      const p =
-        analysis.prediction ||
-        "WAITING";
-
-      prediction.textContent = p;
-
-      prediction.className =
-        p === "BIG" || p === "SMALL"
-          ? "prediction"
-          : "prediction wait";
-    }
 
     /* HISTORY */
 
@@ -310,84 +1082,46 @@ async function loadState(){
       data.history || []
     );
 
-  }catch(error){
 
-    document.getElementById(
-      "status"
-    ).textContent =
+  }
+
+  catch(error){
+
+    const status =
+      document.getElementById(
+        "status"
+      );
+
+
+    status.textContent =
       "● CONNECTION ERROR";
 
-    document.getElementById(
-      "status"
-    ).className =
+
+    status.className =
       "status error";
-  }
-}
 
-function renderHistory(rows){
-
-  const box =
-    document.getElementById(
-      "history"
-    );
-
-  if(!rows.length){
-
-    box.innerHTML =
-      "No history available";
-
-    return;
   }
 
-  box.innerHTML =
-    rows.map(row => {
+  finally{
 
-      const size =
-        row.size || "--";
+    requestRunning =
+      false;
 
-      return `
-        <div class="row">
+  }
 
-          <span>
-            ${escapeHtml(
-              row.issueNumber
-            )}
-          </span>
-
-          <span>
-            ${row.number}
-          </span>
-
-          <span class="${
-            size === "BIG"
-              ? "big"
-              : "small"
-          }">
-            ${size}
-          </span>
-
-        </div>
-      `;
-
-    }).join("");
 }
 
-function escapeHtml(value){
 
-  return String(value)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
-
-/*
-  UI refresh every second.
-  Server itself also polls the source every second.
-*/
+/* =====================================================
+   INITIAL LOAD
+===================================================== */
 
 loadState();
+
+
+/* =====================================================
+   UPDATE EVERY SECOND
+===================================================== */
 
 setInterval(
   loadState,
@@ -396,5 +1130,7 @@ setInterval(
 
 </script>
 
+
 </body>
+
 </html>
