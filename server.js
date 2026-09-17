@@ -1,861 +1,556 @@
 "use strict";
 
-const express = require("express");
+const http = require("http");
+const fs = require("fs");
 const path = require("path");
-
-const app = express();
 
 const PORT = Number(process.env.PORT || 10000);
 
-const WINGOBOT_TOKEN =
-  String(process.env.WINGOBOT_TOKEN || "").trim();
+// WinGo 1M API
+const LIVE_API_URL =
+  process.env.LIVE_API_URL ||
+  "https://draw.ar-lottery01.com/WinGo/WinGo_1M.json";
 
-const ADMIN_KEY =
-  String(process.env.ADMIN_KEY || "").trim();
+const HISTORY_API_URL =
+  process.env.HISTORY_API_URL ||
+  "https://draw.ar-lottery01.com/WinGo/WinGo_1M/GetHistoryIssuePage.json";
 
-const API_URL =
-  "https://api.wingobot.com/v2/1-min-game-history";
+let state = {
+  live: null,
+  history: [],
+  currentPeriod: null,
+  nextPeriod: null,
+  lastPoll: 0,
+  lastError: null,
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(__dirname));
+  analysis: {
+    active: false,
+    remaining: 0,
+    targetPeriod: null,
+    prediction: "WAITING",
+    message: "Waiting for new period..."
+  }
+};
 
-/* =====================================================
+let lastSeenNext = null;
+let analysisTimer = null;
+let pollBusy = false;
+
+/* =========================
    HELPERS
-===================================================== */
+========================= */
 
-function normalizeRow(row) {
-  if (!row) return null;
+function noStore(res) {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+}
 
-  const number = Number(
-    row.number ??
-    row.num ??
-    row.result ??
-    row.resultNumber
+function json(res, data, status = 200) {
+  noStore(res);
+  res.writeHead(status, {
+    "Content-Type": "application/json; charset=utf-8"
+  });
+  res.end(JSON.stringify(data));
+}
+
+function cleanPeriod(v) {
+  if (v === undefined || v === null) return null;
+  return String(v);
+}
+
+function normalizeNumber(v) {
+  const n = Number(v);
+  return Number.isInteger(n) && n >= 0 && n <= 9 ? n : null;
+}
+
+function toSize(n) {
+  if (n === null) return null;
+  return n <= 4 ? "SMALL" : "BIG";
+}
+
+/* =========================
+   FETCH JSON
+========================= */
+
+async function fetchJSON(url) {
+  const separator = url.includes("?") ? "&" : "?";
+
+  const response = await fetch(
+    url + separator + "_=" + Date.now(),
+    {
+      method: "GET",
+      cache: "no-store",
+      headers: {
+        "Accept": "application/json",
+        "Cache-Control": "no-cache"
+      }
+    }
   );
 
-  if (
-    !Number.isInteger(number) ||
-    number < 0 ||
-    number > 9
-  ) {
-    return null;
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
   }
 
-  return {
-    issueNumber:
-      row.issueNumber ??
-      row.period ??
-      row.periodId ??
-      row.issue ??
-      null,
-
-    number,
-
-    size:
-      number <= 4
-        ? "SMALL"
-        : "BIG",
-
-    colour:
-      row.colour ??
-      row.color ??
-      null
-  };
+  return response.json();
 }
 
-function periodValue(value) {
-  if (
-    value === null ||
-    value === undefined
-  ) {
-    return null;
-  }
+/* =========================
+   NORMALIZE HISTORY
+========================= */
 
-  const s = String(value).trim();
+function extractHistory(payload) {
+  const possible =
+    payload?.data?.list ||
+    payload?.data?.records ||
+    payload?.data ||
+    payload?.list ||
+    payload?.history ||
+    [];
 
-  if (!/^\d+$/.test(s)) {
-    return null;
-  }
+  if (!Array.isArray(possible)) return [];
+
+  return possible
+    .map(row => {
+      const period =
+        row.issueNumber ??
+        row.issue ??
+        row.period ??
+        row.periodId ??
+        row.issue;
+
+      const number =
+        normalizeNumber(
+          row.number ??
+          row.num ??
+          row.result ??
+          row.resultNumber
+        );
+
+      if (!period || number === null) return null;
+
+      return {
+        issueNumber: String(period),
+        number,
+        size: toSize(number)
+      };
+    })
+    .filter(Boolean);
+}
+
+/* =========================
+   LIVE DATA
+========================= */
+
+async function updateSource() {
+  if (pollBusy) return;
+
+  pollBusy = true;
 
   try {
-    return BigInt(s);
-  } catch {
-    return null;
+    const [live, historyPayload] = await Promise.all([
+      fetchJSON(LIVE_API_URL),
+      fetchJSON(HISTORY_API_URL)
+    ]);
+
+    const current =
+      live?.current?.issueNumber ??
+      live?.current?.period ??
+      live?.issueNumber ??
+      live?.period ??
+      null;
+
+    const next =
+      live?.next?.issueNumber ??
+      live?.next?.period ??
+      null;
+
+    const history = extractHistory(historyPayload);
+
+    state.live = live;
+    state.history = history.slice(0, 30);
+    state.currentPeriod = cleanPeriod(current);
+    state.nextPeriod = cleanPeriod(next);
+    state.lastPoll = Date.now();
+    state.lastError = null;
+
+    /*
+      IMPORTANT:
+      Only start a new analysis when API itself
+      reports a genuinely new next period.
+    */
+
+    if (
+      state.nextPeriod &&
+      state.nextPeriod !== lastSeenNext
+    ) {
+      lastSeenNext = state.nextPeriod;
+
+      startFiveSecondAnalysis(
+        state.nextPeriod,
+        state.history
+      );
+    }
+
+  } catch (err) {
+    state.lastError = err.message;
+  } finally {
+    pollBusy = false;
   }
 }
 
-/* =====================================================
-   ADVANCED ANALYSIS
-===================================================== */
+/* =========================
+   ANALYSIS ENGINE
+========================= */
 
-function analyze(history) {
+function getBigSmall(history) {
+  return history
+    .map(x => x.size)
+    .filter(x => x === "BIG" || x === "SMALL");
+}
 
-  if (
-    !Array.isArray(history) ||
-    history.length < 10
-  ) {
+function scorePrediction(history) {
+  if (!Array.isArray(history) || history.length < 8) {
     return "NO CLEAR SIGNAL";
   }
 
-  const rows =
-    history
-      .slice(0, 20)
-      .filter(row =>
-        Number.isInteger(
-          Number(row.number)
-        )
-      );
+  const rows = history.slice(0, 20);
 
-  if (rows.length < 10) {
+  let bigScore = 0;
+  let smallScore = 0;
+
+  const sizes = getBigSmall(rows);
+
+  if (sizes.length < 8) {
     return "NO CLEAR SIGNAL";
   }
 
-  const seq =
-    rows.map(row =>
-      Number(row.number) <= 4
-        ? 0
-        : 1
-    );
+  /* -------------------------
+     Recent weighted structure
+  ------------------------- */
 
-  const nums =
-    rows.map(row =>
-      Number(row.number)
-    );
+  sizes.slice(0, 10).forEach((x, i) => {
+    const weight = 10 - i;
 
-  let big = 0;
-  let small = 0;
+    if (x === "BIG") bigScore += weight;
+    else smallScore += weight;
+  });
 
-  /* =================================================
-     1. RECENCY
-  ================================================= */
-
-  for (
-    let i = 0;
-    i < seq.length;
-    i++
-  ) {
-
-    const weight =
-      21 - i;
-
-    if (seq[i] === 1) {
-      big += weight;
-    } else {
-      small += weight;
-    }
-  }
-
-  /* =================================================
-     2. TRANSITION STRUCTURE
-  ================================================= */
-
-  let BB = 0;
-  let BS = 0;
-  let SB = 0;
-  let SS = 0;
-
-  for (
-    let i = 0;
-    i < seq.length - 1;
-    i++
-  ) {
-
-    if (
-      seq[i] === 1 &&
-      seq[i + 1] === 1
-    ) BB++;
-
-    if (
-      seq[i] === 1 &&
-      seq[i + 1] === 0
-    ) BS++;
-
-    if (
-      seq[i] === 0 &&
-      seq[i + 1] === 1
-    ) SB++;
-
-    if (
-      seq[i] === 0 &&
-      seq[i + 1] === 0
-    ) SS++;
-  }
-
-  const fromBig =
-    BB + BS;
-
-  const fromSmall =
-    SB + SS;
-
-  if (fromBig > 0) {
-
-    const p =
-      BB / fromBig;
-
-    if (p >= 0.65) {
-      big += 3;
-    }
-
-    if (p <= 0.35) {
-      small += 3;
-    }
-  }
-
-  if (fromSmall > 0) {
-
-    const p =
-      SB / fromSmall;
-
-    if (p >= 0.65) {
-      big += 3;
-    }
-
-    if (p <= 0.35) {
-      small += 3;
-    }
-  }
-
-  /* =================================================
-     3. CURRENT STREAK
-  ================================================= */
+  /* -------------------------
+     Current streak
+  ------------------------- */
 
   let streak = 1;
 
-  while (
-    streak < seq.length &&
-    seq[streak] === seq[0]
-  ) {
-    streak++;
+  for (let i = 1; i < sizes.length; i++) {
+    if (sizes[i] === sizes[0]) streak++;
+    else break;
   }
 
-  if (streak >= 4) {
-
-    if (seq[0] === 1) {
-      small +=
-        streak >= 6 ? 6 : 4;
+  if (streak >= 3) {
+    if (sizes[0] === "BIG") {
+      bigScore += 4;
+      smallScore += 1;
     } else {
-      big +=
-        streak >= 6 ? 6 : 4;
-    }
-
-  } else if (streak === 3) {
-
-    if (seq[0] === 1) {
-      big += 2;
-    } else {
-      small += 2;
+      smallScore += 4;
+      bigScore += 1;
     }
   }
 
-  /* =================================================
-     4. CHOP / ALTERNATION
-  ================================================= */
+  /* -------------------------
+     Alternation / chop
+  ------------------------- */
 
-  let switches = 0;
+  let alternations = 0;
 
-  for (let i = 0; i < 9; i++) {
-
-    if (
-      seq[i] !== seq[i + 1]
-    ) {
-      switches++;
+  for (let i = 0; i < Math.min(9, sizes.length - 1); i++) {
+    if (sizes[i] !== sizes[i + 1]) {
+      alternations++;
     }
   }
 
-  if (switches >= 7) {
-
-    if (seq[0] === 1) {
-      small += 4;
-    } else {
-      big += 4;
-    }
-
-  } else if (switches <= 2) {
-
-    if (seq[0] === 1) {
-      big += 4;
-    } else {
-      small += 4;
-    }
+  if (alternations >= 7) {
+    // Strong chop = avoid forced signal
+    return "NO CLEAR SIGNAL";
   }
 
-  /* =================================================
-     5. LAST 3
-  ================================================= */
+  /* -------------------------
+     Last 3 pattern
+  ------------------------- */
 
-  const p3 =
-    seq
-      .slice(0, 3)
-      .join("");
+  const p3 = sizes.slice(0, 3).join("");
 
-  if (p3 === "111") {
-    small += 3;
+  if (p3 === "BBB") {
+    smallScore += 3;
   }
 
-  if (p3 === "000") {
-    big += 3;
+  if (p3 === "SSS") {
+    bigScore += 3;
   }
 
-  if (p3 === "101") {
-    small += 2;
+  if (p3 === "BSB") {
+    smallScore += 2;
   }
 
-  if (p3 === "010") {
-    big += 2;
+  if (p3 === "SBS") {
+    bigScore += 2;
   }
 
-  /* =================================================
-     6. LAST 5
-  ================================================= */
+  /* -------------------------
+     Last 5 pattern
+  ------------------------- */
 
-  const p5 =
-    seq
-      .slice(0, 5)
-      .join("");
+  const p5 = sizes.slice(0, 5).join("");
 
-  if (p5 === "10101") {
-    small += 3;
+  if (p5 === "BSBSB") {
+    smallScore += 2;
   }
 
-  if (p5 === "01010") {
-    big += 3;
+  if (p5 === "SBSBS") {
+    bigScore += 2;
   }
 
-  if (p5 === "11100") {
-    big += 2;
+  if (p5 === "BBBSS") {
+    bigScore += 1;
   }
 
-  if (p5 === "00011") {
-    small += 2;
+  if (p5 === "SSSBB") {
+    smallScore += 1;
   }
 
-  if (p5 === "11000") {
-    big += 2;
+  /* -------------------------
+     Digit structure
+  ------------------------- */
+
+  const digits = rows
+    .map(x => x.number)
+    .filter(n => Number.isInteger(n));
+
+  const recentDigits = digits.slice(0, 10);
+
+  let boundary = 0;
+
+  recentDigits.forEach(n => {
+    if (n === 0 || n === 5) boundary++;
+  });
+
+  if (boundary >= 3) {
+    // Boundary digits = lower signal confidence
+    bigScore -= 1;
+    smallScore -= 1;
   }
 
-  if (p5 === "00111") {
-    small += 2;
+  /* -------------------------
+     Short vs long agreement
+  ------------------------- */
+
+  const short = sizes.slice(0, 5);
+
+  const shortBig = short.filter(x => x === "BIG").length;
+  const shortSmall = short.filter(x => x === "SMALL").length;
+
+  const long = sizes.slice(0, 15);
+
+  const longBig = long.filter(x => x === "BIG").length;
+  const longSmall = long.filter(x => x === "SMALL").length;
+
+  if (shortBig > shortSmall && longBig > longSmall) {
+    bigScore += 3;
   }
 
-  /* =================================================
-     7. REPEATED BLOCK
-  ================================================= */
-
-  const p10 =
-    seq
-      .slice(0, 10)
-      .join("");
-
-  if (p10.length === 10) {
-
-    const a =
-      p10.slice(0, 3);
-
-    const b =
-      p10.slice(3, 6);
-
-    const c =
-      p10.slice(6, 9);
-
-    if (a === b) {
-
-      if (seq[0] === 1) {
-        small += 2;
-      } else {
-        big += 2;
-      }
-    }
-
-    if (b === c) {
-
-      if (seq[0] === 1) {
-        small += 2;
-      } else {
-        big += 2;
-      }
-    }
+  if (shortSmall > shortBig && longSmall > longBig) {
+    smallScore += 3;
   }
 
-  /* =================================================
-     8. SHORT VS LONG
-  ================================================= */
+  /* -------------------------
+     Final decision
+  ------------------------- */
 
-  const short =
-    seq.slice(0, 5);
-
-  const long =
-    seq.slice(0, 15);
-
-  const shortBig =
-    short.filter(
-      x => x === 1
-    ).length;
-
-  const shortSmall =
-    short.length - shortBig;
-
-  const longBig =
-    long.filter(
-      x => x === 1
-    ).length;
-
-  const longSmall =
-    long.length - longBig;
-
-  if (
-    shortBig > shortSmall &&
-    longBig > longSmall
-  ) {
-
-    big += 4;
-
-  } else if (
-    shortSmall > shortBig &&
-    longSmall > longBig
-  ) {
-
-    small += 4;
-  }
-
-  /* =================================================
-     9. DIGIT STRUCTURE
-  ================================================= */
-
-  let low = 0;
-  let high = 0;
-  let zero = 0;
-  let five = 0;
-
-  for (const n of nums) {
-
-    if (n <= 4) {
-      low++;
-    } else {
-      high++;
-    }
-
-    if (n === 0) {
-      zero++;
-    }
-
-    if (n === 5) {
-      five++;
-    }
-  }
-
-  if (
-    zero >= 2 &&
-    high >= low
-  ) {
-    big += 2;
-  }
-
-  if (
-    five >= 2 &&
-    low >= high
-  ) {
-    small += 2;
-  }
-
-  /* =================================================
-     10. REVERSAL STRUCTURE
-  ================================================= */
-
-  if (seq.length >= 6) {
-
-    const a = seq[0];
-    const b = seq[1];
-    const c = seq[2];
-    const d = seq[3];
-
-    if (
-      a === 1 &&
-      b === 1 &&
-      c === 0 &&
-      d === 0
-    ) {
-      big += 2;
-    }
-
-    if (
-      a === 0 &&
-      b === 0 &&
-      c === 1 &&
-      d === 1
-    ) {
-      small += 2;
-    }
-
-    if (
-      a === 1 &&
-      b === 0 &&
-      c === 1 &&
-      d === 0
-    ) {
-      small += 1;
-    }
-
-    if (
-      a === 0 &&
-      b === 1 &&
-      c === 0 &&
-      d === 1
-    ) {
-      big += 1;
-    }
-  }
-
-  /* =================================================
-     FINAL SIGNAL
-  ================================================= */
-
-  const difference =
-    Math.abs(
-      big - small
-    );
+  const difference = Math.abs(bigScore - smallScore);
 
   if (difference < 4) {
     return "NO CLEAR SIGNAL";
   }
 
-  const engine =
-    big > small
-      ? "BIG"
-      : "SMALL";
-
-  /*
-     USER REQUEST:
-     DISPLAY OPPOSITE
-  */
-
-  return engine === "BIG"
-    ? "SMALL"
-    : "BIG";
+  return bigScore > smallScore ? "BIG" : "SMALL";
 }
 
-/* =====================================================
-   FETCH WINGOBOT
-===================================================== */
+/*
+  User wanted opposite-output behavior:
+  Engine BIG -> displayed SMALL
+  Engine SMALL -> displayed BIG
+*/
 
-async function fetchLiveData() {
+function invertPrediction(enginePrediction) {
+  if (enginePrediction === "BIG") return "SMALL";
+  if (enginePrediction === "SMALL") return "BIG";
+  return "NO CLEAR SIGNAL";
+}
 
-  if (!WINGOBOT_TOKEN) {
-    throw new Error(
-      "WINGOBOT_TOKEN is not configured in Render."
-    );
+/* =========================
+   5 SECOND ANALYSIS
+========================= */
+
+function startFiveSecondAnalysis(period, history) {
+  if (analysisTimer) {
+    clearInterval(analysisTimer);
+    analysisTimer = null;
   }
 
-  const response =
-    await fetch(
-      API_URL +
-      "?_=" +
-      Date.now(),
-      {
-        method: "GET",
-
-        headers: {
-          Authorization:
-            `Bearer ${WINGOBOT_TOKEN}`,
-
-          Accept:
-            "application/json",
-
-          "Cache-Control":
-            "no-cache",
-
-          Pragma:
-            "no-cache",
-
-          "User-Agent":
-            "DY-AI-Wingo/4.0"
-        },
-
-        cache: "no-store"
-      }
-    );
-
-  const text =
-    await response.text();
-
-  let data;
-
-  try {
-
-    data =
-      JSON.parse(text);
-
-  } catch {
-
-    throw new Error(
-      "WingoBot returned invalid JSON."
-    );
-  }
-
-  if (!response.ok) {
-
-    throw new Error(
-      data?.error ||
-      data?.message ||
-      `HTTP ${response.status}`
-    );
-  }
-
-  if (data?.success === false) {
-
-    throw new Error(
-      data?.error ||
-      "WingoBot API error."
-    );
-  }
-
-  const history =
-    Array.isArray(data.history)
-      ? data.history
-          .map(normalizeRow)
-          .filter(Boolean)
-      : [];
-
-  const current =
-    data?.current?.issueNumber ??
-    data?.current?.period ??
-    data?.current?.periodId ??
-    null;
-
-  return {
-    current,
-    history
+  state.analysis = {
+    active: true,
+    remaining: 5,
+    targetPeriod: period,
+    prediction: "ANALYZING",
+    message: "ANALYZING PATTERN..."
   };
+
+  const messages = {
+    5: "ANALYZING PATTERN...",
+    4: "CHECKING RECENT RESULTS...",
+    3: "COMPARING SEQUENCES...",
+    2: "VALIDATING SIGNAL...",
+    1: "FINALIZING PREDICTION..."
+  };
+
+  let remaining = 5;
+
+  analysisTimer = setInterval(() => {
+    remaining--;
+
+    if (remaining > 0) {
+      state.analysis.remaining = remaining;
+      state.analysis.message = messages[remaining];
+      return;
+    }
+
+    clearInterval(analysisTimer);
+    analysisTimer = null;
+
+    const engine = scorePrediction(history);
+    const finalPrediction = invertPrediction(engine);
+
+    state.analysis = {
+      active: false,
+      remaining: 0,
+      targetPeriod: period,
+      prediction: finalPrediction,
+      message: "PREDICTION READY"
+    };
+
+  }, 1000);
 }
 
-/* =====================================================
-   HISTORY ENDPOINT
-===================================================== */
+/* =========================
+   BACKGROUND POLLING
+========================= */
 
-app.get(
-  "/api/history",
-  async (req, res) => {
+updateSource();
 
-    try {
+setInterval(() => {
+  updateSource();
+}, 1000);
 
-      const result =
-        await fetchLiveData();
+/* =========================
+   HTTP SERVER
+========================= */
 
-      res.set(
-        "Cache-Control",
-        "no-store, no-cache, must-revalidate"
-      );
+const server = http.createServer(async (req, res) => {
 
-      res.json({
+  const url = new URL(
+    req.url,
+    `http://${req.headers.host || "localhost"}`
+  );
 
-        success: true,
+  /* -------------------------
+     API
+  ------------------------- */
 
-        current: {
-          issueNumber:
-            result.current
-        },
+  if (url.pathname === "/api/state") {
 
-        history:
-          result.history
-            .slice(0, 20),
-
-        serverTime:
-          Date.now()
-
-      });
-
-    } catch (error) {
-
-      console.error(
-        "WINGOBOT ERROR:",
-        error.message
-      );
-
-      res.status(502).json({
-
-        success: false,
-
-        error:
-          error.message
-
-      });
-    }
-  }
-);
-
-/* =====================================================
-   HEALTH
-===================================================== */
-
-app.get(
-  "/api/health",
-  (req, res) => {
-
-    res.json({
-
+    return json(res, {
       success: true,
 
-      apiConfigured:
-        Boolean(WINGOBOT_TOKEN),
+      currentPeriod: state.currentPeriod,
+      nextPeriod: state.nextPeriod,
 
-      api:
-        API_URL,
+      history: state.history.slice(0, 20),
 
-      serverTime:
-        new Date().toISOString()
+      analysis: state.analysis,
 
+      lastPoll: state.lastPoll,
+
+      sourceStatus: state.lastError
+        ? "ERROR"
+        : Date.now() - state.lastPoll < 5000
+          ? "LIVE"
+          : "DELAYED",
+
+      error: state.lastError
     });
   }
-);
 
-/* =====================================================
-   ADMIN
-===================================================== */
+  if (url.pathname === "/api/history") {
+    return json(res, {
+      success: true,
+      history: state.history.slice(0, 30)
+    });
+  }
 
-app.post(
-  "/api/admin/check",
-  (req, res) => {
+  if (url.pathname === "/api/health") {
+    return json(res, {
+      ok: true,
+      source: "WinGo 1M",
+      lastPoll: state.lastPoll,
+      sourceStatus:
+        Date.now() - state.lastPoll < 5000
+          ? "LIVE"
+          : "DELAYED"
+    });
+  }
 
-    const key =
-      String(
-        req.body?.key || ""
-      ).trim();
+  /* -------------------------
+     PAGES
+  ------------------------- */
 
-    if (!ADMIN_KEY) {
+  let file = null;
 
-      return res.status(500).json({
+  if (
+    url.pathname === "/" ||
+    url.pathname === "/prediction"
+  ) {
+    file = "prediction.html";
+  }
 
+  if (url.pathname === "/admin") {
+    file = "admin.html";
+  }
+
+  if (file) {
+    const filePath = path.join(__dirname, file);
+
+    if (!fs.existsSync(filePath)) {
+      return json(res, {
         success: false,
-
-        error:
-          "ADMIN_KEY is not configured."
-
-      });
+        error: "File not found"
+      }, 404);
     }
 
-    if (
-      key !== ADMIN_KEY
-    ) {
+    noStore(res);
 
-      return res.status(401).json({
-
-        success: false,
-
-        error:
-          "Invalid admin key."
-
-      });
-    }
-
-    res.json({
-      success: true
+    res.writeHead(200, {
+      "Content-Type": "text/html; charset=utf-8"
     });
-  }
-);
 
-/* =====================================================
-   PAGES
-===================================================== */
-
-app.get(
-  "/",
-  (req, res) => {
-
-    res.sendFile(
-      path.join(
-        __dirname,
-        "prediction.html"
-      )
+    return res.end(
+      fs.readFileSync(filePath)
     );
   }
-);
 
-app.get(
-  "/prediction",
-  (req, res) => {
+  res.writeHead(404);
+  res.end("Not Found");
+});
 
-    res.sendFile(
-      path.join(
-        __dirname,
-        "prediction.html"
-      )
-    );
-  }
-);
-
-app.get(
-  "/admin",
-  (req, res) => {
-
-    res.sendFile(
-      path.join(
-        __dirname,
-        "admin.html"
-      )
-    );
-  }
-);
-
-/* =====================================================
-   404
-===================================================== */
-
-app.use(
-  (req, res) => {
-
-    res.status(404).json({
-
-      success: false,
-
-      error:
-        "Route not found."
-
-    });
-  }
-);
-
-/* =====================================================
-   START
-===================================================== */
-
-app.listen(
-  PORT,
-  () => {
-
-    console.log(
-      "===================================="
-    );
-
-    console.log(
-      " DY AI WINGO 1 MINUTE"
-    );
-
-    console.log(
-      "===================================="
-    );
-
-    console.log(
-      "PORT:",
-      PORT
-    );
-
-    console.log(
-      "API:",
-      API_URL
-    );
-
-    console.log(
-      "TOKEN:",
-      WINGOBOT_TOKEN
-        ? "CONFIGURED"
-        : "NOT CONFIGURED"
-    );
-
-    console.log(
-      "ADMIN:",
-      ADMIN_KEY
-        ? "CONFIGURED"
-        : "NOT CONFIGURED"
-    );
-  }
-);
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
