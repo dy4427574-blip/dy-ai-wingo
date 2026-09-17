@@ -8,50 +8,39 @@ const { Pool } = require("pg");
 
 const PORT = Number(process.env.PORT || 10000);
 
-const ADMIN_KEY =
-  String(process.env.ADMIN_KEY || "dy4427574").trim();
+const ADMIN_KEY = String(
+  process.env.ADMIN_KEY || "dy4427574"
+).trim();
 
-const DEFAULT_ACCESS_KEY =
-  String(process.env.DEFAULT_ACCESS_KEY || "DY-JPMSUULN").trim();
+const DEFAULT_ACCESS_KEY = String(
+  process.env.DEFAULT_ACCESS_KEY || "DY-JPMSUULN"
+).trim();
 
 const WINGOBOT_URL =
   "https://api.wingobot.com/v2/1-min-game-history";
 
-const WINGOBOT_TOKEN =
-  String(process.env.WINGOBOT_TOKEN || "")
-    .replace(/^Bearer\s+/i, "")
-    .replace(/^["']|["']$/g, "")
-    .replace(/\r|\n/g, "")
-    .trim();
+const WINGOBOT_TOKEN = String(
+  process.env.WINGOBOT_TOKEN || ""
+)
+  .replace(/^Bearer\s+/i, "")
+  .replace(/^["']|["']$/g, "")
+  .replace(/\r|\n/g, "")
+  .trim();
 
-const MODEL_VERSION =
-  String(process.env.MODEL || "DY-AI-1MIN-V10").trim();
+const MODEL_VERSION = String(
+  process.env.MODEL || "DY-AI-1MIN-V12"
+).trim();
 
-/*
-=========================================================
-SETTINGS
-=========================================================
-*/
-
-const SKIP_COUNT = 4;
-
-/*
-WingoBot request frequency.
-
-IMPORTANT:
-Never start another API request while the previous
-request is still running.
-*/
 const LIVE_POLL = 1000;
-
 const FETCH_TIMEOUT = 8000;
 
+const SKIP_COUNT = 4;
+const ANALYSIS_SECONDS = 4;
 
-/*
-=========================================================
-DATABASE
-=========================================================
-*/
+
+/* =====================================================
+   DATABASE
+===================================================== */
 
 let pool = null;
 
@@ -68,11 +57,9 @@ if (process.env.DATABASE_URL) {
 }
 
 
-/*
-=========================================================
-MEMORY FALLBACK
-=========================================================
-*/
+/* =====================================================
+   MEMORY FALLBACK
+===================================================== */
 
 const memory = {
   keys: new Map(),
@@ -80,74 +67,44 @@ const memory = {
 };
 
 
-/*
-=========================================================
-LIVE STATE
-=========================================================
-*/
+/* =====================================================
+   LIVE DATA
+===================================================== */
 
 const live = {
   ok: false,
-
   currentIssue: null,
-
   history: [],
-
   fetched: 0,
-
   updated: null,
-
   error: null,
-
-  lastFetch: 0,
-
-  fetchStarted: 0
+  lastFetch: 0
 };
 
 
-/*
-=========================================================
-FETCH LOCK
-
-This is important.
-
-The old code could have:
-
-request #1 still running
-request #2 starts
-request #3 starts
-request #4 starts
-
-That can cause stale responses.
-
-Now only ONE request is allowed.
-=========================================================
-*/
+/* =====================================================
+   FETCH LOCK
+===================================================== */
 
 let fetchRunning = false;
 
 
-/*
-=========================================================
-PREDICTION CACHE
+/* =====================================================
+   ANALYSIS SESSION
+===================================================== */
 
-Prevents repeatedly running DB/model logic
-within the same second.
-=========================================================
-*/
-
-const stateCache = {
+const analysisSession = {
   issue: null,
-  state: null,
-  createdAt: 0
+  targetIssue: null,
+  startedAt: 0,
+  endsAt: 0,
+  active: false
 };
 
 
-/*
-=========================================================
-HELPERS
-=========================================================
-*/
+/* =====================================================
+   HELPERS
+===================================================== */
 
 function now() {
   return Date.now();
@@ -199,14 +156,11 @@ function makeKey() {
 }
 
 
-/*
-=========================================================
-DATABASE INIT
-=========================================================
-*/
+/* =====================================================
+   DATABASE INIT
+===================================================== */
 
 async function initDatabase() {
-
   if (!pool) {
     console.log("[DATABASE] MEMORY MODE");
     return;
@@ -269,16 +223,12 @@ async function initDatabase() {
 }
 
 
-/*
-=========================================================
-DEFAULT KEY
-=========================================================
-*/
+/* =====================================================
+   DEFAULT KEY
+===================================================== */
 
 async function ensureDefaultKey() {
-
   if (pool) {
-
     await pool.query(
       `
       INSERT INTO access_keys
@@ -302,7 +252,6 @@ async function ensureDefaultKey() {
   }
 
   if (!memory.keys.has(DEFAULT_ACCESS_KEY)) {
-
     memory.keys.set(
       DEFAULT_ACCESS_KEY,
       {
@@ -317,30 +266,25 @@ async function ensureDefaultKey() {
 }
 
 
-/*
-=========================================================
-GET KEY
-=========================================================
-*/
+/* =====================================================
+   GET KEY
+===================================================== */
 
 async function getKey(key) {
-
   if (!key) {
     return null;
   }
 
   if (pool) {
-
-    const r =
-      await pool.query(
-        `
-        SELECT *
-        FROM access_keys
-        WHERE access_key=$1
-        LIMIT 1
-        `,
-        [key]
-      );
+    const r = await pool.query(
+      `
+      SELECT *
+      FROM access_keys
+      WHERE access_key=$1
+      LIMIT 1
+      `,
+      [key]
+    );
 
     return r.rows[0] || null;
   }
@@ -349,21 +293,16 @@ async function getKey(key) {
 }
 
 
-/*
-=========================================================
-BIND DEVICE
-=========================================================
-*/
+/* =====================================================
+   BIND DEVICE
+===================================================== */
 
 async function bindDevice(key, device) {
-
   await ensureDefaultKey();
 
-  const item =
-    await getKey(key);
+  const item = await getKey(key);
 
   if (!item) {
-
     return {
       ok: false,
       error: "Invalid access key"
@@ -374,7 +313,6 @@ async function bindDevice(key, device) {
     item.device_id &&
     item.device_id !== device
   ) {
-
     return {
       ok: false,
       error:
@@ -383,7 +321,6 @@ async function bindDevice(key, device) {
   }
 
   if (pool) {
-
     await pool.query(
       `
       UPDATE access_keys
@@ -398,14 +335,11 @@ async function bindDevice(key, device) {
         key
       ]
     );
-
   } else {
-
     item.device_id =
       item.device_id || device;
 
-    item.last_seen =
-      now();
+    item.last_seen = now();
   }
 
   return {
@@ -414,40 +348,35 @@ async function bindDevice(key, device) {
 }
 
 
-/*
-=========================================================
-CREATE KEY
-=========================================================
-*/
+/* =====================================================
+   CREATE KEY
+===================================================== */
 
 async function createKey(customKey) {
-
   const key =
     String(customKey || "").trim() ||
     makeKey();
 
   if (pool) {
-
-    const r =
-      await pool.query(
-        `
-        INSERT INTO access_keys
-        (
-          access_key,
-          device_id,
-          created_at,
-          last_seen
-        )
-        VALUES ($1,NULL,$2,0)
-        ON CONFLICT(access_key)
-        DO NOTHING
-        RETURNING *
-        `,
-        [
-          key,
-          now()
-        ]
-      );
+    const r = await pool.query(
+      `
+      INSERT INTO access_keys
+      (
+        access_key,
+        device_id,
+        created_at,
+        last_seen
+      )
+      VALUES ($1,NULL,$2,0)
+      ON CONFLICT(access_key)
+      DO NOTHING
+      RETURNING *
+      `,
+      [
+        key,
+        now()
+      ]
+    );
 
     if (r.rows[0]) {
       return r.rows[0];
@@ -457,7 +386,6 @@ async function createKey(customKey) {
   }
 
   if (!memory.keys.has(key)) {
-
     memory.keys.set(
       key,
       {
@@ -483,16 +411,12 @@ async function createKey(customKey) {
 }
 
 
-/*
-=========================================================
-LIST KEYS
-=========================================================
-*/
+/* =====================================================
+   LIST KEYS
+===================================================== */
 
 async function listKeys() {
-
   if (pool) {
-
     const r =
       await pool.query(`
         SELECT
@@ -514,16 +438,12 @@ async function listKeys() {
 }
 
 
-/*
-=========================================================
-RESET DEVICE
-=========================================================
-*/
+/* =====================================================
+   RESET DEVICE
+===================================================== */
 
 async function resetDevice(key) {
-
   if (pool) {
-
     await pool.query(
       `
       UPDATE access_keys
@@ -542,32 +462,24 @@ async function resetDevice(key) {
     memory.keys.get(key);
 
   if (item) {
-
     item.device_id = null;
     item.last_seen = 0;
   }
 }
 
 
-/*
-=========================================================
-DELETE KEY
-=========================================================
-*/
+/* =====================================================
+   DELETE KEY
+===================================================== */
 
 async function deleteKey(key) {
-
-  if (
-    key === DEFAULT_ACCESS_KEY
-  ) {
-
+  if (key === DEFAULT_ACCESS_KEY) {
     throw new Error(
       "Default access key cannot be deleted"
     );
   }
 
   if (pool) {
-
     await pool.query(
       `
       DELETE FROM access_keys
@@ -583,21 +495,17 @@ async function deleteKey(key) {
 }
 
 
-/*
-=========================================================
-NORMALIZE WINGOBOT HISTORY
-=========================================================
-*/
+/* =====================================================
+   NORMALIZE HISTORY
+===================================================== */
 
 function normalizeHistory(history) {
-
   if (!Array.isArray(history)) {
     return [];
   }
 
   return history
     .map(row => {
-
       const number =
         Number(row.number);
 
@@ -608,7 +516,6 @@ function normalizeHistory(history) {
       }
 
       return {
-
         issueNumber:
           String(
             row.issueNumber ?? ""
@@ -633,16 +540,12 @@ function normalizeHistory(history) {
 }
 
 
-/*
-=========================================================
-FETCH WINGOBOT
-=========================================================
-*/
+/* =====================================================
+   FETCH WINGOBOT
+===================================================== */
 
 async function fetchWingo() {
-
   if (!WINGOBOT_TOKEN) {
-
     throw new Error(
       "WINGOBOT_TOKEN is missing"
     );
@@ -658,7 +561,6 @@ async function fetchWingo() {
     );
 
   try {
-
     const response =
       await fetch(
         WINGOBOT_URL,
@@ -683,28 +585,21 @@ async function fetchWingo() {
         }
       );
 
-
     const body =
       await response.text();
-
 
     let data;
 
     try {
-
       data =
         JSON.parse(body);
-
     } catch {
-
       throw new Error(
         `Invalid JSON HTTP ${response.status}`
       );
     }
 
-
     if (!response.ok) {
-
       throw new Error(
         `WingoBot HTTP ${response.status}: ` +
         (
@@ -715,18 +610,15 @@ async function fetchWingo() {
       );
     }
 
-
     if (
       data.success !== true
     ) {
-
       throw new Error(
         data.error ||
         data.message ||
         "WingoBot success=false"
       );
     }
-
 
     const currentIssue =
       data.current &&
@@ -736,31 +628,24 @@ async function fetchWingo() {
           )
         : null;
 
-
     const history =
       normalizeHistory(
         data.history
       );
 
-
     if (!currentIssue) {
-
       throw new Error(
         "current.issueNumber missing"
       );
     }
 
-
     if (!history.length) {
-
       throw new Error(
         "WingoBot returned no history"
       );
     }
 
-
     return {
-
       currentIssue,
 
       history,
@@ -775,21 +660,77 @@ async function fetchWingo() {
     };
 
   } finally {
-
     clearTimeout(timeout);
   }
 }
 
 
-/*
-=========================================================
-REFRESH LIVE
+/* =====================================================
+   ANALYSIS RESET
+===================================================== */
 
-ONE REQUEST AT A TIME
-=========================================================
-*/
+function resetAnalysis() {
+  analysisSession.issue = null;
+  analysisSession.targetIssue = null;
+  analysisSession.startedAt = 0;
+  analysisSession.endsAt = 0;
+  analysisSession.active = false;
+}
+
+
+/* =====================================================
+   ANALYSIS START
+===================================================== */
+
+function startAnalysis(
+  currentIssue,
+  targetIssue
+) {
+  /*
+    Do not restart analysis every second.
+  */
+
+  if (
+    analysisSession.active &&
+    analysisSession.issue ===
+      String(currentIssue)
+  ) {
+    return;
+  }
+
+  analysisSession.issue =
+    String(currentIssue);
+
+  analysisSession.targetIssue =
+    String(targetIssue);
+
+  analysisSession.startedAt =
+    now();
+
+  analysisSession.endsAt =
+    analysisSession.startedAt +
+    ANALYSIS_SECONDS * 1000;
+
+  analysisSession.active = true;
+
+  console.log(
+    "[ANALYSIS START]",
+    "Current:",
+    currentIssue,
+    "Target:",
+    targetIssue
+  );
+}
+
+
+/* =====================================================
+   LIVE REFRESH
+===================================================== */
 
 async function refreshLive() {
+  /*
+    Prevent overlapping API calls.
+  */
 
   if (fetchRunning) {
     return;
@@ -797,18 +738,12 @@ async function refreshLive() {
 
   fetchRunning = true;
 
-  live.fetchStarted = now();
-
   try {
-
     const data =
       await fetchWingo();
 
-
-    /*
-      Only replace state after the complete
-      response has been validated.
-    */
+    const oldIssue =
+      live.currentIssue;
 
     live.ok = true;
 
@@ -829,41 +764,27 @@ async function refreshLive() {
     live.lastFetch =
       now();
 
-
-    /*
-      Settle old predictions immediately.
-    */
-
     await settlePredictions();
 
-
     /*
-      Invalidate state cache when new issue
-      arrives.
+      New issue detected.
+      Reset old analysis.
     */
 
     if (
-      stateCache.issue !==
-      live.currentIssue
+      oldIssue &&
+      String(oldIssue) !==
+        String(data.currentIssue)
     ) {
+      resetAnalysis();
 
-      stateCache.issue = null;
-      stateCache.state = null;
-      stateCache.createdAt = 0;
+      console.log(
+        "[NEW ISSUE]",
+        data.currentIssue
+      );
     }
 
   } catch (error) {
-
-    /*
-      IMPORTANT:
-
-      Do NOT wipe the old live data.
-
-      If API temporarily fails, frontend can
-      continue showing last known valid state
-      instead of jumping around.
-    */
-
     live.error =
       error.message;
 
@@ -873,32 +794,24 @@ async function refreshLive() {
     );
 
     /*
-      If there was never a successful fetch,
-      mark offline.
+      Keep last valid live data.
     */
 
-    if (
-      !live.currentIssue
-    ) {
-
+    if (!live.currentIssue) {
       live.ok = false;
     }
 
   } finally {
-
     fetchRunning = false;
   }
 }
 
 
-/*
-=========================================================
-PATTERN ENGINE
-=========================================================
-*/
+/* =====================================================
+   AI / PATTERN ENGINE
+===================================================== */
 
 function analyze(history) {
-
   const rows =
     Array.isArray(history)
       ? history
@@ -910,70 +823,59 @@ function analyze(history) {
           .slice(0, 50)
       : [];
 
+  /*
+    Minimum data fallback.
+  */
 
-  if (
-    rows.length < 10
-  ) {
+  if (rows.length < 10) {
+    const big =
+      rows.filter(
+        x => x.result === "BIG"
+      ).length;
 
-    /*
-      Instead of MODEL_SKIP looping forever,
-      return a deterministic BIG/SMALL value.
-
-      This is only a pattern-based software
-      output; it does NOT guarantee the next
-      lottery result.
-    */
+    const small =
+      rows.filter(
+        x => x.result === "SMALL"
+      ).length;
 
     return {
-
       prediction:
-        rows.length % 2 === 0
+        big >= small
           ? "BIG"
           : "SMALL",
 
-      confidence:
-        50,
+      confidence: 50,
 
-      quality:
-        "LOW_DATA",
+      quality: "LOW_DATA",
 
-      score:
-        0,
+      score: 0,
 
-      agreement:
-        0,
+      agreement: 0,
 
-      matches:
-        0,
+      matches: 0,
 
-      streak:
-        0,
+      streak: 0,
 
-      switchRate:
-        0,
+      switchRate: 0,
 
       counts: {
-        big: 0,
-        small: 0
+        big,
+        small
       },
 
       signals: {}
     };
   }
 
-
   const seq =
     rows.map(
       x => x.result
     );
 
-
   let big = 0;
   let small = 0;
 
-
   for (const x of seq) {
-
     if (x === "BIG") {
       big++;
     } else {
@@ -982,11 +884,9 @@ function analyze(history) {
   }
 
 
-  /*
-  ------------------------------------------------------
-  RECENCY
-  ------------------------------------------------------
-  */
+  /* =================================================
+     RECENCY
+  ================================================= */
 
   let recentBig = 0;
   let recentSmall = 0;
@@ -999,27 +899,21 @@ function analyze(history) {
     i < recent.length;
     i++
   ) {
-
     const weight =
       recent.length - i;
 
     if (
       recent[i] === "BIG"
     ) {
-
       recentBig += weight;
-
     } else {
-
       recentSmall += weight;
     }
   }
 
-
   const recentTotal =
     recentBig +
     recentSmall;
-
 
   const recentScore =
     recentTotal
@@ -1031,130 +925,100 @@ function analyze(history) {
       : 0;
 
 
-  /*
-  ------------------------------------------------------
-  TRANSITIONS
-  ------------------------------------------------------
-  */
+  /* =================================================
+     TRANSITIONS
+  ================================================= */
 
   let BB = 0;
   let BS = 0;
   let SB = 0;
   let SS = 0;
 
-
   for (
     let i = 0;
     i < seq.length - 1;
     i++
   ) {
-
     const current =
       seq[i];
 
     const previous =
       seq[i + 1];
 
-
     if (
       previous === "BIG" &&
       current === "BIG"
     ) {
-
       BB++;
-
     } else if (
       previous === "BIG" &&
       current === "SMALL"
     ) {
-
       BS++;
-
     } else if (
       previous === "SMALL" &&
       current === "BIG"
     ) {
-
       SB++;
-
     } else if (
       previous === "SMALL" &&
       current === "SMALL"
     ) {
-
       SS++;
     }
   }
 
-
   let transitionScore = 0;
-
 
   if (
     seq[0] === "BIG"
   ) {
-
     const total =
       BB + BS;
 
     if (total > 0) {
-
       transitionScore =
         (BB - BS) / total;
     }
-
   } else {
-
     const total =
       SB + SS;
 
     if (total > 0) {
-
       transitionScore =
         (SB - SS) / total;
     }
   }
 
 
-  /*
-  ------------------------------------------------------
-  STREAK
-  ------------------------------------------------------
-  */
+  /* =================================================
+     STREAK
+  ================================================= */
 
   const latest =
     seq[0];
 
-
   let streak = 1;
-
 
   for (
     let i = 1;
     i < seq.length;
     i++
   ) {
-
     if (
       seq[i] === latest
     ) {
-
       streak++;
-
     } else {
-
       break;
     }
   }
 
-
   let streakScore = 0;
-
 
   if (
     streak >= 4
   ) {
-
     streakScore =
       latest === "BIG"
         ? -0.25
@@ -1162,30 +1026,24 @@ function analyze(history) {
   }
 
 
-  /*
-  ------------------------------------------------------
-  SWITCH RATE
-  ------------------------------------------------------
-  */
+  /* =================================================
+     SWITCH RATE
+  ================================================= */
 
   let switches = 0;
-
 
   for (
     let i = 0;
     i < seq.length - 1;
     i++
   ) {
-
     if (
       seq[i] !==
       seq[i + 1]
     ) {
-
       switches++;
     }
   }
-
 
   const switchRate =
     switches /
@@ -1194,14 +1052,11 @@ function analyze(history) {
       seq.length - 1
     );
 
-
   let switchScore = 0;
-
 
   if (
     switchRate >= 0.70
   ) {
-
     switchScore =
       latest === "BIG"
         ? -0.12
@@ -1209,29 +1064,24 @@ function analyze(history) {
   }
 
 
-  /*
-  ------------------------------------------------------
-  HISTORICAL 4-PATTERN
-  ------------------------------------------------------
-  */
+  /* =================================================
+     HISTORICAL PATTERN
+  ================================================= */
 
   const pattern =
     seq
       .slice(0, 4)
       .join("-");
 
-
   let matchBig = 0;
   let matchSmall = 0;
   let matches = 0;
-
 
   for (
     let i = 4;
     i < seq.length;
     i++
   ) {
-
     const oldPattern =
       seq
         .slice(
@@ -1240,25 +1090,19 @@ function analyze(history) {
         )
         .join("-");
 
-
     if (
       oldPattern === pattern
     ) {
-
       const following =
         seq[i - 1];
-
 
       if (
         following === "BIG"
       ) {
-
         matchBig++;
-
       } else if (
         following === "SMALL"
       ) {
-
         matchSmall++;
       }
 
@@ -1266,30 +1110,25 @@ function analyze(history) {
     }
   }
 
-
   let patternScore = 0;
-
 
   if (
     matches > 0
   ) {
-
     patternScore =
       (
         matchBig -
         matchSmall
-      ) / matches;
+      ) /
+      matches;
   }
 
 
-  /*
-  ------------------------------------------------------
-  SHORT / MEDIUM / LONG
-  ------------------------------------------------------
-  */
+  /* =================================================
+     SHORT / MEDIUM / LONG
+  ================================================= */
 
   function ratio(arr) {
-
     if (!arr.length) {
       return 0.5;
     }
@@ -1302,22 +1141,18 @@ function analyze(history) {
     );
   }
 
-
   const short =
     ratio(
       seq.slice(0, 5)
     );
-
 
   const medium =
     ratio(
       seq.slice(0, 15)
     );
 
-
   const long =
     ratio(seq);
-
 
   const directionScore =
     (
@@ -1333,11 +1168,9 @@ function analyze(history) {
     ) * 0.20;
 
 
-  /*
-  ------------------------------------------------------
-  ENSEMBLE
-  ------------------------------------------------------
-  */
+  /* =================================================
+     ENSEMBLE
+  ================================================= */
 
   const score =
 
@@ -1361,13 +1194,12 @@ function analyze(history) {
     directionScore
   ];
 
-
   let positive = 0;
   let negative = 0;
 
-
-  for (const s of signals) {
-
+  for (
+    const s of signals
+  ) {
     if (s > 0.05) {
       positive++;
     }
@@ -1377,24 +1209,19 @@ function analyze(history) {
     }
   }
 
-
   const agreement =
     Math.max(
       positive,
       negative
-    ) / signals.length;
+    ) /
+    signals.length;
 
 
   /*
-  IMPORTANT FIX:
+    Always return BIG or SMALL.
 
-  Old code could return MODEL_SKIP.
-
-  That caused frontend analysis to restart
-  continuously.
-
-  Now every completed analysis produces
-  BIG or SMALL.
+    This prevents an endless MODEL_SKIP
+    analysis loop.
   */
 
   let prediction;
@@ -1422,7 +1249,6 @@ function analyze(history) {
       )
     );
 
-
   confidence =
     Math.max(
       50,
@@ -1436,24 +1262,19 @@ function analyze(history) {
   let quality =
     "WEAK";
 
-
   if (
     agreement >= 0.75 &&
     matches >= 3
   ) {
-
     quality = "STRONG";
-
   } else if (
     agreement >= 0.50
   ) {
-
     quality = "MODERATE";
   }
 
 
   return {
-
     prediction,
 
     confidence,
@@ -1492,7 +1313,6 @@ function analyze(history) {
     },
 
     signals: {
-
       recent:
         Number(
           recentScore.toFixed(3)
@@ -1517,20 +1337,16 @@ function analyze(history) {
 }
 
 
-/*
-=========================================================
-GET PREDICTION FOR ISSUE
-=========================================================
-*/
+/* =====================================================
+   GET PREDICTION BY ISSUE
+===================================================== */
 
 async function getPredictionForIssue(issue) {
-
   if (!issue) {
     return null;
   }
 
   if (pool) {
-
     const r =
       await pool.query(
         `
@@ -1549,23 +1365,21 @@ async function getPredictionForIssue(issue) {
   return (
     memory.predictions.find(
       p =>
-        String(p.target_issue) ===
+        String(
+          p.target_issue
+        ) ===
         String(issue)
     ) || null
   );
 }
 
 
-/*
-=========================================================
-LAST REAL PREDICTION
-=========================================================
-*/
+/* =====================================================
+   LAST REAL PREDICTION
+===================================================== */
 
 async function getLastRealPrediction() {
-
   if (pool) {
-
     const r =
       await pool.query(`
         SELECT *
@@ -1577,7 +1391,6 @@ async function getLastRealPrediction() {
 
     return r.rows[0] || null;
   }
-
 
   return (
     memory.predictions
@@ -1595,31 +1408,25 @@ async function getLastRealPrediction() {
 }
 
 
-/*
-=========================================================
-SAVE PREDICTION
-=========================================================
-*/
+/* =====================================================
+   SAVE PREDICTION
+===================================================== */
 
 async function savePrediction(
   targetIssue,
   prediction,
   confidence
 ) {
-
   const existing =
     await getPredictionForIssue(
       targetIssue
     );
 
-
   if (existing) {
     return existing;
   }
 
-
   if (pool) {
-
     const r =
       await pool.query(
         `
@@ -1646,9 +1453,7 @@ async function savePrediction(
     return r.rows[0];
   }
 
-
   const item = {
-
     id:
       memory.predictions.length + 1,
 
@@ -1662,19 +1467,15 @@ async function savePrediction(
     model_version:
       MODEL_VERSION,
 
-    actual_number:
-      null,
+    actual_number: null,
 
-    actual_result:
-      null,
+    actual_result: null,
 
     created_at:
       now(),
 
-    settled_at:
-      null
+    settled_at: null
   };
-
 
   memory.predictions.unshift(item);
 
@@ -1682,24 +1483,19 @@ async function savePrediction(
 }
 
 
-/*
-=========================================================
-SETTLE PREDICTIONS
-=========================================================
-*/
+/* =====================================================
+   SETTLE PREDICTIONS
+===================================================== */
 
 async function settlePredictions() {
-
   if (!live.history.length) {
     return;
   }
-
 
   for (
     const row of
     live.history.slice(0, 50)
   ) {
-
     if (
       !row.issueNumber ||
       !row.result
@@ -1707,9 +1503,7 @@ async function settlePredictions() {
       continue;
     }
 
-
     if (pool) {
-
       await pool.query(
         `
         UPDATE prediction_records
@@ -1730,17 +1524,18 @@ async function settlePredictions() {
           )
         ]
       );
-
     } else {
-
       for (
         const p of
         memory.predictions
       ) {
-
         if (
-          String(p.target_issue) ===
-          String(row.issueNumber) &&
+          String(
+            p.target_issue
+          ) ===
+          String(
+            row.issueNumber
+          ) &&
 
           (
             p.prediction === "BIG" ||
@@ -1749,7 +1544,6 @@ async function settlePredictions() {
 
           !p.actual_result
         ) {
-
           p.actual_number =
             row.number;
 
@@ -1765,34 +1559,28 @@ async function settlePredictions() {
 }
 
 
-/*
-=========================================================
-4 ROUND CYCLE
-=========================================================
-*/
+/* =====================================================
+   4-SKIP CYCLE
+===================================================== */
 
 async function getCycleState(
   currentIssue
 ) {
-
   const lastReal =
     await getLastRealPrediction();
 
+  /*
+    First prediction.
+  */
 
   if (!lastReal) {
-
     return {
-
       mode: "PREDICTION",
-
       skipRound: 0,
-
       remaining: 0,
-
       lastPrediction: null
     };
   }
-
 
   const difference =
     issueDiff(
@@ -1800,41 +1588,35 @@ async function getCycleState(
       lastReal.target_issue
     );
 
-
-  if (difference === null) {
-
+  if (
+    difference === null
+  ) {
     return {
-
       mode: "PREDICTION",
-
       skipRound: 0,
-
       remaining: 0,
-
-      lastPrediction: lastReal
+      lastPrediction:
+        lastReal
     };
   }
 
 
   /*
-  Example:
+    Prediction target = 100
 
-  Prediction 10801
-
-  10802 = SKIP 1
-  10803 = SKIP 2
-  10804 = SKIP 3
-  10805 = SKIP 4
-  10806 = next prediction
+    Current 100 = prediction already exists
+    Current 101 = skip 1
+    Current 102 = skip 2
+    Current 103 = skip 3
+    Current 104 = skip 4
+    Current 105 = new prediction cycle
   */
 
   if (
     difference >= 1 &&
     difference <= SKIP_COUNT
   ) {
-
     return {
-
       mode: "SKIP",
 
       skipRound:
@@ -1849,9 +1631,7 @@ async function getCycleState(
     };
   }
 
-
   return {
-
     mode: "PREDICTION",
 
     skipRound: 0,
@@ -1864,27 +1644,28 @@ async function getCycleState(
 }
 
 
-/*
-=========================================================
-CURRENT PREDICTION STATE
-=========================================================
-*/
+/* =====================================================
+   GET CURRENT PREDICTION STATE
+===================================================== */
 
 async function getPredictionState() {
 
   if (
+    !live.ok ||
     !live.currentIssue
   ) {
-
     return {
-
       result: "WAIT",
 
       confidence: 0,
 
       status: "OFFLINE",
 
-      targetPeriod: null
+      targetPeriod: null,
+
+      analysisSeconds: 0,
+
+      analysisRemaining: 0
     };
   }
 
@@ -1895,6 +1676,10 @@ async function getPredictionState() {
     );
 
 
+  /*
+    Prediction is for the next issue.
+  */
+
   const targetIssue =
     nextIssue(
       currentIssue
@@ -1902,9 +1687,7 @@ async function getPredictionState() {
 
 
   if (!targetIssue) {
-
     return {
-
       result: "WAIT",
 
       confidence: 0,
@@ -1917,9 +1700,9 @@ async function getPredictionState() {
 
 
   /*
-  -------------------------------------------------------
-  EXISTING PREDICTION FIRST
-  -------------------------------------------------------
+  ======================================================
+  EXISTING PREDICTION
+  ======================================================
   */
 
   const existing =
@@ -1930,13 +1713,12 @@ async function getPredictionState() {
 
   if (existing) {
 
-    let status = "PENDING";
-
+    let status =
+      "PENDING";
 
     if (
       existing.actual_result
     ) {
-
       status =
         existing.prediction ===
         existing.actual_result
@@ -1944,9 +1726,7 @@ async function getPredictionState() {
           : "LOSS";
     }
 
-
     return {
-
       result:
         existing.prediction,
 
@@ -1968,15 +1748,22 @@ async function getPredictionState() {
       actualResult:
         existing.actual_result,
 
+      analysisSeconds:
+        ANALYSIS_SECONDS,
+
+      analysisRemaining: 0,
+
+      analysisProgress: 100,
+
       analysis: null
     };
   }
 
 
   /*
-  -------------------------------------------------------
-  CYCLE CHECK
-  -------------------------------------------------------
+  ======================================================
+  CHECK 4 SKIPS
+  ======================================================
   */
 
   const cycle =
@@ -1990,12 +1777,10 @@ async function getPredictionState() {
   ) {
 
     /*
-      VERY IMPORTANT:
-
-      No analysis information here.
-
-      Frontend should stay on SKIP.
+      No analysis during SKIP.
     */
+
+    resetAnalysis();
 
     return {
 
@@ -2017,9 +1802,18 @@ async function getPredictionState() {
       skipRemaining:
         cycle.remaining,
 
+      analysisSeconds: 0,
+
+      analysisRemaining: 0,
+
+      analysisProgress: 0,
+
+      analysis: null,
+
       lastPrediction:
         cycle.lastPrediction
           ? {
+
               target:
                 cycle.lastPrediction
                   .target_issue,
@@ -2027,33 +1821,74 @@ async function getPredictionState() {
               prediction:
                 cycle.lastPrediction
                   .prediction
-            }
-          : null,
 
-      analysis: null
+            }
+          : null
     };
   }
 
 
   /*
-  -------------------------------------------------------
-  ANALYSIS WINDOW
-  -------------------------------------------------------
+  ======================================================
+  ALLOWED ROUND
+  ======================================================
+
+  Analysis starts immediately when the
+  allowed round starts.
+
+  No 56-second waiting.
+  No end-of-minute waiting.
+  ======================================================
   */
 
-  const second =
-    new Date().getSeconds();
+  startAnalysis(
+    currentIssue,
+    targetIssue
+  );
+
+
+  const elapsedMs =
+    Math.max(
+      0,
+      now() -
+      analysisSession.startedAt
+    );
+
+
+  const remainingMs =
+    Math.max(
+      0,
+      analysisSession.endsAt -
+      now()
+    );
+
+
+  const elapsedSeconds =
+    Math.min(
+      ANALYSIS_SECONDS,
+      Math.floor(
+        elapsedMs / 1000
+      )
+    );
+
+
+  const remainingSeconds =
+    Math.max(
+      0,
+      Math.ceil(
+        remainingMs / 1000
+      )
+    );
 
 
   /*
-    Analysis starts only from second 56.
-
-    56,57,58,59 = analysis
-    next minute = prediction becomes target
+  ======================================================
+  STILL ANALYSING
+  ======================================================
   */
 
   if (
-    second < 56
+    remainingMs > 0
   ) {
 
     return {
@@ -2062,13 +1897,33 @@ async function getPredictionState() {
 
       confidence: 0,
 
-      status: "WAIT_ANALYSIS",
+      status: "ANALYZING",
 
       targetPeriod:
         targetIssue,
 
-      secondsUntilAnalysis:
-        56 - second,
+      analysisSeconds:
+        elapsedSeconds,
+
+      analysisRemaining:
+        remainingSeconds,
+
+      analysisTotal:
+        ANALYSIS_SECONDS,
+
+      analysisProgress:
+        Math.min(
+          100,
+          Math.floor(
+            (
+              elapsedMs /
+              (
+                ANALYSIS_SECONDS *
+                1000
+              )
+            ) * 100
+          )
+        ),
 
       analysis: null
     };
@@ -2076,9 +1931,9 @@ async function getPredictionState() {
 
 
   /*
-  -------------------------------------------------------
-  RUN MODEL
-  -------------------------------------------------------
+  ======================================================
+  4 SECONDS COMPLETE
+  ======================================================
   */
 
   const model =
@@ -2088,9 +1943,9 @@ async function getPredictionState() {
 
 
   /*
-  -------------------------------------------------------
-  SAVE REAL PREDICTION
-  -------------------------------------------------------
+  ======================================================
+  FINAL DUPLICATE CHECK
+  ======================================================
   */
 
   const doubleCheck =
@@ -2100,6 +1955,8 @@ async function getPredictionState() {
 
 
   if (doubleCheck) {
+
+    resetAnalysis();
 
     return {
 
@@ -2124,10 +1981,23 @@ async function getPredictionState() {
       actualResult:
         doubleCheck.actual_result,
 
+      analysisSeconds:
+        ANALYSIS_SECONDS,
+
+      analysisRemaining: 0,
+
+      analysisProgress: 100,
+
       analysis: null
     };
   }
 
+
+  /*
+  ======================================================
+  SAVE REAL PREDICTION
+  ======================================================
+  */
 
   const saved =
     await savePrediction(
@@ -2137,11 +2007,18 @@ async function getPredictionState() {
     );
 
 
-  /*
-    Invalidate cache after creating prediction.
-  */
+  resetAnalysis();
 
-  stateCache.state = null;
+
+  console.log(
+    "[PREDICTION]",
+    "Period:",
+    saved.target_issue,
+    "Result:",
+    saved.prediction,
+    "Confidence:",
+    saved.confidence + "%"
+  );
 
 
   return {
@@ -2161,11 +2038,16 @@ async function getPredictionState() {
         saved.target_issue
       ),
 
-    actualNumber:
-      null,
+    actualNumber: null,
 
-    actualResult:
-      null,
+    actualResult: null,
+
+    analysisSeconds:
+      ANALYSIS_SECONDS,
+
+    analysisRemaining: 0,
+
+    analysisProgress: 100,
 
     analysis:
       model
@@ -2173,11 +2055,9 @@ async function getPredictionState() {
 }
 
 
-/*
-=========================================================
-BUILD STATE
-=========================================================
-*/
+/* =====================================================
+   BUILD STATE
+===================================================== */
 
 async function buildState(
   key,
@@ -2196,27 +2076,6 @@ async function buildState(
   }
 
 
-  /*
-    Small in-memory cache.
-
-    This prevents several browser tabs/devices
-    from simultaneously doing identical DB work.
-  */
-
-  const issue =
-    live.currentIssue;
-
-
-  if (
-    stateCache.issue === issue &&
-    stateCache.state &&
-    now() - stateCache.createdAt < 700
-  ) {
-
-    return stateCache.state;
-  }
-
-
   const prediction =
     await getPredictionState();
 
@@ -2231,7 +2090,7 @@ async function buildState(
     );
 
 
-  const state = {
+  return {
 
     ok: true,
 
@@ -2252,6 +2111,7 @@ async function buildState(
     latestResult:
       latest
         ? {
+
             issueNumber:
               latest.issueNumber,
 
@@ -2260,6 +2120,7 @@ async function buildState(
 
             result:
               latest.result
+
           }
         : null,
 
@@ -2299,10 +2160,14 @@ async function buildState(
 
       signals:
         model.signals
+
     },
 
     recentResults:
-      live.history.slice(0, 30),
+      live.history.slice(
+        0,
+        30
+      ),
 
     source: {
 
@@ -2317,6 +2182,26 @@ async function buildState(
 
       lastFetch:
         live.lastFetch
+
+    },
+
+    analysisSession: {
+
+      active:
+        analysisSession.active,
+
+      issue:
+        analysisSession.issue,
+
+      targetIssue:
+        analysisSession.targetIssue,
+
+      startedAt:
+        analysisSession.startedAt,
+
+      endsAt:
+        analysisSession.endsAt
+
     },
 
     serverTime:
@@ -2324,27 +2209,12 @@ async function buildState(
 
     fetchRunning
   };
-
-
-  stateCache.issue =
-    issue;
-
-  stateCache.state =
-    state;
-
-  stateCache.createdAt =
-    now();
-
-
-  return state;
 }
 
 
-/*
-=========================================================
-BODY READER
-=========================================================
-*/
+/* =====================================================
+   BODY READER
+===================================================== */
 
 function readBody(req) {
 
@@ -2360,6 +2230,7 @@ function readBody(req) {
 
           body +=
             chunk.toString();
+
 
           if (
             body.length >
@@ -2416,11 +2287,9 @@ function readBody(req) {
 }
 
 
-/*
-=========================================================
-JSON RESPONSE
-=========================================================
-*/
+/* =====================================================
+   JSON RESPONSE
+===================================================== */
 
 function sendJson(
   res,
@@ -2431,6 +2300,7 @@ function sendJson(
   res.writeHead(
     status,
     {
+
       "Content-Type":
         "application/json; charset=utf-8",
 
@@ -2445,6 +2315,7 @@ function sendJson(
 
       "Access-Control-Allow-Origin":
         "*"
+
     }
   );
 
@@ -2455,11 +2326,9 @@ function sendJson(
 }
 
 
-/*
-=========================================================
-FILE SERVER
-=========================================================
-*/
+/* =====================================================
+   FILE SERVER
+===================================================== */
 
 function serveFile(
   res,
@@ -2481,11 +2350,13 @@ function serveFile(
       res,
       404,
       {
+
         ok: false,
 
         error:
           "File not found: " +
           fileName
+
       }
     );
   }
@@ -2525,6 +2396,7 @@ function serveFile(
   res.writeHead(
     200,
     {
+
       "Content-Type":
         contentType,
 
@@ -2536,20 +2408,20 @@ function serveFile(
 
       Expires:
         "0"
+
     }
   );
 
 
-  fs.createReadStream(file)
-    .pipe(res);
+  fs.createReadStream(
+    file
+  ).pipe(res);
 }
 
 
-/*
-=========================================================
-ADMIN AUTH
-=========================================================
-*/
+/* =====================================================
+   ADMIN AUTH
+===================================================== */
 
 function isAdmin(url) {
 
@@ -2560,11 +2432,9 @@ function isAdmin(url) {
 }
 
 
-/*
-=========================================================
-HTTP SERVER
-=========================================================
-*/
+/* =====================================================
+   HTTP SERVER
+===================================================== */
 
 const server =
   http.createServer(
@@ -2583,9 +2453,9 @@ const server =
 
 
         /*
-        -------------------------------------------------
+        -----------------------------------------------
         PREDICTION PAGE
-        -------------------------------------------------
+        -----------------------------------------------
         */
 
         if (
@@ -2601,9 +2471,9 @@ const server =
 
 
         /*
-        -------------------------------------------------
+        -----------------------------------------------
         ADMIN PAGE
-        -------------------------------------------------
+        -----------------------------------------------
         */
 
         if (
@@ -2618,9 +2488,9 @@ const server =
 
 
         /*
-        -------------------------------------------------
+        -----------------------------------------------
         HEALTH
-        -------------------------------------------------
+        -----------------------------------------------
         */
 
         if (
@@ -2667,21 +2537,25 @@ const server =
 
               fetchRunning,
 
+              analysis:
+                analysisSession,
+
               lastFetch:
                 live.lastFetch,
 
               serverTime:
                 new Date()
                   .toISOString()
+
             }
           );
         }
 
 
         /*
-        -------------------------------------------------
+        -----------------------------------------------
         PUBLIC STATE
-        -------------------------------------------------
+        -----------------------------------------------
         */
 
         if (
@@ -2716,9 +2590,9 @@ const server =
 
 
         /*
-        -------------------------------------------------
+        -----------------------------------------------
         KEY CHECK
-        -------------------------------------------------
+        -----------------------------------------------
         */
 
         if (
@@ -2752,16 +2626,18 @@ const server =
 
 
         /*
-        -------------------------------------------------
+        -----------------------------------------------
         ADMIN STATUS
-        -------------------------------------------------
+        -----------------------------------------------
         */
 
         if (
           url.pathname === "/api/admin/status"
         ) {
 
-          if (!isAdmin(url)) {
+          if (
+            !isAdmin(url)
+          ) {
 
             return sendJson(
               res,
@@ -2789,23 +2665,29 @@ const server =
               model:
                 MODEL_VERSION,
 
-              fetchRunning
+              fetchRunning,
+
+              analysis:
+                analysisSession
+
             }
           );
         }
 
 
         /*
-        -------------------------------------------------
+        -----------------------------------------------
         ADMIN LIVE TEST
-        -------------------------------------------------
+        -----------------------------------------------
         */
 
         if (
           url.pathname === "/api/admin/live-test"
         ) {
 
-          if (!isAdmin(url)) {
+          if (
+            !isAdmin(url)
+          ) {
 
             return sendJson(
               res,
@@ -2871,16 +2753,18 @@ const server =
 
 
         /*
-        -------------------------------------------------
+        -----------------------------------------------
         ADMIN MODEL TEST
-        -------------------------------------------------
+        -----------------------------------------------
         */
 
         if (
           url.pathname === "/api/admin/model-test"
         ) {
 
-          if (!isAdmin(url)) {
+          if (
+            !isAdmin(url)
+          ) {
 
             return sendJson(
               res,
@@ -2910,9 +2794,9 @@ const server =
 
 
         /*
-        -------------------------------------------------
+        -----------------------------------------------
         GET KEYS
-        -------------------------------------------------
+        -----------------------------------------------
         */
 
         if (
@@ -2920,7 +2804,9 @@ const server =
           req.method === "GET"
         ) {
 
-          if (!isAdmin(url)) {
+          if (
+            !isAdmin(url)
+          ) {
 
             return sendJson(
               res,
@@ -2948,9 +2834,9 @@ const server =
 
 
         /*
-        -------------------------------------------------
+        -----------------------------------------------
         CREATE KEY
-        -------------------------------------------------
+        -----------------------------------------------
         */
 
         if (
@@ -2958,7 +2844,9 @@ const server =
           req.method === "POST"
         ) {
 
-          if (!isAdmin(url)) {
+          if (
+            !isAdmin(url)
+          ) {
 
             return sendJson(
               res,
@@ -2996,9 +2884,9 @@ const server =
 
 
         /*
-        -------------------------------------------------
+        -----------------------------------------------
         RESET DEVICE
-        -------------------------------------------------
+        -----------------------------------------------
         */
 
         if (
@@ -3006,7 +2894,9 @@ const server =
           req.method === "POST"
         ) {
 
-          if (!isAdmin(url)) {
+          if (
+            !isAdmin(url)
+          ) {
 
             return sendJson(
               res,
@@ -3040,9 +2930,9 @@ const server =
 
 
         /*
-        -------------------------------------------------
+        -----------------------------------------------
         DELETE KEY
-        -------------------------------------------------
+        -----------------------------------------------
         */
 
         if (
@@ -3050,7 +2940,9 @@ const server =
           req.method === "POST"
         ) {
 
-          if (!isAdmin(url)) {
+          if (
+            !isAdmin(url)
+          ) {
 
             return sendJson(
               res,
@@ -3084,16 +2976,18 @@ const server =
 
 
         /*
-        -------------------------------------------------
+        -----------------------------------------------
         PREDICTION HISTORY
-        -------------------------------------------------
+        -----------------------------------------------
         */
 
         if (
           url.pathname === "/api/admin/predictions"
         ) {
 
-          if (!isAdmin(url)) {
+          if (
+            !isAdmin(url)
+          ) {
 
             return sendJson(
               res,
@@ -3143,9 +3037,9 @@ const server =
 
 
         /*
-        -------------------------------------------------
+        -----------------------------------------------
         404
-        -------------------------------------------------
+        -----------------------------------------------
         */
 
         return sendJson(
@@ -3187,11 +3081,9 @@ const server =
   );
 
 
-/*
-=========================================================
-START
-=========================================================
-*/
+/* =====================================================
+   START
+===================================================== */
 
 async function start() {
 
@@ -3203,17 +3095,14 @@ async function start() {
 
 
     /*
-      FIRST LIVE FETCH
+      First live fetch.
     */
 
     await refreshLive();
 
 
     /*
-      ONE SECOND REFRESH
-
-      Because refreshLive() has a lock,
-      requests cannot overlap.
+      API refresh every second.
     */
 
     setInterval(
@@ -3241,19 +3130,23 @@ async function start() {
         );
 
         console.log(
-          "LIVE POLL:",
-          LIVE_POLL,
-          "ms"
-        );
-
-        console.log(
-          "SKIP RULE:",
-          "4 ROUNDS"
+          "API POLL:",
+          LIVE_POLL + "ms"
         );
 
         console.log(
           "ANALYSIS:",
-          "SECONDS 56-59"
+          ANALYSIS_SECONDS + " SECONDS"
+        );
+
+        console.log(
+          "SKIP:",
+          SKIP_COUNT + " ROUNDS"
+        );
+
+        console.log(
+          "FLOW:",
+          "ROUND START -> 4 SEC ANALYSIS -> PREDICTION -> 4 SKIPS"
         );
 
         console.log(
