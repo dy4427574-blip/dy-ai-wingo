@@ -1,1573 +1,397 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
 <meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
 
-<meta
-  name="viewport"
-  content="width=device-width, initial-scale=1.0"
-/>
-
-<title>DY AI - Wingo 1 Minute</title>
+<title>DY AI Prediction</title>
 
 <style>
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+*{
+  box-sizing:border-box;
 }
 
-body {
-  min-height: 100vh;
-
-  font-family:
-    Arial,
-    Helvetica,
-    sans-serif;
-
-  color: #fff;
-
-  background:
-    radial-gradient(
-      circle at 50% -10%,
-      #172b52 0,
-      #0a1020 35%,
-      #03050b 75%
-    );
-
-  padding: 14px;
+body{
+  margin:0;
+  min-height:100vh;
+  background:#05070d;
+  color:#fff;
+  font-family:Arial,sans-serif;
 }
 
-.container {
-  width: 100%;
-  max-width: 720px;
-  margin: auto;
+.container{
+  max-width:500px;
+  margin:auto;
+  padding:18px;
 }
 
-/* =====================================================
-   HEADER
-===================================================== */
-
-.header {
-  text-align: center;
-  padding: 10px 0 18px;
+.header{
+  text-align:center;
+  margin-bottom:18px;
 }
 
-.logo {
-  font-size: 34px;
-  font-weight: 900;
-  letter-spacing: 4px;
-
-  text-shadow:
-    0 0 10px rgba(0,210,255,.7),
-    0 0 30px rgba(0,210,255,.35);
+.header h1{
+  margin:0;
+  font-size:25px;
 }
 
-.subtitle {
-  margin-top: 5px;
-
-  color: #8190ad;
-
-  font-size: 11px;
-  letter-spacing: 3px;
+.status{
+  margin-top:8px;
+  font-size:12px;
+  opacity:.7;
 }
 
-.live {
-  display: inline-flex;
-
-  align-items: center;
-  gap: 7px;
-
-  margin-top: 12px;
-
-  padding: 7px 15px;
-
-  border-radius: 30px;
-
-  color: #57ffad;
-
-  background:
-    rgba(40,255,150,.06);
-
-  border:
-    1px solid rgba(40,255,150,.25);
-
-  font-size: 11px;
-  font-weight: 700;
+.card{
+  background:#0d111c;
+  border:1px solid #20283b;
+  border-radius:18px;
+  padding:20px;
+  margin-bottom:15px;
 }
 
-.live-dot {
-  width: 8px;
-  height: 8px;
-
-  border-radius: 50%;
-
-  background: #42ff9d;
-
-  box-shadow:
-    0 0 12px #42ff9d;
-
-  animation:
-    pulse 1.2s infinite;
+.label{
+  font-size:12px;
+  opacity:.6;
+  margin-bottom:8px;
 }
 
-@keyframes pulse {
-
-  0%,100% {
-    opacity: .45;
-    transform: scale(.85);
-  }
-
-  50% {
-    opacity: 1;
-    transform: scale(1);
-  }
+.period{
+  font-size:20px;
+  font-weight:bold;
+  word-break:break-all;
 }
 
-/* =====================================================
-   CARD
-===================================================== */
-
-.card {
-  margin-bottom: 15px;
-
-  padding: 21px;
-
-  border-radius: 22px;
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(19,29,52,.96),
-      rgba(6,10,19,.97)
-    );
-
-  border:
-    1px solid rgba(255,255,255,.07);
-
-  box-shadow:
-    0 18px 55px rgba(0,0,0,.35);
+.analysis{
+  text-align:center;
+  min-height:125px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
 }
 
-/* =====================================================
-   GAME
-===================================================== */
-
-.game-title {
-  text-align: center;
-
-  color: #9caed0;
-
-  font-size: 11px;
-
-  letter-spacing: 3px;
+.analysisText{
+  font-size:14px;
+  letter-spacing:1px;
+  opacity:.8;
 }
 
-.round-title {
-  text-align: center;
-
-  color: #687793;
-
-  margin-top: 7px;
-
-  font-size: 11px;
+.count{
+  font-size:55px;
+  font-weight:bold;
+  margin-top:8px;
 }
 
-/* =====================================================
-   PREDICTION
-===================================================== */
-
-.prediction-box {
-
-  min-height: 165px;
-
-  margin-top: 18px;
-
-  display: flex;
-
-  flex-direction: column;
-
-  justify-content: center;
-
-  align-items: center;
-
-  border-radius: 19px;
-
-  background:
-    rgba(255,255,255,.025);
-
-  border:
-    1px solid rgba(255,255,255,.055);
-
-  transition:
-    .25s ease;
+.prediction{
+  text-align:center;
+  font-size:38px;
+  font-weight:900;
+  padding:25px 10px;
 }
 
-.prediction-label {
-
-  color: #74829e;
-
-  font-size: 10px;
-
-  letter-spacing: 3px;
-
-  margin-bottom: 13px;
+.wait{
+  opacity:.5;
+  font-size:20px;
 }
 
-.prediction {
-
-  font-size: 44px;
-
-  font-weight: 900;
-
-  letter-spacing: 3px;
-
-  transition:
-    .2s ease;
+.history{
+  max-height:380px;
+  overflow-y:auto;
 }
 
-.prediction.big {
-
-  color: #ff557c;
-
-  text-shadow:
-    0 0 25px
-    rgba(255,85,124,.55);
+.row{
+  display:flex;
+  justify-content:space-between;
+  padding:12px 4px;
+  border-bottom:1px solid #1b2130;
+  font-size:13px;
 }
 
-.prediction.small {
-
-  color: #42c2ff;
-
-  text-shadow:
-    0 0 25px
-    rgba(66,194,255,.55);
+.big{
+  font-weight:bold;
 }
 
-.prediction.clear {
-
-  color: #ffc95d;
-
-  font-size: 25px;
-
-  text-shadow:
-    0 0 20px
-    rgba(255,201,93,.35);
+.small{
+  font-weight:bold;
 }
 
-/* =====================================================
-   PERIOD
-===================================================== */
-
-.period-wrap {
-  text-align: center;
-  margin-top: 17px;
+.error{
+  color:#ff6868;
 }
 
-.period-label {
-
-  color: #6e7d99;
-
-  font-size: 10px;
-
-  letter-spacing: 2px;
-
-  margin-bottom: 6px;
+.live{
+  color:#70ff9a;
 }
 
-.period {
-
-  color: #fff;
-
-  font-family: monospace;
-
-  font-size: 18px;
-
-  font-weight: 700;
-
-  word-break: break-all;
+.delayed{
+  color:#ffb454;
 }
-
-/* =====================================================
-   HISTORY
-===================================================== */
-
-.history-title {
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: space-between;
-
-  margin-bottom: 13px;
-}
-
-.history-title h2 {
-
-  font-size: 16px;
-
-  letter-spacing: 1px;
-}
-
-.updated {
-
-  color: #65738d;
-
-  font-size: 10px;
-}
-
-.table-wrap {
-
-  overflow-x: auto;
-
-  border-radius: 15px;
-
-  border:
-    1px solid rgba(255,255,255,.06);
-}
-
-table {
-
-  width: 100%;
-
-  min-width: 480px;
-
-  border-collapse: collapse;
-}
-
-thead {
-
-  background:
-    rgba(255,255,255,.035);
-}
-
-th {
-
-  padding: 12px 8px;
-
-  color: #74829e;
-
-  font-size: 9px;
-
-  letter-spacing: 1.5px;
-
-  text-align: center;
-}
-
-td {
-
-  padding: 12px 8px;
-
-  border-top:
-    1px solid
-    rgba(255,255,255,.045);
-
-  text-align: center;
-
-  font-size: 12px;
-}
-
-.period-cell {
-
-  color: #b7c2d8;
-
-  font-family: monospace;
-}
-
-.number {
-
-  font-size: 15px;
-
-  font-weight: 900;
-}
-
-.size-big {
-
-  color: #ff557c;
-
-  font-weight: 800;
-}
-
-.size-small {
-
-  color: #42c2ff;
-
-  font-weight: 800;
-}
-
-/* =====================================================
-   STATUS
-===================================================== */
-
-.status {
-
-  text-align: center;
-
-  margin-top: 13px;
-
-  color: #687792;
-
-  font-size: 10px;
-}
-
-.status.online {
-  color: #50e7a2;
-}
-
-.status.error {
-  color: #ff6c88;
-}
-
-/* =====================================================
-   MOBILE
-===================================================== */
-
-@media(max-width:520px) {
-
-  body {
-    padding: 10px;
-  }
-
-  .card {
-    padding: 16px;
-    border-radius: 18px;
-  }
-
-  .logo {
-    font-size: 29px;
-  }
-
-  .prediction {
-    font-size: 37px;
-  }
-
-  .prediction.clear {
-    font-size: 21px;
-  }
-
-}
-
 </style>
-
 </head>
 
 <body>
 
 <div class="container">
 
-  <!-- HEADER -->
-
   <div class="header">
+    <h1>DY AI PREDICTION</h1>
+    <div id="status" class="status">
+      Connecting...
+    </div>
+  </div>
 
-    <div class="logo">
-      DY AI
+  <div class="card">
+    <div class="label">CURRENT PERIOD</div>
+    <div id="currentPeriod" class="period">--</div>
+  </div>
+
+  <div class="card">
+    <div class="label">PREDICTION PERIOD</div>
+    <div id="nextPeriod" class="period">--</div>
+  </div>
+
+  <div class="card analysis">
+
+    <div id="analysisText"
+         class="analysisText">
+      WAITING FOR NEW PERIOD
     </div>
 
-    <div class="subtitle">
-      WINGO 1 MINUTE ANALYSIS
-    </div>
-
-    <div class="live">
-
-      <span class="live-dot"></span>
-
-      LIVE
-
+    <div id="count"
+         class="count">
+      --
     </div>
 
   </div>
 
-
-  <!-- PREDICTION -->
-
   <div class="card">
 
-    <div class="game-title">
-      WINGO 1 MINUTE
+    <div class="label">
+      PREDICTION
     </div>
 
-    <div class="round-title">
-      NEXT ROUND
-    </div>
-
-
-    <div class="prediction-box">
-
-      <div class="prediction-label">
-        PREDICTION
-      </div>
-
-      <div
-        id="prediction"
-        class="prediction clear"
-      >
-        CONNECTING...
-      </div>
-
-    </div>
-
-
-    <div class="period-wrap">
-
-      <div class="period-label">
-        PERIOD
-      </div>
-
-      <div
-        id="period"
-        class="period"
-      >
-        --
-      </div>
-
+    <div id="prediction"
+         class="prediction wait">
+      WAITING
     </div>
 
   </div>
 
-
-  <!-- HISTORY -->
-
   <div class="card">
 
-    <div class="history-title">
-
-      <h2>
-        History
-      </h2>
-
-      <div
-        id="updated"
-        class="updated"
-      >
-        Connecting...
-      </div>
-
+    <div class="label">
+      HISTORY
     </div>
 
-
-    <div class="table-wrap">
-
-      <table>
-
-        <thead>
-
-          <tr>
-
-            <th>#</th>
-
-            <th>PERIOD</th>
-
-            <th>NUMBER</th>
-
-            <th>SIZE</th>
-
-          </tr>
-
-        </thead>
-
-        <tbody id="history">
-
-        </tbody>
-
-      </table>
-
-    </div>
-
-
-    <div
-      id="status"
-      class="status"
-    >
-      Connecting to live API...
+    <div id="history"
+         class="history">
+      Loading...
     </div>
 
   </div>
 
 </div>
 
-
 <script>
 
-/* =====================================================
-   STATE
-===================================================== */
+let lastTargetPeriod = null;
 
-let lastSettledPeriod = null;
+async function loadState(){
 
-let lastCurrentPeriod = null;
+  try{
 
-let lastHistorySignature = "";
-
-let cachedPrediction = "NO CLEAR SIGNAL";
-
-let requestRunning = false;
-
-
-/* =====================================================
-   PERIOD NORMALIZER
-===================================================== */
-
-function periodValue(value) {
-
-  if (
-    value === null ||
-    value === undefined
-  ) {
-    return null;
-  }
-
-  const s =
-    String(value).trim();
-
-  if (!/^\d+$/.test(s)) {
-    return null;
-  }
-
-  try {
-    return BigInt(s);
-  } catch {
-    return null;
-  }
-}
-
-
-/* =====================================================
-   NEXT PERIOD
-===================================================== */
-
-function getNextPeriod(
-  currentPeriod,
-  latestPeriod
-) {
-
-  const current =
-    periodValue(currentPeriod);
-
-  const latest =
-    periodValue(latestPeriod);
-
-
-  /*
-    API current period is normally
-    the next/live round.
-  */
-
-  if (
-    current !== null &&
-    latest !== null &&
-    current > latest
-  ) {
-
-    return String(
-      currentPeriod
-    );
-  }
-
-
-  /*
-    Fallback:
-    latest settled + 1
-  */
-
-  if (latest !== null) {
-
-    const next =
-      latest + 1n;
-
-    const source =
-      String(latestPeriod);
-
-    return String(next).padStart(
-      source.length,
-      "0"
-    );
-  }
-
-
-  if (current !== null) {
-    return String(currentPeriod);
-  }
-
-  return "--";
-}
-
-
-/* =====================================================
-   SIZE
-===================================================== */
-
-function getSize(number) {
-
-  const n =
-    Number(number);
-
-  if (
-    !Number.isInteger(n) ||
-    n < 0 ||
-    n > 9
-  ) {
-    return null;
-  }
-
-  return n <= 4
-    ? "SMALL"
-    : "BIG";
-}
-
-
-/* =====================================================
-   ADVANCED CLIENT ANALYSIS
-   Same opposite-output concept
-===================================================== */
-
-function calculatePrediction(history) {
-
-  if (
-    !Array.isArray(history) ||
-    history.length < 10
-  ) {
-    return "NO CLEAR SIGNAL";
-  }
-
-
-  const rows =
-    history
-      .map(row => {
-
-        const n =
-          Number(row.number);
-
-        if (
-          !Number.isInteger(n) ||
-          n < 0 ||
-          n > 9
-        ) {
-          return null;
-        }
-
-        return {
-          number: n,
-
-          size:
-            n <= 4
-              ? "SMALL"
-              : "BIG"
-        };
-
-      })
-      .filter(Boolean)
-      .slice(0, 20);
-
-
-  if (rows.length < 10) {
-    return "NO CLEAR SIGNAL";
-  }
-
-
-  /*
-    newest -> oldest
-  */
-
-  const seq =
-    rows.map(
-      r =>
-        r.size === "BIG"
-          ? 1
-          : 0
-    );
-
-  const nums =
-    rows.map(
-      r => r.number
-    );
-
-
-  let big = 0;
-  let small = 0;
-
-
-  /* =================================================
-     1. RECENCY
-  ================================================= */
-
-  seq.forEach(
-    (value, index) => {
-
-      const weight =
-        21 - index;
-
-      if (value === 1) {
-        big += weight;
-      } else {
-        small += weight;
+    const response = await fetch(
+      "/api/state?_=" + Date.now(),
+      {
+        cache:"no-store"
       }
-
-    }
-  );
-
-
-  /* =================================================
-     2. TRANSITIONS
-  ================================================= */
-
-  let BB = 0;
-  let BS = 0;
-  let SB = 0;
-  let SS = 0;
-
-  for (
-    let i = 0;
-    i < seq.length - 1;
-    i++
-  ) {
-
-    if (
-      seq[i] === 1 &&
-      seq[i + 1] === 1
-    ) BB++;
-
-    if (
-      seq[i] === 1 &&
-      seq[i + 1] === 0
-    ) BS++;
-
-    if (
-      seq[i] === 0 &&
-      seq[i + 1] === 1
-    ) SB++;
-
-    if (
-      seq[i] === 0 &&
-      seq[i + 1] === 0
-    ) SS++;
-  }
-
-
-  const fromBig =
-    BB + BS;
-
-  const fromSmall =
-    SB + SS;
-
-
-  if (fromBig > 0) {
-
-    const p =
-      BB / fromBig;
-
-    if (p >= .65) {
-      big += 3;
-    }
-
-    if (p <= .35) {
-      small += 3;
-    }
-  }
-
-
-  if (fromSmall > 0) {
-
-    const p =
-      SB / fromSmall;
-
-    if (p >= .65) {
-      big += 3;
-    }
-
-    if (p <= .35) {
-      small += 3;
-    }
-  }
-
-
-  /* =================================================
-     3. CURRENT STREAK
-  ================================================= */
-
-  let streak = 1;
-
-  while (
-    streak < seq.length &&
-    seq[streak] === seq[0]
-  ) {
-    streak++;
-  }
-
-
-  if (streak >= 4) {
-
-    if (seq[0] === 1) {
-      small +=
-        streak >= 6 ? 6 : 4;
-    } else {
-      big +=
-        streak >= 6 ? 6 : 4;
-    }
-
-  } else if (streak === 3) {
-
-    if (seq[0] === 1) {
-      big += 2;
-    } else {
-      small += 2;
-    }
-  }
-
-
-  /* =================================================
-     4. CHOP / ALTERNATION
-  ================================================= */
-
-  let switches = 0;
-
-  for (let i = 0; i < 9; i++) {
-
-    if (
-      seq[i] !== seq[i + 1]
-    ) {
-      switches++;
-    }
-  }
-
-
-  if (switches >= 7) {
-
-    if (seq[0] === 1) {
-      small += 4;
-    } else {
-      big += 4;
-    }
-
-  } else if (switches <= 2) {
-
-    if (seq[0] === 1) {
-      big += 4;
-    } else {
-      small += 4;
-    }
-  }
-
-
-  /* =================================================
-     5. LAST 3
-  ================================================= */
-
-  const p3 =
-    seq
-      .slice(0, 3)
-      .join("");
-
-  if (p3 === "111") {
-    small += 3;
-  }
-
-  if (p3 === "000") {
-    big += 3;
-  }
-
-  if (p3 === "101") {
-    small += 2;
-  }
-
-  if (p3 === "010") {
-    big += 2;
-  }
-
-
-  /* =================================================
-     6. LAST 5
-  ================================================= */
-
-  const p5 =
-    seq
-      .slice(0, 5)
-      .join("");
-
-  if (p5 === "10101") {
-    small += 3;
-  }
-
-  if (p5 === "01010") {
-    big += 3;
-  }
-
-  if (p5 === "11100") {
-    big += 2;
-  }
-
-  if (p5 === "00011") {
-    small += 2;
-  }
-
-  if (p5 === "11000") {
-    big += 2;
-  }
-
-  if (p5 === "00111") {
-    small += 2;
-  }
-
-
-  /* =================================================
-     7. REPEATED BLOCK
-  ================================================= */
-
-  const p10 =
-    seq
-      .slice(0, 10)
-      .join("");
-
-
-  if (p10.length === 10) {
-
-    const a =
-      p10.slice(0, 3);
-
-    const b =
-      p10.slice(3, 6);
-
-    const c =
-      p10.slice(6, 9);
-
-
-    if (a === b) {
-
-      if (seq[0] === 1) {
-        small += 2;
-      } else {
-        big += 2;
-      }
-    }
-
-
-    if (b === c) {
-
-      if (seq[0] === 1) {
-        small += 2;
-      } else {
-        big += 2;
-      }
-    }
-  }
-
-
-  /* =================================================
-     8. SHORT / LONG AGREEMENT
-  ================================================= */
-
-  const short =
-    seq.slice(0, 5);
-
-  const long =
-    seq.slice(0, 15);
-
-
-  const shortBig =
-    short.filter(
-      x => x === 1
-    ).length;
-
-  const shortSmall =
-    short.length - shortBig;
-
-
-  const longBig =
-    long.filter(
-      x => x === 1
-    ).length;
-
-  const longSmall =
-    long.length - longBig;
-
-
-  if (
-    shortBig > shortSmall &&
-    longBig > longSmall
-  ) {
-
-    big += 4;
-
-  } else if (
-    shortSmall > shortBig &&
-    longSmall > longBig
-  ) {
-
-    small += 4;
-  }
-
-
-  /* =================================================
-     9. DIGIT STRUCTURE
-  ================================================= */
-
-  let low = 0;
-  let high = 0;
-
-  let zero = 0;
-  let five = 0;
-
-
-  nums.forEach(n => {
-
-    if (n <= 4) {
-      low++;
-    } else {
-      high++;
-    }
-
-    if (n === 0) {
-      zero++;
-    }
-
-    if (n === 5) {
-      five++;
-    }
-
-  });
-
-
-  if (
-    zero >= 2 &&
-    high >= low
-  ) {
-    big += 2;
-  }
-
-
-  if (
-    five >= 2 &&
-    low >= high
-  ) {
-    small += 2;
-  }
-
-
-  /* =================================================
-     10. RECENT REVERSAL
-  ================================================= */
-
-  if (seq.length >= 6) {
-
-    const a = seq[0];
-    const b = seq[1];
-    const c = seq[2];
-    const d = seq[3];
-
-
-    if (
-      a === 1 &&
-      b === 1 &&
-      c === 0 &&
-      d === 0
-    ) {
-      big += 2;
-    }
-
-
-    if (
-      a === 0 &&
-      b === 0 &&
-      c === 1 &&
-      d === 1
-    ) {
-      small += 2;
-    }
-
-
-    if (
-      a === 1 &&
-      b === 0 &&
-      c === 1 &&
-      d === 0
-    ) {
-      small += 1;
-    }
-
-
-    if (
-      a === 0 &&
-      b === 1 &&
-      c === 0 &&
-      d === 1
-    ) {
-      big += 1;
-    }
-  }
-
-
-  /* =================================================
-     FINAL CONFLICT FILTER
-  ================================================= */
-
-  const difference =
-    Math.abs(
-      big - small
     );
 
+    const data = await response.json();
 
-  if (difference < 4) {
-    return "NO CLEAR SIGNAL";
+    if(!data.success){
+      throw new Error("API error");
+    }
+
+    /* PERIOD */
+
+    document.getElementById(
+      "currentPeriod"
+    ).textContent =
+      data.currentPeriod || "--";
+
+    document.getElementById(
+      "nextPeriod"
+    ).textContent =
+      data.nextPeriod || "--";
+
+    /* STATUS */
+
+    const status =
+      document.getElementById("status");
+
+    if(data.sourceStatus === "LIVE"){
+
+      status.textContent =
+        "● LIVE API";
+
+      status.className =
+        "status live";
+
+    }else{
+
+      status.textContent =
+        "● DATA DELAYED";
+
+      status.className =
+        "status delayed";
+
+    }
+
+    if(data.error){
+
+      status.textContent =
+        "● API ERROR: " + data.error;
+
+      status.className =
+        "status error";
+    }
+
+    /* ANALYSIS */
+
+    const analysis =
+      data.analysis || {};
+
+    document.getElementById(
+      "analysisText"
+    ).textContent =
+      analysis.message ||
+      "WAITING FOR NEW PERIOD";
+
+    document.getElementById(
+      "count"
+    ).textContent =
+      analysis.active
+        ? analysis.remaining
+        : "";
+
+    /* PREDICTION */
+
+    const prediction =
+      document.getElementById(
+        "prediction"
+      );
+
+    if(analysis.active){
+
+      prediction.textContent =
+        "ANALYZING...";
+
+      prediction.className =
+        "prediction wait";
+
+    }else{
+
+      const p =
+        analysis.prediction ||
+        "WAITING";
+
+      prediction.textContent = p;
+
+      prediction.className =
+        p === "BIG" || p === "SMALL"
+          ? "prediction"
+          : "prediction wait";
+    }
+
+    /* HISTORY */
+
+    renderHistory(
+      data.history || []
+    );
+
+  }catch(error){
+
+    document.getElementById(
+      "status"
+    ).textContent =
+      "● CONNECTION ERROR";
+
+    document.getElementById(
+      "status"
+    ).className =
+      "status error";
   }
-
-
-  /* =================================================
-     ENGINE RESULT
-  ================================================= */
-
-  const engine =
-    big > small
-      ? "BIG"
-      : "SMALL";
-
-
-  /* =================================================
-     OPPOSITE OUTPUT
-  ================================================= */
-
-  return engine === "BIG"
-    ? "SMALL"
-    : "BIG";
 }
 
+function renderHistory(rows){
 
-/* =====================================================
-   RENDER HISTORY
-===================================================== */
-
-function renderHistory(history) {
-
-  const tbody =
+  const box =
     document.getElementById(
       "history"
     );
 
-  tbody.innerHTML = "";
+  if(!rows.length){
 
+    box.innerHTML =
+      "No history available";
 
-  history
-    .slice(0, 20)
-    .forEach(
-      (row, index) => {
-
-        const number =
-          Number(row.number);
-
-        const size =
-          getSize(number);
-
-
-        const tr =
-          document.createElement(
-            "tr"
-          );
-
-
-        tr.innerHTML = `
-
-          <td>
-            ${index + 1}
-          </td>
-
-          <td class="period-cell">
-            ${row.issueNumber ?? "--"}
-          </td>
-
-          <td class="number">
-            ${number}
-          </td>
-
-          <td class="${
-            size === "BIG"
-              ? "size-big"
-              : "size-small"
-          }">
-            ${size ?? "--"}
-          </td>
-
-        `;
-
-
-        tbody.appendChild(tr);
-      }
-    );
-}
-
-
-/* =====================================================
-   HISTORY SIGNATURE
-===================================================== */
-
-function makeSignature(history) {
-
-  return history
-    .slice(0, 20)
-    .map(
-      row =>
-        `${row.issueNumber}:${row.number}`
-    )
-    .join("|");
-}
-
-
-/* =====================================================
-   DISPLAY PREDICTION
-===================================================== */
-
-function displayPrediction(
-  prediction
-) {
-
-  const el =
-    document.getElementById(
-      "prediction"
-    );
-
-
-  el.textContent =
-    prediction;
-
-
-  el.className =
-    "prediction";
-
-
-  if (
-    prediction === "BIG"
-  ) {
-
-    el.classList.add(
-      "big"
-    );
-
-  } else if (
-    prediction === "SMALL"
-  ) {
-
-    el.classList.add(
-      "small"
-    );
-
-  } else {
-
-    el.classList.add(
-      "clear"
-    );
-  }
-}
-
-
-/* =====================================================
-   MAIN UPDATE
-===================================================== */
-
-async function updateLive() {
-
-  /*
-    Prevent overlapping requests.
-  */
-
-  if (requestRunning) {
     return;
   }
 
-  requestRunning = true;
+  box.innerHTML =
+    rows.map(row => {
 
+      const size =
+        row.size || "--";
 
-  try {
+      return `
+        <div class="row">
 
-    const response =
-      await fetch(
-        "/api/history?_=" +
-        Date.now(),
-        {
-          method: "GET",
+          <span>
+            ${escapeHtml(
+              row.issueNumber
+            )}
+          </span>
 
-          cache: "no-store",
+          <span>
+            ${row.number}
+          </span>
 
-          headers: {
-            "Cache-Control":
-              "no-cache"
-          }
-        }
-      );
+          <span class="${
+            size === "BIG"
+              ? "big"
+              : "small"
+          }">
+            ${size}
+          </span>
 
+        </div>
+      `;
 
-    const data =
-      await response.json();
-
-
-    if (
-      !response.ok ||
-      !data.success
-    ) {
-
-      throw new Error(
-        data.error ||
-        "API request failed"
-      );
-    }
-
-
-    const history =
-      Array.isArray(
-        data.history
-      )
-        ? data.history
-        : [];
-
-
-    const currentPeriod =
-      data?.current?.issueNumber ??
-      null;
-
-
-    const latestPeriod =
-      history[0]?.issueNumber ??
-      null;
-
-
-    /* ===============================================
-       HISTORY UPDATE
-    =============================================== */
-
-    renderHistory(history);
-
-
-    /* ===============================================
-       DETECT NEW SETTLED DATA
-    =============================================== */
-
-    const signature =
-      makeSignature(history);
-
-
-    const newData =
-      signature !==
-      lastHistorySignature;
-
-
-    if (newData) {
-
-      /*
-        Heavy analysis happens ONLY
-        when history actually changes.
-      */
-
-      cachedPrediction =
-        calculatePrediction(
-          history
-        );
-
-
-      lastHistorySignature =
-        signature;
-
-      lastSettledPeriod =
-        latestPeriod;
-    }
-
-
-    /* ===============================================
-       PERIOD
-    =============================================== */
-
-    const nextPeriod =
-      getNextPeriod(
-        currentPeriod,
-        latestPeriod
-      );
-
-
-    document.getElementById(
-      "period"
-    ).textContent =
-      nextPeriod;
-
-
-    /* ===============================================
-       PREDICTION
-    =============================================== */
-
-    displayPrediction(
-      cachedPrediction
-    );
-
-
-    /* ===============================================
-       STATUS
-    =============================================== */
-
-    const status =
-      document.getElementById(
-        "status"
-      );
-
-
-    status.textContent =
-      newData
-        ? "New result detected • Analysis updated"
-        : "Live • Waiting for next result";
-
-
-    status.className =
-      "status online";
-
-
-    document.getElementById(
-      "updated"
-    ).textContent =
-      new Date()
-        .toLocaleTimeString();
-
-
-    lastCurrentPeriod =
-      currentPeriod;
-
-
-  } catch (error) {
-
-    console.error(
-      "LIVE UPDATE ERROR:",
-      error
-    );
-
-
-    const status =
-      document.getElementById(
-        "status"
-      );
-
-
-    status.textContent =
-      "Live API connection error";
-
-    status.className =
-      "status error";
-
-  } finally {
-
-    requestRunning = false;
-  }
+    }).join("");
 }
 
+function escapeHtml(value){
 
-/* =====================================================
-   FIRST LOAD
-===================================================== */
+  return String(value)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
 
-updateLive();
+/*
+  UI refresh every second.
+  Server itself also polls the source every second.
+*/
 
-
-/* =====================================================
-   FAST POLLING
-===================================================== */
+loadState();
 
 setInterval(
-  updateLive,
-  2000
+  loadState,
+  1000
 );
 
 </script>
