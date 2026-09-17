@@ -7,60 +7,50 @@ const app = express();
 
 const PORT = Number(process.env.PORT || 10000);
 
-const WINGOBOT_TOKEN =
-  String(process.env.WINGOBOT_TOKEN || "").trim();
+/*
+=====================================================
+CONFIG
+=====================================================
+*/
+
+const LIVE_API_URL =
+  String(process.env.LIVE_API_URL || "").trim();
+
+const LIVE_API_TOKEN =
+  String(process.env.LIVE_API_TOKEN || "").trim();
 
 const ADMIN_KEY =
   String(process.env.ADMIN_KEY || "").trim();
 
-const API_URL =
-  "https://api.wingobot.com/v2/1-min-game-history";
+/*
+Optional:
+If API needs Authorization header.
+Example:
+Authorization: Bearer XXXXX
+*/
+
+const API_AUTH_TYPE =
+  String(
+    process.env.API_AUTH_TYPE || "Bearer"
+  ).trim();
+
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({
+  extended: true
+}));
+
 app.use(express.static(__dirname));
 
-/* =====================================================
-   HELPERS
-===================================================== */
 
-function normalizeRow(row) {
-  const number = Number(row?.number);
+/*
+=====================================================
+HELPERS
+=====================================================
+*/
 
-  if (
-    !Number.isInteger(number) ||
-    number < 0 ||
-    number > 9
-  ) {
-    return null;
-  }
+function toBigIntPeriod(value) {
 
-  return {
-    issueNumber:
-      row?.issueNumber ??
-      row?.period ??
-      row?.periodId ??
-      null,
-
-    number,
-
-    colour:
-      row?.colour ?? null,
-
-    premium:
-      row?.premium ?? null,
-
-    sum:
-      row?.sum ?? null,
-
-    size:
-      number <= 4
-        ? "SMALL"
-        : "BIG"
-  };
-}
-
-function periodNumber(value) {
   if (
     value === null ||
     value === undefined
@@ -68,7 +58,8 @@ function periodNumber(value) {
     return null;
   }
 
-  const s = String(value).trim();
+  const s =
+    String(value).trim();
 
   if (!/^\d+$/.test(s)) {
     return null;
@@ -81,195 +72,546 @@ function periodNumber(value) {
   }
 }
 
-/* =====================================================
-   ADVANCED ANALYSIS
-===================================================== */
+
+function normalizeRow(row) {
+
+  if (!row) {
+    return null;
+  }
+
+  const number =
+    Number(
+      row.number ??
+      row.num ??
+      row.result ??
+      row.resultNumber ??
+      row.openNumber
+    );
+
+  if (
+    !Number.isInteger(number) ||
+    number < 0 ||
+    number > 9
+  ) {
+    return null;
+  }
+
+  const issueNumber =
+    row.issueNumber ??
+    row.issue ??
+    row.period ??
+    row.periodId ??
+    row.issue ??
+    row.id ??
+    null;
+
+  return {
+
+    issueNumber,
+
+    number,
+
+    size:
+      number <= 4
+        ? "SMALL"
+        : "BIG",
+
+    colour:
+      row.colour ??
+      row.color ??
+      null
+
+  };
+}
+
+
+/*
+=====================================================
+EXTRACT HISTORY
+=====================================================
+*/
+
+function extractHistory(data) {
+
+  let source = null;
+
+  if (
+    Array.isArray(data)
+  ) {
+    source = data;
+  }
+
+  else if (
+    Array.isArray(data?.history)
+  ) {
+    source = data.history;
+  }
+
+  else if (
+    Array.isArray(data?.data)
+  ) {
+    source = data.data;
+  }
+
+  else if (
+    Array.isArray(data?.data?.list)
+  ) {
+    source = data.data.list;
+  }
+
+  else if (
+    Array.isArray(data?.data?.records)
+  ) {
+    source = data.data.records;
+  }
+
+  else if (
+    Array.isArray(data?.result)
+  ) {
+    source = data.result;
+  }
+
+  else if (
+    Array.isArray(data?.records)
+  ) {
+    source = data.records;
+  }
+
+  else {
+    source = [];
+  }
+
+
+  return source
+    .map(normalizeRow)
+    .filter(Boolean)
+    .slice(0, 50);
+}
+
+
+/*
+=====================================================
+CURRENT PERIOD
+=====================================================
+*/
+
+function extractCurrentPeriod(data) {
+
+  return (
+
+    data?.current?.issueNumber ??
+
+    data?.current?.issue ??
+
+    data?.current?.period ??
+
+    data?.current?.periodId ??
+
+    data?.issueNumber ??
+
+    data?.issue ??
+
+    data?.period ??
+
+    data?.periodId ??
+
+    data?.data?.current?.issueNumber ??
+
+    data?.data?.current?.period ??
+
+    data?.data?.issueNumber ??
+
+    data?.data?.issue ??
+
+    data?.data?.period ??
+
+    data?.data?.periodId ??
+
+    null
+
+  );
+}
+
+
+/*
+=====================================================
+LIVE API
+=====================================================
+*/
+
+async function fetchLiveData() {
+
+  if (!LIVE_API_URL) {
+
+    throw new Error(
+      "LIVE_API_URL is not configured."
+    );
+  }
+
+
+  const headers = {
+
+    "Accept":
+      "application/json",
+
+    "Cache-Control":
+      "no-cache",
+
+    "Pragma":
+      "no-cache",
+
+    "User-Agent":
+      "DY-AI-Live/3.0"
+
+  };
+
+
+  if (LIVE_API_TOKEN) {
+
+    headers[
+      "Authorization"
+    ] =
+      `${API_AUTH_TYPE} ${LIVE_API_TOKEN}`;
+  }
+
+
+  const separator =
+    LIVE_API_URL.includes("?")
+      ? "&"
+      : "?";
+
+
+  const url =
+    LIVE_API_URL +
+    separator +
+    "_ts=" +
+    Date.now();
+
+
+  const response =
+    await fetch(
+      url,
+      {
+        method: "GET",
+        headers,
+        cache: "no-store"
+      }
+    );
+
+
+  const text =
+    await response.text();
+
+
+  let data;
+
+
+  try {
+
+    data =
+      JSON.parse(text);
+
+  } catch {
+
+    throw new Error(
+      "Live API returned invalid JSON."
+    );
+  }
+
+
+  if (!response.ok) {
+
+    throw new Error(
+      data?.message ||
+      data?.error ||
+      `HTTP ${response.status}`
+    );
+  }
+
+
+  const history =
+    extractHistory(data);
+
+
+  const current =
+    extractCurrentPeriod(data);
+
+
+  return {
+
+    current,
+
+    history
+
+  };
+}
+
+
+/*
+=====================================================
+ANALYSIS ENGINE
+=====================================================
+*/
 
 function analyze(history) {
 
-  if (!Array.isArray(history)) {
-    return "NO CLEAR SIGNAL";
+  if (
+    !Array.isArray(history) ||
+    history.length < 10
+  ) {
+
+    return {
+      prediction:
+        "NO CLEAR SIGNAL"
+    };
   }
+
 
   const rows =
     history
-      .map(normalizeRow)
-      .filter(Boolean)
       .slice(0, 20);
 
-  if (rows.length < 10) {
-    return "NO CLEAR SIGNAL";
-  }
 
   const seq =
     rows.map(
-      r => r.size === "BIG" ? 1 : 0
+      row =>
+        row.size === "BIG"
+          ? 1
+          : 0
     );
 
-  const nums =
-    rows.map(r => r.number);
+
+  const numbers =
+    rows.map(
+      row =>
+        row.number
+    );
+
 
   let big = 0;
+
   let small = 0;
 
-  /* =================================================
-     A. RECENCY WEIGHT
-  ================================================= */
 
-  for (let i = 0; i < seq.length; i++) {
+  /*
+  -----------------------------------------------
+  RECENCY
+  -----------------------------------------------
+  */
+
+  for (
+    let i = 0;
+    i < seq.length;
+    i++
+  ) {
 
     const weight =
-      Math.max(
-        1,
-        21 - i
-      );
+      21 - i;
+
 
     if (seq[i] === 1) {
       big += weight;
-    } else {
+    }
+
+    else {
       small += weight;
     }
   }
 
-  /* =================================================
-     B. TRANSITION MATRIX
-  ================================================= */
+
+  /*
+  -----------------------------------------------
+  TRANSITIONS
+  -----------------------------------------------
+  */
 
   let BB = 0;
   let BS = 0;
   let SB = 0;
   let SS = 0;
 
-  for (let i = 0; i < seq.length - 1; i++) {
 
-    const current = seq[i];
-    const next = seq[i + 1];
+  for (
+    let i = 0;
+    i < seq.length - 1;
+    i++
+  ) {
 
-    if (current === 1 && next === 1) BB++;
-    if (current === 1 && next === 0) BS++;
-    if (current === 0 && next === 1) SB++;
-    if (current === 0 && next === 0) SS++;
+    if (
+      seq[i] === 1 &&
+      seq[i + 1] === 1
+    ) BB++;
+
+
+    if (
+      seq[i] === 1 &&
+      seq[i + 1] === 0
+    ) BS++;
+
+
+    if (
+      seq[i] === 0 &&
+      seq[i + 1] === 1
+    ) SB++;
+
+
+    if (
+      seq[i] === 0 &&
+      seq[i + 1] === 0
+    ) SS++;
   }
+
+
+  const fromBig =
+    BB + BS;
+
+
+  const fromSmall =
+    SB + SS;
+
+
+  if (fromBig > 0) {
+
+    const p =
+      BB / fromBig;
+
+
+    if (p >= 0.65) {
+      big += 3;
+    }
+
+    else if (p <= 0.35) {
+      small += 3;
+    }
+  }
+
+
+  if (fromSmall > 0) {
+
+    const p =
+      SB / fromSmall;
+
+
+    if (p >= 0.65) {
+      big += 3;
+    }
+
+    else if (p <= 0.35) {
+      small += 3;
+    }
+  }
+
 
   /*
-    Since newest is at index 0,
-    inspect historical transitions.
+  -----------------------------------------------
+  STREAK
+  -----------------------------------------------
   */
 
-  const totalFromBig = BB + BS;
-  const totalFromSmall = SB + SS;
-
-  if (totalFromBig > 0) {
-
-    const pBigAfterBig =
-      BB / totalFromBig;
-
-    if (pBigAfterBig > 0.65) {
-      big += 3;
-    } else if (pBigAfterBig < 0.35) {
-      small += 3;
-    }
-  }
-
-  if (totalFromSmall > 0) {
-
-    const pBigAfterSmall =
-      SB / totalFromSmall;
-
-    if (pBigAfterSmall > 0.65) {
-      big += 3;
-    } else if (pBigAfterSmall < 0.35) {
-      small += 3;
-    }
-  }
-
-  /* =================================================
-     C. CURRENT STREAK
-  ================================================= */
-
   let streak = 1;
+
 
   while (
     streak < seq.length &&
     seq[streak] === seq[0]
   ) {
+
     streak++;
   }
+
 
   if (streak >= 4) {
 
     if (seq[0] === 1) {
+
       small +=
-        streak >= 6 ? 6 : 4;
-    } else {
-      big +=
-        streak >= 6 ? 6 : 4;
+        streak >= 6
+          ? 6
+          : 4;
+
     }
 
-  } else if (streak === 3) {
+    else {
 
-    /*
-      Moderate continuation signal.
-    */
+      big +=
+        streak >= 6
+          ? 6
+          : 4;
+    }
+
+  }
+
+  else if (streak === 3) {
 
     if (seq[0] === 1) {
       big += 2;
-    } else {
+    }
+
+    else {
       small += 2;
     }
   }
 
-  /* =================================================
-     D. ALTERNATION
-  ================================================= */
+
+  /*
+  -----------------------------------------------
+  ALTERNATION
+  -----------------------------------------------
+  */
 
   let switches = 0;
 
-  for (let i = 0; i < 9; i++) {
 
-    if (seq[i] !== seq[i + 1]) {
+  for (
+    let i = 0;
+    i < 9;
+    i++
+  ) {
+
+    if (
+      seq[i] !== seq[i + 1]
+    ) {
+
       switches++;
     }
   }
 
-  if (switches >= 7) {
 
-    /*
-      Very high chop.
-      Apply reversal pressure.
-    */
+  if (switches >= 7) {
 
     if (seq[0] === 1) {
       small += 4;
-    } else {
+    }
+
+    else {
       big += 4;
     }
 
-  } else if (switches <= 2) {
+  }
 
-    /*
-      Low switching = continuation structure.
-    */
+  else if (switches <= 2) {
 
     if (seq[0] === 1) {
       big += 4;
-    } else {
+    }
+
+    else {
       small += 4;
     }
   }
 
-  /* =================================================
-     E. LAST 3
-  ================================================= */
+
+  /*
+  -----------------------------------------------
+  PATTERN 3
+  -----------------------------------------------
+  */
 
   const p3 =
-    seq.slice(0, 3).join("");
+    seq
+      .slice(0, 3)
+      .join("");
 
-  const p5 =
-    seq.slice(0, 5).join("");
-
-  const p10 =
-    seq.slice(0, 10).join("");
 
   if (p3 === "111") {
     small += 3;
@@ -287,9 +629,18 @@ function analyze(history) {
     big += 2;
   }
 
-  /* =================================================
-     F. LAST 5 STRUCTURE
-  ================================================= */
+
+  /*
+  -----------------------------------------------
+  PATTERN 5
+  -----------------------------------------------
+  */
+
+  const p5 =
+    seq
+      .slice(0, 5)
+      .join("");
+
 
   if (p5 === "10101") {
     small += 3;
@@ -315,61 +666,42 @@ function analyze(history) {
     small += 2;
   }
 
-  /* =================================================
-     G. REPEATED BLOCK
-  ================================================= */
 
-  if (p10.length === 10) {
-
-    const a =
-      p10.slice(0, 3);
-
-    const b =
-      p10.slice(3, 6);
-
-    const c =
-      p10.slice(6, 9);
-
-    if (a === b) {
-
-      if (seq[0] === 1) {
-        small += 2;
-      } else {
-        big += 2;
-      }
-    }
-
-    if (b === c) {
-
-      if (seq[0] === 1) {
-        small += 2;
-      } else {
-        big += 2;
-      }
-    }
-  }
-
-  /* =================================================
-     H. SHORT VS LONG WINDOW
-  ================================================= */
+  /*
+  -----------------------------------------------
+  SHORT VS LONG
+  -----------------------------------------------
+  */
 
   const short =
     seq.slice(0, 5);
 
+
   const long =
     seq.slice(0, 15);
 
+
   const shortBig =
-    short.filter(x => x === 1).length;
+    short.filter(
+      x => x === 1
+    ).length;
+
 
   const shortSmall =
-    short.length - shortBig;
+    short.length -
+    shortBig;
+
 
   const longBig =
-    long.filter(x => x === 1).length;
+    long.filter(
+      x => x === 1
+    ).length;
+
 
   const longSmall =
-    long.length - longBig;
+    long.length -
+    longBig;
+
 
   if (
     shortBig > shortSmall &&
@@ -378,7 +710,9 @@ function analyze(history) {
 
     big += 4;
 
-  } else if (
+  }
+
+  else if (
     shortSmall > shortBig &&
     longSmall > longBig
   ) {
@@ -386,235 +720,141 @@ function analyze(history) {
     small += 4;
   }
 
-  /* =================================================
-     I. DIGIT STRUCTURE
-  ================================================= */
+
+  /*
+  -----------------------------------------------
+  DIGIT STRUCTURE
+  -----------------------------------------------
+  */
 
   let low = 0;
   let high = 0;
+
   let zero = 0;
   let five = 0;
 
-  for (const n of nums) {
 
-    if (n <= 4) low++;
-    else high++;
+  for (
+    const n of numbers
+  ) {
 
-    if (n === 0) zero++;
-    if (n === 5) five++;
+    if (n <= 4) {
+      low++;
+    }
+
+    else {
+      high++;
+    }
+
+
+    if (n === 0) {
+      zero++;
+    }
+
+
+    if (n === 5) {
+      five++;
+    }
   }
+
+
+  if (
+    zero >= 2 &&
+    high >= low
+  ) {
+
+    big += 2;
+  }
+
+
+  if (
+    five >= 2 &&
+    low >= high
+  ) {
+
+    small += 2;
+  }
+
 
   /*
-    Boundary digits get small
-    structural weight only.
+  -----------------------------------------------
+  FINAL SIGNAL
+  -----------------------------------------------
   */
-
-  if (zero >= 2) {
-
-    if (high >= low) {
-      big += 2;
-    }
-  }
-
-  if (five >= 2) {
-
-    if (low >= high) {
-      small += 2;
-    }
-  }
-
-  /* =================================================
-     J. RECENT REVERSAL
-  ================================================= */
-
-  if (seq.length >= 6) {
-
-    const a = seq[0];
-    const b = seq[1];
-    const c = seq[2];
-    const d = seq[3];
-    const e = seq[4];
-    const f = seq[5];
-
-    if (
-      a === 1 &&
-      b === 1 &&
-      c === 0 &&
-      d === 0
-    ) {
-      big += 2;
-    }
-
-    if (
-      a === 0 &&
-      b === 0 &&
-      c === 1 &&
-      d === 1
-    ) {
-      small += 2;
-    }
-
-    if (
-      a === 1 &&
-      b === 0 &&
-      c === 1 &&
-      d === 0
-    ) {
-      small += 1;
-    }
-
-    if (
-      a === 0 &&
-      b === 1 &&
-      c === 0 &&
-      d === 1
-    ) {
-      big += 1;
-    }
-
-    /*
-      6-result mirror structure.
-    */
-
-    if (
-      a === f &&
-      b === e &&
-      c === d
-    ) {
-
-      if (a === 1) {
-        small += 2;
-      } else {
-        big += 2;
-      }
-    }
-  }
-
-  /* =================================================
-     K. CONFLICT FILTER
-  ================================================= */
 
   const difference =
     Math.abs(
       big - small
     );
 
-  /*
-    Don't force a prediction
-    when signals are too close.
-  */
 
-  if (difference < 4) {
-    return "NO CLEAR SIGNAL";
+  if (
+    difference < 4
+  ) {
+
+    return {
+      prediction:
+        "NO CLEAR SIGNAL"
+    };
   }
 
-  /* =================================================
-     L. ENGINE RESULT
-  ================================================= */
 
-  const engineResult =
+  const engine =
     big > small
       ? "BIG"
       : "SMALL";
 
-  /* =================================================
-     M. OPPOSITE DISPLAY
-  ================================================= */
 
-  return engineResult === "BIG"
-    ? "SMALL"
-    : "BIG";
-}
+  /*
+  IMPORTANT:
+  Existing opposite-prediction requirement.
+  */
 
+  const prediction =
+    engine === "BIG"
+      ? "SMALL"
+      : "BIG";
 
-/* =====================================================
-   FETCH WINGOBOT
-===================================================== */
-
-async function fetchHistory() {
-
-  if (!WINGOBOT_TOKEN) {
-
-    throw new Error(
-      "WINGOBOT_TOKEN is not configured."
-    );
-  }
-
-  const response =
-    await fetch(
-      API_URL,
-      {
-        method: "GET",
-
-        headers: {
-          Authorization:
-            `Bearer ${WINGOBOT_TOKEN}`,
-
-          Accept:
-            "application/json",
-
-          "User-Agent":
-            "DY-AI-Wingo-1Min/2.0"
-        },
-
-        cache: "no-store"
-      }
-    );
-
-  const text =
-    await response.text();
-
-  let data;
-
-  try {
-    data = JSON.parse(text);
-  } catch {
-
-    throw new Error(
-      "Invalid JSON received from API."
-    );
-  }
-
-  if (!response.ok) {
-
-    throw new Error(
-      data?.error ||
-      data?.message ||
-      `API HTTP ${response.status}`
-    );
-  }
-
-  if (data?.success === false) {
-
-    throw new Error(
-      data?.error ||
-      "WingoBot API error."
-    );
-  }
-
-  const history =
-    Array.isArray(data?.history)
-      ? data.history
-          .map(normalizeRow)
-          .filter(Boolean)
-      : [];
-
-  const current =
-    data?.current?.issueNumber ??
-    data?.current?.period ??
-    data?.current?.periodId ??
-    null;
 
   return {
-    history,
-    current
+    prediction
   };
 }
 
 
-/* =====================================================
-   API ENDPOINT
-===================================================== */
+/*
+=====================================================
+HEALTH
+=====================================================
+*/
+
+app.get(
+  "/api/health",
+  (req, res) => {
+
+    res.json({
+
+      success: true,
+
+      liveApiConfigured:
+        Boolean(LIVE_API_URL),
+
+      tokenConfigured:
+        Boolean(LIVE_API_TOKEN),
+
+      time:
+        new Date().toISOString()
+
+    });
+  }
+);
+
+
+/*
+=====================================================
+LIVE DATA ENDPOINT
+=====================================================
+*/
 
 app.get(
   "/api/history",
@@ -623,14 +863,17 @@ app.get(
     try {
 
       const result =
-        await fetchHistory();
+        await fetchLiveData();
+
 
       res.set(
         "Cache-Control",
         "no-store, no-cache, must-revalidate"
       );
 
+
       res.json({
+
         success: true,
 
         current: {
@@ -639,35 +882,42 @@ app.get(
         },
 
         history:
-          result.history.slice(0, 20),
+          result.history
+            .slice(0, 20),
 
         serverTime:
-          new Date().toISOString()
+          Date.now()
+
       });
 
-    } catch (error) {
+    }
+
+    catch (error) {
 
       console.error(
-        "API ERROR:",
+        "LIVE API ERROR:",
         error.message
       );
+
 
       res.status(502).json({
 
         success: false,
 
         error:
-          error.message ||
-          "Unable to fetch live data."
+          error.message
+
       });
     }
   }
 );
 
 
-/* =====================================================
-   ADMIN
-===================================================== */
+/*
+=====================================================
+ADMIN CHECK
+=====================================================
+*/
 
 app.post(
   "/api/admin/check",
@@ -678,23 +928,34 @@ app.post(
         req.body?.key || ""
       ).trim();
 
+
     if (!ADMIN_KEY) {
 
       return res.status(500).json({
+
         success: false,
+
         error:
           "ADMIN_KEY is not configured."
+
       });
     }
 
-    if (key !== ADMIN_KEY) {
+
+    if (
+      key !== ADMIN_KEY
+    ) {
 
       return res.status(401).json({
+
         success: false,
+
         error:
           "Invalid admin key."
+
       });
     }
+
 
     res.json({
       success: true
@@ -703,9 +964,11 @@ app.post(
 );
 
 
-/* =====================================================
-   PAGES
-===================================================== */
+/*
+=====================================================
+PAGES
+=====================================================
+*/
 
 app.get(
   "/",
@@ -720,6 +983,7 @@ app.get(
   }
 );
 
+
 app.get(
   "/prediction",
   (req, res) => {
@@ -732,6 +996,7 @@ app.get(
     );
   }
 );
+
 
 app.get(
   "/admin",
@@ -747,24 +1012,32 @@ app.get(
 );
 
 
-/* =====================================================
-   404
-===================================================== */
+/*
+=====================================================
+404
+=====================================================
+*/
 
 app.use(
   (req, res) => {
 
     res.status(404).json({
+
       success: false,
-      error: "Route not found."
+
+      error:
+        "Route not found."
+
     });
   }
 );
 
 
-/* =====================================================
-   START
-===================================================== */
+/*
+=====================================================
+START
+=====================================================
+*/
 
 app.listen(
   PORT,
@@ -775,7 +1048,7 @@ app.listen(
     );
 
     console.log(
-      " DY AI WINGO 1 MINUTE v2"
+      " DY AI WINGO LIVE v3"
     );
 
     console.log(
@@ -788,13 +1061,15 @@ app.listen(
     );
 
     console.log(
-      "API:",
-      API_URL
+      "LIVE API:",
+      LIVE_API_URL
+        ? "CONFIGURED"
+        : "NOT CONFIGURED"
     );
 
     console.log(
       "TOKEN:",
-      WINGOBOT_TOKEN
+      LIVE_API_TOKEN
         ? "CONFIGURED"
         : "NOT CONFIGURED"
     );
