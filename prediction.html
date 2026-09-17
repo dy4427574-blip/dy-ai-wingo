@@ -1,272 +1,578 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>DY AI • Wingo 1 Minute</title>
+
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1.0"
+>
+
+<title>
+DY AI • Wingo 1 Minute
+</title>
+
 
 <style>
+
 *{
   box-sizing:border-box;
   margin:0;
   padding:0;
 }
 
+
 body{
+
   min-height:100vh;
-  font-family:Arial,Helvetica,sans-serif;
-  background:
-    radial-gradient(circle at top,#172746,#070910 48%,#030408);
+
+  font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
+
   color:#fff;
+
+  background:
+    radial-gradient(
+      circle at top,
+      #172746,
+      #070910 48%,
+      #030408
+    );
+
 }
+
 
 .wrap{
+
   width:min(650px,94%);
+
   margin:auto;
-  padding:18px 0 35px;
+
+  padding:
+    18px
+    0
+    35px;
+
 }
+
+
+/* =====================================================
+   HEADER
+===================================================== */
 
 .header{
+
   display:flex;
+
   align-items:center;
+
   justify-content:space-between;
-  padding:17px 19px;
+
+  padding:
+    17px
+    19px;
+
   border-radius:20px;
-  background:rgba(12,18,30,.92);
-  border:1px solid rgba(255,255,255,.09);
+
+  background:
+    rgba(12,18,30,.92);
+
+  border:
+    1px solid
+    rgba(255,255,255,.09);
+
+  box-shadow:
+    0 15px 45px
+    rgba(0,0,0,.30);
+
 }
+
 
 .logo{
+
   font-size:23px;
+
   font-weight:900;
+
 }
+
 
 .logo span{
+
   color:#00eaff;
+
 }
+
 
 .api{
+
   display:flex;
+
   align-items:center;
+
   gap:7px;
+
   color:#8f9caf;
+
   font-size:11px;
+
 }
+
 
 .dot{
+
   width:8px;
+
   height:8px;
+
   border-radius:50%;
+
   background:#ff526b;
+
 }
+
 
 .dot.on{
+
   background:#19e58b;
-  box-shadow:0 0 12px #19e58b;
+
+  box-shadow:
+    0 0 12px
+    #19e58b;
+
 }
+
+
+/* =====================================================
+   PREDICTION
+===================================================== */
 
 .prediction{
+
   margin-top:18px;
-  padding:27px 20px;
+
+  padding:
+    27px
+    20px;
+
   text-align:center;
+
   border-radius:23px;
+
   background:
-    linear-gradient(145deg,
+    linear-gradient(
+      145deg,
       rgba(18,40,70,.97),
-      rgba(9,14,25,.98));
-  border:1px solid rgba(0,234,255,.18);
-  box-shadow:0 15px 45px rgba(0,0,0,.3);
+      rgba(9,14,25,.98)
+    );
+
+  border:
+    1px solid
+    rgba(0,234,255,.18);
+
+  box-shadow:
+    0 15px 45px
+    rgba(0,0,0,.30);
+
 }
 
-.small-title{
+
+.game{
+
   color:#75dfff;
+
   font-size:11px;
+
   font-weight:800;
+
   letter-spacing:2px;
+
 }
 
-.prediction h1{
+
+.next{
+
   margin-top:9px;
-  font-size:15px;
+
   color:#9ba8bb;
+
+  font-size:15px;
+
   font-weight:600;
+
 }
+
 
 .result{
+
   margin-top:13px;
+
   font-size:44px;
+
   font-weight:1000;
+
   letter-spacing:1px;
+
 }
+
 
 .result.big{
+
   color:#ff7188;
-  text-shadow:0 0 25px rgba(255,113,136,.25);
+
+  text-shadow:
+    0 0 25px
+    rgba(255,113,136,.25);
+
 }
+
 
 .result.small{
+
   color:#51ddff;
-  text-shadow:0 0 25px rgba(81,221,255,.25);
+
+  text-shadow:
+    0 0 25px
+    rgba(81,221,255,.25);
+
 }
+
 
 .result.wait{
+
   color:#aab4c5;
-  font-size:30px;
+
+  font-size:28px;
+
 }
+
+
+.period-label{
+
+  margin-top:13px;
+
+  color:#66748b;
+
+  font-size:9px;
+
+  text-transform:uppercase;
+
+  letter-spacing:1px;
+
+}
+
 
 .period{
-  margin-top:9px;
-  color:#77859b;
-  font-size:11px;
+
+  margin-top:4px;
+
+  color:#8794a9;
+
+  font-size:12px;
+
+  font-weight:700;
+
   overflow:hidden;
+
   text-overflow:ellipsis;
+
   white-space:nowrap;
+
 }
 
-.history{
-  margin-top:18px;
-  padding:20px;
-  border-radius:22px;
-  background:rgba(9,14,24,.94);
-  border:1px solid rgba(255,255,255,.08);
-}
-
-.history-title{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:15px;
-}
-
-.history-title h2{
-  font-size:18px;
-}
-
-.live-text{
-  font-size:10px;
-  color:#19e58b;
-  font-weight:800;
-}
-
-table{
-  width:100%;
-  border-collapse:collapse;
-}
-
-th,td{
-  padding:12px 8px;
-  border-bottom:1px solid rgba(255,255,255,.07);
-  text-align:left;
-  font-size:12px;
-}
-
-th{
-  color:#718097;
-  font-size:9px;
-  text-transform:uppercase;
-}
-
-td:first-child{
-  color:#6f7c91;
-}
-
-.number{
-  font-size:18px;
-  font-weight:900;
-}
-
-.badge{
-  display:inline-block;
-  padding:5px 9px;
-  border-radius:999px;
-  font-size:9px;
-  font-weight:900;
-}
-
-.badge.big{
-  color:#ff7b91;
-  background:rgba(255,113,136,.12);
-}
-
-.badge.small{
-  color:#55ddff;
-  background:rgba(81,221,255,.12);
-}
-
-.empty{
-  padding:25px 5px;
-  text-align:center;
-  color:#6e7b90;
-  font-size:12px;
-}
 
 .error{
+
   margin-top:10px;
+
   color:#ff7188;
+
   font-size:11px;
+
 }
+
+
+/* =====================================================
+   HISTORY
+===================================================== */
+
+.history{
+
+  margin-top:18px;
+
+  padding:20px;
+
+  border-radius:22px;
+
+  background:
+    rgba(9,14,24,.94);
+
+  border:
+    1px solid
+    rgba(255,255,255,.08);
+
+}
+
+
+.history-head{
+
+  display:flex;
+
+  justify-content:space-between;
+
+  align-items:center;
+
+  margin-bottom:15px;
+
+}
+
+
+.history-head h2{
+
+  font-size:18px;
+
+}
+
+
+.live{
+
+  color:#19e58b;
+
+  font-size:10px;
+
+  font-weight:800;
+
+}
+
+
+.table-wrap{
+
+  width:100%;
+
+  overflow-x:auto;
+
+}
+
+
+table{
+
+  width:100%;
+
+  border-collapse:collapse;
+
+  min-width:520px;
+
+}
+
+
+th,
+td{
+
+  padding:
+    12px
+    8px;
+
+  text-align:left;
+
+  border-bottom:
+    1px solid
+    rgba(255,255,255,.07);
+
+  font-size:12px;
+
+}
+
+
+th{
+
+  color:#718097;
+
+  font-size:9px;
+
+  text-transform:uppercase;
+
+}
+
+
+.number{
+
+  font-size:18px;
+
+  font-weight:900;
+
+}
+
+
+.badge{
+
+  display:inline-block;
+
+  padding:
+    5px
+    9px;
+
+  border-radius:999px;
+
+  font-size:9px;
+
+  font-weight:900;
+
+}
+
+
+.badge.big{
+
+  color:#ff7b91;
+
+  background:
+    rgba(255,113,136,.12);
+
+}
+
+
+.badge.small{
+
+  color:#55ddff;
+
+  background:
+    rgba(81,221,255,.12);
+
+}
+
+
+.empty{
+
+  padding:
+    25px
+    5px;
+
+  text-align:center;
+
+  color:#6e7b90;
+
+  font-size:12px;
+
+}
+
 
 @media(max-width:450px){
 
   .wrap{
+
     width:93%;
+
   }
+
 
   .result{
+
     font-size:38px;
+
   }
 
-  th,td{
-    padding:11px 5px;
+
+  th,
+  td{
+
+    padding:
+      11px
+      5px;
+
   }
 
 }
+
 </style>
+
 </head>
+
 
 <body>
 
+
 <div class="wrap">
 
-  <!-- HEADER -->
 
-  <div class="header">
+  <!-- =================================================
+       HEADER
+  ================================================== -->
+
+  <header class="header">
 
     <div class="logo">
-      DY <span>AI</span>
+
+      DY
+      <span>AI</span>
+
     </div>
+
 
     <div class="api">
-      <span id="dot" class="dot"></span>
-      <span id="apiText">CONNECTING</span>
+
+      <span
+        id="dot"
+        class="dot">
+      </span>
+
+      <span
+        id="apiText">
+        CONNECTING
+      </span>
+
     </div>
 
-  </div>
+  </header>
 
 
-  <!-- ONLY PREDICTION -->
+
+  <!-- =================================================
+       PREDICTION
+  ================================================== -->
 
   <section class="prediction">
 
-    <div class="small-title">
+    <div class="game">
+
       WINGO 1 MINUTE
+
     </div>
 
-    <h1>
+
+    <div class="next">
+
       NEXT ROUND
-    </h1>
+
+    </div>
+
 
     <div
       id="prediction"
       class="result wait">
+
       ANALYZING...
+
     </div>
+
+
+    <div class="period-label">
+
+      PERIOD
+
+    </div>
+
 
     <div
       id="period"
       class="period">
+
       —
+
     </div>
+
 
     <div
       id="error"
@@ -276,50 +582,77 @@ td:first-child{
   </section>
 
 
-  <!-- ONLY HISTORY -->
+
+  <!-- =================================================
+       HISTORY
+  ================================================== -->
 
   <section class="history">
 
-    <div class="history-title">
+    <div class="history-head">
 
       <h2>
         History
       </h2>
 
-      <span class="live-text">
+      <span class="live">
         ● LIVE
       </span>
 
     </div>
 
-    <table>
 
-      <thead>
+    <div class="table-wrap">
 
-        <tr>
-          <th>#</th>
-          <th>Period</th>
-          <th>Number</th>
-          <th>Size</th>
-        </tr>
+      <table>
 
-      </thead>
+        <thead>
 
-      <tbody id="historyBody">
+          <tr>
 
-      </tbody>
+            <th>
+              #
+            </th>
 
-    </table>
+            <th>
+              Period
+            </th>
+
+            <th>
+              Number
+            </th>
+
+            <th>
+              Size
+            </th>
+
+          </tr>
+
+        </thead>
+
+
+        <tbody
+          id="historyBody">
+        </tbody>
+
+      </table>
+
+    </div>
+
 
     <div
       id="empty"
       class="empty">
+
       Loading history...
+
     </div>
 
   </section>
 
+
 </div>
+
 
 
 <script>
@@ -330,105 +663,204 @@ td:first-child{
 
 const SAMPLE_SIZE = 20;
 
-
-/* =====================================================
-   ELEMENTS
-===================================================== */
-
-const $ = id =>
-  document.getElementById(id);
+const REFRESH_MS = 15000;
 
 
 /* =====================================================
-   LOAD DATA
+   ELEMENT
 ===================================================== */
 
-async function loadData(){
+const $ =
+  id =>
+    document.getElementById(id);
+
+
+/* =====================================================
+   PERIOD HELPERS
+===================================================== */
+
+
+/*
+ * Convert numeric-looking period to BigInt.
+ */
+
+function numericPeriod(value){
+
+  const str =
+    String(
+      value ?? ""
+    ).trim();
+
+
+  if(
+    /^\d+$/.test(str)
+  ){
+
+    try{
+
+      return BigInt(str);
+
+    }
+    catch{
+
+      return null;
+
+    }
+
+  }
+
+
+  return null;
+
+}
+
+
+/*
+ * Add one to a period while preserving
+ * leading zeroes when applicable.
+ */
+
+function incrementPeriod(value){
+
+  const str =
+    String(
+      value ?? ""
+    ).trim();
+
+
+  if(!str){
+
+    return null;
+
+  }
+
+
+  if(
+    /^\d+$/.test(str)
+  ){
+
+    try{
+
+      return (
+        BigInt(str) + 1n
+      ).toString();
+
+    }
+    catch{
+
+      return null;
+
+    }
+
+  }
+
+
+  const match =
+    str.match(
+      /^(.*?)(\d+)$/
+    );
+
+
+  if(!match){
+
+    return null;
+
+  }
+
 
   try{
 
-    const response =
-      await fetch(
-        "/api/history?time=" +
-        Date.now(),
-        {
-          cache:"no-store"
-        }
+    const prefix =
+      match[1];
+
+    const digits =
+      match[2];
+
+    const next =
+      (
+        BigInt(digits) + 1n
+      )
+      .toString()
+      .padStart(
+        digits.length,
+        "0"
       );
 
-    const data =
-      await response.json();
 
-    if(
-      !response.ok ||
-      !data.success
-    ){
-
-      throw new Error(
-        data.error ||
-        "API error"
-      );
-
-    }
-
-    const history =
-      Array.isArray(data.history)
-        ? data.history
-        : [];
-
-    if(!history.length){
-
-      throw new Error(
-        "No history received"
-      );
-
-    }
-
-    $("dot")
-      .classList
-      .add("on");
-
-    $("apiText")
-      .textContent = "LIVE";
-
-    $("error")
-      .textContent = "";
-
-    renderHistory(history);
-
-    calculatePrediction(history);
+    return prefix + next;
 
   }
-  catch(error){
+  catch{
 
-    console.error(error);
-
-    $("dot")
-      .classList
-      .remove("on");
-
-    $("apiText")
-      .textContent = "OFFLINE";
-
-    $("prediction")
-      .textContent =
-      "WAITING";
-
-    $("prediction")
-      .className =
-      "result wait";
-
-    $("error")
-      .textContent =
-      "Live data unavailable.";
+    return null;
 
   }
 
 }
 
 
+/*
+ * Decide the correct prediction period.
+ *
+ * Priority:
+ *
+ * 1. API current period if it is ahead
+ *    of latest settled history.
+ *
+ * 2. Otherwise latest history + 1.
+ */
+
+function getPredictionPeriod(
+  apiCurrent,
+  latestHistory
+){
+
+  const current =
+    numericPeriod(
+      apiCurrent
+    );
+
+
+  const latest =
+    numericPeriod(
+      latestHistory
+    );
+
+
+  if(
+    current !== null &&
+    latest !== null
+  ){
+
+    if(current > latest){
+
+      return String(
+        apiCurrent
+      );
+
+    }
+
+  }
+
+
+  const next =
+    incrementPeriod(
+      latestHistory
+    );
+
+
+  return next ||
+    String(
+      apiCurrent ||
+      latestHistory ||
+      "—"
+    );
+
+}
+
+
 /* =====================================================
-   CONVERT NUMBER
+   NUMBER → BIG/SMALL
 ===================================================== */
 
 function getSize(number){
@@ -436,13 +868,17 @@ function getSize(number){
   const n =
     Number(number);
 
+
   if(
-    !Number.isFinite(n)
+    !Number.isFinite(n) ||
+    n < 0 ||
+    n > 9
   ){
 
     return null;
 
   }
+
 
   return n <= 4
     ? "SMALL"
@@ -452,399 +888,50 @@ function getSize(number){
 
 
 /* =====================================================
-   NORMALIZE HISTORY
+   NORMALIZE
 ===================================================== */
 
 function normalize(history){
 
   return history
+
     .map(item => {
 
       const number =
         Number(item.number);
 
+
       const size =
         item.size ||
         getSize(number);
 
+
       return {
+
         issueNumber:
           item.issueNumber ??
           item.period ??
+          item.periodId ??
           "—",
 
         number,
 
         size
+
       };
 
     })
+
     .filter(
-      x =>
-        Number.isFinite(x.number) &&
+      item =>
+        Number.isFinite(
+          item.number
+        ) &&
         (
-          x.size === "BIG" ||
-          x.size === "SMALL"
+          item.size === "BIG" ||
+          item.size === "SMALL"
         )
     );
-
-}
-
-
-/* =====================================================
-   MULTI-FACTOR ANALYSIS
-===================================================== */
-
-function calculatePrediction(rawHistory){
-
-  const history =
-    normalize(rawHistory)
-      .slice(0,SAMPLE_SIZE);
-
-
-  if(history.length < 8){
-
-    setPrediction(
-      "WAITING",
-      null
-    );
-
-    $("period").textContent =
-      history[0]?.issueNumber ||
-      "—";
-
-    return;
-
-  }
-
-
-  /*
-   * IMPORTANT:
-   *
-   * This does NOT simply say:
-   * BIG count > SMALL count = BIG.
-   *
-   * Several sequence structures are examined.
-   */
-
-
-  let bigScore = 0;
-  let smallScore = 0;
-
-
-  /* ---------------------------------------------------
-     1. VERY RECENT WINDOW
-  --------------------------------------------------- */
-
-  const recent =
-    history.slice(0,5);
-
-
-  /*
-   * Recency-weighted sequence.
-   */
-
-  recent.forEach(
-    (item,index)=>{
-
-      const weight =
-        5 - index;
-
-      if(item.size === "BIG"){
-
-        bigScore += weight;
-
-      }else{
-
-        smallScore += weight;
-
-      }
-
-    }
-  );
-
-
-  /* ---------------------------------------------------
-     2. ALTERNATION DETECTION
-  --------------------------------------------------- */
-
-  const altLength =
-    alternatingLength(history);
-
-
-  if(altLength >= 5){
-
-    /*
-     * If the latest sequence is strongly alternating,
-     * continue the detected alternating structure
-     * as one analysis signal.
-     */
-
-    const last =
-      history[0].size;
-
-    const previous =
-      history[1]?.size;
-
-    if(
-      last &&
-      previous &&
-      last !== previous
-    ){
-
-      /*
-       * Current sequence is alternating.
-       * The next member of a strict alternation
-       * would be opposite to the latest.
-       */
-
-      if(last === "BIG"){
-
-        smallScore += 8;
-
-      }else{
-
-        bigScore += 8;
-
-      }
-
-    }
-
-  }
-
-
-  /* ---------------------------------------------------
-     3. STREAK STRUCTURE
-  --------------------------------------------------- */
-
-  const streak =
-    getStreak(history);
-
-
-  if(streak.length >= 3){
-
-    /*
-     * Long streak is treated as a pattern signal,
-     * but NOT as an automatic opposite prediction.
-     */
-
-    if(streak.side === "BIG"){
-
-      bigScore +=
-        Math.min(
-          streak.length * 1.2,
-          6
-        );
-
-    }else{
-
-      smallScore +=
-        Math.min(
-          streak.length * 1.2,
-          6
-        );
-
-    }
-
-  }
-
-
-  /* ---------------------------------------------------
-     4. STREAK BREAK STRUCTURE
-  --------------------------------------------------- */
-
-  const breakSignal =
-    detectBreak(history);
-
-
-  if(breakSignal){
-
-    if(
-      breakSignal === "BIG"
-    ){
-
-      bigScore += 5;
-
-    }else{
-
-      smallScore += 5;
-
-    }
-
-  }
-
-
-  /* ---------------------------------------------------
-     5. LAST 3/4 PATTERN MATCH
-  --------------------------------------------------- */
-
-  const patternSignal =
-    findRepeatedPattern(history);
-
-
-  if(patternSignal){
-
-    if(
-      patternSignal === "BIG"
-    ){
-
-      bigScore += 7;
-
-    }else{
-
-      smallScore += 7;
-
-    }
-
-  }
-
-
-  /* ---------------------------------------------------
-     6. NUMBER-LEVEL STRUCTURE
-  --------------------------------------------------- */
-
-  const numberSignal =
-    digitStructure(history);
-
-
-  if(numberSignal){
-
-    if(
-      numberSignal === "BIG"
-    ){
-
-      bigScore += 4;
-
-    }else{
-
-      smallScore += 4;
-
-    }
-
-  }
-
-
-  /* ---------------------------------------------------
-     7. SHORT VS LONG STRUCTURE
-  --------------------------------------------------- */
-
-  const shortSignal =
-    windowSignal(
-      history.slice(0,5)
-    );
-
-  const longSignal =
-    windowSignal(
-      history.slice(0,10)
-    );
-
-
-  /*
-   * Only add if the signals agree.
-   * This prevents a single majority count
-   * from controlling the result.
-   */
-
-  if(
-    shortSignal &&
-    shortSignal === longSignal
-  ){
-
-    if(shortSignal === "BIG"){
-
-      bigScore += 5;
-
-    }else{
-
-      smallScore += 5;
-
-    }
-
-  }
-
-
-  /* ---------------------------------------------------
-     FINAL DECISION
-  --------------------------------------------------- */
-
-  const difference =
-    Math.abs(
-      bigScore -
-      smallScore
-    );
-
-
-  /*
-   * If signals are almost equal,
-   * don't force a direction.
-   */
-
-  if(
-    difference < 3
-  ){
-
-    setPrediction(
-      "NO CLEAR SIGNAL",
-      history[0]?.issueNumber
-    );
-
-    return;
-
-  }
-
-
-  const result =
-    bigScore > smallScore
-      ? "BIG"
-      : "SMALL";
-
-
-  setPrediction(
-    result,
-    history[0]?.issueNumber
-  );
-
-}
-
-
-/* =====================================================
-   ALTERNATION LENGTH
-===================================================== */
-
-function alternatingLength(history){
-
-  if(history.length < 2){
-
-    return 1;
-
-  }
-
-  let length = 1;
-
-
-  for(
-    let i = 1;
-    i < history.length;
-    i++
-  ){
-
-    if(
-      history[i].size !==
-      history[i-1].size
-    ){
-
-      length++;
-
-    }else{
-
-      break;
-
-    }
-
-  }
-
-
-  return length;
 
 }
 
@@ -877,11 +964,14 @@ function getStreak(history){
     of history
   ){
 
-    if(item.size === side){
+    if(
+      item.size === side
+    ){
 
       length++;
 
-    }else{
+    }
+    else{
 
       break;
 
@@ -899,12 +989,130 @@ function getStreak(history){
 
 
 /* =====================================================
-   BREAK DETECTION
+   ALTERNATION
 ===================================================== */
 
-function detectBreak(history){
+function alternatingLength(history){
 
-  if(history.length < 5){
+  if(
+    history.length < 2
+  ){
+
+    return 1;
+
+  }
+
+
+  let length = 1;
+
+
+  for(
+    let i = 1;
+    i < history.length;
+    i++
+  ){
+
+    if(
+      history[i].size !==
+      history[i-1].size
+    ){
+
+      length++;
+
+    }
+    else{
+
+      break;
+
+    }
+
+  }
+
+
+  return length;
+
+}
+
+
+/* =====================================================
+   REPEATED PATTERN
+===================================================== */
+
+function findRepeatedPattern(
+  history
+){
+
+  if(
+    history.length < 8
+  ){
+
+    return null;
+
+  }
+
+
+  const current =
+    history
+      .slice(0,3)
+      .map(
+        x => x.size
+      )
+      .join("-");
+
+
+  for(
+    let i = 3;
+    i <= history.length - 4;
+    i++
+  ){
+
+    const oldPattern =
+      history
+        .slice(i,i+3)
+        .map(
+          x => x.size
+        )
+        .join("-");
+
+
+    if(
+      oldPattern === current
+    ){
+
+      const following =
+        history[i-1]?.size;
+
+
+      if(
+        following === "BIG" ||
+        following === "SMALL"
+      ){
+
+        return following;
+
+      }
+
+    }
+
+  }
+
+
+  return null;
+
+}
+
+
+/* =====================================================
+   BREAK SIGNAL
+===================================================== */
+
+function detectBreak(
+  history
+){
+
+  if(
+    history.length < 5
+  ){
 
     return null;
 
@@ -914,12 +1122,13 @@ function detectBreak(history){
   const latest =
     history[0].size;
 
-
   const previous =
     history[1].size;
 
 
-  if(latest === previous){
+  if(
+    latest === previous
+  ){
 
     return null;
 
@@ -942,7 +1151,8 @@ function detectBreak(history){
 
       oldStreak++;
 
-    }else{
+    }
+    else{
 
       break;
 
@@ -951,7 +1161,9 @@ function detectBreak(history){
   }
 
 
-  if(oldStreak >= 3){
+  if(
+    oldStreak >= 3
+  ){
 
     return latest;
 
@@ -964,77 +1176,16 @@ function detectBreak(history){
 
 
 /* =====================================================
-   REPEATED PATTERN
+   NUMBER STRUCTURE
 ===================================================== */
 
-function findRepeatedPattern(history){
+function digitStructure(
+  history
+){
 
-  if(history.length < 8){
-
-    return null;
-
-  }
-
-
-  /*
-   * Look for a previous 3-result pattern
-   * and inspect what followed it.
-   */
-
-  const current =
-    history
-      .slice(0,3)
-      .map(x => x.size)
-      .join("-");
-
-
-  for(
-    let i = 3;
-    i <= history.length - 4;
-    i++
+  if(
+    history.length < 5
   ){
-
-    const oldPattern =
-      history
-        .slice(i,i+3)
-        .map(x => x.size)
-        .join("-");
-
-
-    if(
-      oldPattern === current
-    ){
-
-      const next =
-        history[i-1]?.size;
-
-
-      if(
-        next === "BIG" ||
-        next === "SMALL"
-      ){
-
-        return next;
-
-      }
-
-    }
-
-  }
-
-
-  return null;
-
-}
-
-
-/* =====================================================
-   DIGIT STRUCTURE
-===================================================== */
-
-function digitStructure(history){
-
-  if(history.length < 5){
 
     return null;
 
@@ -1045,14 +1196,11 @@ function digitStructure(history){
     history.slice(0,5);
 
 
-  /*
-   * Check parity-like grouping around the
-   * BIG/SMALL boundary without using simple
-   * total frequency.
-   */
+  let high =
+    0;
 
-  let highBig = 0;
-  let lowSmall = 0;
+  let low =
+    0;
 
 
   recent.forEach(item => {
@@ -1061,7 +1209,7 @@ function digitStructure(history){
       item.number >= 7
     ){
 
-      highBig++;
+      high++;
 
     }
 
@@ -1070,7 +1218,7 @@ function digitStructure(history){
       item.number <= 2
     ){
 
-      lowSmall++;
+      low++;
 
     }
 
@@ -1078,8 +1226,8 @@ function digitStructure(history){
 
 
   if(
-    highBig >= 3 &&
-    lowSmall <= 1
+    high >= 3 &&
+    low <= 1
   ){
 
     return "BIG";
@@ -1088,8 +1236,8 @@ function digitStructure(history){
 
 
   if(
-    lowSmall >= 3 &&
-    highBig <= 1
+    low >= 3 &&
+    high <= 1
   ){
 
     return "SMALL";
@@ -1106,7 +1254,9 @@ function digitStructure(history){
    WINDOW SIGNAL
 ===================================================== */
 
-function windowSignal(history){
+function windowSignal(
+  history
+){
 
   if(!history.length){
 
@@ -1124,11 +1274,15 @@ function windowSignal(history){
       const weight =
         history.length - index;
 
-      if(item.size === "BIG"){
+
+      if(
+        item.size === "BIG"
+      ){
 
         score += weight;
 
-      }else{
+      }
+      else{
 
         score -= weight;
 
@@ -1139,9 +1293,7 @@ function windowSignal(history){
 
 
   /*
-   * Return null when the window itself is
-   * too balanced. This stops simple majority
-   * from dominating.
+   * Do not use a weak majority signal.
    */
 
   if(
@@ -1155,6 +1307,302 @@ function windowSignal(history){
 
 
   return score > 0
+    ? "BIG"
+    : "SMALL";
+
+}
+
+
+/* =====================================================
+   MULTI FACTOR ANALYSIS
+===================================================== */
+
+function calculatePrediction(
+  rawHistory
+){
+
+  const history =
+    normalize(rawHistory)
+      .slice(
+        0,
+        SAMPLE_SIZE
+      );
+
+
+  if(
+    history.length < 8
+  ){
+
+    return "NO CLEAR SIGNAL";
+
+  }
+
+
+  let bigScore =
+    0;
+
+  let smallScore =
+    0;
+
+
+  /* -----------------------------------------------
+     Recent weighted sequence
+  ------------------------------------------------ */
+
+  const recent =
+    history.slice(0,5);
+
+
+  recent.forEach(
+    (item,index)=>{
+
+      const weight =
+        5 - index;
+
+
+      if(
+        item.size === "BIG"
+      ){
+
+        bigScore += weight;
+
+      }
+      else{
+
+        smallScore += weight;
+
+      }
+
+    }
+  );
+
+
+  /* -----------------------------------------------
+     Alternation
+  ------------------------------------------------ */
+
+  const alt =
+    alternatingLength(
+      history
+    );
+
+
+  if(
+    alt >= 5 &&
+    history[0] &&
+    history[1]
+  ){
+
+    if(
+      history[0].size !==
+      history[1].size
+    ){
+
+      if(
+        history[0].size ===
+        "BIG"
+      ){
+
+        smallScore += 8;
+
+      }
+      else{
+
+        bigScore += 8;
+
+      }
+
+    }
+
+  }
+
+
+  /* -----------------------------------------------
+     Streak
+  ------------------------------------------------ */
+
+  const streak =
+    getStreak(
+      history
+    );
+
+
+  if(
+    streak.length >= 3
+  ){
+
+    if(
+      streak.side === "BIG"
+    ){
+
+      bigScore +=
+        Math.min(
+          streak.length * 1.2,
+          6
+        );
+
+    }
+    else{
+
+      smallScore +=
+        Math.min(
+          streak.length * 1.2,
+          6
+        );
+
+    }
+
+  }
+
+
+  /* -----------------------------------------------
+     Break
+  ------------------------------------------------ */
+
+  const breakSignal =
+    detectBreak(
+      history
+    );
+
+
+  if(
+    breakSignal === "BIG"
+  ){
+
+    bigScore += 5;
+
+  }
+
+
+  if(
+    breakSignal === "SMALL"
+  ){
+
+    smallScore += 5;
+
+  }
+
+
+  /* -----------------------------------------------
+     Repeated pattern
+  ------------------------------------------------ */
+
+  const pattern =
+    findRepeatedPattern(
+      history
+    );
+
+
+  if(
+    pattern === "BIG"
+  ){
+
+    bigScore += 7;
+
+  }
+
+
+  if(
+    pattern === "SMALL"
+  ){
+
+    smallScore += 7;
+
+  }
+
+
+  /* -----------------------------------------------
+     Digit structure
+  ------------------------------------------------ */
+
+  const digit =
+    digitStructure(
+      history
+    );
+
+
+  if(
+    digit === "BIG"
+  ){
+
+    bigScore += 4;
+
+  }
+
+
+  if(
+    digit === "SMALL"
+  ){
+
+    smallScore += 4;
+
+  }
+
+
+  /* -----------------------------------------------
+     Short/long agreement
+  ------------------------------------------------ */
+
+  const short =
+    windowSignal(
+      history.slice(0,5)
+    );
+
+
+  const long =
+    windowSignal(
+      history.slice(0,10)
+    );
+
+
+  if(
+    short &&
+    long &&
+    short === long
+  ){
+
+    if(
+      short === "BIG"
+    ){
+
+      bigScore += 5;
+
+    }
+    else{
+
+      smallScore += 5;
+
+    }
+
+  }
+
+
+  /* -----------------------------------------------
+     Final
+  ------------------------------------------------ */
+
+  const difference =
+    Math.abs(
+      bigScore -
+      smallScore
+    );
+
+
+  /*
+   * Avoid forcing a result when signals
+   * are nearly equal.
+   */
+
+  if(
+    difference < 3
+  ){
+
+    return "NO CLEAR SIGNAL";
+
+  }
+
+
+  return bigScore > smallScore
     ? "BIG"
     : "SMALL";
 
@@ -1196,14 +1644,20 @@ function setPrediction(
 
 
 /* =====================================================
-   HISTORY
+   HISTORY TABLE
 ===================================================== */
 
-function renderHistory(rawHistory){
+function renderHistory(
+  rawHistory
+){
 
   const history =
-    normalize(rawHistory)
-      .slice(0,20);
+    normalize(
+      rawHistory
+    ).slice(
+      0,
+      20
+    );
 
 
   const body =
@@ -1213,7 +1667,9 @@ function renderHistory(rawHistory){
   body.innerHTML = "";
 
 
-  if(!history.length){
+  if(
+    !history.length
+  ){
 
     $("empty").style.display =
       "block";
@@ -1234,10 +1690,12 @@ function renderHistory(rawHistory){
     (item,index)=>{
 
       const tr =
-        document.createElement("tr");
+        document.createElement(
+          "tr"
+        );
 
 
-      const cls =
+      const badgeClass =
         item.size === "BIG"
           ? "big"
           : "small";
@@ -1260,7 +1718,8 @@ function renderHistory(rawHistory){
         </td>
 
         <td>
-          <span class="badge ${cls}">
+          <span
+            class="badge ${badgeClass}">
             ${item.size}
           </span>
         </td>
@@ -1283,11 +1742,194 @@ function renderHistory(rawHistory){
 function escapeHtml(value){
 
   return String(value)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
+
+    .replaceAll(
+      "&",
+      "&amp;"
+    )
+
+    .replaceAll(
+      "<",
+      "&lt;"
+    )
+
+    .replaceAll(
+      ">",
+      "&gt;"
+    )
+
+    .replaceAll(
+      '"',
+      "&quot;"
+    )
+
+    .replaceAll(
+      "'",
+      "&#039;"
+    );
+
+}
+
+
+/* =====================================================
+   MAIN RENDER
+===================================================== */
+
+function render(data){
+
+  const history =
+    Array.isArray(
+      data.history
+    )
+      ? data.history
+      : [];
+
+
+  if(
+    !history.length
+  ){
+
+    setPrediction(
+      "WAITING",
+      "—"
+    );
+
+    return;
+
+  }
+
+
+  const latest =
+    normalize(history)[0];
+
+
+  /*
+   * THIS IS THE IMPORTANT FIX.
+   *
+   * History[0] = latest settled round.
+   *
+   * Prediction period =
+   * API current period if ahead,
+   * otherwise latest + 1.
+   */
+
+  const predictionPeriod =
+    getPredictionPeriod(
+
+      data?.current?.issueNumber,
+
+      latest?.issueNumber
+
+    );
+
+
+  const prediction =
+    calculatePrediction(
+      history
+    );
+
+
+  setPrediction(
+    prediction,
+    predictionPeriod
+  );
+
+
+  renderHistory(
+    history
+  );
+
+}
+
+
+/* =====================================================
+   LOAD
+===================================================== */
+
+async function loadData(){
+
+  try{
+
+    $("apiText").textContent =
+      "UPDATING";
+
+
+    const response =
+      await fetch(
+        "/api/history?ts=" +
+        Date.now(),
+        {
+          cache:"no-store"
+        }
+      );
+
+
+    const data =
+      await response.json();
+
+
+    if(
+      !response.ok ||
+      !data.success
+    ){
+
+      throw new Error(
+        data.error ||
+        "API request failed"
+      );
+
+    }
+
+
+    render(data);
+
+
+    $("dot")
+      .classList
+      .add("on");
+
+
+    $("apiText").textContent =
+      "LIVE";
+
+
+    $("error").textContent =
+      "";
+
+  }
+  catch(error){
+
+    console.error(
+      "LOAD ERROR:",
+      error
+    );
+
+
+    $("dot")
+      .classList
+      .remove("on");
+
+
+    $("apiText").textContent =
+      "OFFLINE";
+
+
+    $("prediction").textContent =
+      "WAITING";
+
+
+    $("prediction").className =
+      "result wait";
+
+
+    $("period").textContent =
+      "—";
+
+
+    $("error").textContent =
+      "Live data unavailable.";
+
+  }
 
 }
 
@@ -1299,16 +1941,13 @@ function escapeHtml(value){
 loadData();
 
 
-/*
- * Refresh every 15 seconds.
- */
-
 setInterval(
   loadData,
-  15000
+  REFRESH_MS
 );
 
 </script>
 
 </body>
+
 </html>
