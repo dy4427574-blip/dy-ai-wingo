@@ -2,9 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport"
-      content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <title>DY AI WinGo</title>
 
 <style>
@@ -16,11 +14,11 @@
 
 body{
   min-height:100vh;
-  background:
-    radial-gradient(circle at 50% -10%,#19213c 0,#080b15 38%,#020308 100%);
+  padding:14px;
   color:#fff;
+  background:
+    radial-gradient(circle at 50% -10%,#1b2340 0,#080b15 38%,#020307 100%);
   font-family:Arial,sans-serif;
-  padding:16px;
 }
 
 .wrap{
@@ -33,7 +31,7 @@ header{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  padding:15px 5px 24px;
+  padding:16px 5px 24px;
 }
 
 .logo{
@@ -43,16 +41,16 @@ header{
 }
 
 .sub{
-  color:#6e7897;
+  margin-top:8px;
+  color:#697492;
   font-size:10px;
   letter-spacing:5px;
-  margin-top:8px;
 }
 
 .online{
   display:flex;
   align-items:center;
-  gap:9px;
+  gap:8px;
   font-size:11px;
   font-weight:800;
 }
@@ -61,41 +59,42 @@ header{
   width:12px;
   height:12px;
   border-radius:50%;
-  background:#ff315e;
-  box-shadow:0 0 18px #ff315e;
+  background:#ff315d;
+  box-shadow:0 0 18px #ff315d;
 }
 
 .dot.ok{
-  background:#27ff9d;
-  box-shadow:0 0 18px #27ff9d;
+  background:#2cff9d;
+  box-shadow:0 0 18px #2cff9d;
 }
 
 .card{
-  background:rgba(10,15,29,.96);
+  margin-bottom:18px;
+  padding:22px;
   border:1px solid #202b48;
   border-radius:28px;
-  padding:23px;
-  margin-bottom:18px;
+  background:rgba(9,14,28,.97);
   box-shadow:0 15px 45px rgba(0,0,0,.35);
 }
 
 .label{
-  color:#6d7896;
+  margin-bottom:17px;
+  color:#707a98;
   font-size:10px;
   font-weight:800;
   letter-spacing:5px;
-  margin-bottom:17px;
 }
 
 .error{
   display:none;
-  background:#2b111c;
-  border:1px solid #71324a;
-  color:#ff7895;
-  border-radius:16px;
+  margin-bottom:17px;
   padding:14px;
-  margin-bottom:16px;
+  border:1px solid #713149;
+  border-radius:15px;
+  color:#ff7895;
+  background:#2a101a;
   font-size:13px;
+  font-weight:700;
 }
 
 .login{
@@ -104,133 +103,152 @@ header{
 
 input{
   width:100%;
-  background:#050914;
-  color:white;
-  border:1px solid #283653;
-  border-radius:14px;
+  margin-bottom:12px;
   padding:16px;
   outline:none;
-  margin-bottom:12px;
+  border:1px solid #283653;
+  border-radius:14px;
+  color:#fff;
+  background:#050914;
+  font-size:15px;
 }
 
 button{
   width:100%;
+  padding:15px;
   border:0;
   border-radius:14px;
-  padding:15px;
+  color:#fff;
   background:#ff3f69;
-  color:white;
+  font-size:14px;
   font-weight:900;
 }
 
 .period{
-  font-size:28px;
+  color:#fff;
+  font-size:27px;
   font-weight:900;
   letter-spacing:3px;
   word-break:break-all;
 }
 
 .next{
-  color:#68738f;
-  font-size:12px;
   margin-top:15px;
+  color:#707b98;
+  font-size:12px;
+  font-weight:700;
 }
 
 .resultRow{
   display:flex;
   align-items:center;
-  gap:25px;
+  gap:24px;
 }
 
 .ball{
+  display:flex;
   width:135px;
   height:135px;
   flex-shrink:0;
-  border-radius:50%;
-  background:#02050a;
-  border:2px solid #273452;
-  display:flex;
   align-items:center;
   justify-content:center;
-  font-size:45px;
+  border:2px solid #263452;
+  border-radius:50%;
+  background:#02050a;
+  color:#fff;
+  font-size:46px;
   font-weight:900;
 }
 
 .number{
+  color:#fff;
   font-size:30px;
   font-weight:900;
 }
 
 .type{
   margin-top:10px;
-  color:#78829f;
+  color:#737d9b;
   font-size:13px;
-  font-weight:700;
+  font-weight:800;
 }
 
 .big{
-  color:#ffbe51;
-  text-shadow:0 0 20px rgba(255,190,81,.5);
+  color:#ffbf52!important;
+  text-shadow:0 0 20px rgba(255,191,82,.5);
 }
 
 .small{
-  color:#4bdcff;
-  text-shadow:0 0 20px rgba(75,220,255,.5);
+  color:#4ddfff!important;
+  text-shadow:0 0 20px rgba(77,223,255,.5);
 }
 
 .wait{
-  color:#ffbe51;
+  color:#ffbf52!important;
 }
 
 .prediction{
+  margin:12px 0 14px;
   text-align:center;
+  color:#ffbf52;
   font-size:57px;
   font-weight:900;
   letter-spacing:4px;
-  margin:12px 0 15px;
 }
 
 .target{
   text-align:center;
-  color:#727c98;
+  color:#737d9b;
   font-size:11px;
-  font-weight:700;
+  font-weight:800;
 }
 
 .confRow{
   display:flex;
   justify-content:space-between;
-  color:#727c98;
-  font-size:11px;
   margin-top:25px;
   margin-bottom:9px;
+  color:#727c98;
+  font-size:11px;
+  font-weight:800;
 }
 
 .bar{
   width:100%;
   height:11px;
-  background:#03050a;
-  border-radius:20px;
   overflow:hidden;
+  border-radius:20px;
+  background:#03050a;
 }
 
 .fill{
-  height:100%;
   width:0%;
-  background:linear-gradient(
-    90deg,
-    #ff3967,
-    #ffbd4f
-  );
-  transition:width .3s ease;
+  height:100%;
+  border-radius:20px;
+  background:linear-gradient(90deg,#ff3967,#ffbd4f);
+  transition:width .3s;
 }
 
 .status{
-  text-align:center;
-  color:#727d9b;
-  font-size:13px;
-  margin-top:15px;
   min-height:18px;
+  margin-top:15px;
+  text-align:center;
+  color:#737e9b;
+  font-size:13px;
+  font-weight:700;
+}
+
+.skipBox{
+  display:none;
+  margin-top:15px;
+  padding:13px;
+  border:1px solid #56451f;
+  border-radius:14px;
+  color:#ffcb69;
+  background:#19140a;
+  text-align:center;
+  font-size:12px;
+  font-weight:900;
 }
 
 .grid{
@@ -240,54 +258,42 @@ button{
 }
 
 .stat{
-  background:#070b15;
-  border:1px solid #1c2842;
-  border-radius:17px;
   padding:16px;
+  border:1px solid #1d2943;
+  border-radius:17px;
+  background:#070b15;
 }
 
 .stat small{
   display:block;
+  margin-bottom:9px;
   color:#66718e;
   font-size:9px;
   letter-spacing:2px;
-  margin-bottom:9px;
 }
 
 .stat b{
+  color:#fff;
   font-size:17px;
 }
 
 .history{
   display:flex;
-  gap:8px;
   flex-wrap:wrap;
+  gap:8px;
 }
 
 .historyItem{
+  display:flex;
   width:43px;
   height:43px;
-  border-radius:12px;
-  display:flex;
   align-items:center;
   justify-content:center;
-  background:#070c17;
   border:1px solid #202d49;
+  border-radius:12px;
+  background:#070c17;
   font-size:16px;
   font-weight:900;
-}
-
-.skipBox{
-  display:none;
-  margin-top:15px;
-  padding:13px;
-  text-align:center;
-  border:1px solid #4a3b21;
-  background:#19140a;
-  border-radius:14px;
-  color:#ffca67;
-  font-size:12px;
-  font-weight:800;
 }
 
 .hide{
@@ -297,7 +303,7 @@ button{
 @media(max-width:500px){
 
   body{
-    padding:12px;
+    padding:11px;
   }
 
   .card{
@@ -307,6 +313,7 @@ button{
 
   .logo{
     font-size:25px;
+    letter-spacing:8px;
   }
 
   .resultRow{
@@ -348,7 +355,9 @@ button{
 
 </header>
 
+
 <div id="error" class="error"></div>
+
 
 <!-- LOGIN -->
 
@@ -361,19 +370,23 @@ button{
   <input
     id="accessKey"
     type="text"
-    placeholder="Enter Access Key"
+    placeholder="ENTER ACCESS KEY"
     autocomplete="off"
   >
 
-  <button onclick="login()">
+  <button
+    onclick="login()"
+  >
     UNLOCK AI
   </button>
 
 </div>
 
-<!-- APP -->
+
+<!-- MAIN APP -->
 
 <div id="app" class="hide">
+
 
   <!-- CURRENT PERIOD -->
 
@@ -498,7 +511,7 @@ button{
   </div>
 
 
-  <!-- AI ANALYSIS -->
+  <!-- ANALYSIS -->
 
   <div class="card">
 
@@ -565,13 +578,22 @@ button{
 
 <script>
 
+/* =========================
+   CONFIG
+========================= */
+
 const API = "";
 
 const KEY_STORAGE =
-  "dy_ai_access_key";
+  "DY_AI_ACCESS_KEY_V2";
 
 const DEVICE_STORAGE =
-  "dy_ai_device_id";
+  "DY_AI_DEVICE_ID_V2";
+
+
+/* =========================
+   LOCAL ACCESS
+========================= */
 
 let accessKey =
   localStorage.getItem(
@@ -584,38 +606,53 @@ let deviceId =
   );
 
 
-/* DEVICE ID */
+/* =========================
+   DEVICE ID
+========================= */
 
-if(!deviceId){
+function createDeviceId(){
 
   if(
     window.crypto &&
-    crypto.randomUUID
+    typeof crypto.randomUUID ===
+      "function"
   ){
 
-    deviceId =
-      crypto.randomUUID();
-
-  }else{
-
-    deviceId =
-      "DY-" +
-      Math.random()
-        .toString(36)
-        .slice(2) +
-      "-" +
-      Date.now();
+    return crypto.randomUUID();
 
   }
+
+  return (
+    "DY-" +
+    Math.random()
+      .toString(36)
+      .slice(2) +
+    "-" +
+    Date.now() +
+    "-" +
+    Math.random()
+      .toString(36)
+      .slice(2)
+  );
+}
+
+
+if(!deviceId){
+
+  deviceId =
+    createDeviceId();
 
   localStorage.setItem(
     DEVICE_STORAGE,
     deviceId
   );
+
 }
 
 
-/* HELPERS */
+/* =========================
+   DOM HELPER
+========================= */
 
 function $(id){
 
@@ -626,13 +663,17 @@ function $(id){
 }
 
 
+/* =========================
+   ERROR
+========================= */
+
 function showError(message){
 
   const box =
     $("error");
 
   box.textContent =
-    message || "Error";
+    message || "ERROR";
 
   box.style.display =
     "block";
@@ -648,6 +689,10 @@ function clearError(){
 
 }
 
+
+/* =========================
+   LOGIN SCREEN
+========================= */
 
 function showLogin(){
 
@@ -677,21 +722,23 @@ function showApp(){
 }
 
 
-/* LOGIN */
+/* =========================
+   LOGIN
+========================= */
 
 async function login(){
 
   clearError();
 
-  const key =
+  const input =
     $("accessKey")
       .value
       .trim();
 
-  if(!key){
+  if(!input){
 
     showError(
-      "Access Key enter karo."
+      "ACCESS KEY ENTER KARO."
     );
 
     return;
@@ -713,7 +760,7 @@ async function login(){
 
           body:
             JSON.stringify({
-              key:key,
+              key:input,
               deviceId:deviceId
             })
         }
@@ -726,14 +773,14 @@ async function login(){
 
       showError(
         data.error ||
-        "Invalid Access Key"
+        "INVALID KEY"
       );
 
       return;
     }
 
     accessKey =
-      key;
+      input;
 
     localStorage.setItem(
       KEY_STORAGE,
@@ -747,7 +794,7 @@ async function login(){
   }catch(error){
 
     showError(
-      "Server connection failed."
+      "SERVER CONNECTION FAILED."
     );
 
   }
@@ -755,7 +802,26 @@ async function login(){
 }
 
 
-/* STATE */
+/* =========================
+   LOGOUT / RESET LOCAL
+========================= */
+
+function resetLocalLogin(){
+
+  localStorage.removeItem(
+    KEY_STORAGE
+  );
+
+  accessKey = "";
+
+  showLogin();
+
+}
+
+
+/* =========================
+   LOAD STATE
+========================= */
 
 async function loadState(){
 
@@ -791,27 +857,92 @@ async function loadState(){
     const data =
       await response.json();
 
+
+    /*
+      INVALID KEY:
+      purani saved key hata do
+      aur login screen dikhao.
+    */
+
     if(
-      response.status === 403
+      response.status === 403 &&
+      data.error ===
+        "INVALID_KEY"
     ){
 
+      localStorage.removeItem(
+        KEY_STORAGE
+      );
+
+      accessKey = "";
+
+      showLogin();
+
       showError(
-        data.error ||
-        "Access denied"
+        "ACCESS KEY INVALID HAI. VALID KEY ENTER KARO."
       );
 
       return;
     }
+
+
+    if(
+      response.status === 403 &&
+      data.error ===
+        "KEY_AND_DEVICE_REQUIRED"
+    ){
+
+      localStorage.removeItem(
+        KEY_STORAGE
+      );
+
+      accessKey = "";
+
+      showLogin();
+
+      showError(
+        "ACCESS KEY REQUIRED."
+      );
+
+      return;
+    }
+
+
+    if(
+      response.status === 403 &&
+      data.error ===
+        "KEY_ALREADY_USED_ON_ANOTHER_DEVICE"
+    ){
+
+      showError(
+        "YE KEY KISI DOOSRE DEVICE PAR ACTIVE HAI."
+      );
+
+      return;
+    }
+
+
+    if(!response.ok){
+
+      showError(
+        data.error ||
+        "SERVER ERROR"
+      );
+
+      return;
+    }
+
 
     if(!data.ok){
 
       showError(
         data.error ||
-        "Unable to load state"
+        "LIVE DATA ERROR"
       );
 
       return;
     }
+
 
     clearError();
 
@@ -828,7 +959,31 @@ async function loadState(){
 }
 
 
-/* RENDER */
+/* =========================
+   OFFLINE
+========================= */
+
+function setOffline(message){
+
+  $("dot")
+    .classList.remove(
+      "ok"
+    );
+
+  $("onlineText")
+    .textContent =
+    "OFFLINE";
+
+  $("status")
+    .textContent =
+    message;
+
+}
+
+
+/* =========================
+   RENDER
+========================= */
 
 function render(data){
 
@@ -838,8 +993,8 @@ function render(data){
   const dot =
     $("dot");
 
-  const onlineText =
-    $("onlineText");
+
+  /* ONLINE */
 
   if(source.ok){
 
@@ -847,7 +1002,8 @@ function render(data){
       "ok"
     );
 
-    onlineText.textContent =
+    $("onlineText")
+      .textContent =
       "ONLINE";
 
   }else{
@@ -856,7 +1012,8 @@ function render(data){
       "ok"
     );
 
-    onlineText.textContent =
+    $("onlineText")
+      .textContent =
       "OFFLINE";
 
   }
@@ -864,11 +1021,14 @@ function render(data){
 
   /* PERIOD */
 
-  $("period").textContent =
+  $("period")
+    .textContent =
     data.currentPeriod ||
     "—";
 
-  $("next").textContent =
+
+  $("next")
+    .textContent =
     "NEXT PERIOD: " +
     (
       data.currentPeriod ||
@@ -876,36 +1036,58 @@ function render(data){
     );
 
 
-  /* LATEST */
+  /* LATEST RESULT */
 
   const latest =
     data.latestResult;
 
+
   if(latest){
 
-    $("ball").textContent =
+    const n =
       latest.number;
 
-    $("number").textContent =
-      latest.number;
+    const r =
+      latest.result;
 
-    $("type").textContent =
-      latest.result || "—";
 
-    $("type").className =
-      "type " +
-      (
-        latest.result === "BIG"
-          ? "big"
-          : "small"
-      );
+    $("ball")
+      .textContent =
+      n;
 
-    $("ball").className =
+
+    $("number")
+      .textContent =
+      n;
+
+
+    $("type")
+      .textContent =
+      r ||
+      "—";
+
+
+    $("ball")
+      .className =
       "ball " +
       (
-        latest.result === "BIG"
+        r === "BIG"
           ? "big"
-          : "small"
+          : r === "SMALL"
+            ? "small"
+            : ""
+      );
+
+
+    $("type")
+      .className =
+      "type " +
+      (
+        r === "BIG"
+          ? "big"
+          : r === "SMALL"
+            ? "small"
+            : ""
       );
 
   }
@@ -914,16 +1096,21 @@ function render(data){
   /* PREDICTION */
 
   const p =
-    data.prediction || {};
+    data.prediction ||
+    {};
 
   const result =
     p.result ||
     "WAIT";
 
-  $("prediction").textContent =
+
+  $("prediction")
+    .textContent =
     result;
 
-  $("prediction").className =
+
+  $("prediction")
+    .className =
     "prediction " +
     (
       result === "BIG"
@@ -934,7 +1121,8 @@ function render(data){
     );
 
 
-  $("target").textContent =
+  $("target")
+    .textContent =
     "TARGET PERIOD: " +
     (
       p.issue ||
@@ -942,16 +1130,23 @@ function render(data){
     );
 
 
+  /* CONFIDENCE */
+
   const confidence =
     Number(
-      p.confidence || 0
+      p.confidence ||
+      0
     );
 
-  $("confidence").textContent =
+
+  $("confidence")
+    .textContent =
     confidence +
     "%";
 
-  $("fill").style.width =
+
+  $("fill")
+    .style.width =
     Math.max(
       0,
       Math.min(
@@ -965,7 +1160,8 @@ function render(data){
   /* STATUS */
 
   let status =
-    "Waiting for live data...";
+    "WAITING FOR LIVE DATA...";
+
 
   if(
     p.status ===
@@ -978,15 +1174,13 @@ function render(data){
         0
       );
 
-    const seconds =
-      Math.max(
-        0,
-        remaining / 1000
-      );
 
     status =
       "AI ANALYSIS • " +
-      seconds.toFixed(1) +
+      (
+        remaining /
+        1000
+      ).toFixed(1) +
       " SEC";
 
   }
@@ -1014,14 +1208,17 @@ function render(data){
   }
 
 
-  $("status").textContent =
+  $("status")
+    .textContent =
     status;
 
 
-  /* SKIP */
+  /* SKIP BOX */
 
   const cycle =
-    data.cycle || {};
+    data.cycle ||
+    {};
+
 
   if(
     p.status ===
@@ -1031,6 +1228,7 @@ function render(data){
     $("skipBox")
       .style.display =
       "block";
+
 
     $("skipBox")
       .textContent =
@@ -1063,32 +1261,44 @@ function render(data){
   /* AI */
 
   const ai =
-    data.ai || {};
+    data.ai ||
+    {};
 
-  $("model").textContent =
+
+  $("model")
+    .textContent =
     ai.model ||
     "—";
 
-  $("quality").textContent =
+
+  $("quality")
+    .textContent =
     ai.quality ||
     "—";
 
-  $("sample").textContent =
+
+  $("sample")
+    .textContent =
     ai.sampleSize ||
     0;
 
-  $("score").textContent =
+
+  $("score")
+    .textContent =
     ai.score ??
     "—";
 
 
   /* CYCLE */
 
-  $("skipRound").textContent =
+  $("skipRound")
+    .textContent =
     cycle.skipRound ||
     0;
 
-  $("skipLeft").textContent =
+
+  $("skipLeft")
+    .textContent =
     cycle.skipRemaining ||
     0;
 
@@ -1098,65 +1308,57 @@ function render(data){
   const history =
     $("history");
 
+
   history.innerHTML =
     "";
+
 
   const list =
     data.recentResults ||
     [];
 
-  list.forEach(
-    item => {
 
-      const el =
-        document.createElement(
-          "div"
+  list
+    .slice(0,10)
+    .forEach(
+      item => {
+
+        const el =
+          document.createElement(
+            "div"
+          );
+
+
+        el.className =
+          "historyItem " +
+          (
+            item.result ===
+            "BIG"
+              ? "big"
+              : item.result ===
+                "SMALL"
+                ? "small"
+                : ""
+          );
+
+
+        el.textContent =
+          item.number;
+
+
+        history.appendChild(
+          el
         );
 
-      el.className =
-        "historyItem " +
-        (
-          item.result === "BIG"
-            ? "big"
-            : "small"
-        );
-
-      el.textContent =
-        item.number;
-
-      history.appendChild(
-        el
-      );
-
-    }
-  );
-
-}
-
-
-/* OFFLINE */
-
-function setOffline(
-  message
-){
-
-  $("dot")
-    .classList.remove(
-      "ok"
+      }
     );
 
-  $("onlineText")
-    .textContent =
-    "OFFLINE";
-
-  $("status")
-    .textContent =
-    message;
-
 }
 
 
-/* START */
+/* =========================
+   START
+========================= */
 
 if(accessKey){
 
@@ -1168,13 +1370,13 @@ if(accessKey){
 
 }
 
+
 loadState();
 
 
-/*
-  API refresh:
-  every 1 second
-*/
+/* =========================
+   1 SECOND LIVE UPDATE
+========================= */
 
 setInterval(
   loadState,
