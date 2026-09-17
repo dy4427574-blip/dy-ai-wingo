@@ -1,15 +1,11 @@
 {
-  "name": "dy-ai-wingo-1min",
+  "name": "dy-ai-wingo",
   "version": "1.0.0",
-  "description": "Wingo 1 Minute historical analysis dashboard",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "engines": {
     "node": ">=18"
-  },
-  "dependencies": {
-    "express": "^4.21.2"
   }
 }
