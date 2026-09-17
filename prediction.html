@@ -1,11 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"
+>
+
 <title>DY AI WinGo</title>
 
 <style>
+
 *{
   box-sizing:border-box;
   margin:0;
@@ -14,16 +22,21 @@
 
 body{
   min-height:100vh;
-  padding:14px;
+  padding:12px;
   color:#fff;
   background:
-    radial-gradient(circle at 50% -10%,#1b2340 0,#080b15 38%,#020307 100%);
+    radial-gradient(
+      circle at 50% -10%,
+      #202a4d,
+      #080b14 45%,
+      #020306
+    );
   font-family:Arial,sans-serif;
 }
 
 .wrap{
   width:100%;
-  max-width:720px;
+  max-width:700px;
   margin:auto;
 }
 
@@ -31,70 +44,58 @@ header{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  padding:16px 5px 24px;
+  padding:16px 4px 22px;
 }
 
 .logo{
-  font-size:29px;
+  font-size:28px;
   font-weight:900;
-  letter-spacing:10px;
+  letter-spacing:8px;
 }
 
 .sub{
-  margin-top:8px;
-  color:#697492;
+  margin-top:7px;
+  color:#68728d;
   font-size:10px;
-  letter-spacing:5px;
+  letter-spacing:4px;
 }
 
 .online{
   display:flex;
   align-items:center;
-  gap:8px;
-  font-size:11px;
-  font-weight:800;
+  gap:7px;
+  color:#8992a9;
+  font-size:10px;
+  font-weight:900;
 }
 
 .dot{
-  width:12px;
-  height:12px;
+  width:11px;
+  height:11px;
   border-radius:50%;
   background:#ff315d;
-  box-shadow:0 0 18px #ff315d;
 }
 
 .dot.ok{
-  background:#2cff9d;
-  box-shadow:0 0 18px #2cff9d;
+  background:#2cff9f;
+  box-shadow:0 0 15px #2cff9f;
 }
 
 .card{
-  margin-bottom:18px;
-  padding:22px;
-  border:1px solid #202b48;
-  border-radius:28px;
-  background:rgba(9,14,28,.97);
-  box-shadow:0 15px 45px rgba(0,0,0,.35);
+  margin-bottom:15px;
+  padding:20px;
+  border:1px solid #202b45;
+  border-radius:25px;
+  background:rgba(8,13,25,.97);
+  box-shadow:0 14px 40px rgba(0,0,0,.3);
 }
 
 .label{
-  margin-bottom:17px;
-  color:#707a98;
+  margin-bottom:15px;
+  color:#68728d;
   font-size:10px;
-  font-weight:800;
-  letter-spacing:5px;
-}
-
-.error{
-  display:none;
-  margin-bottom:17px;
-  padding:14px;
-  border:1px solid #713149;
-  border-radius:15px;
-  color:#ff7895;
-  background:#2a101a;
-  font-size:13px;
-  font-weight:700;
+  font-weight:900;
+  letter-spacing:4px;
 }
 
 .login{
@@ -106,7 +107,7 @@ input{
   margin-bottom:12px;
   padding:16px;
   outline:none;
-  border:1px solid #283653;
+  border:1px solid #273654;
   border-radius:14px;
   color:#fff;
   background:#050914;
@@ -115,166 +116,178 @@ input{
 
 button{
   width:100%;
-  padding:15px;
+  padding:16px;
   border:0;
   border-radius:14px;
   color:#fff;
-  background:#ff3f69;
-  font-size:14px;
+  background:#ff3c68;
   font-weight:900;
+}
+
+.error{
+  display:none;
+  margin-bottom:14px;
+  padding:13px;
+  border:1px solid #713149;
+  border-radius:14px;
+  color:#ff7594;
+  background:#29101a;
+  font-size:12px;
+  font-weight:800;
+}
+
+.hide{
+  display:none!important;
 }
 
 .period{
   color:#fff;
-  font-size:27px;
+  font-size:25px;
   font-weight:900;
-  letter-spacing:3px;
+  letter-spacing:2px;
   word-break:break-all;
 }
 
 .next{
-  margin-top:15px;
-  color:#707b98;
-  font-size:12px;
-  font-weight:700;
+  margin-top:12px;
+  color:#69738e;
+  font-size:11px;
+  font-weight:800;
 }
 
-.resultRow{
+.result{
   display:flex;
   align-items:center;
-  gap:24px;
+  gap:20px;
 }
 
 .ball{
   display:flex;
-  width:135px;
-  height:135px;
-  flex-shrink:0;
+  width:120px;
+  height:120px;
   align-items:center;
   justify-content:center;
-  border:2px solid #263452;
+  border:2px solid #263551;
   border-radius:50%;
   background:#02050a;
-  color:#fff;
-  font-size:46px;
+  font-size:40px;
   font-weight:900;
 }
 
 .number{
-  color:#fff;
-  font-size:30px;
+  font-size:29px;
   font-weight:900;
 }
 
 .type{
-  margin-top:10px;
-  color:#737d9b;
-  font-size:13px;
-  font-weight:800;
+  margin-top:8px;
+  color:#68738e;
+  font-size:12px;
+  font-weight:900;
 }
 
 .big{
-  color:#ffbf52!important;
-  text-shadow:0 0 20px rgba(255,191,82,.5);
+  color:#ffbe50!important;
+  text-shadow:0 0 18px rgba(255,190,80,.45);
 }
 
 .small{
-  color:#4ddfff!important;
-  text-shadow:0 0 20px rgba(77,223,255,.5);
-}
-
-.wait{
-  color:#ffbf52!important;
+  color:#4bdcff!important;
+  text-shadow:0 0 18px rgba(75,220,255,.45);
 }
 
 .prediction{
-  margin:12px 0 14px;
   text-align:center;
-  color:#ffbf52;
-  font-size:57px;
+  margin:12px 0;
+  font-size:52px;
   font-weight:900;
-  letter-spacing:4px;
+  letter-spacing:3px;
+}
+
+.wait{
+  color:#ffbf51;
 }
 
 .target{
   text-align:center;
-  color:#737d9b;
-  font-size:11px;
-  font-weight:800;
+  color:#68738e;
+  font-size:10px;
+  font-weight:900;
 }
 
-.confRow{
+.conf{
   display:flex;
   justify-content:space-between;
-  margin-top:25px;
-  margin-bottom:9px;
-  color:#727c98;
-  font-size:11px;
-  font-weight:800;
+  margin:20px 0 8px;
+  color:#69738e;
+  font-size:10px;
+  font-weight:900;
 }
 
 .bar{
-  width:100%;
-  height:11px;
+  height:10px;
   overflow:hidden;
   border-radius:20px;
   background:#03050a;
 }
 
 .fill{
-  width:0%;
+  width:0;
   height:100%;
   border-radius:20px;
-  background:linear-gradient(90deg,#ff3967,#ffbd4f);
-  transition:width .3s;
+  background:linear-gradient(
+    90deg,
+    #ff3967,
+    #ffc151
+  );
+  transition:.3s;
 }
 
 .status{
   min-height:18px;
-  margin-top:15px;
+  margin-top:14px;
   text-align:center;
-  color:#737e9b;
-  font-size:13px;
-  font-weight:700;
+  color:#727c96;
+  font-size:12px;
+  font-weight:800;
 }
 
-.skipBox{
+.skip{
   display:none;
-  margin-top:15px;
-  padding:13px;
-  border:1px solid #56451f;
-  border-radius:14px;
-  color:#ffcb69;
-  background:#19140a;
+  margin-top:13px;
+  padding:12px;
+  border:1px solid #55431d;
+  border-radius:13px;
+  color:#ffc866;
+  background:#191309;
   text-align:center;
-  font-size:12px;
+  font-size:11px;
   font-weight:900;
 }
 
 .grid{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:12px;
+  gap:10px;
 }
 
 .stat{
-  padding:16px;
-  border:1px solid #1d2943;
-  border-radius:17px;
-  background:#070b15;
+  padding:15px;
+  border:1px solid #1c2942;
+  border-radius:15px;
+  background:#070b14;
 }
 
 .stat small{
   display:block;
-  margin-bottom:9px;
-  color:#66718e;
-  font-size:9px;
+  margin-bottom:7px;
+  color:#626d88;
+  font-size:8px;
   letter-spacing:2px;
 }
 
 .stat b{
-  color:#fff;
-  font-size:17px;
+  font-size:15px;
 }
 
 .history{
@@ -283,58 +296,38 @@ button{
   gap:8px;
 }
 
-.historyItem{
+.h{
   display:flex;
-  width:43px;
-  height:43px;
+  width:42px;
+  height:42px;
   align-items:center;
   justify-content:center;
   border:1px solid #202d49;
-  border-radius:12px;
-  background:#070c17;
-  font-size:16px;
+  border-radius:11px;
+  background:#070c16;
+  font-size:15px;
   font-weight:900;
 }
 
-.hide{
-  display:none!important;
-}
-
-@media(max-width:500px){
-
-  body{
-    padding:11px;
-  }
-
-  .card{
-    padding:19px;
-    border-radius:24px;
-  }
+@media(max-width:450px){
 
   .logo{
-    font-size:25px;
-    letter-spacing:8px;
-  }
-
-  .resultRow{
-    gap:16px;
+    font-size:23px;
   }
 
   .ball{
-    width:115px;
-    height:115px;
-    font-size:38px;
+    width:105px;
+    height:105px;
   }
 
   .prediction{
-    font-size:45px;
+    font-size:43px;
   }
 
-  .period{
-    font-size:21px;
-  }
 }
+
 </style>
+
 </head>
 
 <body>
@@ -343,233 +336,242 @@ button{
 
 <header>
 
-  <div>
-    <div class="logo">D Y AI</div>
-    <div class="sub">WINGO 1 MINUTE</div>
-  </div>
+<div>
 
-  <div class="online">
-    <span id="dot" class="dot"></span>
-    <span id="onlineText">OFFLINE</span>
-  </div>
+<div class="logo">
+DY AI
+</div>
+
+<div class="sub">
+WINGO 1 MINUTE
+</div>
+
+</div>
+
+<div class="online">
+
+<span
+  id="dot"
+  class="dot"
+></span>
+
+<span id="online">
+OFFLINE
+</span>
+
+</div>
 
 </header>
 
 
-<div id="error" class="error"></div>
+<div
+  id="error"
+  class="error"
+></div>
 
 
-<!-- LOGIN -->
+<div
+  id="login"
+  class="card login"
+>
 
-<div id="login" class="card login">
+<div class="label">
+PREMIUM ACCESS
+</div>
 
-  <div class="label">
-    PREMIUM ACCESS
-  </div>
+<input
+  id="key"
+  placeholder="ENTER ACCESS KEY"
+  autocomplete="off"
+>
 
-  <input
-    id="accessKey"
-    type="text"
-    placeholder="ENTER ACCESS KEY"
-    autocomplete="off"
-  >
-
-  <button
-    onclick="login()"
-  >
-    UNLOCK AI
-  </button>
+<button
+  onclick="login()"
+>
+UNLOCK AI
+</button>
 
 </div>
 
 
-<!-- MAIN APP -->
-
-<div id="app" class="hide">
-
-
-  <!-- CURRENT PERIOD -->
-
-  <div class="card">
-
-    <div class="label">
-      CURRENT PERIOD
-    </div>
-
-    <div
-      id="period"
-      class="period"
-    >
-      —
-    </div>
-
-    <div
-      id="next"
-      class="next"
-    >
-      NEXT PERIOD: —
-    </div>
-
-  </div>
+<div
+  id="app"
+  class="hide"
+>
 
 
-  <!-- LATEST RESULT -->
+<div class="card">
 
-  <div class="card">
+<div class="label">
+CURRENT PERIOD
+</div>
 
-    <div class="label">
-      LATEST RESULT
-    </div>
+<div
+  id="period"
+  class="period"
+>
+—
+</div>
 
-    <div class="resultRow">
+<div
+  id="next"
+  class="next"
+>
+NEXT PERIOD: —
+</div>
 
-      <div
-        id="ball"
-        class="ball"
-      >
-        —
-      </div>
-
-      <div>
-
-        <div
-          id="number"
-          class="number"
-        >
-          —
-        </div>
-
-        <div
-          id="type"
-          class="type"
-        >
-          Waiting for live data...
-        </div>
-
-      </div>
-
-    </div>
-
-  </div>
+</div>
 
 
-  <!-- PREDICTION -->
+<div class="card">
 
-  <div class="card">
+<div class="label">
+LATEST RESULT
+</div>
 
-    <div class="label">
-      🎯 AI PREMIUM PREDICTION
-    </div>
+<div class="result">
 
-    <div
-      id="prediction"
-      class="prediction wait"
-    >
-      WAIT
-    </div>
+<div
+  id="ball"
+  class="ball"
+>
+—
+</div>
 
-    <div
-      id="target"
-      class="target"
-    >
-      TARGET PERIOD: —
-    </div>
+<div>
 
-    <div class="confRow">
+<div
+  id="number"
+  class="number"
+>
+—
+</div>
 
-      <span>
-        AI CONFIDENCE
-      </span>
+<div
+  id="type"
+  class="type"
+>
+Waiting...
+</div>
 
-      <span id="confidence">
-        0%
-      </span>
+</div>
 
-    </div>
+</div>
 
-    <div class="bar">
-      <div
-        id="fill"
-        class="fill"
-      ></div>
-    </div>
-
-    <div
-      id="status"
-      class="status"
-    >
-      Waiting for live data...
-    </div>
-
-    <div
-      id="skipBox"
-      class="skipBox"
-    >
-      SKIP ROUND
-    </div>
-
-  </div>
+</div>
 
 
-  <!-- ANALYSIS -->
+<div class="card">
 
-  <div class="card">
+<div class="label">
+AI PREMIUM PREDICTION
+</div>
 
-    <div class="label">
-      REAL PATTERN ANALYSIS
-    </div>
+<div
+  id="prediction"
+  class="prediction wait"
+>
+WAIT
+</div>
 
-    <div class="grid">
+<div
+  id="target"
+  class="target"
+>
+TARGET PERIOD: —
+</div>
 
-      <div class="stat">
-        <small>MODEL</small>
-        <b id="model">—</b>
-      </div>
+<div class="conf">
 
-      <div class="stat">
-        <small>QUALITY</small>
-        <b id="quality">—</b>
-      </div>
+<span>
+AI CONFIDENCE
+</span>
 
-      <div class="stat">
-        <small>SKIP ROUND</small>
-        <b id="skipRound">0</b>
-      </div>
+<span id="confidence">
+0%
+</span>
 
-      <div class="stat">
-        <small>SKIP LEFT</small>
-        <b id="skipLeft">0</b>
-      </div>
+</div>
 
-      <div class="stat">
-        <small>SAMPLE</small>
-        <b id="sample">0</b>
-      </div>
+<div class="bar">
 
-      <div class="stat">
-        <small>AI SCORE</small>
-        <b id="score">—</b>
-      </div>
+<div
+  id="fill"
+  class="fill"
+></div>
 
-    </div>
+</div>
 
-  </div>
+<div
+  id="status"
+  class="status"
+>
+WAITING FOR LIVE DATA...
+</div>
+
+<div
+  id="skip"
+  class="skip"
+></div>
+
+</div>
 
 
-  <!-- HISTORY -->
+<div class="card">
 
-  <div class="card">
+<div class="label">
+AI ANALYSIS
+</div>
 
-    <div class="label">
-      LAST 10 RESULTS
-    </div>
+<div class="grid">
 
-    <div
-      id="history"
-      class="history"
-    ></div>
+<div class="stat">
+<small>MODEL</small>
+<b id="model">—</b>
+</div>
 
-  </div>
+<div class="stat">
+<small>QUALITY</small>
+<b id="quality">—</b>
+</div>
+
+<div class="stat">
+<small>SKIP ROUND</small>
+<b id="skipRound">0</b>
+</div>
+
+<div class="stat">
+<small>SKIP LEFT</small>
+<b id="skipLeft">0</b>
+</div>
+
+<div class="stat">
+<small>SAMPLE</small>
+<b id="sample">0</b>
+</div>
+
+<div class="stat">
+<small>AI SCORE</small>
+<b id="score">—</b>
+</div>
+
+</div>
+
+</div>
+
+
+<div class="card">
+
+<div class="label">
+LAST 10 RESULTS
+</div>
+
+<div
+  id="history"
+  class="history"
+></div>
+
+</div>
 
 </div>
 
@@ -578,48 +580,32 @@ button{
 
 <script>
 
-/* =========================
-   CONFIG
-========================= */
+const KEY_STORE =
+  "DY_AI_ACCESS_KEY_V5";
 
-const API = "";
-
-const KEY_STORAGE =
-  "DY_AI_ACCESS_KEY_V2";
-
-const DEVICE_STORAGE =
-  "DY_AI_DEVICE_ID_V2";
+const DEVICE_STORE =
+  "DY_AI_DEVICE_ID_V5";
 
 
-/* =========================
-   LOCAL ACCESS
-========================= */
-
-let accessKey =
+let key =
   localStorage.getItem(
-    KEY_STORAGE
+    KEY_STORE
   ) || "";
 
-let deviceId =
+
+let device =
   localStorage.getItem(
-    DEVICE_STORAGE
+    DEVICE_STORE
   );
 
 
-/* =========================
-   DEVICE ID
-========================= */
-
-function createDeviceId(){
+function makeDevice(){
 
   if(
-    window.crypto &&
-    typeof crypto.randomUUID ===
-      "function"
+    crypto &&
+    crypto.randomUUID
   ){
-
     return crypto.randomUUID();
-
   }
 
   return (
@@ -627,32 +613,22 @@ function createDeviceId(){
     Math.random()
       .toString(36)
       .slice(2) +
-    "-" +
-    Date.now() +
-    "-" +
-    Math.random()
-      .toString(36)
-      .slice(2)
+    Date.now()
   );
 }
 
 
-if(!deviceId){
+if(!device){
 
-  deviceId =
-    createDeviceId();
+  device =
+    makeDevice();
 
   localStorage.setItem(
-    DEVICE_STORAGE,
-    deviceId
+    DEVICE_STORE,
+    device
   );
-
 }
 
-
-/* =========================
-   DOM HELPER
-========================= */
 
 function $(id){
 
@@ -663,19 +639,14 @@ function $(id){
 }
 
 
-/* =========================
-   ERROR
-========================= */
+function error(text){
 
-function showError(message){
+  $("error")
+    .textContent =
+    text;
 
-  const box =
-    $("error");
-
-  box.textContent =
-    message || "ERROR";
-
-  box.style.display =
+  $("error")
+    .style.display =
     "block";
 
 }
@@ -689,10 +660,6 @@ function clearError(){
 
 }
 
-
-/* =========================
-   LOGIN SCREEN
-========================= */
 
 function showLogin(){
 
@@ -722,22 +689,18 @@ function showApp(){
 }
 
 
-/* =========================
-   LOGIN
-========================= */
-
 async function login(){
 
   clearError();
 
-  const input =
-    $("accessKey")
+  const entered =
+    $("key")
       .value
       .trim();
 
-  if(!input){
+  if(!entered){
 
-    showError(
+    error(
       "ACCESS KEY ENTER KARO."
     );
 
@@ -746,9 +709,8 @@ async function login(){
 
   try{
 
-    const response =
+    const r =
       await fetch(
-        API +
         "/api/key/check",
         {
           method:"POST",
@@ -760,18 +722,18 @@ async function login(){
 
           body:
             JSON.stringify({
-              key:input,
-              deviceId:deviceId
+              key:entered,
+              deviceId:device
             })
         }
       );
 
     const data =
-      await response.json();
+      await r.json();
 
     if(!data.ok){
 
-      showError(
+      error(
         data.error ||
         "INVALID KEY"
       );
@@ -779,21 +741,21 @@ async function login(){
       return;
     }
 
-    accessKey =
-      input;
+    key =
+      entered;
 
     localStorage.setItem(
-      KEY_STORAGE,
-      accessKey
+      KEY_STORE,
+      key
     );
 
     showApp();
 
-    await loadState();
+    load();
 
-  }catch(error){
+  }catch(e){
 
-    showError(
+    error(
       "SERVER CONNECTION FAILED."
     );
 
@@ -802,30 +764,9 @@ async function login(){
 }
 
 
-/* =========================
-   LOGOUT / RESET LOCAL
-========================= */
+async function load(){
 
-function resetLocalLogin(){
-
-  localStorage.removeItem(
-    KEY_STORAGE
-  );
-
-  accessKey = "";
-
-  showLogin();
-
-}
-
-
-/* =========================
-   LOAD STATE
-========================= */
-
-async function loadState(){
-
-  if(!accessKey){
+  if(!key){
 
     showLogin();
 
@@ -834,108 +775,49 @@ async function loadState(){
 
   try{
 
-    const response =
+    const r =
       await fetch(
-        API +
         "/api/state?t=" +
         Date.now(),
         {
-          method:"GET",
+          cache:"no-store",
 
           headers:{
             "X-Access-Key":
-              accessKey,
+              key,
 
             "X-Device-ID":
-              deviceId
-          },
-
-          cache:"no-store"
+              device
+          }
         }
       );
 
     const data =
-      await response.json();
-
-
-    /*
-      INVALID KEY:
-      purani saved key hata do
-      aur login screen dikhao.
-    */
+      await r.json();
 
     if(
-      response.status === 403 &&
-      data.error ===
-        "INVALID_KEY"
+      r.status === 403
     ){
 
       localStorage.removeItem(
-        KEY_STORAGE
+        KEY_STORE
       );
 
-      accessKey = "";
+      key = "";
 
       showLogin();
 
-      showError(
-        "ACCESS KEY INVALID HAI. VALID KEY ENTER KARO."
-      );
-
-      return;
-    }
-
-
-    if(
-      response.status === 403 &&
-      data.error ===
-        "KEY_AND_DEVICE_REQUIRED"
-    ){
-
-      localStorage.removeItem(
-        KEY_STORAGE
-      );
-
-      accessKey = "";
-
-      showLogin();
-
-      showError(
-        "ACCESS KEY REQUIRED."
-      );
-
-      return;
-    }
-
-
-    if(
-      response.status === 403 &&
-      data.error ===
-        "KEY_ALREADY_USED_ON_ANOTHER_DEVICE"
-    ){
-
-      showError(
-        "YE KEY KISI DOOSRE DEVICE PAR ACTIVE HAI."
-      );
-
-      return;
-    }
-
-
-    if(!response.ok){
-
-      showError(
+      error(
         data.error ||
-        "SERVER ERROR"
+        "ACCESS DENIED"
       );
 
       return;
     }
-
 
     if(!data.ok){
 
-      showError(
+      error(
         data.error ||
         "LIVE DATA ERROR"
       );
@@ -943,83 +825,54 @@ async function loadState(){
       return;
     }
 
-
     clearError();
 
     render(data);
 
-  }catch(error){
+  }catch(e){
 
-    setOffline(
-      "SERVER CONNECTION ERROR"
-    );
+    $("online")
+      .textContent =
+      "OFFLINE";
+
+    $("dot")
+      .classList.remove(
+        "ok"
+      );
 
   }
 
 }
 
-
-/* =========================
-   OFFLINE
-========================= */
-
-function setOffline(message){
-
-  $("dot")
-    .classList.remove(
-      "ok"
-    );
-
-  $("onlineText")
-    .textContent =
-    "OFFLINE";
-
-  $("status")
-    .textContent =
-    message;
-
-}
-
-
-/* =========================
-   RENDER
-========================= */
 
 function render(data){
 
   const source =
     data.source || {};
 
-  const dot =
-    $("dot");
-
-
-  /* ONLINE */
-
   if(source.ok){
 
-    dot.classList.add(
-      "ok"
-    );
-
-    $("onlineText")
+    $("online")
       .textContent =
       "ONLINE";
 
+    $("dot")
+      .classList.add(
+        "ok"
+      );
+
   }else{
 
-    dot.classList.remove(
-      "ok"
-    );
-
-    $("onlineText")
+    $("online")
       .textContent =
       "OFFLINE";
 
+    $("dot")
+      .classList.remove(
+        "ok"
+      );
   }
 
-
-  /* PERIOD */
 
   $("period")
     .textContent =
@@ -1036,86 +889,60 @@ function render(data){
     );
 
 
-  /* LATEST RESULT */
-
   const latest =
     data.latestResult;
 
-
   if(latest){
-
-    const n =
-      latest.number;
-
-    const r =
-      latest.result;
-
 
     $("ball")
       .textContent =
-      n;
-
+      latest.number;
 
     $("number")
       .textContent =
-      n;
-
+      latest.number;
 
     $("type")
       .textContent =
-      r ||
+      latest.result ||
       "—";
 
+    const cls =
+      latest.result === "BIG"
+        ? "big"
+        : latest.result === "SMALL"
+          ? "small"
+          : "";
 
     $("ball")
       .className =
-      "ball " +
-      (
-        r === "BIG"
-          ? "big"
-          : r === "SMALL"
-            ? "small"
-            : ""
-      );
-
+      "ball " + cls;
 
     $("type")
       .className =
-      "type " +
-      (
-        r === "BIG"
-          ? "big"
-          : r === "SMALL"
-            ? "small"
-            : ""
-      );
-
+      "type " + cls;
   }
 
 
-  /* PREDICTION */
-
   const p =
-    data.prediction ||
-    {};
+    data.prediction || {};
 
-  const result =
+  const value =
     p.result ||
     "WAIT";
 
 
   $("prediction")
     .textContent =
-    result;
-
+    value;
 
   $("prediction")
     .className =
     "prediction " +
     (
-      result === "BIG"
+      value === "BIG"
         ? "big"
-        : result === "SMALL"
+        : value === "SMALL"
           ? "small"
           : "wait"
     );
@@ -1130,12 +957,9 @@ function render(data){
     );
 
 
-  /* CONFIDENCE */
-
   const confidence =
     Number(
-      p.confidence ||
-      0
+      p.confidence || 0
     );
 
 
@@ -1147,17 +971,12 @@ function render(data){
 
   $("fill")
     .style.width =
-    Math.max(
-      0,
-      Math.min(
-        100,
-        confidence
-      )
+    Math.min(
+      100,
+      confidence
     ) +
     "%";
 
-
-  /* STATUS */
 
   let status =
     "WAITING FOR LIVE DATA...";
@@ -1168,18 +987,13 @@ function render(data){
     "ANALYZING"
   ){
 
-    const remaining =
-      Number(
-        p.analysis?.remaining ||
-        0
-      );
-
-
     status =
       "AI ANALYSIS • " +
       (
-        remaining /
-        1000
+        Number(
+          p.analysis?.remaining ||
+          0
+        ) / 1000
       ).toFixed(1) +
       " SEC";
 
@@ -1203,7 +1017,7 @@ function render(data){
   ){
 
     status =
-      "NO ANALYSIS • SKIP MODE";
+      "SKIP MODE • NO ANALYSIS";
 
   }
 
@@ -1213,11 +1027,8 @@ function render(data){
     status;
 
 
-  /* SKIP BOX */
-
   const cycle =
-    data.cycle ||
-    {};
+    data.cycle || {};
 
 
   if(
@@ -1225,63 +1036,43 @@ function render(data){
     "COOLDOWN"
   ){
 
-    $("skipBox")
+    $("skip")
       .style.display =
       "block";
 
-
-    $("skipBox")
+    $("skip")
       .textContent =
-      "SKIP ROUND " +
-      (
-        cycle.skipRound ||
-        0
-      ) +
+      "SKIP " +
+      cycle.skipRound +
       " / " +
-      (
-        cycle.skipTotal ||
-        4
-      ) +
+      cycle.skipTotal +
       " • " +
-      (
-        cycle.skipRemaining ||
-        0
-      ) +
+      cycle.skipRemaining +
       " LEFT";
 
   }else{
 
-    $("skipBox")
+    $("skip")
       .style.display =
       "none";
 
   }
 
 
-  /* AI */
-
   const ai =
-    data.ai ||
-    {};
-
+    data.ai || {};
 
   $("model")
     .textContent =
-    ai.model ||
-    "—";
-
+    ai.model || "—";
 
   $("quality")
     .textContent =
-    ai.quality ||
-    "—";
-
+    ai.quality || "—";
 
   $("sample")
     .textContent =
-    ai.sampleSize ||
-    0;
-
+    ai.sampleSize || 0;
 
   $("score")
     .textContent =
@@ -1289,36 +1080,24 @@ function render(data){
     "—";
 
 
-  /* CYCLE */
-
   $("skipRound")
     .textContent =
-    cycle.skipRound ||
-    0;
-
+    cycle.skipRound || 0;
 
   $("skipLeft")
     .textContent =
-    cycle.skipRemaining ||
-    0;
+    cycle.skipRemaining || 0;
 
 
-  /* HISTORY */
-
-  const history =
+  const box =
     $("history");
 
+  box.innerHTML = "";
 
-  history.innerHTML =
-    "";
-
-
-  const list =
+  (
     data.recentResults ||
-    [];
-
-
-  list
+    []
+  )
     .slice(0,10)
     .forEach(
       item => {
@@ -1328,25 +1107,20 @@ function render(data){
             "div"
           );
 
+        const cls =
+          item.result === "BIG"
+            ? "big"
+            : item.result === "SMALL"
+              ? "small"
+              : "";
 
         el.className =
-          "historyItem " +
-          (
-            item.result ===
-            "BIG"
-              ? "big"
-              : item.result ===
-                "SMALL"
-                ? "small"
-                : ""
-          );
-
+          "h " + cls;
 
         el.textContent =
           item.number;
 
-
-        history.appendChild(
+        box.appendChild(
           el
         );
 
@@ -1356,11 +1130,7 @@ function render(data){
 }
 
 
-/* =========================
-   START
-========================= */
-
-if(accessKey){
+if(key){
 
   showApp();
 
@@ -1371,19 +1141,16 @@ if(accessKey){
 }
 
 
-loadState();
+load();
 
-
-/* =========================
-   1 SECOND LIVE UPDATE
-========================= */
 
 setInterval(
-  loadState,
+  load,
   1000
 );
 
 </script>
 
 </body>
+
 </html>
