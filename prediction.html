@@ -2,13 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 
 <title>DY AI • Wingo 1 Minute</title>
 
 <style>
-
 *{
   box-sizing:border-box;
   margin:0;
@@ -18,28 +16,30 @@
 body{
   min-height:100vh;
   font-family:Arial,Helvetica,sans-serif;
-  background:
-    radial-gradient(circle at top,#18284b 0%,#080b13 45%,#05060a 100%);
   color:#fff;
+  background:
+    radial-gradient(circle at 15% 0%,#172d50 0%,transparent 35%),
+    radial-gradient(circle at 90% 10%,#302052 0%,transparent 30%),
+    #05070c;
 }
 
 .container{
   width:min(1100px,94%);
   margin:auto;
-  padding:25px 0 45px;
+  padding:18px 0 45px;
 }
 
 .header{
-  border:1px solid rgba(255,255,255,.12);
-  background:rgba(15,20,32,.82);
-  backdrop-filter:blur(15px);
-  border-radius:24px;
-  padding:20px;
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap:15px;
-  box-shadow:0 15px 50px rgba(0,0,0,.35);
+  padding:18px 20px;
+  border-radius:22px;
+  background:rgba(12,18,30,.88);
+  border:1px solid rgba(255,255,255,.10);
+  box-shadow:0 15px 45px rgba(0,0,0,.35);
+  backdrop-filter:blur(15px);
 }
 
 .brand{
@@ -56,135 +56,232 @@ body{
   display:flex;
   align-items:center;
   gap:8px;
-  font-size:13px;
-  color:#b9c2d4;
+  font-size:12px;
+  color:#a9b4c8;
 }
 
 .dot{
   width:9px;
   height:9px;
   border-radius:50%;
-  background:#ff4d67;
+  background:#ff4963;
 }
 
 .dot.online{
-  background:#18e58b;
-  box-shadow:0 0 12px #18e58b;
+  background:#19e58b;
+  box-shadow:0 0 14px #19e58b;
 }
 
 .hero{
-  margin-top:20px;
+  margin-top:18px;
   padding:28px;
-  border-radius:26px;
-  background:linear-gradient(
-    135deg,
-    rgba(21,38,73,.95),
-    rgba(13,18,31,.95)
-  );
-  border:1px solid rgba(0,234,255,.16);
+  border-radius:25px;
+  background:
+    linear-gradient(135deg,
+    rgba(17,40,72,.95),
+    rgba(11,16,28,.96));
+  border:1px solid rgba(0,234,255,.15);
 }
 
-.game-title{
-  font-size:14px;
-  color:#7ddfff;
-  font-weight:700;
+.kicker{
+  color:#63dfff;
+  font-size:12px;
+  font-weight:800;
   letter-spacing:2px;
 }
 
 h1{
-  margin-top:7px;
-  font-size:clamp(30px,6vw,55px);
+  margin-top:8px;
+  font-size:clamp(30px,6vw,52px);
 }
 
 .subtitle{
-  color:#9da9bd;
   margin-top:8px;
+  color:#929fb4;
 }
+
+/* TOP CARDS */
 
 .grid{
   display:grid;
   grid-template-columns:repeat(4,1fr);
-  gap:15px;
-  margin-top:20px;
+  gap:14px;
+  margin-top:18px;
 }
 
 .card{
-  background:rgba(15,21,34,.86);
-  border:1px solid rgba(255,255,255,.09);
-  border-radius:20px;
-  padding:20px;
-  box-shadow:0 10px 30px rgba(0,0,0,.22);
+  padding:19px;
+  border-radius:19px;
+  background:rgba(12,18,30,.9);
+  border:1px solid rgba(255,255,255,.08);
 }
 
 .label{
-  color:#8f9bb1;
-  font-size:12px;
+  color:#7e8ca4;
+  font-size:11px;
   text-transform:uppercase;
   letter-spacing:1px;
 }
 
 .value{
-  margin-top:9px;
-  font-size:25px;
+  margin-top:8px;
+  font-size:24px;
   font-weight:900;
 }
 
 .period{
   overflow:hidden;
   text-overflow:ellipsis;
+  white-space:nowrap;
 }
 
-.analysis{
-  margin-top:20px;
+/* MAIN */
+
+.main{
   display:grid;
-  grid-template-columns:1.3fr .7fr;
-  gap:20px;
+  grid-template-columns:1.25fr .75fr;
+  gap:18px;
+  margin-top:18px;
 }
 
 .panel{
-  background:rgba(11,16,27,.88);
-  border:1px solid rgba(255,255,255,.09);
-  border-radius:24px;
   padding:22px;
+  border-radius:23px;
+  background:rgba(10,15,26,.91);
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow:0 12px 35px rgba(0,0,0,.2);
 }
 
 .panel h2{
-  font-size:19px;
-  margin-bottom:18px;
+  font-size:18px;
+  margin-bottom:17px;
 }
+
+/* NEXT ESTIMATE */
+
+.next-card{
+  position:relative;
+  overflow:hidden;
+  padding:25px;
+  border-radius:20px;
+  background:
+    linear-gradient(135deg,
+    rgba(21,32,56,.95),
+    rgba(10,15,26,.98));
+  border:1px solid rgba(0,234,255,.18);
+}
+
+.next-label{
+  color:#8b9bb4;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:1.5px;
+}
+
+.next-result{
+  margin-top:8px;
+  font-size:40px;
+  font-weight:1000;
+}
+
+.next-result.big{
+  color:#ff7087;
+}
+
+.next-result.small{
+  color:#50ddff;
+}
+
+.estimate-sub{
+  margin-top:7px;
+  color:#8e9aae;
+  font-size:12px;
+}
+
+.probability{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-top:18px;
+}
+
+.prob{
+  padding:15px;
+  border-radius:16px;
+  background:#111827;
+}
+
+.prob-title{
+  font-size:11px;
+  color:#8491a8;
+}
+
+.prob-value{
+  margin-top:6px;
+  font-size:24px;
+  font-weight:900;
+}
+
+.big-text{
+  color:#ff7087;
+}
+
+.small-text{
+  color:#50ddff;
+}
+
+.confidence{
+  margin-top:15px;
+  padding:13px 15px;
+  border-radius:14px;
+  background:#111827;
+  color:#aab5c7;
+  font-size:13px;
+}
+
+.confidence strong{
+  color:#fff;
+}
+
+/* DISTRIBUTION */
 
 .bigsmall{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:15px;
+  gap:12px;
 }
 
 .bs{
-  padding:25px;
+  padding:22px;
   text-align:center;
-  border-radius:20px;
+  border-radius:18px;
   background:#111827;
-  border:1px solid rgba(255,255,255,.08);
 }
 
-.bs strong{
+.bs-name{
+  font-size:12px;
+  font-weight:800;
+}
+
+.bs-number{
   display:block;
-  font-size:32px;
-  margin-top:8px;
+  margin-top:6px;
+  font-size:30px;
+  font-weight:900;
 }
 
-.big-count{
-  color:#ff7187;
+.big-number{
+  color:#ff7087;
 }
 
-.small-count{
-  color:#52d9ff;
+.small-number{
+  color:#50ddff;
 }
 
 .bar{
-  margin-top:13px;
-  height:10px;
-  background:#202838;
+  height:9px;
+  margin-top:12px;
+  background:#252d3c;
   border-radius:20px;
   overflow:hidden;
 }
@@ -196,65 +293,73 @@ h1{
 }
 
 .big-fill{
-  background:#ff7187;
+  background:#ff7087;
 }
 
 .small-fill{
-  background:#52d9ff;
+  background:#50ddff;
 }
 
-.insight{
-  padding:17px;
+/* STREAK */
+
+.streak-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+.streak-box{
+  padding:20px;
   border-radius:17px;
   background:#111827;
-  margin-top:15px;
-  color:#b8c3d7;
-  line-height:1.55;
 }
 
+.streak-value{
+  margin-top:8px;
+  font-size:25px;
+  font-weight:900;
+}
+
+/* INSIGHT */
+
+.insight{
+  margin-top:14px;
+  padding:15px;
+  border-radius:15px;
+  background:#111827;
+  color:#aeb9cb;
+  line-height:1.55;
+  font-size:13px;
+}
+
+/* HISTORY */
+
 .history{
-  margin-top:20px;
+  margin-top:18px;
 }
 
 .table-wrap{
+  width:100%;
   overflow-x:auto;
 }
 
 table{
   width:100%;
+  min-width:540px;
   border-collapse:collapse;
-  min-width:500px;
 }
 
 th,td{
   padding:13px 10px;
-  border-bottom:1px solid rgba(255,255,255,.07);
   text-align:left;
+  border-bottom:1px solid rgba(255,255,255,.07);
   font-size:13px;
 }
 
 th{
-  color:#8996ad;
-  font-size:11px;
+  color:#75839b;
+  font-size:10px;
   text-transform:uppercase;
-}
-
-.badge{
-  display:inline-block;
-  padding:6px 10px;
-  border-radius:999px;
-  font-weight:800;
-  font-size:11px;
-}
-
-.badge.big{
-  background:rgba(255,113,135,.13);
-  color:#ff8295;
-}
-
-.badge.small{
-  background:rgba(82,217,255,.13);
-  color:#52d9ff;
 }
 
 .number{
@@ -262,21 +367,33 @@ th{
   font-weight:900;
 }
 
-.footer{
-  text-align:center;
-  margin-top:25px;
-  color:#69758a;
-  font-size:12px;
-  line-height:1.6;
+.badge{
+  display:inline-block;
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:10px;
+  font-weight:900;
 }
 
+.badge.big{
+  color:#ff8095;
+  background:rgba(255,112,135,.12);
+}
+
+.badge.small{
+  color:#50ddff;
+  background:rgba(80,221,255,.12);
+}
+
+/* BUTTON */
+
 .refresh{
-  margin-top:15px;
   width:100%;
-  border:0;
+  margin-top:16px;
   padding:14px;
+  border:0;
   border-radius:14px;
-  background:#00b8d9;
+  background:#00c9e8;
   color:#001014;
   font-weight:900;
   cursor:pointer;
@@ -286,13 +403,25 @@ th{
   transform:scale(.98);
 }
 
-@media(max-width:800px){
+/* FOOTER */
+
+.footer{
+  margin-top:22px;
+  text-align:center;
+  color:#68758a;
+  font-size:11px;
+  line-height:1.6;
+}
+
+/* MOBILE */
+
+@media(max-width:820px){
 
   .grid{
     grid-template-columns:repeat(2,1fr);
   }
 
-  .analysis{
+  .main{
     grid-template-columns:1fr;
   }
 
@@ -302,12 +431,10 @@ th{
 
   .container{
     width:92%;
-    padding-top:14px;
   }
 
   .header{
-    padding:16px;
-    border-radius:18px;
+    padding:15px;
   }
 
   .brand{
@@ -319,7 +446,7 @@ th{
   }
 
   .grid{
-    gap:10px;
+    gap:9px;
   }
 
   .card{
@@ -330,14 +457,19 @@ th{
     font-size:20px;
   }
 
-}
+  .next-result{
+    font-size:34px;
+  }
 
+}
 </style>
 </head>
 
 <body>
 
 <div class="container">
+
+  <!-- HEADER -->
 
   <header class="header">
 
@@ -347,105 +479,274 @@ th{
 
     <div class="status">
       <span id="statusDot" class="dot"></span>
-      <span id="statusText">Connecting...</span>
+      <span id="statusText">CONNECTING</span>
     </div>
 
   </header>
 
 
+  <!-- HERO -->
+
   <section class="hero">
 
-    <div class="game-title">
-      LIVE STATISTICAL DASHBOARD
+    <div class="kicker">
+      LIVE STATISTICAL ANALYSIS
     </div>
 
     <h1>Wingo 1 Minute</h1>
 
     <p class="subtitle">
-      Live historical result analysis • 60-second game
+      60-second game • Live historical data
     </p>
 
   </section>
 
 
+  <!-- TOP INFORMATION -->
+
   <section class="grid">
 
     <div class="card">
-      <div class="label">Current Period</div>
-      <div id="period" class="value period">—</div>
+
+      <div class="label">
+        Current Period
+      </div>
+
+      <div
+        id="period"
+        class="value period">
+        —
+      </div>
+
     </div>
 
-    <div class="card">
-      <div class="label">Latest Number</div>
-      <div id="latestNumber" class="value">—</div>
-    </div>
 
     <div class="card">
-      <div class="label">Latest Size</div>
-      <div id="latestSize" class="value">—</div>
+
+      <div class="label">
+        Latest Number
+      </div>
+
+      <div
+        id="latestNumber"
+        class="value">
+        —
+      </div>
+
     </div>
 
+
     <div class="card">
-      <div class="label">Data Points</div>
-      <div id="dataPoints" class="value">0</div>
+
+      <div class="label">
+        Latest Size
+      </div>
+
+      <div
+        id="latestSize"
+        class="value">
+        —
+      </div>
+
+    </div>
+
+
+    <div class="card">
+
+      <div class="label">
+        Data Points
+      </div>
+
+      <div
+        id="dataPoints"
+        class="value">
+        0
+      </div>
+
     </div>
 
   </section>
 
 
-  <section class="analysis">
+  <!-- MAIN -->
+
+  <section class="main">
+
+
+    <!-- NEXT ROUND ESTIMATE -->
 
     <div class="panel">
 
-      <h2>Big / Small Distribution</h2>
+      <h2>
+        Next-Round Statistical Estimate
+      </h2>
+
+      <div class="next-card">
+
+        <div class="next-label">
+          Based on recent sample
+        </div>
+
+        <div
+          id="nextResult"
+          class="next-result">
+          WAITING
+        </div>
+
+        <div
+          id="nextSub"
+          class="estimate-sub">
+          Waiting for data...
+        </div>
+
+
+        <div class="probability">
+
+          <div class="prob">
+
+            <div class="prob-title">
+              BIG
+            </div>
+
+            <div
+              id="bigProbability"
+              class="prob-value big-text">
+              50%
+            </div>
+
+          </div>
+
+
+          <div class="prob">
+
+            <div class="prob-title">
+              SMALL
+            </div>
+
+            <div
+              id="smallProbability"
+              class="prob-value small-text">
+              50%
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="confidence">
+
+          Statistical confidence:
+          <strong id="confidence">
+            —
+          </strong>
+
+        </div>
+
+      </div>
+
+
+      <div
+        id="analysisText"
+        class="insight">
+        Waiting for sufficient historical data...
+      </div>
+
+    </div>
+
+
+    <!-- DISTRIBUTION -->
+
+    <div class="panel">
+
+      <h2>
+        Recent Distribution
+      </h2>
 
       <div class="bigsmall">
 
         <div class="bs">
-          BIG
-          <strong id="bigCount" class="big-count">0</strong>
+
+          <div class="bs-name">
+            BIG
+          </div>
+
+          <span
+            id="bigCount"
+            class="bs-number big-number">
+            0
+          </span>
 
           <div class="bar">
-            <div id="bigBar"
-                 class="bar-fill big-fill">
+            <div
+              id="bigBar"
+              class="bar-fill big-fill">
             </div>
           </div>
+
         </div>
+
 
         <div class="bs">
-          SMALL
-          <strong id="smallCount" class="small-count">0</strong>
+
+          <div class="bs-name">
+            SMALL
+          </div>
+
+          <span
+            id="smallCount"
+            class="bs-number small-number">
+            0
+          </span>
 
           <div class="bar">
-            <div id="smallBar"
-                 class="bar-fill small-fill">
+            <div
+              id="smallBar"
+              class="bar-fill small-fill">
             </div>
           </div>
+
         </div>
 
       </div>
 
-      <div id="insight" class="insight">
-        Waiting for live data...
-      </div>
 
-    </div>
+      <h2 style="margin-top:22px">
+        Current Streak
+      </h2>
 
 
-    <div class="panel">
+      <div class="streak-grid">
 
-      <h2>Current Streak</h2>
+        <div class="streak-box">
 
-      <div class="card">
-        <div class="label">Side</div>
-        <div id="streakSide" class="value">—</div>
-      </div>
+          <div class="label">
+            Side
+          </div>
 
-      <br>
+          <div
+            id="streakSide"
+            class="streak-value">
+            —
+          </div>
 
-      <div class="card">
-        <div class="label">Length</div>
-        <div id="streakLength" class="value">0</div>
+        </div>
+
+
+        <div class="streak-box">
+
+          <div class="label">
+            Length
+          </div>
+
+          <div
+            id="streakLength"
+            class="streak-value">
+            0
+          </div>
+
+        </div>
+
       </div>
 
     </div>
@@ -453,15 +754,20 @@ th{
   </section>
 
 
+  <!-- HISTORY -->
+
   <section class="panel history">
 
-    <h2>Recent History</h2>
+    <h2>
+      Last 20 Results
+    </h2>
 
     <div class="table-wrap">
 
       <table>
 
         <thead>
+
           <tr>
             <th>#</th>
             <th>Period</th>
@@ -469,6 +775,7 @@ th{
             <th>Size</th>
             <th>Colour</th>
           </tr>
+
         </thead>
 
         <tbody id="historyBody">
@@ -478,9 +785,11 @@ th{
 
     </div>
 
-    <button class="refresh"
-            onclick="loadData()">
-      ↻ Refresh Data
+
+    <button
+      class="refresh"
+      onclick="loadData()">
+      ↻ REFRESH DATA
     </button>
 
   </section>
@@ -488,9 +797,8 @@ th{
 
   <div class="footer">
 
-    Historical/statistical information only.<br>
-    Past draw results do not determine future outcomes.
-    Use the information for research and educational purposes.
+    Statistical estimate only. Past results do not guarantee
+    future outcomes. Use for research and educational purposes.
 
   </div>
 
@@ -499,24 +807,31 @@ th{
 
 <script>
 
-const $ = (id) =>
+/* =====================================================
+   HELPERS
+===================================================== */
+
+const $ = id =>
   document.getElementById(id);
 
 
 /* =====================================================
-   LOAD API
+   API LOAD
 ===================================================== */
 
 async function loadData(){
 
-  setStatus(false, "Updating...");
+  setStatus(false,"UPDATING...");
 
   try{
 
     const response =
-      await fetch("/api/history", {
-        cache: "no-store"
-      });
+      await fetch(
+        "/api/history?ts=" + Date.now(),
+        {
+          cache:"no-store"
+        }
+      );
 
     const data =
       await response.json();
@@ -530,18 +845,26 @@ async function loadData(){
 
     }
 
-    render(data);
+    const history =
+      Array.isArray(data.history)
+        ? data.history
+        : [];
 
-    setStatus(true, "LIVE");
+    render(data,history);
+
+    setStatus(true,"LIVE");
 
   }catch(error){
 
-    console.error(error);
+    console.error(
+      "DATA ERROR:",
+      error
+    );
 
-    setStatus(false, "Offline");
+    setStatus(false,"OFFLINE");
 
-    $("insight").textContent =
-      "Unable to load live data. Check the server and WingoBot API configuration.";
+    $("analysisText").textContent =
+      "Live data could not be loaded. Check WingoBot token, API status and server logs.";
 
   }
 
@@ -552,15 +875,20 @@ async function loadData(){
    STATUS
 ===================================================== */
 
-function setStatus(online,text){
+function setStatus(
+  online,
+  text
+){
 
-  $("statusDot").classList.toggle(
-    "online",
-    online
-  );
+  $("statusDot")
+    .classList
+    .toggle(
+      "online",
+      online
+    );
 
-  $("statusText").textContent =
-    text;
+  $("statusText")
+    .textContent = text;
 
 }
 
@@ -569,20 +897,20 @@ function setStatus(online,text){
    RENDER
 ===================================================== */
 
-function render(data){
-
-  const history =
-    Array.isArray(data.history)
-      ? data.history
-      : [];
+function render(
+  data,
+  history
+){
 
   if(!history.length){
 
-    $("insight").textContent =
-      "No result history received.";
+    $("analysisText").textContent =
+      "No historical results received from the API.";
 
     return;
+
   }
+
 
   const latest =
     history[0];
@@ -591,73 +919,388 @@ function render(data){
   $("period").textContent =
     latest.issueNumber || "—";
 
+
   $("latestNumber").textContent =
     latest.number ?? "—";
 
+
   $("latestSize").textContent =
     latest.size || "—";
+
 
   $("dataPoints").textContent =
     history.length;
 
 
+  /* -----------------------------------------------
+     RECENT SAMPLE
+  ------------------------------------------------ */
+
+  const sample =
+    history.slice(
+      0,
+      Math.min(20,history.length)
+    );
+
+
   const big =
-    history.filter(
+    sample.filter(
       x => x.size === "BIG"
     ).length;
 
+
   const small =
-    history.filter(
+    sample.filter(
       x => x.size === "SMALL"
     ).length;
-
-  $("bigCount").textContent =
-    big;
-
-  $("smallCount").textContent =
-    small;
 
 
   const total =
     big + small;
+
 
   const bigPercent =
     total
       ? (big / total) * 100
       : 50;
 
+
   const smallPercent =
     total
       ? (small / total) * 100
       : 50;
 
+
+  $("bigCount").textContent =
+    big;
+
+
+  $("smallCount").textContent =
+    small;
+
+
   $("bigBar").style.width =
     bigPercent + "%";
+
 
   $("smallBar").style.width =
     smallPercent + "%";
 
 
+  /* -----------------------------------------------
+     STREAK
+  ------------------------------------------------ */
+
   const streak =
-    calculateStreak(history);
+    getStreak(sample);
+
 
   $("streakSide").textContent =
     streak.side || "—";
+
 
   $("streakLength").textContent =
     streak.length;
 
 
-  $("insight").textContent =
-    createInsight(
-      history,
-      bigPercent,
-      smallPercent,
-      streak
+  /* -----------------------------------------------
+     NEXT ESTIMATE
+  ------------------------------------------------ */
+
+  const estimate =
+    calculateEstimate(sample);
+
+
+  $("nextResult").textContent =
+    estimate.result;
+
+
+  $("nextResult").className =
+    "next-result " +
+    estimate.result.toLowerCase();
+
+
+  $("bigProbability").textContent =
+    estimate.big + "%";
+
+
+  $("smallProbability").textContent =
+    estimate.small + "%";
+
+
+  $("confidence").textContent =
+    estimate.confidence;
+
+
+  $("nextSub").textContent =
+    estimate.reason;
+
+
+  $("analysisText").textContent =
+    estimate.detail;
+
+
+  /* -----------------------------------------------
+     TABLE
+  ------------------------------------------------ */
+
+  renderHistory(sample);
+
+}
+
+
+/* =====================================================
+   STATISTICAL ESTIMATE
+===================================================== */
+
+function calculateEstimate(history){
+
+  if(history.length < 5){
+
+    return {
+      result:"WAITING",
+      big:50,
+      small:50,
+      confidence:"LOW",
+      reason:"Need more historical results.",
+      detail:"At least 5 valid results are required for the statistical summary."
+    };
+
+  }
+
+
+  /*
+   * Base frequency
+   */
+
+  let big =
+    history.filter(
+      x => x.size === "BIG"
+    ).length;
+
+
+  let small =
+    history.filter(
+      x => x.size === "SMALL"
+    ).length;
+
+
+  /*
+   * Give slightly more weight to recent
+   * observations.
+   */
+
+  let weightedBig = 0;
+  let weightedSmall = 0;
+  let weightTotal = 0;
+
+
+  history.forEach(
+    (item,index)=>{
+
+      const weight =
+        history.length - index;
+
+      weightTotal += weight;
+
+      if(item.size === "BIG"){
+
+        weightedBig += weight;
+
+      }
+
+      if(item.size === "SMALL"){
+
+        weightedSmall += weight;
+
+      }
+
+    }
+  );
+
+
+  /*
+   * Combine normal frequency and
+   * recency-weighted frequency.
+   */
+
+  const frequencyBig =
+    big /
+    (big + small);
+
+
+  const weightedBigRatio =
+    weightedBig /
+    (weightTotal || 1);
+
+
+  let bigScore =
+    (
+      frequencyBig * 0.55
+    ) +
+    (
+      weightedBigRatio * 0.45
     );
 
 
-  renderHistory(history);
+  let smallScore =
+    1 - bigScore;
+
+
+  /*
+   * Do NOT turn a streak into a forced
+   * opposite prediction.
+   *
+   * We only use it as a small statistical
+   * context factor.
+   */
+
+  const streak =
+    getStreak(history);
+
+
+  if(streak.length >= 5){
+
+    if(streak.side === "BIG"){
+
+      bigScore += 0.015;
+      smallScore -= 0.015;
+
+    }
+
+    if(streak.side === "SMALL"){
+
+      smallScore += 0.015;
+      bigScore -= 0.015;
+
+    }
+
+  }
+
+
+  /*
+   * Normalize
+   */
+
+  bigScore =
+    Math.max(
+      0,
+      Math.min(1,bigScore)
+    );
+
+
+  smallScore =
+    1 - bigScore;
+
+
+  let bigPercent =
+    Math.round(
+      bigScore * 100
+    );
+
+
+  let smallPercent =
+    100 - bigPercent;
+
+
+  /*
+   * Select the higher statistical estimate.
+   */
+
+  let result =
+    bigPercent >= smallPercent
+      ? "BIG"
+      : "SMALL";
+
+
+  /*
+   * Confidence is based on separation,
+   * not on certainty.
+   */
+
+  const difference =
+    Math.abs(
+      bigPercent -
+      smallPercent
+    );
+
+
+  let confidence;
+
+  if(difference >= 25){
+
+    confidence = "HIGH";
+
+  }else if(difference >= 12){
+
+    confidence = "MEDIUM";
+
+  }else{
+
+    confidence = "LOW";
+
+  }
+
+
+  /*
+   * Reason
+   */
+
+  let reason =
+    `Recent sample: ${history.length} results • ` +
+    `BIG ${bigPercent}% / SMALL ${smallPercent}%`;
+
+
+  /*
+   * Detail
+   */
+
+  let detail =
+    `Statistical estimate: ${result}. ` +
+    `The calculation combines recent BIG/SMALL frequency ` +
+    `with recency weighting. `;
+
+
+  if(streak.length >= 4){
+
+    detail +=
+      `Current ${streak.side} streak length is ${streak.length}. `;
+
+  }
+
+
+  const boundaryDigits =
+    history.filter(
+      x =>
+        x.number === 0 ||
+        x.number === 5
+    ).length;
+
+
+  if(boundaryDigits > 0){
+
+    detail +=
+      `${boundaryDigits} boundary digit result(s) ` +
+      `(0 or 5) appear in the sample.`;
+
+  }
+
+
+  return {
+
+    result,
+
+    big:bigPercent,
+
+    small:smallPercent,
+
+    confidence,
+
+    reason,
+
+    detail
+
+  };
 
 }
 
@@ -666,7 +1309,7 @@ function render(data){
    STREAK
 ===================================================== */
 
-function calculateStreak(history){
+function getStreak(history){
 
   if(!history.length){
 
@@ -677,12 +1320,28 @@ function calculateStreak(history){
 
   }
 
+
   const side =
     history[0].size;
 
+
+  if(!side){
+
+    return {
+      side:null,
+      length:0
+    };
+
+  }
+
+
   let length = 0;
 
-  for(const item of history){
+
+  for(
+    const item
+    of history
+  ){
 
     if(item.size === side){
 
@@ -696,96 +1355,11 @@ function calculateStreak(history){
 
   }
 
+
   return {
     side,
     length
   };
-
-}
-
-
-/* =====================================================
-   STATISTICAL INSIGHT
-===================================================== */
-
-function createInsight(
-  history,
-  bigPercent,
-  smallPercent,
-  streak
-){
-
-  if(history.length < 5){
-
-    return "Not enough historical data for a useful statistical summary.";
-
-  }
-
-
-  let text = "";
-
-
-  if(
-    Math.abs(
-      bigPercent - smallPercent
-    ) < 10
-  ){
-
-    text +=
-      "The recent sample is relatively balanced. ";
-
-  }else if(
-    bigPercent > smallPercent
-  ){
-
-    text +=
-      "BIG appears more frequently in the selected recent sample. ";
-
-  }else{
-
-    text +=
-      "SMALL appears more frequently in the selected recent sample. ";
-
-  }
-
-
-  if(streak.length >= 4){
-
-    text +=
-      `There is a ${streak.length}-result ${streak.side} streak in the current history. `;
-
-  }else{
-
-    text +=
-      "No unusually long current streak is visible. ";
-
-  }
-
-
-  const recent =
-    history.slice(
-      0,
-      Math.min(10, history.length)
-    );
-
-
-  const hasBoundary =
-    recent.some(
-      x =>
-        x.number === 0 ||
-        x.number === 5
-    );
-
-
-  if(hasBoundary){
-
-    text +=
-      "The recent sample contains boundary digits 0 or 5; treat simple distribution statistics cautiously.";
-
-  }
-
-
-  return text;
 
 }
 
@@ -799,7 +1373,9 @@ function renderHistory(history){
   const body =
     $("historyBody");
 
+
   body.innerHTML = "";
+
 
   history
     .slice(0,20)
@@ -809,19 +1385,28 @@ function renderHistory(history){
         const tr =
           document.createElement("tr");
 
+
+        const size =
+          item.size || "—";
+
+
         const badgeClass =
-          item.size === "BIG"
+          size === "BIG"
             ? "big"
             : "small";
 
+
         tr.innerHTML = `
 
-          <td>${index + 1}</td>
+          <td>
+            ${index + 1}
+          </td>
 
           <td>
             ${escapeHtml(
               String(
-                item.issueNumber ?? "—"
+                item.issueNumber ??
+                "—"
               )
             )}
           </td>
@@ -832,21 +1417,21 @@ function renderHistory(history){
 
           <td>
             <span class="badge ${badgeClass}">
-              ${escapeHtml(
-                item.size || "—"
-              )}
+              ${escapeHtml(size)}
             </span>
           </td>
 
           <td>
             ${escapeHtml(
               String(
-                item.colour ?? "—"
+                item.colour ??
+                "—"
               )
             )}
           </td>
 
         `;
+
 
         body.appendChild(tr);
 
@@ -857,12 +1442,12 @@ function renderHistory(history){
 
 
 /* =====================================================
-   HTML ESCAPE
+   ESCAPE HTML
 ===================================================== */
 
 function escapeHtml(value){
 
-  return value
+  return String(value)
     .replaceAll("&","&amp;")
     .replaceAll("<","&lt;")
     .replaceAll(">","&gt;")
@@ -873,10 +1458,17 @@ function escapeHtml(value){
 
 
 /* =====================================================
-   AUTO UPDATE
+   AUTO REFRESH
 ===================================================== */
 
 loadData();
+
+
+/*
+ * Every 15 seconds.
+ * This does not assume the round has
+ * settled exactly at this moment.
+ */
 
 setInterval(
   loadData,
@@ -886,4 +1478,4 @@ setInterval(
 </script>
 
 </body>
-</html>
+      </html>
