@@ -2,398 +2,392 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
 
-<title>DY AI • Wingo 1 Minute</title>
+<title>DY AI WinGo 1 Minute</title>
 
 <style>
 *{
   box-sizing:border-box;
   margin:0;
   padding:0;
-  -webkit-tap-highlight-color:transparent;
 }
 
 body{
-  min-height:100vh;
-  background:
-    radial-gradient(circle at 50% 0%,#18203d 0%,#090c18 42%,#030409 100%);
+  background:#070a13;
   color:#fff;
   font-family:Arial,Helvetica,sans-serif;
+  min-height:100vh;
 }
 
-.app{
+.container{
   width:100%;
-  max-width:520px;
+  max-width:720px;
   margin:auto;
-  padding:13px;
+  padding:16px;
 }
 
 .header{
   display:flex;
-  align-items:center;
   justify-content:space-between;
-  padding:12px 3px 18px;
+  align-items:center;
+  padding:12px 5px 22px;
 }
 
 .logo{
-  font-size:25px;
+  font-size:30px;
   font-weight:900;
-  letter-spacing:1px;
+  letter-spacing:4px;
 }
 
-.logo span{
-  display:block;
-  margin-top:4px;
-  font-size:9px;
-  color:#727a93;
-  letter-spacing:2px;
+.subtitle{
+  margin-top:6px;
+  color:#737e9e;
+  font-size:10px;
+  letter-spacing:3px;
 }
 
 .live{
-  font-size:10px;
-  color:#54f4a0;
-  font-weight:800;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:11px;
+  font-weight:bold;
 }
 
-.liveDot{
-  display:inline-block;
-  width:7px;
-  height:7px;
+.dot{
+  width:11px;
+  height:11px;
   border-radius:50%;
-  background:#54f4a0;
-  box-shadow:0 0 12px #54f4a0;
-  margin-right:5px;
+  background:#28f49b;
+  box-shadow:0 0 18px #28f49b;
+}
+
+.dot.off{
+  background:#ff536d;
+  box-shadow:0 0 18px #ff536d;
 }
 
 .card{
-  background:rgba(16,20,34,.9);
-  border:1px solid rgba(255,255,255,.07);
-  border-radius:20px;
-  padding:16px;
-  margin-bottom:12px;
-  box-shadow:0 15px 35px rgba(0,0,0,.25);
+  background:#0d1221;
+  border:1px solid #202a42;
+  border-radius:26px;
+  padding:22px;
+  margin-bottom:17px;
+  box-shadow:0 12px 40px rgba(0,0,0,.25);
 }
 
 .label{
-  color:#737c96;
-  font-size:9px;
-  font-weight:800;
-  letter-spacing:1.4px;
-  text-transform:uppercase;
+  color:#717c9d;
+  font-size:10px;
+  letter-spacing:3px;
+  font-weight:bold;
 }
 
-.issue{
-  margin-top:8px;
-  font-size:22px;
+.period{
+  margin-top:17px;
+  font-size:27px;
   font-weight:900;
   word-break:break-all;
 }
 
-.nextIssue{
-  margin-top:5px;
-  color:#606980;
-  font-size:9px;
+.next{
+  margin-top:12px;
+  color:#77829f;
+  font-size:11px;
 }
 
-.latest{
+.resultBox{
   display:flex;
-  justify-content:space-between;
   align-items:center;
-  margin-top:12px;
+  gap:20px;
+  margin-top:23px;
 }
 
 .number{
-  width:70px;
-  height:70px;
+  width:105px;
+  height:105px;
+  flex-shrink:0;
   border-radius:50%;
+  background:#04070e;
+  border:1px solid #26304a;
   display:flex;
-  justify-content:center;
   align-items:center;
-  background:#080b14;
-  border:1px solid rgba(255,255,255,.08);
-  font-size:30px;
+  justify-content:center;
+  font-size:45px;
   font-weight:900;
-  box-shadow:0 0 25px rgba(80,120,255,.12);
-}
-
-.latestRight{
-  text-align:right;
 }
 
 .resultType{
   font-size:25px;
-  font-weight:1000;
-}
-
-.BIG{
-  color:#ff7777;
-}
-
-.SMALL{
-  color:#65a4ff;
-}
-
-.updated{
-  margin-top:5px;
-  color:#656d84;
-  font-size:9px;
-}
-
-.aiCard{
-  text-align:center;
-  padding-top:20px;
-  padding-bottom:20px;
-}
-
-.aiTitle{
-  color:#8991a9;
-  font-size:10px;
   font-weight:900;
-  letter-spacing:2px;
+}
+
+.resultIssue{
+  margin-top:8px;
+  color:#737e9c;
+  font-size:11px;
+}
+
+.predictionCard{
+  text-align:center;
+  padding-top:25px;
+  padding-bottom:25px;
+}
+
+.predictionTitle{
+  color:#8994b3;
+  font-size:11px;
+  letter-spacing:3px;
 }
 
 .prediction{
-  margin-top:12px;
-  font-size:40px;
-  line-height:1;
+  font-size:52px;
   font-weight:1000;
-  letter-spacing:2px;
+  letter-spacing:5px;
+  margin:17px 0 8px;
+}
+
+.prediction.BIG{
+  color:#42ddff;
+  text-shadow:0 0 20px rgba(66,221,255,.3);
+}
+
+.prediction.SMALL{
+  color:#bd8cff;
+  text-shadow:0 0 20px rgba(189,140,255,.3);
+}
+
+.prediction.SKIP{
+  color:#777f95;
 }
 
 .target{
-  margin-top:8px;
-  color:#707890;
-  font-size:10px;
+  color:#77819d;
+  font-size:11px;
 }
 
-.target b{
-  color:#b5bdd0;
-}
-
-.confidenceBox{
-  margin-top:18px;
-}
-
-.confidenceTop{
+.confidenceHeader{
   display:flex;
   justify-content:space-between;
-  margin-bottom:7px;
-  color:#929ab0;
+  margin-top:25px;
+  margin-bottom:8px;
+  color:#7f89a7;
   font-size:10px;
+  letter-spacing:2px;
+  font-weight:bold;
 }
 
-.bar{
-  height:7px;
+.progress{
+  height:9px;
   width:100%;
-  background:#080a11;
+  background:#050810;
   border-radius:20px;
   overflow:hidden;
 }
 
-.fill{
-  height:100%;
+.progressFill{
   width:0%;
+  height:100%;
   border-radius:20px;
-  transition:width .45s ease;
+  background:linear-gradient(
+    90deg,
+    #4d7dff,
+    #43e5ff
+  );
+  transition:width .5s ease;
 }
 
-.status{
-  margin-top:12px;
-  color:#8a92a8;
-  font-size:10px;
-}
-
-.cooldown{
-  display:none;
-  margin-top:12px;
-  padding:9px;
-  border-radius:9px;
-  background:rgba(255,190,60,.06);
-  color:#ffca66;
-  font-size:9px;
+.predictionStatus{
+  margin-top:14px;
+  color:#79839f;
+  font-size:11px;
 }
 
 .grid{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:9px;
+  gap:13px;
+  margin-top:19px;
 }
 
 .stat{
-  background:#090c14;
-  border-radius:13px;
-  padding:13px;
+  background:#070b15;
+  border:1px solid #11192c;
+  border-radius:19px;
+  padding:18px;
+}
+
+.statName{
+  color:#77829f;
+  font-size:9px;
+  letter-spacing:2px;
 }
 
 .statValue{
-  margin-top:5px;
-  font-size:20px;
+  margin-top:10px;
+  font-size:26px;
   font-weight:900;
 }
 
 .statSub{
-  margin-top:4px;
-  color:#626a82;
-  font-size:9px;
+  margin-top:5px;
+  color:#69748e;
+  font-size:10px;
 }
 
 .pattern{
   display:flex;
   flex-wrap:wrap;
-  gap:5px;
-  margin-top:10px;
+  gap:6px;
+  margin-top:18px;
 }
 
 .pill{
-  min-width:32px;
   padding:7px 9px;
-  border-radius:8px;
-  background:#090c14;
-  text-align:center;
+  border-radius:10px;
   font-size:9px;
-  font-weight:900;
+  font-weight:bold;
 }
 
-.pill.BIG{
-  color:#ff7777;
+.pill.big{
+  color:#43dcff;
+  background:#103641;
 }
 
-.pill.SMALL{
-  color:#65a4ff;
+.pill.small{
+  color:#c18cff;
+  background:#28183c;
 }
 
 .history{
-  margin-top:10px;
+  margin-top:17px;
+  overflow:hidden;
 }
 
 .row{
   display:grid;
-  grid-template-columns:1.4fr .45fr .75fr .6fr;
-  gap:6px;
+  grid-template-columns:1.4fr .5fr .8fr .7fr;
+  gap:7px;
   align-items:center;
-  background:#090c14;
-  border-radius:10px;
-  padding:10px;
-  margin-bottom:6px;
-  font-size:9px;
+  padding:12px 0;
+  border-bottom:1px solid #151d30;
+  font-size:10px;
 }
 
-.rowIssue{
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-  color:#aab2c6;
-}
-
-.rowNumber{
-  text-align:center;
-  font-size:14px;
-  font-weight:900;
-}
-
-.rowPrediction{
-  text-align:center;
-  font-weight:900;
-}
-
-.badge{
-  text-align:center;
-  padding:5px 3px;
-  border-radius:6px;
+.rowHead{
+  color:#69748f;
   font-size:8px;
-  font-weight:900;
+  letter-spacing:1px;
 }
 
-.WIN{
-  color:#54f4a0;
-  background:rgba(70,255,160,.08);
+.bigText{
+  color:#43dcff;
+  font-weight:bold;
 }
 
-.LOSS{
-  color:#ff7777;
-  background:rgba(255,70,70,.08);
+.smallText{
+  color:#c18cff;
+  font-weight:bold;
 }
 
-.PENDING{
-  color:#ffca66;
-  background:rgba(255,190,60,.08);
+.win{
+  color:#30ee98;
+  font-weight:bold;
 }
 
-.SKIPPED{
-  color:#777f96;
-  background:rgba(150,150,150,.06);
+.loss{
+  color:#ff5870;
+  font-weight:bold;
+}
+
+.pending{
+  color:#ffc85c;
+  font-weight:bold;
 }
 
 .error{
   display:none;
-  padding:10px;
-  border-radius:10px;
-  background:rgba(255,70,70,.08);
-  border:1px solid rgba(255,70,70,.12);
-  color:#ff8585;
-  font-size:10px;
-  margin-bottom:12px;
+  background:#291018;
+  border:1px solid #5d2030;
+  color:#ff8295;
+  border-radius:15px;
+  padding:13px;
+  margin-bottom:16px;
+  font-size:11px;
+  word-break:break-word;
 }
 
-.footer{
+.source{
+  color:#4f5a75;
+  font-size:9px;
   text-align:center;
-  color:#50586f;
-  font-size:8px;
-  padding:10px 0 25px;
+  padding:10px 0 30px;
 }
 
-.loading{
-  opacity:.55;
-}
+@media(max-width:480px){
 
-@media(max-width:360px){
-
-  .app{
-    padding:9px;
+  .container{
+    padding:13px;
   }
 
-  .prediction{
-    font-size:34px;
+  .card{
+    border-radius:23px;
+    padding:19px;
   }
 
   .number{
-    width:62px;
-    height:62px;
-    font-size:27px;
+    width:90px;
+    height:90px;
+    font-size:39px;
   }
 
-  .resultType{
-    font-size:21px;
+  .prediction{
+    font-size:45px;
   }
 
+  .row{
+    font-size:9px;
+  }
 }
 </style>
 </head>
 
 <body>
 
-<div class="app">
+<div class="container">
 
   <!-- HEADER -->
   <div class="header">
 
-    <div class="logo">
-      DY AI
-      <span>WINGO 1 MINUTE</span>
+    <div>
+      <div class="logo">DY AI</div>
+
+      <div class="subtitle">
+        WINGO 1 MINUTE
+      </div>
     </div>
 
     <div class="live">
-      <span class="liveDot"></span>
-      LIVE
+
+      <span
+        id="liveDot"
+        class="dot off"
+      ></span>
+
+      <span id="liveText">
+        CONNECTING
+      </span>
+
     </div>
 
   </div>
 
-
   <!-- ERROR -->
-  <div id="errorBox" class="error"></div>
-
+  <div
+    id="errorBox"
+    class="error"
+  ></div>
 
   <!-- CURRENT PERIOD -->
   <div class="card">
@@ -402,17 +396,21 @@ body{
       CURRENT PERIOD
     </div>
 
-    <div id="currentIssue" class="issue">
-      Loading...
+    <div
+      id="currentPeriod"
+      class="period"
+    >
+      —
     </div>
 
-    <div class="nextIssue">
-      NEXT PERIOD:
-      <b id="nextIssue">—</b>
+    <div
+      id="nextPeriod"
+      class="next"
+    >
+      NEXT PERIOD: —
     </div>
 
   </div>
-
 
   <!-- LATEST RESULT -->
   <div class="card">
@@ -421,19 +419,28 @@ body{
       LATEST RESULT
     </div>
 
-    <div class="latest">
+    <div class="resultBox">
 
-      <div id="latestNumber" class="number">
+      <div
+        id="latestNumber"
+        class="number"
+      >
         —
       </div>
 
-      <div class="latestRight">
+      <div>
 
-        <div id="latestResult" class="resultType">
+        <div
+          id="latestType"
+          class="resultType"
+        >
           —
         </div>
 
-        <div id="updated" class="updated">
+        <div
+          id="latestIssue"
+          class="resultIssue"
+        >
           Waiting for live data...
         </div>
 
@@ -443,124 +450,120 @@ body{
 
   </div>
 
-
   <!-- PREDICTION -->
-  <div class="card aiCard">
+  <div class="card predictionCard">
 
-    <div class="aiTitle">
+    <div class="predictionTitle">
       🎯 AI PREMIUM PREDICTION
     </div>
 
-    <div id="prediction" class="prediction">
-      —
+    <div
+      id="prediction"
+      class="prediction SKIP"
+    >
+      SKIP
     </div>
 
-    <div class="target">
-      TARGET PERIOD:
-      <b id="predictionTarget">—</b>
+    <div
+      id="target"
+      class="target"
+    >
+      TARGET PERIOD: —
     </div>
 
+    <div class="confidenceHeader">
 
-    <div class="confidenceBox">
+      <span>
+        AI CONFIDENCE
+      </span>
 
-      <div class="confidenceTop">
-
-        <span>
-          AI CONFIDENCE
-        </span>
-
-        <b id="confidence">
-          0%
-        </b>
-
-      </div>
-
-      <div class="bar">
-
-        <div
-          id="confidenceFill"
-          class="fill">
-        </div>
-
-      </div>
+      <span id="confidence">
+        0%
+      </span>
 
     </div>
 
+    <div class="progress">
 
-    <div id="predictionStatus" class="status">
-      Waiting for prediction...
+      <div
+        id="confidenceBar"
+        class="progressFill"
+      ></div>
+
     </div>
 
-
-    <div id="cooldown" class="cooldown">
+    <div
+      id="predictionStatus"
+      class="predictionStatus"
+    >
+      Waiting for live data...
     </div>
 
   </div>
 
-
-  <!-- ANALYSIS -->
+  <!-- LIVE ANALYSIS -->
   <div class="card">
 
     <div class="label">
       LIVE ANALYSIS
     </div>
 
-    <br>
-
     <div class="grid">
-
 
       <div class="stat">
 
-        <div class="label">
+        <div class="statName">
           BIG
         </div>
 
         <div
-          id="bigPct"
-          class="statValue">
+          id="bigPercent"
+          class="statValue"
+        >
           0%
         </div>
 
         <div
           id="bigCount"
-          class="statSub">
+          class="statSub"
+        >
           0 results
         </div>
 
       </div>
 
-
       <div class="stat">
 
-        <div class="label">
+        <div class="statName">
           SMALL
         </div>
 
         <div
-          id="smallPct"
-          class="statValue">
+          id="smallPercent"
+          class="statValue"
+        >
           0%
         </div>
 
         <div
           id="smallCount"
-          class="statSub">
+          class="statSub"
+        >
           0 results
         </div>
 
       </div>
 
-
       <div class="stat">
 
-        <div class="label">
+        <div class="statName">
           SWITCH RATE
         </div>
 
         <div
           id="switchRate"
-          class="statValue">
+          class="statValue"
+        >
           0%
         </div>
 
@@ -570,22 +573,23 @@ body{
 
       </div>
 
-
       <div class="stat">
 
-        <div class="label">
+        <div class="statName">
           STREAK
         </div>
 
         <div
           id="streak"
-          class="statValue">
+          class="statValue"
+        >
           —
         </div>
 
         <div
           id="streakCount"
-          class="statSub">
+          class="statSub"
+        >
           0 rounds
         </div>
 
@@ -593,296 +597,742 @@ body{
 
     </div>
 
-  </div>
-
-
-  <!-- PATTERN -->
-  <div class="card">
-
-    <div class="label">
-      RECENT PATTERN
-    </div>
-
     <div
       id="pattern"
-      class="pattern">
-    </div>
+      class="pattern"
+    ></div>
 
   </div>
 
-
-  <!-- PREDICTION HISTORY -->
-  <div class="card">
-
-    <div class="label">
-      PREDICTION HISTORY
-    </div>
-
-    <div
-      id="predictionHistory"
-      class="history">
-
-      <div class="row">
-
-        <div class="rowIssue">
-          Waiting...
-        </div>
-
-        <div class="rowNumber">
-          —
-        </div>
-
-        <div class="rowPrediction">
-          —
-        </div>
-
-        <div class="badge PENDING">
-          LIVE
-        </div>
-
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <!-- LIVE RESULTS -->
+  <!-- HISTORY -->
   <div class="card">
 
     <div class="label">
       LAST 30 RESULTS
     </div>
 
-    <div
-      id="resultHistory"
-      class="history">
+    <div class="history">
 
-      <div class="row">
+      <div class="row rowHead">
 
-        <div class="rowIssue">
-          Waiting...
-        </div>
-
-        <div class="rowNumber">
-          —
-        </div>
-
-        <div class="rowPrediction">
-          —
-        </div>
-
-        <div class="badge PENDING">
-          LIVE
-        </div>
+        <div>PERIOD</div>
+        <div>NO.</div>
+        <div>RESULT</div>
+        <div>COLOUR</div>
 
       </div>
+
+      <div
+        id="historyRows"
+      ></div>
 
     </div>
 
   </div>
 
-
-  <div class="footer">
-    DY AI • WINGO 1 MINUTE • LIVE ANALYSIS
+  <div class="source">
+    DY AI • WINGOBOT LIVE DATA • 1 MINUTE
   </div>
 
 </div>
 
-
 <script>
 
-"use strict";
+/* =========================================================
+   CONFIG
+========================================================= */
+
+const DEFAULT_ACCESS_KEY =
+  "DY-JPMSUULN";
+
+const POLL_INTERVAL =
+  3000;
 
 
-/* =========================
-   DEVICE
-========================= */
+/* =========================================================
+   DEVICE ID
+========================================================= */
 
-const DEVICE_STORAGE =
-  "dy_ai_device_id";
+function getDeviceId(){
 
-let deviceId =
-  localStorage.getItem(
-    DEVICE_STORAGE
+  let id =
+    localStorage.getItem(
+      "dy_ai_device_id"
+    );
+
+  if(!id){
+
+    if(
+      window.crypto &&
+      crypto.randomUUID
+    ){
+
+      id =
+        crypto.randomUUID();
+
+    }else{
+
+      id =
+        "device-" +
+        Date.now() +
+        "-" +
+        Math.random()
+          .toString(16)
+          .slice(2);
+
+    }
+
+    localStorage.setItem(
+      "dy_ai_device_id",
+      id
+    );
+  }
+
+  return id;
+}
+
+
+/* =========================================================
+   ACCESS KEY
+========================================================= */
+
+function getAccessKey(){
+
+  return (
+    localStorage.getItem(
+      "dy_ai_access_key"
+    ) ||
+    DEFAULT_ACCESS_KEY
   );
+}
 
 
-if(!deviceId){
+/* =========================================================
+   TEXT HELPER
+========================================================= */
 
-  if(
-    window.crypto &&
-    crypto.randomUUID
-  ){
+function setText(
+  id,
+  value
+){
 
-    deviceId =
-      crypto.randomUUID();
+  const element =
+    document.getElementById(
+      id
+    );
 
-  }else{
+  if(element){
 
-    deviceId =
-      "device-" +
-      Date.now() +
-      "-" +
-      Math.random()
-        .toString(36)
-        .slice(2);
+    element.textContent =
+      value == null
+        ? "—"
+        : value;
 
   }
 
-  localStorage.setItem(
-    DEVICE_STORAGE,
-    deviceId
-  );
+}
+
+
+/* =========================================================
+   ERROR
+========================================================= */
+
+function showError(
+  message
+){
+
+  const box =
+    document.getElementById(
+      "errorBox"
+    );
+
+  if(!message){
+
+    box.style.display =
+      "none";
+
+    box.textContent =
+      "";
+
+    return;
+  }
+
+  box.style.display =
+    "block";
+
+  box.textContent =
+    message;
 
 }
 
 
-/* =========================
-   ACCESS KEY
-========================= */
+/* =========================================================
+   LIVE INDICATOR
+========================================================= */
 
-const KEY_STORAGE =
-  "dy_ai_wingo_access_key";
+function setLive(
+  live
+){
 
+  const dot =
+    document.getElementById(
+      "liveDot"
+    );
 
-let accessKey =
-  localStorage.getItem(
-    KEY_STORAGE
-  );
+  const text =
+    document.getElementById(
+      "liveText"
+    );
 
+  if(live){
 
-/*
-  This is only the default
-  key created by the new server.
-*/
+    dot.classList.remove(
+      "off"
+    );
 
-if(!accessKey){
+    text.textContent =
+      "LIVE";
 
-  accessKey =
-    "DY-JPMSUULN";
+  }else{
 
-  localStorage.setItem(
-    KEY_STORAGE,
-    accessKey
-  );
+    dot.classList.add(
+      "off"
+    );
 
-}
+    text.textContent =
+      "OFFLINE";
 
-
-/* =========================
-   ELEMENT
-========================= */
-
-function $(id){
-
-  return document.getElementById(id);
+  }
 
 }
 
 
-/* =========================
-   ESCAPE
-========================= */
+/* =========================================================
+   ESCAPE HTML
+========================================================= */
 
-function escapeHTML(value){
+function escapeHtml(
+  value
+){
 
   return String(
     value ?? ""
   )
-  .replace(/&/g,"&amp;")
-  .replace(/</g,"&lt;")
-  .replace(/>/g,"&gt;")
-  .replace(/"/g,"&quot;")
-  .replace(/'/g,"&#039;");
+  .replaceAll(
+    "&",
+    "&amp;"
+  )
+  .replaceAll(
+    "<",
+    "&lt;"
+  )
+  .replaceAll(
+    ">",
+    "&gt;"
+  )
+  .replaceAll(
+    '"',
+    "&quot;"
+  )
+  .replaceAll(
+    "'",
+    "&#039;"
+  );
 
 }
 
 
-/* =========================
-   KEY CHECK
-========================= */
+/* =========================================================
+   RENDER PREDICTION
+========================================================= */
 
-async function checkAccess(){
+function renderPrediction(
+  prediction
+){
 
-  const url =
-    "/api/key/check?" +
-    "key=" +
-    encodeURIComponent(
-      accessKey
-    ) +
-    "&deviceId=" +
-    encodeURIComponent(
-      deviceId
-    ) +
-    "&_=" +
-    Date.now();
-
-
-  const response =
-    await fetch(
-      url,
-      {
-        method:"GET",
-        cache:"no-store"
-      }
+  const element =
+    document.getElementById(
+      "prediction"
     );
 
+  if(!prediction){
 
-  const data =
-    await response.json();
+    element.textContent =
+      "SKIP";
 
+    element.className =
+      "prediction SKIP";
 
-  if(
-    !response.ok ||
-    !data.valid
-  ){
-
-    throw new Error(
-      data.error ||
-      "ACCESS_KEY_INVALID"
+    setText(
+      "target",
+      "TARGET PERIOD: —"
     );
 
-  }
+    setText(
+      "confidence",
+      "0%"
+    );
 
-  return data;
+    document
+      .getElementById(
+        "confidenceBar"
+      )
+      .style.width =
+      "0%";
 
-}
+    setText(
+      "predictionStatus",
+      "Waiting for next prediction..."
+    );
 
-
-/* =========================
-   LOAD STATE
-========================= */
-
-let loading = false;
-
-
-async function loadState(){
-
-  if(loading){
     return;
   }
 
-  loading = true;
+
+  const result =
+    String(
+      prediction.result ||
+      "SKIP"
+    ).toUpperCase();
+
+
+  element.textContent =
+    result;
+
+  element.className =
+    "prediction " +
+    (
+      result === "BIG"
+        ? "BIG"
+        : result === "SMALL"
+          ? "SMALL"
+          : "SKIP"
+    );
+
+
+  setText(
+    "target",
+    "TARGET PERIOD: " +
+    (
+      prediction.targetPeriod ||
+      "—"
+    )
+  );
+
+
+  const confidence =
+    Math.max(
+      0,
+      Math.min(
+        100,
+        Number(
+          prediction.confidence ||
+          0
+        )
+      )
+    );
+
+
+  setText(
+    "confidence",
+    confidence + "%"
+  );
+
+
+  document
+    .getElementById(
+      "confidenceBar"
+    )
+    .style.width =
+    confidence + "%";
+
+
+  if(
+    prediction.status ===
+    "WIN"
+  ){
+
+    setText(
+      "predictionStatus",
+      "✅ WIN • Actual Number: " +
+      prediction.actualNumber
+    );
+
+  }else if(
+    prediction.status ===
+    "LOSS"
+  ){
+
+    setText(
+      "predictionStatus",
+      "❌ LOSS • Actual Number: " +
+      prediction.actualNumber
+    );
+
+  }else{
+
+    setText(
+      "predictionStatus",
+      "⏳ PREDICTION PENDING"
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   RENDER ANALYSIS
+========================================================= */
+
+function renderAnalysis(
+  analysis
+){
+
+  if(!analysis){
+    return;
+  }
+
+
+  setText(
+    "bigPercent",
+    Number(
+      analysis.bigPercent || 0
+    ) + "%"
+  );
+
+
+  setText(
+    "smallPercent",
+    Number(
+      analysis.smallPercent || 0
+    ) + "%"
+  );
+
+
+  setText(
+    "bigCount",
+    Number(
+      analysis.big || 0
+    ) + " results"
+  );
+
+
+  setText(
+    "smallCount",
+    Number(
+      analysis.small || 0
+    ) + " results"
+  );
+
+
+  setText(
+    "switchRate",
+    Number(
+      analysis.switchRate || 0
+    ) + "%"
+  );
+
+
+  setText(
+    "streak",
+    analysis.streak ||
+    "—"
+  );
+
+
+  setText(
+    "streakCount",
+    Number(
+      analysis.streakCount || 0
+    ) + " rounds"
+  );
+
+
+  const pattern =
+    document.getElementById(
+      "pattern"
+    );
+
+  pattern.innerHTML =
+    "";
+
+
+  (
+    analysis.recent ||
+    []
+  )
+  .forEach(
+    result => {
+
+      const span =
+        document.createElement(
+          "span"
+        );
+
+      span.className =
+        "pill " +
+        (
+          result === "BIG"
+            ? "big"
+            : "small"
+        );
+
+      span.textContent =
+        result;
+
+      pattern.appendChild(
+        span
+      );
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   RENDER HISTORY
+========================================================= */
+
+function renderHistory(
+  rows
+){
+
+  const container =
+    document.getElementById(
+      "historyRows"
+    );
+
+  container.innerHTML =
+    "";
+
+  if(
+    !Array.isArray(rows) ||
+    rows.length === 0
+  ){
+
+    container.innerHTML = `
+      <div
+        style="
+          padding:20px 0;
+          color:#69748f;
+          font-size:11px;
+        "
+      >
+        Waiting for result history...
+      </div>
+    `;
+
+    return;
+  }
+
+
+  rows.forEach(
+    row => {
+
+      const div =
+        document.createElement(
+          "div"
+        );
+
+      div.className =
+        "row";
+
+
+      const result =
+        String(
+          row.result ||
+          ""
+        ).toUpperCase();
+
+
+      const resultClass =
+        result === "BIG"
+          ? "bigText"
+          : "smallText";
+
+
+      div.innerHTML = `
+
+        <div>
+          ${escapeHtml(
+            row.issueNumber
+          )}
+        </div>
+
+        <div>
+          ${escapeHtml(
+            row.number
+          )}
+        </div>
+
+        <div
+          class="${resultClass}"
+        >
+          ${escapeHtml(
+            result
+          )}
+        </div>
+
+        <div>
+          ${escapeHtml(
+            row.colour ||
+            "—"
+          )}
+        </div>
+
+      `;
+
+
+      container.appendChild(
+        div
+      );
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   RENDER COMPLETE STATE
+========================================================= */
+
+function renderState(
+  data
+){
+
+  setLive(
+    Boolean(
+      data.live
+    )
+  );
+
+
+  setText(
+    "currentPeriod",
+    data.currentPeriod ||
+    "—"
+  );
+
+
+  setText(
+    "nextPeriod",
+    "NEXT PERIOD: " +
+    (
+      data.nextPeriod ||
+      "—"
+    )
+  );
+
+
+  /* Latest result */
+
+  const latest =
+    data.latestResult;
+
+
+  if(latest){
+
+    setText(
+      "latestNumber",
+      latest.number
+    );
+
+    setText(
+      "latestType",
+      latest.result
+    );
+
+    setText(
+      "latestIssue",
+      "Period: " +
+      latest.issueNumber
+    );
+
+  }else{
+
+    setText(
+      "latestNumber",
+      "—"
+    );
+
+    setText(
+      "latestType",
+      "—"
+    );
+
+    setText(
+      "latestIssue",
+      "Waiting for live data..."
+    );
+
+  }
+
+
+  /* Prediction */
+
+  renderPrediction(
+    data.prediction
+  );
+
+
+  /* Analysis */
+
+  renderAnalysis(
+    data.analysis
+  );
+
+
+  /* History */
+
+  renderHistory(
+    data.recentResults
+  );
+
+
+  if(data.live){
+
+    showError("");
+
+  }else{
+
+    showError(
+      data.liveError ||
+      "Waiting for live Wingo data..."
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   LOAD STATE
+========================================================= */
+
+async function loadState(){
+
+  const key =
+    getAccessKey();
+
+  const device =
+    getDeviceId();
 
 
   try{
 
-    await checkAccess();
-
-
     const url =
-      "/api/state?" +
-      "key=" +
+      "/api/state" +
+      "?key=" +
       encodeURIComponent(
-        accessKey
+        key
       ) +
-      "&deviceId=" +
+      "&device=" +
       encodeURIComponent(
-        deviceId
-      ) +
-      "&_=" +
-      Date.now();
+        device
+      );
 
 
     const response =
@@ -890,7 +1340,11 @@ async function loadState(){
         url,
         {
           method:"GET",
-          cache:"no-store"
+          cache:"no-store",
+          headers:{
+            "Accept":
+              "application/json"
+          }
         }
       );
 
@@ -899,678 +1353,49 @@ async function loadState(){
       await response.json();
 
 
-    if(
-      !response.ok ||
-      !data.ok
-    ){
+    if(!response.ok){
 
-      throw new Error(
+      setLive(false);
+
+      showError(
         data.error ||
-        "STATE_ERROR"
+        "Unable to load prediction data"
       );
+
+      return;
 
     }
 
 
-    render(data);
-
-
-    $("errorBox")
-      .style
-      .display =
-      "none";
+    renderState(
+      data
+    );
 
 
   }catch(error){
 
-    console.error(error);
+    setLive(false);
 
-
-    $("errorBox")
-      .textContent =
-      "LIVE ERROR: " +
-      error.message;
-
-
-    $("errorBox")
-      .style
-      .display =
-      "block";
-
-
-    $("prediction")
-      .textContent =
-      "OFFLINE";
-
-  }finally{
-
-    loading = false;
-
-  }
-
-}
-
-
-/* =========================
-   RENDER
-========================= */
-
-function render(data){
-
-  renderCurrent(data);
-
-  renderPrediction(data);
-
-  renderAnalysis(data);
-
-  renderPattern(data);
-
-  renderPredictionHistory(data);
-
-  renderLiveResults(data);
-
-}
-
-
-/* =========================
-   CURRENT
-========================= */
-
-function renderCurrent(data){
-
-  $("currentIssue")
-    .textContent =
-    data.currentIssue ||
-    "—";
-
-
-  $("nextIssue")
-    .textContent =
-    data.nextIssue ||
-    "—";
-
-
-  const latest =
-    data.latest;
-
-
-  if(!latest){
-
-    $("latestNumber")
-      .textContent =
-      "—";
-
-    $("latestResult")
-      .textContent =
-      "—";
-
-    return;
-
-  }
-
-
-  $("latestNumber")
-    .textContent =
-    latest.number;
-
-
-  $("latestResult")
-    .textContent =
-    latest.result ||
-    "—";
-
-
-  $("latestResult")
-    .className =
-    "resultType " +
-    (
-      latest.result ||
-      ""
+    showError(
+      "Server connection error: " +
+      error.message
     );
 
-
-  if(data.fetchedAt){
-
-    $("updated")
-      .textContent =
-      "Updated " +
-      new Date(
-        Number(
-          data.fetchedAt
-        )
-      ).toLocaleTimeString();
-
   }
 
 }
 
 
-/* =========================
-   PREDICTION
-========================= */
-
-function renderPrediction(data){
-
-  const p =
-    data.prediction;
-
-
-  if(!p){
-
-    $("prediction")
-      .textContent =
-      "SKIP";
-
-    $("prediction")
-      .className =
-      "prediction";
-
-
-    $("predictionTarget")
-      .textContent =
-      data.nextIssue ||
-      "—";
-
-
-    $("confidence")
-      .textContent =
-      "0%";
-
-
-    $("confidenceFill")
-      .style
-      .width =
-      "0%";
-
-
-    $("predictionStatus")
-      .textContent =
-      "Waiting for next prediction";
-
-
-    renderCooldown(
-      data.cooldown
-    );
-
-    return;
-
-  }
-
-
-  $("prediction")
-    .textContent =
-    p.prediction;
-
-
-  $("prediction")
-    .className =
-    "prediction " +
-    p.prediction;
-
-
-  $("predictionTarget")
-    .textContent =
-    p.targetIssue ||
-    "—";
-
-
-  const confidence =
-    Number(
-      p.confidence || 0
-    );
-
-
-  $("confidence")
-    .textContent =
-    confidence +
-    "%";
-
-
-  $("confidenceFill")
-    .style
-    .width =
-    Math.max(
-      0,
-      Math.min(
-        100,
-        confidence
-      )
-    ) +
-    "%";
-
-
-  $("confidenceFill")
-    .style
-    .background =
-    p.prediction === "BIG"
-      ? "#ff7272"
-      : "#619fff";
-
-
-  let status =
-    p.status ||
-    "PENDING";
-
-
-  $("predictionStatus")
-    .textContent =
-    "Status: " +
-    status +
-    " • " +
-    (
-      p.model ||
-      data.model ||
-      "DY-AI"
-    );
-
-
-  renderCooldown(
-    data.cooldown
-  );
-
-}
-
-
-/* =========================
-   COOLDOWN
-========================= */
-
-function renderCooldown(cooldown){
-
-  const box =
-    $("cooldown");
-
-
-  if(
-    !cooldown ||
-    !cooldown.active
-  ){
-
-    box.style.display =
-      "none";
-
-    return;
-
-  }
-
-
-  box.style.display =
-    "block";
-
-
-  box.textContent =
-    "⏳ COOLDOWN ACTIVE • " +
-    cooldown.wait +
-    " ROUND(S) REMAINING";
-
-}
-
-
-/* =========================
-   ANALYSIS
-========================= */
-
-function renderAnalysis(data){
-
-  const a =
-    data.analysis;
-
-
-  if(!a){
-    return;
-  }
-
-
-  $("bigPct")
-    .textContent =
-    Number(
-      a.bigPct || 0
-    ).toFixed(1) +
-    "%";
-
-
-  $("smallPct")
-    .textContent =
-    Number(
-      a.smallPct || 0
-    ).toFixed(1) +
-    "%";
-
-
-  $("bigCount")
-    .textContent =
-    (a.big || 0) +
-    " results";
-
-
-  $("smallCount")
-    .textContent =
-    (a.small || 0) +
-    " results";
-
-
-  $("switchRate")
-    .textContent =
-    Number(
-      a.switchRate || 0
-    ).toFixed(1) +
-    "%";
-
-
-  if(a.streak){
-
-    $("streak")
-      .textContent =
-      a.streak.current ||
-      "—";
-
-
-    $("streakCount")
-      .textContent =
-      (
-        a.streak.currentLength ||
-        0
-      ) +
-      " rounds";
-
-  }
-
-}
-
-
-/* =========================
-   PATTERN
-========================= */
-
-function renderPattern(arr){
-
-  const box =
-    $("pattern");
-
-
-  box.innerHTML = "";
-
-
-  if(
-    !Array.isArray(arr) ||
-    !arr.length
-  ){
-
-    box.innerHTML =
-      '<div class="pill">WAITING</div>';
-
-    return;
-
-  }
-
-
-  arr.forEach(
-    value => {
-
-      const div =
-        document.createElement(
-          "div"
-        );
-
-
-      div.className =
-        "pill " +
-        value;
-
-
-      div.textContent =
-        value === "BIG"
-          ? "B"
-          : "S";
-
-
-      box.appendChild(div);
-
-    }
-  );
-
-}
-
-
-/* =========================
-   PREDICTION HISTORY
-========================= */
-
-function renderPredictionHistory(data){
-
-  const box =
-    $("predictionHistory");
-
-
-  box.innerHTML = "";
-
-
-  const history =
-    Array.isArray(
-      data.history
-    )
-      ? data.history
-      : [];
-
-
-  if(!history.length){
-
-    box.innerHTML =
-      `
-      <div class="row">
-
-        <div class="rowIssue">
-          No prediction history
-        </div>
-
-        <div class="rowNumber">
-          —
-        </div>
-
-        <div class="rowPrediction">
-          —
-        </div>
-
-        <div class="badge PENDING">
-          —
-        </div>
-
-      </div>
-      `;
-
-    return;
-
-  }
-
-
-  history
-    .slice(0,30)
-    .forEach(
-      item => {
-
-        const status =
-          String(
-            item.actual_result ||
-            "PENDING"
-          ).toUpperCase();
-
-
-        const row =
-          document.createElement(
-            "div"
-          );
-
-
-        row.className =
-          "row";
-
-
-        row.innerHTML =
-          `
-
-          <div class="rowIssue">
-            ${escapeHTML(
-              item.target_issue ||
-              "—"
-            )}
-          </div>
-
-          <div class="rowNumber">
-            ${
-              item.actual_number ??
-              "—"
-            }
-          </div>
-
-          <div class="rowPrediction">
-            ${escapeHTML(
-              item.prediction ||
-              "—"
-            )}
-          </div>
-
-          <div class="badge ${status}">
-            ${status}
-          </div>
-
-          `;
-
-
-        box.appendChild(row);
-
-      }
-    );
-
-}
-
-
-/* =========================
-   LIVE RESULTS
-========================= */
-
-function renderLiveResults(data){
-
-  const box =
-    $("resultHistory");
-
-
-  box.innerHTML = "";
-
-
-  const rows =
-    Array.isArray(
-      data.last30
-    )
-      ? data.last30
-      : [];
-
-
-  if(!rows.length){
-
-    box.innerHTML =
-      `
-      <div class="row">
-
-        <div class="rowIssue">
-          No live results
-        </div>
-
-        <div class="rowNumber">
-          —
-        </div>
-
-        <div class="rowPrediction">
-          —
-        </div>
-
-        <div class="badge PENDING">
-          LIVE
-        </div>
-
-      </div>
-      `;
-
-    return;
-
-  }
-
-
-  rows
-    .slice(0,30)
-    .forEach(
-      item => {
-
-        const row =
-          document.createElement(
-            "div"
-          );
-
-
-        row.className =
-          "row";
-
-
-        const result =
-          String(
-            item.result ||
-            ""
-          ).toUpperCase();
-
-
-        row.innerHTML =
-          `
-
-          <div class="rowIssue">
-            ${escapeHTML(
-              item.issue ||
-              "—"
-            )}
-          </div>
-
-          <div class="rowNumber">
-            ${
-              item.number ??
-              "—"
-            }
-          </div>
-
-          <div class="rowPrediction">
-            ${escapeHTML(
-              result ||
-              "—"
-            )}
-          </div>
-
-          <div class="badge PENDING">
-            LIVE
-          </div>
-
-          `;
-
-
-        box.appendChild(row);
-
-      }
-    );
-
-}
-
-
-/* =========================
+/* =========================================================
    START
-========================= */
+========================================================= */
 
 loadState();
 
 
-/*
-  3 second UI refresh.
-  Server itself uses live API.
-*/
-
 setInterval(
   loadState,
-  3000
+  POLL_INTERVAL
 );
 
 </script>
