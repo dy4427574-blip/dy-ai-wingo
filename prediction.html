@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>DY AI — Wingo 1 Minute</title>
+
+<title>DY AI • Wingo 1 Minute</title>
 
 <style>
 *{
@@ -14,436 +15,358 @@
 }
 
 body{
+  min-height:100vh;
   background:
-    radial-gradient(circle at top,#171b32 0%,#080a13 42%,#04050a 100%);
+    radial-gradient(circle at 50% 0%,#18203d 0%,#090c18 42%,#030409 100%);
   color:#fff;
   font-family:Arial,Helvetica,sans-serif;
-  min-height:100vh;
 }
 
 .app{
   width:100%;
   max-width:520px;
   margin:auto;
-  padding:14px;
+  padding:13px;
 }
 
 .header{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  padding:15px 4px 18px;
+  padding:12px 3px 18px;
 }
 
 .logo{
-  font-size:24px;
+  font-size:25px;
   font-weight:900;
   letter-spacing:1px;
 }
 
 .logo span{
-  font-size:12px;
   display:block;
-  opacity:.55;
-  margin-top:3px;
+  margin-top:4px;
+  font-size:9px;
+  color:#727a93;
   letter-spacing:2px;
 }
 
 .live{
-  display:flex;
-  align-items:center;
-  gap:7px;
-  font-size:11px;
-  font-weight:700;
-  opacity:.85;
+  font-size:10px;
+  color:#54f4a0;
+  font-weight:800;
 }
 
-.dot{
-  width:8px;
-  height:8px;
+.liveDot{
+  display:inline-block;
+  width:7px;
+  height:7px;
   border-radius:50%;
-  background:#42ff9c;
-  box-shadow:0 0 12px #42ff9c;
+  background:#54f4a0;
+  box-shadow:0 0 12px #54f4a0;
+  margin-right:5px;
 }
 
 .card{
-  background:rgba(18,21,36,.86);
-  border:1px solid rgba(255,255,255,.08);
+  background:rgba(16,20,34,.9);
+  border:1px solid rgba(255,255,255,.07);
   border-radius:20px;
   padding:16px;
-  margin-bottom:13px;
-  box-shadow:0 12px 35px rgba(0,0,0,.28);
-  backdrop-filter:blur(14px);
+  margin-bottom:12px;
+  box-shadow:0 15px 35px rgba(0,0,0,.25);
 }
 
 .label{
-  font-size:10px;
-  color:#8d94ad;
-  text-transform:uppercase;
+  color:#737c96;
+  font-size:9px;
+  font-weight:800;
   letter-spacing:1.4px;
-  margin-bottom:7px;
+  text-transform:uppercase;
 }
 
 .issue{
+  margin-top:8px;
   font-size:22px;
   font-weight:900;
-  letter-spacing:.5px;
   word-break:break-all;
 }
 
-.issueSub{
-  margin-top:6px;
-  font-size:11px;
-  color:#777f99;
+.nextIssue{
+  margin-top:5px;
+  color:#606980;
+  font-size:9px;
 }
 
-.liveResult{
+.latest{
   display:flex;
   justify-content:space-between;
   align-items:center;
+  margin-top:12px;
 }
 
 .number{
-  width:72px;
-  height:72px;
+  width:70px;
+  height:70px;
   border-radius:50%;
   display:flex;
-  align-items:center;
   justify-content:center;
-  font-size:31px;
+  align-items:center;
+  background:#080b14;
+  border:1px solid rgba(255,255,255,.08);
+  font-size:30px;
   font-weight:900;
-  background:#111525;
-  border:1px solid rgba(255,255,255,.1);
-  box-shadow:0 0 25px rgba(90,120,255,.15);
+  box-shadow:0 0 25px rgba(80,120,255,.12);
 }
 
-.resultText{
+.latestRight{
   text-align:right;
 }
 
-.bigSmall{
-  font-size:24px;
-  font-weight:900;
+.resultType{
+  font-size:25px;
+  font-weight:1000;
 }
 
-.bigSmall.big{
-  color:#ff8a8a;
+.BIG{
+  color:#ff7777;
 }
 
-.bigSmall.small{
-  color:#71a7ff;
+.SMALL{
+  color:#65a4ff;
 }
 
-.time{
-  color:#777f99;
-  font-size:10px;
+.updated{
   margin-top:5px;
+  color:#656d84;
+  font-size:9px;
 }
 
-.predictBox{
+.aiCard{
   text-align:center;
-  padding:21px 15px;
+  padding-top:20px;
+  padding-bottom:20px;
 }
 
 .aiTitle{
-  font-size:11px;
-  color:#858ca5;
+  color:#8991a9;
+  font-size:10px;
+  font-weight:900;
   letter-spacing:2px;
-  margin-bottom:12px;
 }
 
 .prediction{
-  font-size:38px;
+  margin-top:12px;
+  font-size:40px;
+  line-height:1;
   font-weight:1000;
   letter-spacing:2px;
-  margin:5px 0 8px;
-}
-
-.prediction.BIG{
-  color:#ff7474;
-  text-shadow:0 0 25px rgba(255,90,90,.3);
-}
-
-.prediction.SMALL{
-  color:#65a4ff;
-  text-shadow:0 0 25px rgba(80,140,255,.3);
 }
 
 .target{
-  font-size:11px;
-  color:#777f99;
+  margin-top:8px;
+  color:#707890;
+  font-size:10px;
 }
 
-.confWrap{
-  margin-top:17px;
+.target b{
+  color:#b5bdd0;
 }
 
-.confTop{
+.confidenceBox{
+  margin-top:18px;
+}
+
+.confidenceTop{
   display:flex;
   justify-content:space-between;
-  font-size:11px;
-  color:#9ca3bb;
   margin-bottom:7px;
+  color:#929ab0;
+  font-size:10px;
 }
 
 .bar{
-  width:100%;
   height:7px;
-  background:#090b13;
-  border-radius:10px;
+  width:100%;
+  background:#080a11;
+  border-radius:20px;
   overflow:hidden;
 }
 
-.barFill{
-  width:0%;
+.fill{
   height:100%;
-  border-radius:10px;
-  transition:width .5s ease;
+  width:0%;
+  border-radius:20px;
+  transition:width .45s ease;
 }
 
 .status{
-  margin-top:13px;
-  font-size:11px;
-  color:#8e96ad;
+  margin-top:12px;
+  color:#8a92a8;
+  font-size:10px;
 }
 
 .cooldown{
-  padding:12px;
-  border-radius:13px;
-  background:#0d101b;
-  color:#ffcc70;
-  font-size:11px;
-  margin-top:13px;
   display:none;
+  margin-top:12px;
+  padding:9px;
+  border-radius:9px;
+  background:rgba(255,190,60,.06);
+  color:#ffca66;
+  font-size:9px;
 }
 
 .grid{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:10px;
+  gap:9px;
 }
 
 .stat{
-  background:#0c0f19;
-  border-radius:14px;
+  background:#090c14;
+  border-radius:13px;
   padding:13px;
 }
 
 .statValue{
-  font-size:21px;
-  font-weight:900;
   margin-top:5px;
+  font-size:20px;
+  font-weight:900;
 }
 
-.statSmall{
-  font-size:10px;
-  color:#727a93;
+.statSub{
   margin-top:4px;
-}
-
-.sectionTitle{
-  font-size:12px;
-  font-weight:800;
-  letter-spacing:1px;
-  color:#9aa2bb;
-  margin-bottom:11px;
+  color:#626a82;
+  font-size:9px;
 }
 
 .pattern{
   display:flex;
   flex-wrap:wrap;
   gap:5px;
+  margin-top:10px;
 }
 
 .pill{
-  min-width:37px;
+  min-width:32px;
+  padding:7px 9px;
+  border-radius:8px;
+  background:#090c14;
   text-align:center;
-  padding:7px 8px;
-  border-radius:9px;
-  font-size:10px;
+  font-size:9px;
   font-weight:900;
-  background:#111523;
 }
 
 .pill.BIG{
-  color:#ff8585;
-  border:1px solid rgba(255,100,100,.16);
+  color:#ff7777;
 }
 
 .pill.SMALL{
-  color:#6ca7ff;
-  border:1px solid rgba(80,140,255,.16);
+  color:#65a4ff;
 }
 
 .history{
-  display:flex;
-  flex-direction:column;
-  gap:7px;
+  margin-top:10px;
 }
 
 .row{
   display:grid;
-  grid-template-columns:1.35fr .55fr .8fr .55fr;
+  grid-template-columns:1.4fr .45fr .75fr .6fr;
+  gap:6px;
   align-items:center;
-  gap:7px;
+  background:#090c14;
+  border-radius:10px;
   padding:10px;
-  border-radius:11px;
-  background:#0b0e18;
-  font-size:10px;
+  margin-bottom:6px;
+  font-size:9px;
 }
 
 .rowIssue{
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
-  color:#aeb5ca;
+  color:#aab2c6;
 }
 
-.rowNum{
-  font-size:15px;
-  font-weight:900;
+.rowNumber{
   text-align:center;
-}
-
-.rowType{
+  font-size:14px;
   font-weight:900;
+}
+
+.rowPrediction{
   text-align:center;
-}
-
-.rowType.BIG{
-  color:#ff7d7d;
-}
-
-.rowType.SMALL{
-  color:#68a5ff;
+  font-weight:900;
 }
 
 .badge{
   text-align:center;
-  font-size:9px;
-  font-weight:900;
   padding:5px 3px;
-  border-radius:7px;
+  border-radius:6px;
+  font-size:8px;
+  font-weight:900;
 }
 
-.win{
-  color:#52f59c;
-  background:rgba(60,255,150,.08);
+.WIN{
+  color:#54f4a0;
+  background:rgba(70,255,160,.08);
 }
 
-.loss{
+.LOSS{
   color:#ff7777;
-  background:rgba(255,80,80,.08);
+  background:rgba(255,70,70,.08);
 }
 
-.pending{
-  color:#ffcc68;
-  background:rgba(255,190,70,.08);
+.PENDING{
+  color:#ffca66;
+  background:rgba(255,190,60,.08);
 }
 
-.skipped{
-  color:#858da5;
-  background:rgba(150,150,150,.07);
-}
-
-.footer{
-  text-align:center;
-  padding:12px 0 25px;
-  color:#565e75;
-  font-size:9px;
+.SKIPPED{
+  color:#777f96;
+  background:rgba(150,150,150,.06);
 }
 
 .error{
   display:none;
-  padding:12px;
-  border-radius:12px;
+  padding:10px;
+  border-radius:10px;
   background:rgba(255,70,70,.08);
-  border:1px solid rgba(255,70,70,.15);
-  color:#ff8c8c;
-  font-size:11px;
-  margin-bottom:13px;
+  border:1px solid rgba(255,70,70,.12);
+  color:#ff8585;
+  font-size:10px;
+  margin-bottom:12px;
 }
 
-.login{
-  min-height:80vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-.loginBox{
-  width:100%;
-  background:#111421;
-  border:1px solid rgba(255,255,255,.08);
-  border-radius:22px;
-  padding:25px;
+.footer{
   text-align:center;
+  color:#50586f;
+  font-size:8px;
+  padding:10px 0 25px;
 }
 
-.loginBox h1{
-  font-size:25px;
-  margin-bottom:6px;
-}
-
-.loginBox p{
-  color:#737b94;
-  font-size:11px;
-  margin-bottom:20px;
-}
-
-input{
-  width:100%;
-  height:48px;
-  border:1px solid rgba(255,255,255,.1);
-  border-radius:12px;
-  background:#080b13;
-  color:#fff;
-  outline:none;
-  padding:0 14px;
-  font-size:14px;
-  text-align:center;
-}
-
-button{
-  width:100%;
-  height:48px;
-  margin-top:10px;
-  border:0;
-  border-radius:12px;
-  background:#fff;
-  color:#05060a;
-  font-weight:900;
-  cursor:pointer;
-}
-
-.loginError{
-  color:#ff7777;
-  font-size:11px;
-  margin-top:12px;
-  display:none;
-}
-
-#dashboard{
-  display:none;
+.loading{
+  opacity:.55;
 }
 
 @media(max-width:360px){
-  .app{
-    padding:10px;
-  }
 
-  .issue{
-    font-size:18px;
+  .app{
+    padding:9px;
   }
 
   .prediction{
-    font-size:32px;
+    font-size:34px;
   }
 
   .number{
     width:62px;
     height:62px;
+    font-size:27px;
   }
+
+  .resultType{
+    font-size:21px;
+  }
+
 }
 </style>
 </head>
@@ -452,153 +375,111 @@ button{
 
 <div class="app">
 
-  <!-- LOGIN -->
-  <div id="login" class="login">
-    <div class="loginBox">
-      <h1>DY AI</h1>
-      <p>WINGO 1 MINUTE ACCESS</p>
+  <!-- HEADER -->
+  <div class="header">
 
-      <input
-        id="accessKey"
-        type="text"
-        placeholder="Enter Access Key"
-        autocomplete="off"
-      >
-
-      <button onclick="activateKey()">ACTIVATE ACCESS</button>
-
-      <div id="loginError" class="loginError">
-        Invalid access key
-      </div>
+    <div class="logo">
+      DY AI
+      <span>WINGO 1 MINUTE</span>
     </div>
+
+    <div class="live">
+      <span class="liveDot"></span>
+      LIVE
+    </div>
+
   </div>
 
 
-  <!-- DASHBOARD -->
-  <div id="dashboard">
+  <!-- ERROR -->
+  <div id="errorBox" class="error"></div>
 
-    <div class="header">
-      <div class="logo">
-        DY AI
-        <span>WINGO 1 MINUTE</span>
-      </div>
 
-      <div class="live">
-        <span class="dot"></span>
-        LIVE
-      </div>
+  <!-- CURRENT PERIOD -->
+  <div class="card">
+
+    <div class="label">
+      CURRENT PERIOD
     </div>
 
-    <div id="errorBox" class="error"></div>
+    <div id="currentIssue" class="issue">
+      Loading...
+    </div>
+
+    <div class="nextIssue">
+      NEXT PERIOD:
+      <b id="nextIssue">—</b>
+    </div>
+
+  </div>
 
 
-    <!-- CURRENT ISSUE -->
-    <div class="card">
-      <div class="label">Current Period</div>
+  <!-- LATEST RESULT -->
+  <div class="card">
 
-      <div class="issue" id="currentIssue">
+    <div class="label">
+      LATEST RESULT
+    </div>
+
+    <div class="latest">
+
+      <div id="latestNumber" class="number">
         —
       </div>
 
-      <div class="issueSub">
-        Live 1-minute Wingo result
-      </div>
-    </div>
+      <div class="latestRight">
 
-
-    <!-- LIVE RESULT -->
-    <div class="card">
-      <div class="label">Latest Result</div>
-
-      <div class="liveResult">
-
-        <div class="number" id="latestNumber">
+        <div id="latestResult" class="resultType">
           —
         </div>
 
-        <div class="resultText">
-          <div id="latestType" class="bigSmall">
-            —
-          </div>
-
-          <div class="time" id="updateTime">
-            Waiting for live data...
-          </div>
+        <div id="updated" class="updated">
+          Waiting for live data...
         </div>
 
       </div>
-    </div>
-
-
-    <!-- AI PREDICTION -->
-    <div class="card predictBox">
-
-      <div class="aiTitle">
-        🎯 AI PREMIUM PREDICTION
-      </div>
-
-      <div id="prediction" class="prediction">
-        —
-      </div>
-
-      <div class="target">
-        Target Period:
-        <b id="targetIssue">—</b>
-      </div>
-
-      <div class="confWrap">
-
-        <div class="confTop">
-          <span>AI CONFIDENCE</span>
-          <b id="confidence">0%</b>
-        </div>
-
-        <div class="bar">
-          <div id="confidenceBar" class="barFill"></div>
-        </div>
-
-      </div>
-
-      <div class="status" id="predictionStatus">
-        Waiting for prediction...
-      </div>
-
-      <div id="cooldown" class="cooldown"></div>
 
     </div>
 
+  </div>
 
-    <!-- ANALYSIS -->
-    <div class="card">
 
-      <div class="sectionTitle">
-        LIVE ANALYSIS
+  <!-- PREDICTION -->
+  <div class="card aiCard">
+
+    <div class="aiTitle">
+      🎯 AI PREMIUM PREDICTION
+    </div>
+
+    <div id="prediction" class="prediction">
+      —
+    </div>
+
+    <div class="target">
+      TARGET PERIOD:
+      <b id="predictionTarget">—</b>
+    </div>
+
+
+    <div class="confidenceBox">
+
+      <div class="confidenceTop">
+
+        <span>
+          AI CONFIDENCE
+        </span>
+
+        <b id="confidence">
+          0%
+        </b>
+
       </div>
 
-      <div class="grid">
+      <div class="bar">
 
-        <div class="stat">
-          <div class="label">BIG</div>
-          <div class="statValue" id="bigPct">0%</div>
-          <div class="statSmall" id="bigCount">0 results</div>
-        </div>
-
-        <div class="stat">
-          <div class="label">SMALL</div>
-          <div class="statValue" id="smallPct">0%</div>
-          <div class="statSmall" id="smallCount">0 results</div>
-        </div>
-
-        <div class="stat">
-          <div class="label">SWITCH RATE</div>
-          <div class="statValue" id="switchRate">0%</div>
-          <div class="statSmall">Historical</div>
-        </div>
-
-        <div class="stat">
-          <div class="label">STREAK</div>
-          <div class="statValue" id="streak">—</div>
-          <div class="statSmall" id="streakLength">0 rounds</div>
+        <div
+          id="confidenceFill"
+          class="fill">
         </div>
 
       </div>
@@ -606,691 +487,1091 @@ button{
     </div>
 
 
-    <!-- PATTERN -->
-    <div class="card">
-
-      <div class="sectionTitle">
-        RECENT PATTERN
-      </div>
-
-      <div id="pattern" class="pattern">
-        <div class="pill">Waiting...</div>
-      </div>
-
+    <div id="predictionStatus" class="status">
+      Waiting for prediction...
     </div>
 
 
-    <!-- PREDICTION HISTORY -->
-    <div class="card">
+    <div id="cooldown" class="cooldown">
+    </div>
 
-      <div class="sectionTitle">
-        PREDICTION HISTORY
-      </div>
+  </div>
 
-      <div id="history" class="history">
-        <div class="row">
-          <div class="rowIssue">Waiting...</div>
-          <div class="rowNum">—</div>
-          <div class="rowType">—</div>
-          <div class="badge pending">LIVE</div>
+
+  <!-- ANALYSIS -->
+  <div class="card">
+
+    <div class="label">
+      LIVE ANALYSIS
+    </div>
+
+    <br>
+
+    <div class="grid">
+
+
+      <div class="stat">
+
+        <div class="label">
+          BIG
         </div>
-      </div>
 
-    </div>
-
-
-    <!-- LIVE RESULTS -->
-    <div class="card">
-
-      <div class="sectionTitle">
-        LAST 30 RESULTS
-      </div>
-
-      <div id="results" class="history">
-        <div class="row">
-          <div class="rowIssue">Waiting...</div>
-          <div class="rowNum">—</div>
-          <div class="rowType">—</div>
-          <div class="badge pending">LIVE</div>
+        <div
+          id="bigPct"
+          class="statValue">
+          0%
         </div>
+
+        <div
+          id="bigCount"
+          class="statSub">
+          0 results
+        </div>
+
+      </div>
+
+
+      <div class="stat">
+
+        <div class="label">
+          SMALL
+        </div>
+
+        <div
+          id="smallPct"
+          class="statValue">
+          0%
+        </div>
+
+        <div
+          id="smallCount"
+          class="statSub">
+          0 results
+        </div>
+
+      </div>
+
+
+      <div class="stat">
+
+        <div class="label">
+          SWITCH RATE
+        </div>
+
+        <div
+          id="switchRate"
+          class="statValue">
+          0%
+        </div>
+
+        <div class="statSub">
+          Historical
+        </div>
+
+      </div>
+
+
+      <div class="stat">
+
+        <div class="label">
+          STREAK
+        </div>
+
+        <div
+          id="streak"
+          class="statValue">
+          —
+        </div>
+
+        <div
+          id="streakCount"
+          class="statSub">
+          0 rounds
+        </div>
+
       </div>
 
     </div>
 
+  </div>
 
-    <div class="footer">
-      DY AI • WINGO 1 MINUTE • LIVE ANALYSIS
+
+  <!-- PATTERN -->
+  <div class="card">
+
+    <div class="label">
+      RECENT PATTERN
     </div>
 
+    <div
+      id="pattern"
+      class="pattern">
+    </div>
+
+  </div>
+
+
+  <!-- PREDICTION HISTORY -->
+  <div class="card">
+
+    <div class="label">
+      PREDICTION HISTORY
+    </div>
+
+    <div
+      id="predictionHistory"
+      class="history">
+
+      <div class="row">
+
+        <div class="rowIssue">
+          Waiting...
+        </div>
+
+        <div class="rowNumber">
+          —
+        </div>
+
+        <div class="rowPrediction">
+          —
+        </div>
+
+        <div class="badge PENDING">
+          LIVE
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- LIVE RESULTS -->
+  <div class="card">
+
+    <div class="label">
+      LAST 30 RESULTS
+    </div>
+
+    <div
+      id="resultHistory"
+      class="history">
+
+      <div class="row">
+
+        <div class="rowIssue">
+          Waiting...
+        </div>
+
+        <div class="rowNumber">
+          —
+        </div>
+
+        <div class="rowPrediction">
+          —
+        </div>
+
+        <div class="badge PENDING">
+          LIVE
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <div class="footer">
+    DY AI • WINGO 1 MINUTE • LIVE ANALYSIS
   </div>
 
 </div>
 
 
 <script>
+
 "use strict";
 
-const KEY_STORAGE = "dy_ai_wingo_access_key";
-const DEVICE_STORAGE = "dy_ai_device_id";
 
-let accessKey = localStorage.getItem(KEY_STORAGE) || "";
-let deviceId = localStorage.getItem(DEVICE_STORAGE);
+/* =========================
+   DEVICE
+========================= */
 
-if (!deviceId) {
-  deviceId =
-    (crypto.randomUUID
-      ? crypto.randomUUID()
-      : "device-" +
-        Date.now() +
-        "-" +
-        Math.random().toString(36).slice(2));
+const DEVICE_STORAGE =
+  "dy_ai_device_id";
 
-  localStorage.setItem(DEVICE_STORAGE, deviceId);
+let deviceId =
+  localStorage.getItem(
+    DEVICE_STORAGE
+  );
+
+
+if(!deviceId){
+
+  if(
+    window.crypto &&
+    crypto.randomUUID
+  ){
+
+    deviceId =
+      crypto.randomUUID();
+
+  }else{
+
+    deviceId =
+      "device-" +
+      Date.now() +
+      "-" +
+      Math.random()
+        .toString(36)
+        .slice(2);
+
+  }
+
+  localStorage.setItem(
+    DEVICE_STORAGE,
+    deviceId
+  );
+
 }
 
-let lastState = null;
+
+/* =========================
+   ACCESS KEY
+========================= */
+
+const KEY_STORAGE =
+  "dy_ai_wingo_access_key";
+
+
+let accessKey =
+  localStorage.getItem(
+    KEY_STORAGE
+  );
+
+
+/*
+  This is only the default
+  key created by the new server.
+*/
+
+if(!accessKey){
+
+  accessKey =
+    "DY-JPMSUULN";
+
+  localStorage.setItem(
+    KEY_STORAGE,
+    accessKey
+  );
+
+}
+
+
+/* =========================
+   ELEMENT
+========================= */
+
+function $(id){
+
+  return document.getElementById(id);
+
+}
+
+
+/* =========================
+   ESCAPE
+========================= */
+
+function escapeHTML(value){
+
+  return String(
+    value ?? ""
+  )
+  .replace(/&/g,"&amp;")
+  .replace(/</g,"&lt;")
+  .replace(/>/g,"&gt;")
+  .replace(/"/g,"&quot;")
+  .replace(/'/g,"&#039;");
+
+}
+
+
+/* =========================
+   KEY CHECK
+========================= */
+
+async function checkAccess(){
+
+  const url =
+    "/api/key/check?" +
+    "key=" +
+    encodeURIComponent(
+      accessKey
+    ) +
+    "&deviceId=" +
+    encodeURIComponent(
+      deviceId
+    ) +
+    "&_=" +
+    Date.now();
+
+
+  const response =
+    await fetch(
+      url,
+      {
+        method:"GET",
+        cache:"no-store"
+      }
+    );
+
+
+  const data =
+    await response.json();
+
+
+  if(
+    !response.ok ||
+    !data.valid
+  ){
+
+    throw new Error(
+      data.error ||
+      "ACCESS_KEY_INVALID"
+    );
+
+  }
+
+  return data;
+
+}
+
+
+/* =========================
+   LOAD STATE
+========================= */
+
 let loading = false;
 
 
-function $(id) {
-  return document.getElementById(id);
-}
+async function loadState(){
 
-
-function showLoginError(message) {
-  $("loginError").textContent = message;
-  $("loginError").style.display = "block";
-}
-
-
-async function activateKey() {
-
-  const input = $("accessKey").value.trim();
-
-  if (!input) {
-    showLoginError("Access key required");
+  if(loading){
     return;
   }
 
-  try {
-
-    const response = await fetch(
-      "/api/key/check?key=" +
-      encodeURIComponent(input) +
-      "&deviceId=" +
-      encodeURIComponent(deviceId),
-      {
-        cache:"no-store"
-      }
-    );
-
-    const data = await response.json();
-
-    if (!data.valid) {
-      showLoginError(
-        data.error === "KEY_BOUND_TO_OTHER_DEVICE"
-          ? "This key is already bound to another device"
-          : "Invalid access key"
-      );
-      return;
-    }
-
-    accessKey = input;
-
-    localStorage.setItem(KEY_STORAGE, accessKey);
-
-    $("login").style.display = "none";
-    $("dashboard").style.display = "block";
-
-    loadState();
-
-  } catch (error) {
-
-    showLoginError("Server connection failed");
-
-  }
-}
-
-
-async function validateSavedKey() {
-
-  if (!accessKey) return false;
-
-  try {
-
-    const response = await fetch(
-      "/api/key/check?key=" +
-      encodeURIComponent(accessKey) +
-      "&deviceId=" +
-      encodeURIComponent(deviceId),
-      {
-        cache:"no-store"
-      }
-    );
-
-    const data = await response.json();
-
-    return !!data.valid;
-
-  } catch (_) {
-
-    return false;
-
-  }
-}
-
-
-async function loadState() {
-
-  if (loading || !accessKey) return;
-
   loading = true;
 
-  try {
 
-    const response = await fetch(
-      "/api/state?key=" +
-      encodeURIComponent(accessKey) +
+  try{
+
+    await checkAccess();
+
+
+    const url =
+      "/api/state?" +
+      "key=" +
+      encodeURIComponent(
+        accessKey
+      ) +
       "&deviceId=" +
-      encodeURIComponent(deviceId) +
+      encodeURIComponent(
+        deviceId
+      ) +
       "&_=" +
-      Date.now(),
-      {
-        cache:"no-store"
-      }
-    );
+      Date.now();
 
-    const data = await response.json();
 
-    if (!response.ok || !data.ok) {
+    const response =
+      await fetch(
+        url,
+        {
+          method:"GET",
+          cache:"no-store"
+        }
+      );
 
-      if (
-        data.error === "INVALID_ACCESS_KEY" ||
-        data.error === "KEY_BOUND_TO_OTHER_DEVICE"
-      ) {
 
-        localStorage.removeItem(KEY_STORAGE);
-        accessKey = "";
+    const data =
+      await response.json();
 
-        $("dashboard").style.display = "none";
-        $("login").style.display = "flex";
 
-        showLoginError(data.error);
+    if(
+      !response.ok ||
+      !data.ok
+    ){
 
-        return;
-      }
+      throw new Error(
+        data.error ||
+        "STATE_ERROR"
+      );
 
-      throw new Error(data.error || "STATE_ERROR");
     }
 
-    lastState = data;
 
     render(data);
 
-  } catch (error) {
 
-    $("errorBox").textContent =
-      "LIVE DATA ERROR: " + error.message;
+    $("errorBox")
+      .style
+      .display =
+      "none";
 
-    $("errorBox").style.display = "block";
 
-  } finally {
+  }catch(error){
+
+    console.error(error);
+
+
+    $("errorBox")
+      .textContent =
+      "LIVE ERROR: " +
+      error.message;
+
+
+    $("errorBox")
+      .style
+      .display =
+      "block";
+
+
+    $("prediction")
+      .textContent =
+      "OFFLINE";
+
+  }finally{
 
     loading = false;
 
   }
+
 }
 
 
-function render(data) {
+/* =========================
+   RENDER
+========================= */
 
-  $("errorBox").style.display = "none";
+function render(data){
 
   renderCurrent(data);
+
   renderPrediction(data);
+
   renderAnalysis(data);
+
   renderPattern(data);
-  renderHistory(data);
-  renderResults(data);
+
+  renderPredictionHistory(data);
+
+  renderLiveResults(data);
 
 }
 
 
-function renderCurrent(data) {
+/* =========================
+   CURRENT
+========================= */
 
-  const latest = data.latest;
+function renderCurrent(data){
 
-  $("currentIssue").textContent =
-    data.currentIssue || "—";
+  $("currentIssue")
+    .textContent =
+    data.currentIssue ||
+    "—";
 
-  if (!latest) {
 
-    $("latestNumber").textContent = "—";
-    $("latestType").textContent = "—";
+  $("nextIssue")
+    .textContent =
+    data.nextIssue ||
+    "—";
+
+
+  const latest =
+    data.latest;
+
+
+  if(!latest){
+
+    $("latestNumber")
+      .textContent =
+      "—";
+
+    $("latestResult")
+      .textContent =
+      "—";
+
     return;
 
   }
 
-  $("latestNumber").textContent =
+
+  $("latestNumber")
+    .textContent =
     latest.number;
 
-  $("latestType").textContent =
-    latest.result || "—";
 
-  $("latestType").className =
-    "bigSmall " +
-    String(latest.result || "").toLowerCase();
+  $("latestResult")
+    .textContent =
+    latest.result ||
+    "—";
 
-  const date = new Date(data.fetchedAt || Date.now());
 
-  $("updateTime").textContent =
-    "Updated " +
-    date.toLocaleTimeString();
+  $("latestResult")
+    .className =
+    "resultType " +
+    (
+      latest.result ||
+      ""
+    );
+
+
+  if(data.fetchedAt){
+
+    $("updated")
+      .textContent =
+      "Updated " +
+      new Date(
+        Number(
+          data.fetchedAt
+        )
+      ).toLocaleTimeString();
+
+  }
 
 }
 
 
-function renderPrediction(data) {
+/* =========================
+   PREDICTION
+========================= */
 
-  const p = data.prediction;
+function renderPrediction(data){
 
-  if (!p) {
+  const p =
+    data.prediction;
 
-    $("prediction").textContent = "SKIP";
-    $("prediction").className = "prediction";
 
-    $("targetIssue").textContent =
-      data.nextIssue || "—";
+  if(!p){
 
-    $("confidence").textContent = "0%";
-    $("confidenceBar").style.width = "0%";
+    $("prediction")
+      .textContent =
+      "SKIP";
 
-    $("predictionStatus").textContent =
-      data.cooldown && data.cooldown.active
-        ? "Prediction paused during cooldown"
-        : "Waiting for next valid prediction";
+    $("prediction")
+      .className =
+      "prediction";
 
-    renderCooldown(data.cooldown);
+
+    $("predictionTarget")
+      .textContent =
+      data.nextIssue ||
+      "—";
+
+
+    $("confidence")
+      .textContent =
+      "0%";
+
+
+    $("confidenceFill")
+      .style
+      .width =
+      "0%";
+
+
+    $("predictionStatus")
+      .textContent =
+      "Waiting for next prediction";
+
+
+    renderCooldown(
+      data.cooldown
+    );
 
     return;
+
   }
 
 
-  $("prediction").textContent =
+  $("prediction")
+    .textContent =
     p.prediction;
 
-  $("prediction").className =
-    "prediction " + p.prediction;
+
+  $("prediction")
+    .className =
+    "prediction " +
+    p.prediction;
 
 
-  $("targetIssue").textContent =
-    p.targetIssue || "—";
+  $("predictionTarget")
+    .textContent =
+    p.targetIssue ||
+    "—";
 
 
   const confidence =
-    Number(p.confidence || 0);
-
-  $("confidence").textContent =
-    confidence + "%";
-
-  $("confidenceBar").style.width =
-    Math.max(0,Math.min(100,confidence)) + "%";
+    Number(
+      p.confidence || 0
+    );
 
 
-  let status = "PENDING";
-
-  if (p.status === "WIN") {
-    status = "✅ WIN";
-  }
-  else if (p.status === "LOSS") {
-    status = "❌ LOSS";
-  }
-  else if (p.status === "SKIPPED") {
-    status = "⏭ SKIPPED";
-  }
-
-  $("predictionStatus").textContent =
-    "Status: " + status +
-    " • Model: " +
-    (p.model || data.model || "DY-AI");
+  $("confidence")
+    .textContent =
+    confidence +
+    "%";
 
 
-  renderCooldown(data.cooldown);
+  $("confidenceFill")
+    .style
+    .width =
+    Math.max(
+      0,
+      Math.min(
+        100,
+        confidence
+      )
+    ) +
+    "%";
+
+
+  $("confidenceFill")
+    .style
+    .background =
+    p.prediction === "BIG"
+      ? "#ff7272"
+      : "#619fff";
+
+
+  let status =
+    p.status ||
+    "PENDING";
+
+
+  $("predictionStatus")
+    .textContent =
+    "Status: " +
+    status +
+    " • " +
+    (
+      p.model ||
+      data.model ||
+      "DY-AI"
+    );
+
+
+  renderCooldown(
+    data.cooldown
+  );
 
 }
 
 
-function renderCooldown(cooldown) {
+/* =========================
+   COOLDOWN
+========================= */
 
-  const box = $("cooldown");
+function renderCooldown(cooldown){
 
-  if (!cooldown || !cooldown.active) {
+  const box =
+    $("cooldown");
 
-    box.style.display = "none";
+
+  if(
+    !cooldown ||
+    !cooldown.active
+  ){
+
+    box.style.display =
+      "none";
+
     return;
 
   }
 
-  box.style.display = "block";
+
+  box.style.display =
+    "block";
+
 
   box.textContent =
     "⏳ COOLDOWN ACTIVE • " +
     cooldown.wait +
-    " round(s) remaining";
+    " ROUND(S) REMAINING";
 
 }
 
 
-function renderAnalysis(data) {
+/* =========================
+   ANALYSIS
+========================= */
 
-  const a = data.analysis;
+function renderAnalysis(data){
 
-  if (!a) return;
-
-  $("bigPct").textContent =
-    Number(a.bigPct || 0).toFixed(1) + "%";
-
-  $("smallPct").textContent =
-    Number(a.smallPct || 0).toFixed(1) + "%";
-
-  $("bigCount").textContent =
-    (a.big || 0) + " results";
-
-  $("smallCount").textContent =
-    (a.small || 0) + " results";
-
-  $("switchRate").textContent =
-    Number(a.switchRate || 0).toFixed(1) + "%";
+  const a =
+    data.analysis;
 
 
-  if (a.streak) {
+  if(!a){
+    return;
+  }
 
-    $("streak").textContent =
-      a.streak.current || "—";
 
-    $("streakLength").textContent =
-      (a.streak.currentLength || 0) +
+  $("bigPct")
+    .textContent =
+    Number(
+      a.bigPct || 0
+    ).toFixed(1) +
+    "%";
+
+
+  $("smallPct")
+    .textContent =
+    Number(
+      a.smallPct || 0
+    ).toFixed(1) +
+    "%";
+
+
+  $("bigCount")
+    .textContent =
+    (a.big || 0) +
+    " results";
+
+
+  $("smallCount")
+    .textContent =
+    (a.small || 0) +
+    " results";
+
+
+  $("switchRate")
+    .textContent =
+    Number(
+      a.switchRate || 0
+    ).toFixed(1) +
+    "%";
+
+
+  if(a.streak){
+
+    $("streak")
+      .textContent =
+      a.streak.current ||
+      "—";
+
+
+    $("streakCount")
+      .textContent =
+      (
+        a.streak.currentLength ||
+        0
+      ) +
       " rounds";
 
   }
 
-
 }
 
 
-function renderPattern(data) {
+/* =========================
+   PATTERN
+========================= */
 
-  const box = $("pattern");
+function renderPattern(arr){
+
+  const box =
+    $("pattern");
+
 
   box.innerHTML = "";
 
-  const pattern =
-    data.analysis &&
-    data.analysis.recent10
-      ? data.analysis.recent10
-      : [];
 
-  if (!pattern.length) {
+  if(
+    !Array.isArray(arr) ||
+    !arr.length
+  ){
 
     box.innerHTML =
-      '<div class="pill">Waiting...</div>';
+      '<div class="pill">WAITING</div>';
 
     return;
 
   }
 
-  pattern.forEach(type => {
 
-    const div =
-      document.createElement("div");
+  arr.forEach(
+    value => {
 
-    div.className =
-      "pill " + type;
+      const div =
+        document.createElement(
+          "div"
+        );
 
-    div.textContent =
-      type === "BIG" ? "B" : "S";
 
-    box.appendChild(div);
+      div.className =
+        "pill " +
+        value;
 
-  });
+
+      div.textContent =
+        value === "BIG"
+          ? "B"
+          : "S";
+
+
+      box.appendChild(div);
+
+    }
+  );
 
 }
 
 
-function renderHistory(data) {
+/* =========================
+   PREDICTION HISTORY
+========================= */
 
-  const box = $("history");
+function renderPredictionHistory(data){
+
+  const box =
+    $("predictionHistory");
+
 
   box.innerHTML = "";
 
+
   const history =
-    Array.isArray(data.history)
+    Array.isArray(
+      data.history
+    )
       ? data.history
       : [];
 
-  if (!history.length) {
+
+  if(!history.length){
 
     box.innerHTML =
-      '<div class="row">' +
-      '<div class="rowIssue">No history</div>' +
-      '<div class="rowNum">—</div>' +
-      '<div class="rowType">—</div>' +
-      '<div class="badge pending">—</div>' +
-      '</div>';
+      `
+      <div class="row">
+
+        <div class="rowIssue">
+          No prediction history
+        </div>
+
+        <div class="rowNumber">
+          —
+        </div>
+
+        <div class="rowPrediction">
+          —
+        </div>
+
+        <div class="badge PENDING">
+          —
+        </div>
+
+      </div>
+      `;
 
     return;
 
   }
 
 
-  history.slice(0,30).forEach(item => {
+  history
+    .slice(0,30)
+    .forEach(
+      item => {
 
-    const row =
-      document.createElement("div");
-
-    row.className = "row";
-
-
-    const issue =
-      document.createElement("div");
-
-    issue.className = "rowIssue";
-
-    issue.textContent =
-      item.target_issue || "—";
+        const status =
+          String(
+            item.actual_result ||
+            "PENDING"
+          ).toUpperCase();
 
 
-    const number =
-      document.createElement("div");
-
-    number.className = "rowNum";
-
-    number.textContent =
-      item.actual_number !== null &&
-      item.actual_number !== undefined
-        ? item.actual_number
-        : "—";
+        const row =
+          document.createElement(
+            "div"
+          );
 
 
-    const type =
-      document.createElement("div");
-
-    type.className =
-      "rowType " +
-      String(item.prediction || "").toUpperCase();
-
-    type.textContent =
-      item.prediction || "—";
+        row.className =
+          "row";
 
 
-    const badge =
-      document.createElement("div");
+        row.innerHTML =
+          `
 
-    const status =
-      String(item.actual_result || "PENDING").toUpperCase();
+          <div class="rowIssue">
+            ${escapeHTML(
+              item.target_issue ||
+              "—"
+            )}
+          </div>
 
-    badge.className =
-      "badge " +
-      (
-        status === "WIN"
-          ? "win"
-          : status === "LOSS"
-          ? "loss"
-          : status === "SKIPPED"
-          ? "skipped"
-          : "pending"
-      );
+          <div class="rowNumber">
+            ${
+              item.actual_number ??
+              "—"
+            }
+          </div>
 
-    badge.textContent =
-      status;
+          <div class="rowPrediction">
+            ${escapeHTML(
+              item.prediction ||
+              "—"
+            )}
+          </div>
+
+          <div class="badge ${status}">
+            ${status}
+          </div>
+
+          `;
 
 
-    row.appendChild(issue);
-    row.appendChild(number);
-    row.appendChild(type);
-    row.appendChild(badge);
+        box.appendChild(row);
 
-    box.appendChild(row);
-
-  });
+      }
+    );
 
 }
 
 
-function renderResults(data) {
+/* =========================
+   LIVE RESULTS
+========================= */
 
-  const box = $("results");
+function renderLiveResults(data){
+
+  const box =
+    $("resultHistory");
+
 
   box.innerHTML = "";
 
+
   const rows =
-    Array.isArray(data.last30)
+    Array.isArray(
+      data.last30
+    )
       ? data.last30
       : [];
 
-  if (!rows.length) {
+
+  if(!rows.length){
 
     box.innerHTML =
-      '<div class="row">' +
-      '<div class="rowIssue">No live results</div>' +
-      '<div class="rowNum">—</div>' +
-      '<div class="rowType">—</div>' +
-      '<div class="badge pending">—</div>' +
-      '</div>';
+      `
+      <div class="row">
+
+        <div class="rowIssue">
+          No live results
+        </div>
+
+        <div class="rowNumber">
+          —
+        </div>
+
+        <div class="rowPrediction">
+          —
+        </div>
+
+        <div class="badge PENDING">
+          LIVE
+        </div>
+
+      </div>
+      `;
 
     return;
 
   }
 
 
-  rows.slice(0,30).forEach(item => {
+  rows
+    .slice(0,30)
+    .forEach(
+      item => {
 
-    const row =
-      document.createElement("div");
-
-    row.className = "row";
-
-
-    const issue =
-      document.createElement("div");
-
-    issue.className = "rowIssue";
-
-    issue.textContent =
-      item.issue || "—";
+        const row =
+          document.createElement(
+            "div"
+          );
 
 
-    const number =
-      document.createElement("div");
-
-    number.className = "rowNum";
-
-    number.textContent =
-      item.number ?? "—";
+        row.className =
+          "row";
 
 
-    const type =
-      document.createElement("div");
-
-    type.className =
-      "rowType " +
-      String(item.result || "").toUpperCase();
-
-    type.textContent =
-      item.result || "—";
+        const result =
+          String(
+            item.result ||
+            ""
+          ).toUpperCase();
 
 
-    const badge =
-      document.createElement("div");
+        row.innerHTML =
+          `
 
-    badge.className = "badge pending";
+          <div class="rowIssue">
+            ${escapeHTML(
+              item.issue ||
+              "—"
+            )}
+          </div>
 
-    badge.textContent = "LIVE";
+          <div class="rowNumber">
+            ${
+              item.number ??
+              "—"
+            }
+          </div>
+
+          <div class="rowPrediction">
+            ${escapeHTML(
+              result ||
+              "—"
+            )}
+          </div>
+
+          <div class="badge PENDING">
+            LIVE
+          </div>
+
+          `;
 
 
-    row.appendChild(issue);
-    row.appendChild(number);
-    row.appendChild(type);
-    row.appendChild(badge);
+        box.appendChild(row);
 
-    box.appendChild(row);
-
-  });
+      }
+    );
 
 }
 
 
-/* Enter key */
-$("accessKey").addEventListener(
-  "keydown",
-  event => {
-    if (event.key === "Enter") {
-      activateKey();
-    }
-  }
-);
+/* =========================
+   START
+========================= */
 
-
-/* Auto login */
-(async function init() {
-
-  if (!accessKey) return;
-
-  const valid =
-    await validateSavedKey();
-
-  if (!valid) {
-
-    localStorage.removeItem(KEY_STORAGE);
-    accessKey = "";
-
-    return;
-
-  }
-
-  $("login").style.display = "none";
-  $("dashboard").style.display = "block";
-
-  loadState();
-
-})();
+loadState();
 
 
 /*
-  1-minute game:
-  frontend refreshes frequently so that
-  result/prediction changes appear quickly.
+  3 second UI refresh.
+  Server itself uses live API.
 */
-setInterval(() => {
 
-  if (
-    accessKey &&
-    $("dashboard").style.display !== "none"
-  ) {
-    loadState();
-  }
-
-}, 3000);
+setInterval(
+  loadState,
+  3000
+);
 
 </script>
 
