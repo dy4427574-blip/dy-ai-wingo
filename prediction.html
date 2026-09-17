@@ -1,585 +1,1296 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
 <meta charset="UTF-8">
-
-<meta
-  name="viewport"
-  content="width=device-width,initial-scale=1"
->
-
-<title>DY AI Prediction</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>DY AI — Wingo 1 Minute</title>
 
 <style>
-
 *{
   box-sizing:border-box;
+  margin:0;
+  padding:0;
+  -webkit-tap-highlight-color:transparent;
 }
 
 body{
-  margin:0;
+  background:
+    radial-gradient(circle at top,#171b32 0%,#080a13 42%,#04050a 100%);
+  color:#fff;
+  font-family:Arial,Helvetica,sans-serif;
   min-height:100vh;
-  background:#05070d;
-  color:white;
-  font-family:Arial,sans-serif;
 }
 
-.container{
+.app{
+  width:100%;
   max-width:520px;
   margin:auto;
-  padding:18px;
+  padding:14px;
 }
 
 .header{
-  text-align:center;
-  margin-bottom:18px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:15px 4px 18px;
 }
 
-.header h1{
-  font-size:27px;
-  margin:5px 0;
+.logo{
+  font-size:24px;
   font-weight:900;
+  letter-spacing:1px;
 }
 
-.header p{
-  font-size:11px;
-  opacity:.5;
-}
-
-.status{
-  margin-top:9px;
+.logo span{
   font-size:12px;
-  font-weight:800;
+  display:block;
+  opacity:.55;
+  margin-top:3px;
+  letter-spacing:2px;
 }
 
 .live{
-  color:#55ff91;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  font-size:11px;
+  font-weight:700;
+  opacity:.85;
 }
 
-.error{
-  color:#ff5c5c;
+.dot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#42ff9c;
+  box-shadow:0 0 12px #42ff9c;
 }
 
 .card{
-  background:#0d111c;
-  border:1px solid #20283b;
+  background:rgba(18,21,36,.86);
+  border:1px solid rgba(255,255,255,.08);
   border-radius:20px;
-  padding:20px;
-  margin-bottom:14px;
+  padding:16px;
+  margin-bottom:13px;
+  box-shadow:0 12px 35px rgba(0,0,0,.28);
+  backdrop-filter:blur(14px);
 }
 
 .label{
-  font-size:11px;
-  opacity:.55;
-  font-weight:800;
-  letter-spacing:1px;
-  margin-bottom:10px;
+  font-size:10px;
+  color:#8d94ad;
+  text-transform:uppercase;
+  letter-spacing:1.4px;
+  margin-bottom:7px;
 }
 
-.period{
-  font-size:19px;
+.issue{
+  font-size:22px;
   font-weight:900;
+  letter-spacing:.5px;
   word-break:break-all;
 }
 
-.analysis{
-  min-height:155px;
+.issueSub{
+  margin-top:6px;
+  font-size:11px;
+  color:#777f99;
+}
+
+.liveResult{
   display:flex;
-  flex-direction:column;
-  justify-content:center;
+  justify-content:space-between;
   align-items:center;
-  text-align:center;
 }
 
-.analysisText{
-  font-size:14px;
-  font-weight:800;
-  letter-spacing:1px;
-}
-
-.count{
-  font-size:58px;
-  font-weight:900;
-  margin-top:8px;
-}
-
-.loader{
-  width:42px;
-  height:42px;
+.number{
+  width:72px;
+  height:72px;
   border-radius:50%;
-  border:3px solid #252b3b;
-  border-top-color:white;
-  margin-top:14px;
-  animation:spin .8s linear infinite;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:31px;
+  font-weight:900;
+  background:#111525;
+  border:1px solid rgba(255,255,255,.1);
+  box-shadow:0 0 25px rgba(90,120,255,.15);
 }
 
-@keyframes spin{
-  to{
-    transform:rotate(360deg);
-  }
+.resultText{
+  text-align:right;
+}
+
+.bigSmall{
+  font-size:24px;
+  font-weight:900;
+}
+
+.bigSmall.big{
+  color:#ff8a8a;
+}
+
+.bigSmall.small{
+  color:#71a7ff;
+}
+
+.time{
+  color:#777f99;
+  font-size:10px;
+  margin-top:5px;
+}
+
+.predictBox{
+  text-align:center;
+  padding:21px 15px;
+}
+
+.aiTitle{
+  font-size:11px;
+  color:#858ca5;
+  letter-spacing:2px;
+  margin-bottom:12px;
 }
 
 .prediction{
-  min-height:100px;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  text-align:center;
-  font-size:39px;
+  font-size:38px;
   font-weight:1000;
+  letter-spacing:2px;
+  margin:5px 0 8px;
 }
 
-.big{
-  color:#58ff91;
+.prediction.BIG{
+  color:#ff7474;
+  text-shadow:0 0 25px rgba(255,90,90,.3);
 }
 
-.small{
-  color:#5db5ff;
+.prediction.SMALL{
+  color:#65a4ff;
+  text-shadow:0 0 25px rgba(80,140,255,.3);
 }
 
-.clear{
-  color:#ffbd55;
+.target{
+  font-size:11px;
+  color:#777f99;
 }
 
-.wait{
-  opacity:.4;
-  font-size:22px;
+.confWrap{
+  margin-top:17px;
+}
+
+.confTop{
+  display:flex;
+  justify-content:space-between;
+  font-size:11px;
+  color:#9ca3bb;
+  margin-bottom:7px;
+}
+
+.bar{
+  width:100%;
+  height:7px;
+  background:#090b13;
+  border-radius:10px;
+  overflow:hidden;
+}
+
+.barFill{
+  width:0%;
+  height:100%;
+  border-radius:10px;
+  transition:width .5s ease;
+}
+
+.status{
+  margin-top:13px;
+  font-size:11px;
+  color:#8e96ad;
+}
+
+.cooldown{
+  padding:12px;
+  border-radius:13px;
+  background:#0d101b;
+  color:#ffcc70;
+  font-size:11px;
+  margin-top:13px;
+  display:none;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.stat{
+  background:#0c0f19;
+  border-radius:14px;
+  padding:13px;
+}
+
+.statValue{
+  font-size:21px;
+  font-weight:900;
+  margin-top:5px;
+}
+
+.statSmall{
+  font-size:10px;
+  color:#727a93;
+  margin-top:4px;
+}
+
+.sectionTitle{
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:1px;
+  color:#9aa2bb;
+  margin-bottom:11px;
+}
+
+.pattern{
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+}
+
+.pill{
+  min-width:37px;
+  text-align:center;
+  padding:7px 8px;
+  border-radius:9px;
+  font-size:10px;
+  font-weight:900;
+  background:#111523;
+}
+
+.pill.BIG{
+  color:#ff8585;
+  border:1px solid rgba(255,100,100,.16);
+}
+
+.pill.SMALL{
+  color:#6ca7ff;
+  border:1px solid rgba(80,140,255,.16);
 }
 
 .history{
-  max-height:390px;
-  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+  gap:7px;
 }
 
 .row{
   display:grid;
-  grid-template-columns:1fr 45px 70px;
-  gap:8px;
-  padding:13px 2px;
-  border-bottom:1px solid #1b2130;
-  font-size:13px;
+  grid-template-columns:1.35fr .55fr .8fr .55fr;
+  align-items:center;
+  gap:7px;
+  padding:10px;
+  border-radius:11px;
+  background:#0b0e18;
+  font-size:10px;
 }
 
-.num{
-  text-align:center;
+.rowIssue{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:#aeb5ca;
+}
+
+.rowNum{
+  font-size:15px;
   font-weight:900;
-}
-
-.size{
-  text-align:right;
-  font-weight:900;
-}
-
-.empty{
   text-align:center;
+}
+
+.rowType{
+  font-weight:900;
+  text-align:center;
+}
+
+.rowType.BIG{
+  color:#ff7d7d;
+}
+
+.rowType.SMALL{
+  color:#68a5ff;
+}
+
+.badge{
+  text-align:center;
+  font-size:9px;
+  font-weight:900;
+  padding:5px 3px;
+  border-radius:7px;
+}
+
+.win{
+  color:#52f59c;
+  background:rgba(60,255,150,.08);
+}
+
+.loss{
+  color:#ff7777;
+  background:rgba(255,80,80,.08);
+}
+
+.pending{
+  color:#ffcc68;
+  background:rgba(255,190,70,.08);
+}
+
+.skipped{
+  color:#858da5;
+  background:rgba(150,150,150,.07);
+}
+
+.footer{
+  text-align:center;
+  padding:12px 0 25px;
+  color:#565e75;
+  font-size:9px;
+}
+
+.error{
+  display:none;
+  padding:12px;
+  border-radius:12px;
+  background:rgba(255,70,70,.08);
+  border:1px solid rgba(255,70,70,.15);
+  color:#ff8c8c;
+  font-size:11px;
+  margin-bottom:13px;
+}
+
+.login{
+  min-height:80vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.loginBox{
+  width:100%;
+  background:#111421;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:22px;
   padding:25px;
-  opacity:.4;
+  text-align:center;
 }
 
-</style>
+.loginBox h1{
+  font-size:25px;
+  margin-bottom:6px;
+}
 
+.loginBox p{
+  color:#737b94;
+  font-size:11px;
+  margin-bottom:20px;
+}
+
+input{
+  width:100%;
+  height:48px;
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:12px;
+  background:#080b13;
+  color:#fff;
+  outline:none;
+  padding:0 14px;
+  font-size:14px;
+  text-align:center;
+}
+
+button{
+  width:100%;
+  height:48px;
+  margin-top:10px;
+  border:0;
+  border-radius:12px;
+  background:#fff;
+  color:#05060a;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.loginError{
+  color:#ff7777;
+  font-size:11px;
+  margin-top:12px;
+  display:none;
+}
+
+#dashboard{
+  display:none;
+}
+
+@media(max-width:360px){
+  .app{
+    padding:10px;
+  }
+
+  .issue{
+    font-size:18px;
+  }
+
+  .prediction{
+    font-size:32px;
+  }
+
+  .number{
+    width:62px;
+    height:62px;
+  }
+}
+</style>
 </head>
 
 <body>
 
-<div class="container">
+<div class="app">
 
-<div class="header">
+  <!-- LOGIN -->
+  <div id="login" class="login">
+    <div class="loginBox">
+      <h1>DY AI</h1>
+      <p>WINGO 1 MINUTE ACCESS</p>
 
-<h1>
-DY AI PREDICTION
-</h1>
+      <input
+        id="accessKey"
+        type="text"
+        placeholder="Enter Access Key"
+        autocomplete="off"
+      >
 
-<p>
-LIVE WIN GO 1 MIN ANALYSIS
-</p>
+      <button onclick="activateKey()">ACTIVATE ACCESS</button>
 
-<div
-id="status"
-class="status"
->
-● CONNECTING...
-</div>
-
-</div>
-
-
-<div class="card">
-
-<div class="label">
-CURRENT PERIOD
-</div>
-
-<div
-id="current"
-class="period"
->
---
-</div>
-
-</div>
+      <div id="loginError" class="loginError">
+        Invalid access key
+      </div>
+    </div>
+  </div>
 
 
-<div class="card">
+  <!-- DASHBOARD -->
+  <div id="dashboard">
 
-<div class="label">
-PREDICTION PERIOD
-</div>
+    <div class="header">
+      <div class="logo">
+        DY AI
+        <span>WINGO 1 MINUTE</span>
+      </div>
 
-<div
-id="next"
-class="period"
->
---
-</div>
+      <div class="live">
+        <span class="dot"></span>
+        LIVE
+      </div>
+    </div>
 
-</div>
-
-
-<div class="card analysis">
-
-<div
-id="analysisText"
-class="analysisText"
->
-WAITING FOR NEW PERIOD...
-</div>
-
-<div
-id="count"
-class="count"
->
-</div>
-
-<div
-id="loader"
-class="loader"
-style="display:none"
->
-</div>
-
-</div>
+    <div id="errorBox" class="error"></div>
 
 
-<div class="card">
+    <!-- CURRENT ISSUE -->
+    <div class="card">
+      <div class="label">Current Period</div>
 
-<div class="label">
-PREDICTION
-</div>
+      <div class="issue" id="currentIssue">
+        —
+      </div>
 
-<div
-id="prediction"
-class="prediction wait"
->
-WAITING
-</div>
-
-</div>
+      <div class="issueSub">
+        Live 1-minute Wingo result
+      </div>
+    </div>
 
 
-<div class="card">
+    <!-- LIVE RESULT -->
+    <div class="card">
+      <div class="label">Latest Result</div>
 
-<div class="label">
-HISTORY
-</div>
+      <div class="liveResult">
 
-<div
-id="history"
-class="history"
->
-<div class="empty">
-Loading...
-</div>
-</div>
+        <div class="number" id="latestNumber">
+          —
+        </div>
 
-</div>
+        <div class="resultText">
+          <div id="latestType" class="bigSmall">
+            —
+          </div>
+
+          <div class="time" id="updateTime">
+            Waiting for live data...
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+
+    <!-- AI PREDICTION -->
+    <div class="card predictBox">
+
+      <div class="aiTitle">
+        🎯 AI PREMIUM PREDICTION
+      </div>
+
+      <div id="prediction" class="prediction">
+        —
+      </div>
+
+      <div class="target">
+        Target Period:
+        <b id="targetIssue">—</b>
+      </div>
+
+      <div class="confWrap">
+
+        <div class="confTop">
+          <span>AI CONFIDENCE</span>
+          <b id="confidence">0%</b>
+        </div>
+
+        <div class="bar">
+          <div id="confidenceBar" class="barFill"></div>
+        </div>
+
+      </div>
+
+      <div class="status" id="predictionStatus">
+        Waiting for prediction...
+      </div>
+
+      <div id="cooldown" class="cooldown"></div>
+
+    </div>
+
+
+    <!-- ANALYSIS -->
+    <div class="card">
+
+      <div class="sectionTitle">
+        LIVE ANALYSIS
+      </div>
+
+      <div class="grid">
+
+        <div class="stat">
+          <div class="label">BIG</div>
+          <div class="statValue" id="bigPct">0%</div>
+          <div class="statSmall" id="bigCount">0 results</div>
+        </div>
+
+        <div class="stat">
+          <div class="label">SMALL</div>
+          <div class="statValue" id="smallPct">0%</div>
+          <div class="statSmall" id="smallCount">0 results</div>
+        </div>
+
+        <div class="stat">
+          <div class="label">SWITCH RATE</div>
+          <div class="statValue" id="switchRate">0%</div>
+          <div class="statSmall">Historical</div>
+        </div>
+
+        <div class="stat">
+          <div class="label">STREAK</div>
+          <div class="statValue" id="streak">—</div>
+          <div class="statSmall" id="streakLength">0 rounds</div>
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- PATTERN -->
+    <div class="card">
+
+      <div class="sectionTitle">
+        RECENT PATTERN
+      </div>
+
+      <div id="pattern" class="pattern">
+        <div class="pill">Waiting...</div>
+      </div>
+
+    </div>
+
+
+    <!-- PREDICTION HISTORY -->
+    <div class="card">
+
+      <div class="sectionTitle">
+        PREDICTION HISTORY
+      </div>
+
+      <div id="history" class="history">
+        <div class="row">
+          <div class="rowIssue">Waiting...</div>
+          <div class="rowNum">—</div>
+          <div class="rowType">—</div>
+          <div class="badge pending">LIVE</div>
+        </div>
+      </div>
+
+    </div>
+
+
+    <!-- LIVE RESULTS -->
+    <div class="card">
+
+      <div class="sectionTitle">
+        LAST 30 RESULTS
+      </div>
+
+      <div id="results" class="history">
+        <div class="row">
+          <div class="rowIssue">Waiting...</div>
+          <div class="rowNum">—</div>
+          <div class="rowType">—</div>
+          <div class="badge pending">LIVE</div>
+        </div>
+      </div>
+
+    </div>
+
+
+    <div class="footer">
+      DY AI • WINGO 1 MINUTE • LIVE ANALYSIS
+    </div>
+
+  </div>
 
 </div>
 
 
 <script>
+"use strict";
 
-function escapeHTML(v){
+const KEY_STORAGE = "dy_ai_wingo_access_key";
+const DEVICE_STORAGE = "dy_ai_device_id";
 
-  return String(v ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
+let accessKey = localStorage.getItem(KEY_STORAGE) || "";
+let deviceId = localStorage.getItem(DEVICE_STORAGE);
+
+if (!deviceId) {
+  deviceId =
+    (crypto.randomUUID
+      ? crypto.randomUUID()
+      : "device-" +
+        Date.now() +
+        "-" +
+        Math.random().toString(36).slice(2));
+
+  localStorage.setItem(DEVICE_STORAGE, deviceId);
+}
+
+let lastState = null;
+let loading = false;
+
+
+function $(id) {
+  return document.getElementById(id);
+}
+
+
+function showLoginError(message) {
+  $("loginError").textContent = message;
+  $("loginError").style.display = "block";
+}
+
+
+async function activateKey() {
+
+  const input = $("accessKey").value.trim();
+
+  if (!input) {
+    showLoginError("Access key required");
+    return;
+  }
+
+  try {
+
+    const response = await fetch(
+      "/api/key/check?key=" +
+      encodeURIComponent(input) +
+      "&deviceId=" +
+      encodeURIComponent(deviceId),
+      {
+        cache:"no-store"
+      }
+    );
+
+    const data = await response.json();
+
+    if (!data.valid) {
+      showLoginError(
+        data.error === "KEY_BOUND_TO_OTHER_DEVICE"
+          ? "This key is already bound to another device"
+          : "Invalid access key"
+      );
+      return;
+    }
+
+    accessKey = input;
+
+    localStorage.setItem(KEY_STORAGE, accessKey);
+
+    $("login").style.display = "none";
+    $("dashboard").style.display = "block";
+
+    loadState();
+
+  } catch (error) {
+
+    showLoginError("Server connection failed");
+
+  }
+}
+
+
+async function validateSavedKey() {
+
+  if (!accessKey) return false;
+
+  try {
+
+    const response = await fetch(
+      "/api/key/check?key=" +
+      encodeURIComponent(accessKey) +
+      "&deviceId=" +
+      encodeURIComponent(deviceId),
+      {
+        cache:"no-store"
+      }
+    );
+
+    const data = await response.json();
+
+    return !!data.valid;
+
+  } catch (_) {
+
+    return false;
+
+  }
+}
+
+
+async function loadState() {
+
+  if (loading || !accessKey) return;
+
+  loading = true;
+
+  try {
+
+    const response = await fetch(
+      "/api/state?key=" +
+      encodeURIComponent(accessKey) +
+      "&deviceId=" +
+      encodeURIComponent(deviceId) +
+      "&_=" +
+      Date.now(),
+      {
+        cache:"no-store"
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok || !data.ok) {
+
+      if (
+        data.error === "INVALID_ACCESS_KEY" ||
+        data.error === "KEY_BOUND_TO_OTHER_DEVICE"
+      ) {
+
+        localStorage.removeItem(KEY_STORAGE);
+        accessKey = "";
+
+        $("dashboard").style.display = "none";
+        $("login").style.display = "flex";
+
+        showLoginError(data.error);
+
+        return;
+      }
+
+      throw new Error(data.error || "STATE_ERROR");
+    }
+
+    lastState = data;
+
+    render(data);
+
+  } catch (error) {
+
+    $("errorBox").textContent =
+      "LIVE DATA ERROR: " + error.message;
+
+    $("errorBox").style.display = "block";
+
+  } finally {
+
+    loading = false;
+
+  }
+}
+
+
+function render(data) {
+
+  $("errorBox").style.display = "none";
+
+  renderCurrent(data);
+  renderPrediction(data);
+  renderAnalysis(data);
+  renderPattern(data);
+  renderHistory(data);
+  renderResults(data);
 
 }
 
 
-function renderHistory(rows){
+function renderCurrent(data) {
 
-  const box =
-    document.getElementById(
-      "history"
-    );
+  const latest = data.latest;
 
-  if(
-    !Array.isArray(rows) ||
-    !rows.length
-  ){
+  $("currentIssue").textContent =
+    data.currentIssue || "—";
 
-    box.innerHTML =
-      `<div class="empty">
-        No history available
-      </div>`;
+  if (!latest) {
+
+    $("latestNumber").textContent = "—";
+    $("latestType").textContent = "—";
+    return;
+
+  }
+
+  $("latestNumber").textContent =
+    latest.number;
+
+  $("latestType").textContent =
+    latest.result || "—";
+
+  $("latestType").className =
+    "bigSmall " +
+    String(latest.result || "").toLowerCase();
+
+  const date = new Date(data.fetchedAt || Date.now());
+
+  $("updateTime").textContent =
+    "Updated " +
+    date.toLocaleTimeString();
+
+}
+
+
+function renderPrediction(data) {
+
+  const p = data.prediction;
+
+  if (!p) {
+
+    $("prediction").textContent = "SKIP";
+    $("prediction").className = "prediction";
+
+    $("targetIssue").textContent =
+      data.nextIssue || "—";
+
+    $("confidence").textContent = "0%";
+    $("confidenceBar").style.width = "0%";
+
+    $("predictionStatus").textContent =
+      data.cooldown && data.cooldown.active
+        ? "Prediction paused during cooldown"
+        : "Waiting for next valid prediction";
+
+    renderCooldown(data.cooldown);
 
     return;
   }
 
 
-  box.innerHTML =
-    rows.map(row => {
+  $("prediction").textContent =
+    p.prediction;
 
-      const size =
-        row.size ||
-        (
-          Number(row.number) <= 4
-            ? "SMALL"
-            : "BIG"
-        );
+  $("prediction").className =
+    "prediction " + p.prediction;
 
-      const cls =
-        size === "BIG"
-          ? "big"
-          : "small";
 
-      return `
-        <div class="row">
+  $("targetIssue").textContent =
+    p.targetIssue || "—";
 
-          <div>
-            ${escapeHTML(
-              row.issueNumber
-            )}
-          </div>
 
-          <div class="num">
-            ${escapeHTML(
-              row.number
-            )}
-          </div>
+  const confidence =
+    Number(p.confidence || 0);
 
-          <div class="size ${cls}">
-            ${size}
-          </div>
+  $("confidence").textContent =
+    confidence + "%";
 
-        </div>
-      `;
+  $("confidenceBar").style.width =
+    Math.max(0,Math.min(100,confidence)) + "%";
 
-    }).join("");
+
+  let status = "PENDING";
+
+  if (p.status === "WIN") {
+    status = "✅ WIN";
+  }
+  else if (p.status === "LOSS") {
+    status = "❌ LOSS";
+  }
+  else if (p.status === "SKIPPED") {
+    status = "⏭ SKIPPED";
+  }
+
+  $("predictionStatus").textContent =
+    "Status: " + status +
+    " • Model: " +
+    (p.model || data.model || "DY-AI");
+
+
+  renderCooldown(data.cooldown);
 
 }
 
 
-function render(data){
+function renderCooldown(cooldown) {
 
-  document.getElementById(
-    "current"
-  ).textContent =
-    data.currentPeriod || "--";
+  const box = $("cooldown");
 
+  if (!cooldown || !cooldown.active) {
 
-  document.getElementById(
-    "next"
-  ).textContent =
-    data.predictionPeriod ||
-    data.nextPeriod ||
-    "--";
-
-
-  const status =
-    document.getElementById(
-      "status"
-    );
-
-
-  if(
-    data.sourceStatus ===
-    "LIVE"
-  ){
-
-    status.textContent =
-      "● LIVE API";
-
-    status.className =
-      "status live";
-
-  }else{
-
-    status.textContent =
-      "● " +
-      (
-        data.error ||
-        "API ERROR"
-      );
-
-    status.className =
-      "status error";
+    box.style.display = "none";
+    return;
 
   }
 
+  box.style.display = "block";
 
-  const analysis =
-    data.analysis || {};
-
-
-  const text =
-    document.getElementById(
-      "analysisText"
-    );
-
-
-  const count =
-    document.getElementById(
-      "count"
-    );
-
-
-  const loader =
-    document.getElementById(
-      "loader"
-    );
-
-
-  if(
-    analysis.active
-  ){
-
-    text.textContent =
-      analysis.message ||
-      "ANALYZING...";
-
-    count.textContent =
-      analysis.remaining;
-
-    loader.style.display =
-      "block";
-
-  }else{
-
-    text.textContent =
-      analysis.message ||
-      "WAITING FOR NEW PERIOD...";
-
-    count.textContent =
-      "";
-
-    loader.style.display =
-      "none";
-
-  }
-
-
-  const p =
-    document.getElementById(
-      "prediction"
-    );
-
-
-  if(
-    analysis.active
-  ){
-
-    p.textContent =
-      "ANALYZING...";
-
-    p.className =
-      "prediction wait";
-
-  }else{
-
-    const value =
-      analysis.prediction ||
-      "WAITING";
-
-    p.textContent =
-      value;
-
-
-    if(value === "BIG"){
-
-      p.className =
-        "prediction big";
-
-    }else if(value === "SMALL"){
-
-      p.className =
-        "prediction small";
-
-    }else if(
-      value ===
-      "NO CLEAR SIGNAL"
-    ){
-
-      p.className =
-        "prediction clear";
-
-    }else{
-
-      p.className =
-        "prediction wait";
-
-    }
-
-  }
-
-
-  renderHistory(
-    data.history || []
-  );
+  box.textContent =
+    "⏳ COOLDOWN ACTIVE • " +
+    cooldown.wait +
+    " round(s) remaining";
 
 }
 
 
-async function load(){
+function renderAnalysis(data) {
 
-  try{
+  const a = data.analysis;
 
-    const response =
-      await fetch(
-        "/api/state?_=" +
-        Date.now(),
-        {
-          cache:"no-store"
-        }
-      );
+  if (!a) return;
+
+  $("bigPct").textContent =
+    Number(a.bigPct || 0).toFixed(1) + "%";
+
+  $("smallPct").textContent =
+    Number(a.smallPct || 0).toFixed(1) + "%";
+
+  $("bigCount").textContent =
+    (a.big || 0) + " results";
+
+  $("smallCount").textContent =
+    (a.small || 0) + " results";
+
+  $("switchRate").textContent =
+    Number(a.switchRate || 0).toFixed(1) + "%";
 
 
-    const data =
-      await response.json();
+  if (a.streak) {
+
+    $("streak").textContent =
+      a.streak.current || "—";
+
+    $("streakLength").textContent =
+      (a.streak.currentLength || 0) +
+      " rounds";
+
+  }
 
 
-    render(data);
+}
 
-  }catch{
+
+function renderPattern(data) {
+
+  const box = $("pattern");
+
+  box.innerHTML = "";
+
+  const pattern =
+    data.analysis &&
+    data.analysis.recent10
+      ? data.analysis.recent10
+      : [];
+
+  if (!pattern.length) {
+
+    box.innerHTML =
+      '<div class="pill">Waiting...</div>';
+
+    return;
+
+  }
+
+  pattern.forEach(type => {
+
+    const div =
+      document.createElement("div");
+
+    div.className =
+      "pill " + type;
+
+    div.textContent =
+      type === "BIG" ? "B" : "S";
+
+    box.appendChild(div);
+
+  });
+
+}
+
+
+function renderHistory(data) {
+
+  const box = $("history");
+
+  box.innerHTML = "";
+
+  const history =
+    Array.isArray(data.history)
+      ? data.history
+      : [];
+
+  if (!history.length) {
+
+    box.innerHTML =
+      '<div class="row">' +
+      '<div class="rowIssue">No history</div>' +
+      '<div class="rowNum">—</div>' +
+      '<div class="rowType">—</div>' +
+      '<div class="badge pending">—</div>' +
+      '</div>';
+
+    return;
+
+  }
+
+
+  history.slice(0,30).forEach(item => {
+
+    const row =
+      document.createElement("div");
+
+    row.className = "row";
+
+
+    const issue =
+      document.createElement("div");
+
+    issue.className = "rowIssue";
+
+    issue.textContent =
+      item.target_issue || "—";
+
+
+    const number =
+      document.createElement("div");
+
+    number.className = "rowNum";
+
+    number.textContent =
+      item.actual_number !== null &&
+      item.actual_number !== undefined
+        ? item.actual_number
+        : "—";
+
+
+    const type =
+      document.createElement("div");
+
+    type.className =
+      "rowType " +
+      String(item.prediction || "").toUpperCase();
+
+    type.textContent =
+      item.prediction || "—";
+
+
+    const badge =
+      document.createElement("div");
 
     const status =
-      document.getElementById(
-        "status"
+      String(item.actual_result || "PENDING").toUpperCase();
+
+    badge.className =
+      "badge " +
+      (
+        status === "WIN"
+          ? "win"
+          : status === "LOSS"
+          ? "loss"
+          : status === "SKIPPED"
+          ? "skipped"
+          : "pending"
       );
 
-    status.textContent =
-      "● CONNECTION ERROR";
+    badge.textContent =
+      status;
 
-    status.className =
-      "status error";
 
-  }
+    row.appendChild(issue);
+    row.appendChild(number);
+    row.appendChild(type);
+    row.appendChild(badge);
+
+    box.appendChild(row);
+
+  });
 
 }
 
 
-load();
+function renderResults(data) {
 
-setInterval(
-  load,
-  1000
+  const box = $("results");
+
+  box.innerHTML = "";
+
+  const rows =
+    Array.isArray(data.last30)
+      ? data.last30
+      : [];
+
+  if (!rows.length) {
+
+    box.innerHTML =
+      '<div class="row">' +
+      '<div class="rowIssue">No live results</div>' +
+      '<div class="rowNum">—</div>' +
+      '<div class="rowType">—</div>' +
+      '<div class="badge pending">—</div>' +
+      '</div>';
+
+    return;
+
+  }
+
+
+  rows.slice(0,30).forEach(item => {
+
+    const row =
+      document.createElement("div");
+
+    row.className = "row";
+
+
+    const issue =
+      document.createElement("div");
+
+    issue.className = "rowIssue";
+
+    issue.textContent =
+      item.issue || "—";
+
+
+    const number =
+      document.createElement("div");
+
+    number.className = "rowNum";
+
+    number.textContent =
+      item.number ?? "—";
+
+
+    const type =
+      document.createElement("div");
+
+    type.className =
+      "rowType " +
+      String(item.result || "").toUpperCase();
+
+    type.textContent =
+      item.result || "—";
+
+
+    const badge =
+      document.createElement("div");
+
+    badge.className = "badge pending";
+
+    badge.textContent = "LIVE";
+
+
+    row.appendChild(issue);
+    row.appendChild(number);
+    row.appendChild(type);
+    row.appendChild(badge);
+
+    box.appendChild(row);
+
+  });
+
+}
+
+
+/* Enter key */
+$("accessKey").addEventListener(
+  "keydown",
+  event => {
+    if (event.key === "Enter") {
+      activateKey();
+    }
+  }
 );
+
+
+/* Auto login */
+(async function init() {
+
+  if (!accessKey) return;
+
+  const valid =
+    await validateSavedKey();
+
+  if (!valid) {
+
+    localStorage.removeItem(KEY_STORAGE);
+    accessKey = "";
+
+    return;
+
+  }
+
+  $("login").style.display = "none";
+  $("dashboard").style.display = "block";
+
+  loadState();
+
+})();
+
+
+/*
+  1-minute game:
+  frontend refreshes frequently so that
+  result/prediction changes appear quickly.
+*/
+setInterval(() => {
+
+  if (
+    accessKey &&
+    $("dashboard").style.display !== "none"
+  ) {
+    loadState();
+  }
+
+}, 3000);
 
 </script>
 
