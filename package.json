@@ -1,12 +1,15 @@
 {
   "name": "dy-ai-wingo",
-  "version": "1.0.0",
-  "private": true,
+  "version": "3.0.0",
+  "description": "DY AI Wingo 1 Minute Live Analysis Dashboard",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "engines": {
     "node": ">=18"
+  },
+  "dependencies": {
+    "pg": "^8.16.3"
   }
 }
