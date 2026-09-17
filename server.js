@@ -4,177 +4,189 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 
-const PORT = Number(process.env.PORT || 10000);
 
 /* =====================================================
-   API CONFIG
+   CONFIG
 ===================================================== */
 
-const API_URL = String(
-  process.env.LIVE_API_URL ||
-  "https://api.wingobot.com/v2/1-min-game-history"
-).trim();
+const PORT =
+  Number(process.env.PORT || 10000);
 
-const API_METHOD = String(
-  process.env.LIVE_API_METHOD || "GET"
-).toUpperCase();
 
-const API_TOKEN = String(
-  process.env.WINGOBOT_TOKEN || ""
-).trim();
+/*
+   IMPORTANT:
+   Token Render Environment Variable में रखना है.
 
-const ADMIN_KEY = String(
-  process.env.ADMIN_KEY || "dy4427574"
-).trim();
+   Render:
+   WINGOBOT_TOKEN = YOUR_TOKEN
+*/
+
+const WINGOBOT_TOKEN =
+  String(
+    process.env.WINGOBOT_TOKEN || ""
+  ).trim();
+
+
+const ADMIN_KEY =
+  String(
+    process.env.ADMIN_KEY ||
+    "dy4427574"
+  ).trim();
+
+
+const API_URL =
+  "https://api.wingobot.com/v2/1-min-game-history";
 
 
 /* =====================================================
-   GLOBAL STATE
+   STATE
 ===================================================== */
 
 let state = {
-  history: [],
+
+  success: false,
 
   currentPeriod: null,
-  nextPeriod: null,
+
+  predictionPeriod: null,
+
+  history: [],
+
+  stats: null,
 
   sourceStatus: "CONNECTING",
-  lastPoll: 0,
+
+  lastUpdate: 0,
+
   lastError: null,
 
   analysis: {
+
     active: false,
+
     remaining: 0,
+
     targetPeriod: null,
+
     prediction: "WAITING",
-    message: "WAITING FOR NEW PERIOD..."
+
+    message:
+      "WAITING FOR NEW PERIOD..."
+
   }
+
 };
 
-let lastDetectedPeriod = null;
+
+let lastPredictionPeriod = null;
+
 let analysisTimer = null;
-let pollBusy = false;
+
+let requestRunning = false;
 
 
 /* =====================================================
-   HTTP HELPERS
+   NO CACHE
 ===================================================== */
 
-function noStore(res) {
+function noCache(res) {
+
   res.setHeader(
     "Cache-Control",
     "no-store, no-cache, must-revalidate, proxy-revalidate"
   );
 
-  res.setHeader("Pragma", "no-cache");
-  res.setHeader("Expires", "0");
+  res.setHeader(
+    "Pragma",
+    "no-cache"
+  );
+
+  res.setHeader(
+    "Expires",
+    "0"
+  );
+
 }
 
 
-function sendJSON(res, data, code = 200) {
-  noStore(res);
+/* =====================================================
+   JSON RESPONSE
+===================================================== */
 
-  res.writeHead(code, {
-    "Content-Type": "application/json; charset=utf-8"
-  });
+function sendJSON(
+  res,
+  data,
+  status = 200
+) {
 
-  res.end(JSON.stringify(data));
+  noCache(res);
+
+  res.writeHead(
+    status,
+    {
+      "Content-Type":
+        "application/json; charset=utf-8"
+    }
+  );
+
+  res.end(
+    JSON.stringify(data)
+  );
+
 }
 
 
-function sendFile(res, filename, contentType) {
+/* =====================================================
+   FILE RESPONSE
+===================================================== */
 
-  const filePath = path.join(__dirname, filename);
+function sendFile(
+  res,
+  filename
+) {
 
-  if (!fs.existsSync(filePath)) {
+  const filePath =
+    path.join(
+      __dirname,
+      filename
+    );
+
+
+  if (
+    !fs.existsSync(filePath)
+  ) {
 
     return sendJSON(
       res,
       {
         success: false,
-        error: "File not found: " + filename
+        error:
+          "File not found: " +
+          filename
       },
       404
     );
+
   }
 
-  noStore(res);
 
-  res.writeHead(200, {
-    "Content-Type": contentType
-  });
+  noCache(res);
+
+  res.writeHead(
+    200,
+    {
+      "Content-Type":
+        "text/html; charset=utf-8"
+    }
+  );
+
 
   res.end(
-    fs.readFileSync(filePath)
+    fs.readFileSync(
+      filePath
+    )
   );
-}
 
-
-/* =====================================================
-   PERIOD PARSER
-===================================================== */
-
-function periodOf(row) {
-
-  if (!row || typeof row !== "object") {
-    return null;
-  }
-
-  const value =
-    row.issueNumber ??
-    row.issue ??
-    row.period ??
-    row.periodId ??
-    row.issueId ??
-    row.id;
-
-  if (
-    value === undefined ||
-    value === null
-  ) {
-    return null;
-  }
-
-  return String(value);
-}
-
-
-/* =====================================================
-   NUMBER PARSER
-===================================================== */
-
-function numberOf(row) {
-
-  if (!row || typeof row !== "object") {
-    return null;
-  }
-
-  const values = [
-
-    row.number,
-    row.num,
-    row.result,
-    row.resultNumber,
-    row.openNumber,
-    row.winNumber,
-    row.lotteryNumber
-
-  ];
-
-  for (const value of values) {
-
-    const number = Number(value);
-
-    if (
-      Number.isInteger(number) &&
-      number >= 0 &&
-      number <= 9
-    ) {
-      return number;
-    }
-  }
-
-  return null;
 }
 
 
@@ -182,251 +194,275 @@ function numberOf(row) {
    BIG / SMALL
 ===================================================== */
 
-function sizeOf(number) {
+function getSize(number) {
 
-  if (number <= 4) {
-    return "SMALL";
-  }
+  const n =
+    Number(number);
 
-  return "BIG";
-}
-
-
-/* =====================================================
-   FIND HISTORY INSIDE API RESPONSE
-===================================================== */
-
-function findRows(value, depth = 0) {
 
   if (
-    depth > 7 ||
-    value === null ||
-    value === undefined
+    !Number.isInteger(n)
   ) {
-    return [];
-  }
 
-
-  /* ARRAY */
-
-  if (Array.isArray(value)) {
-
-    const direct = value
-
-      .map(row => {
-
-        const period = periodOf(row);
-        const number = numberOf(row);
-
-        if (
-          period &&
-          number !== null
-        ) {
-
-          return {
-            issueNumber: period,
-            number,
-            size: sizeOf(number)
-          };
-
-        }
-
-        return null;
-
-      })
-
-      .filter(Boolean);
-
-
-    if (direct.length) {
-      return direct;
-    }
-
-
-    for (const item of value) {
-
-      const found =
-        findRows(item, depth + 1);
-
-      if (found.length) {
-        return found;
-      }
-
-    }
-
-    return [];
-  }
-
-
-  /* OBJECT */
-
-  if (typeof value === "object") {
-
-    const preferredKeys = [
-
-      "list",
-      "records",
-      "history",
-      "data",
-      "result",
-      "rows",
-      "items",
-      "games",
-      "lotteryData"
-
-    ];
-
-
-    for (const key of preferredKeys) {
-
-      if (value[key] !== undefined) {
-
-        const found =
-          findRows(
-            value[key],
-            depth + 1
-          );
-
-        if (found.length) {
-          return found;
-        }
-
-      }
-
-    }
-
-
-    for (const key of Object.keys(value)) {
-
-      const found =
-        findRows(
-          value[key],
-          depth + 1
-        );
-
-      if (found.length) {
-        return found;
-      }
-
-    }
+    return null;
 
   }
 
-  return [];
+
+  return n <= 4
+    ? "SMALL"
+    : "BIG";
+
 }
 
 
 /* =====================================================
-   FIND CURRENT / NEXT PERIOD
+   NORMALIZE EXACT WINGOBOT HISTORY
 ===================================================== */
 
-function findCurrentPeriod(
-  value,
-  depth = 0
+function normalizeHistory(
+  history
 ) {
 
   if (
-    depth > 6 ||
-    value === null ||
-    value === undefined ||
-    typeof value !== "object"
+    !Array.isArray(history)
   ) {
-    return null;
+
+    return [];
+
   }
 
 
-  if (Array.isArray(value)) {
+  return history
 
-    for (const item of value) {
+    .map(
+      row => {
 
-      const found =
-        findCurrentPeriod(
-          item,
-          depth + 1
-        );
+        if (
+          !row ||
+          typeof row !==
+          "object"
+        ) {
 
-      if (found) {
-        return found;
+          return null;
+
+        }
+
+
+        const period =
+          row.issueNumber ??
+          row.period ??
+          row.issue ??
+          null;
+
+
+        const number =
+          Number(
+            row.number
+          );
+
+
+        if (
+          period === null ||
+          !Number.isInteger(
+            number
+          ) ||
+          number < 0 ||
+          number > 9
+        ) {
+
+          return null;
+
+        }
+
+
+        return {
+
+          issueNumber:
+            String(period),
+
+          number:
+
+            number,
+
+          size:
+            getSize(number),
+
+          colour:
+            row.colour ??
+            row.color ??
+            null,
+
+          premium:
+            row.premium ??
+            null,
+
+          sum:
+            row.sum ??
+            null
+
+        };
+
       }
+    )
 
-    }
+    .filter(Boolean);
+
+}
+
+
+/* =====================================================
+   PERIOD TO BIGINT
+===================================================== */
+
+function periodNumber(
+  value
+) {
+
+  if (
+    value === null ||
+    value === undefined
+  ) {
 
     return null;
-  }
-
-
-  const keys = [
-
-    "currentPeriod",
-    "currentIssue",
-    "currentIssueNumber",
-
-    "current",
-
-    "nextPeriod",
-    "nextIssue",
-    "nextIssueNumber",
-
-    "period",
-    "issueNumber"
-
-  ];
-
-
-  for (const key of keys) {
-
-    const valueAtKey =
-      value[key];
-
-    if (
-      valueAtKey !== undefined &&
-      valueAtKey !== null &&
-      typeof valueAtKey !== "object"
-    ) {
-
-      const stringValue =
-        String(valueAtKey);
-
-      if (
-        /\d{6,}/.test(stringValue)
-      ) {
-        return stringValue;
-      }
-
-    }
 
   }
 
 
-  for (const key of Object.keys(value)) {
+  const s =
+    String(value);
 
-    const found =
-      findCurrentPeriod(
-        value[key],
-        depth + 1
+
+  if (
+    !/^\d+$/.test(s)
+  ) {
+
+    return null;
+
+  }
+
+
+  try {
+
+    return BigInt(s);
+
+  } catch {
+
+    return null;
+
+  }
+
+}
+
+
+/* =====================================================
+   GET NEXT PERIOD
+===================================================== */
+
+function getNextPeriod(
+  currentPeriod,
+  history
+) {
+
+  /*
+     API current.issueNumber
+     is the authoritative period.
+  */
+
+  if (
+    currentPeriod
+  ) {
+
+    const current =
+      String(
+        currentPeriod
       );
 
-    if (found) {
-      return found;
+
+    const n =
+      periodNumber(
+        current
+      );
+
+
+    if (
+      n !== null
+    ) {
+
+      return (
+        n + 1n
+      )
+      .toString()
+      .padStart(
+        current.length,
+        "0"
+      );
+
+    }
+
+  }
+
+
+  /*
+     Fallback:
+     latest history + 1
+  */
+
+  if (
+    Array.isArray(history) &&
+    history.length
+  ) {
+
+    const latest =
+      String(
+        history[0]
+          .issueNumber
+      );
+
+
+    const n =
+      periodNumber(
+        latest
+      );
+
+
+    if (
+      n !== null
+    ) {
+
+      return (
+        n + 1n
+      )
+      .toString()
+      .padStart(
+        latest.length,
+        "0"
+      );
+
     }
 
   }
 
 
   return null;
+
 }
 
 
 /* =====================================================
-   FETCH API
+   EXACT WINGOBOT REQUEST
 ===================================================== */
 
-async function fetchSource() {
+async function fetchWingoBot() {
 
-  if (!API_URL) {
+  if (
+    !WINGOBOT_TOKEN
+  ) {
+
     throw new Error(
-      "LIVE_API_URL is empty"
+      "WINGOBOT_TOKEN is not configured"
     );
+
   }
 
 
@@ -443,42 +479,37 @@ async function fetchSource() {
     Date.now();
 
 
-  const headers = {
-
-    "Accept":
-      "application/json",
-
-    "Cache-Control":
-      "no-cache",
-
-    "Pragma":
-      "no-cache",
-
-    "User-Agent":
-      "DY-AI-Wingo/1.0"
-
-  };
-
-
-  /*
-     Token stays on SERVER.
-     It is never sent to browser HTML.
-  */
-
-  if (API_TOKEN) {
-
-    headers.Authorization =
-      `Bearer ${API_TOKEN}`;
-
-  }
-
-
   const response =
     await fetch(
       requestURL,
       {
-        method: API_METHOD,
-        headers
+
+        method:
+          "GET",
+
+        cache:
+          "no-store",
+
+        headers: {
+
+          "Authorization":
+            "Bearer " +
+            WINGOBOT_TOKEN,
+
+          "Accept":
+            "application/json",
+
+          "Cache-Control":
+            "no-cache",
+
+          "Pragma":
+            "no-cache",
+
+          "User-Agent":
+            "DY-AI-Wingo/1.0"
+
+        }
+
       }
     );
 
@@ -487,44 +518,63 @@ async function fetchSource() {
     await response.text();
 
 
-  if (!response.ok) {
+  if (
+    !response.ok
+  ) {
 
     throw new Error(
-      `HTTP ${response.status}`
+      "HTTP " +
+      response.status
     );
 
   }
 
 
-  let payload;
+  let data;
+
 
   try {
 
-    payload =
+    data =
       JSON.parse(text);
 
   } catch {
 
     throw new Error(
-      "API returned non-JSON data"
+      "WingoBot returned invalid JSON"
     );
 
   }
 
 
-  return payload;
+  if (
+    data.success !== true
+  ) {
+
+    throw new Error(
+      data.error ||
+      "WingoBot API returned success=false"
+    );
+
+  }
+
+
+  return data;
+
 }
 
 
 /* =====================================================
-   ADVANCED ANALYSIS ENGINE
+   ANALYSIS ENGINE
 ===================================================== */
 
-function scoreEngine(history) {
+function calculateEngine(
+  history
+) {
 
   if (
     !Array.isArray(history) ||
-    history.length < 8
+    history.length < 10
   ) {
 
     return "NO CLEAR SIGNAL";
@@ -533,7 +583,10 @@ function scoreEngine(history) {
 
 
   const rows =
-    history.slice(0, 20);
+    history.slice(
+      0,
+      20
+    );
 
 
   const sizes =
@@ -543,6 +596,7 @@ function scoreEngine(history) {
 
 
   let bigScore = 0;
+
   let smallScore = 0;
 
 
@@ -558,13 +612,23 @@ function scoreEngine(history) {
         const weight =
           10 - index;
 
-        if (value === "BIG") {
 
-          bigScore += weight;
+        if (
+          value === "BIG"
+        ) {
 
-        } else {
+          bigScore +=
+            weight;
 
-          smallScore += weight;
+        }
+
+
+        if (
+          value === "SMALL"
+        ) {
+
+          smallScore +=
+            weight;
 
         }
 
@@ -586,7 +650,8 @@ function scoreEngine(history) {
   ) {
 
     if (
-      sizes[i] === sizes[0]
+      sizes[i] ===
+      sizes[0]
     ) {
 
       streak++;
@@ -600,16 +665,23 @@ function scoreEngine(history) {
   }
 
 
-  if (streak >= 3) {
+  if (
+    streak >= 3
+  ) {
 
-    if (sizes[0] === "BIG") {
+    if (
+      sizes[0] ===
+      "BIG"
+    ) {
 
       bigScore += 4;
+
       smallScore += 1;
 
     } else {
 
       smallScore += 4;
+
       bigScore += 1;
 
     }
@@ -618,15 +690,17 @@ function scoreEngine(history) {
 
 
   /* --------------------------------
-     ALTERNATION / CHOP
+     ALTERNATION
   -------------------------------- */
 
-  let alternations = 0;
+  let alternation =
+    0;
 
 
   for (
     let i = 0;
-    i < Math.min(
+    i <
+    Math.min(
       9,
       sizes.length - 1
     );
@@ -638,14 +712,21 @@ function scoreEngine(history) {
       sizes[i + 1]
     ) {
 
-      alternations++;
+      alternation++;
 
     }
 
   }
 
 
-  if (alternations >= 7) {
+  /*
+     Very strong chop:
+     don't force a prediction.
+  */
+
+  if (
+    alternation >= 7
+  ) {
 
     return "NO CLEAR SIGNAL";
 
@@ -653,17 +734,17 @@ function scoreEngine(history) {
 
 
   /* --------------------------------
-     LAST 3 PATTERN
+     LAST 3
   -------------------------------- */
 
-  const pattern3 =
+  const p3 =
     sizes
       .slice(0, 3)
       .join("");
 
 
   if (
-    pattern3 === "BBB"
+    p3 === "BBB"
   ) {
 
     smallScore += 3;
@@ -672,7 +753,7 @@ function scoreEngine(history) {
 
 
   if (
-    pattern3 === "SSS"
+    p3 === "SSS"
   ) {
 
     bigScore += 3;
@@ -681,7 +762,7 @@ function scoreEngine(history) {
 
 
   if (
-    pattern3 === "BSB"
+    p3 === "BSB"
   ) {
 
     smallScore += 2;
@@ -690,7 +771,7 @@ function scoreEngine(history) {
 
 
   if (
-    pattern3 === "SBS"
+    p3 === "SBS"
   ) {
 
     bigScore += 2;
@@ -699,17 +780,17 @@ function scoreEngine(history) {
 
 
   /* --------------------------------
-     LAST 5 PATTERN
+     LAST 5
   -------------------------------- */
 
-  const pattern5 =
+  const p5 =
     sizes
       .slice(0, 5)
       .join("");
 
 
   if (
-    pattern5 === "BSBSB"
+    p5 === "BSBSB"
   ) {
 
     smallScore += 2;
@@ -718,7 +799,7 @@ function scoreEngine(history) {
 
 
   if (
-    pattern5 === "SBSBS"
+    p5 === "SBSBS"
   ) {
 
     bigScore += 2;
@@ -727,7 +808,7 @@ function scoreEngine(history) {
 
 
   if (
-    pattern5 === "BBBSS"
+    p5 === "BBBSS"
   ) {
 
     bigScore += 1;
@@ -736,7 +817,7 @@ function scoreEngine(history) {
 
 
   if (
-    pattern5 === "SSSBB"
+    p5 === "SSSBB"
   ) {
 
     smallScore += 1;
@@ -745,28 +826,28 @@ function scoreEngine(history) {
 
 
   /* --------------------------------
-     REPEATED 3-BLOCK
+     REPEATED 3 BLOCK
   -------------------------------- */
 
-  const blockA =
+  const block1 =
     sizes
       .slice(0, 3)
       .join("");
 
 
-  const blockB =
+  const block2 =
     sizes
       .slice(3, 6)
       .join("");
 
 
   if (
-    blockA &&
-    blockA === blockB
+    block1 &&
+    block1 === block2
   ) {
 
     if (
-      blockA === "BBB"
+      block1 === "BBB"
     ) {
 
       smallScore += 2;
@@ -775,7 +856,7 @@ function scoreEngine(history) {
 
 
     if (
-      blockA === "SSS"
+      block1 === "SSS"
     ) {
 
       bigScore += 2;
@@ -790,11 +871,17 @@ function scoreEngine(history) {
   -------------------------------- */
 
   const short =
-    sizes.slice(0, 5);
+    sizes.slice(
+      0,
+      5
+    );
 
 
   const long =
-    sizes.slice(0, 15);
+    sizes.slice(
+      0,
+      15
+    );
 
 
   const shortBig =
@@ -822,8 +909,10 @@ function scoreEngine(history) {
 
 
   if (
-    shortBig > shortSmall &&
-    longBig > longSmall
+    shortBig >
+      shortSmall &&
+    longBig >
+      longSmall
   ) {
 
     bigScore += 3;
@@ -832,8 +921,10 @@ function scoreEngine(history) {
 
 
   if (
-    shortSmall > shortBig &&
-    longSmall > longBig
+    shortSmall >
+      shortBig &&
+    longSmall >
+      longBig
   ) {
 
     smallScore += 3;
@@ -845,11 +936,12 @@ function scoreEngine(history) {
      DIGIT STRUCTURE
   -------------------------------- */
 
-  const boundaryCount =
+  const boundary =
     rows
 
       .map(
-        x => x.number
+        row =>
+          row.number
       )
 
       .filter(
@@ -862,17 +954,18 @@ function scoreEngine(history) {
 
 
   if (
-    boundaryCount >= 3
+    boundary >= 3
   ) {
 
     bigScore -= 1;
+
     smallScore -= 1;
 
   }
 
 
   /* --------------------------------
-     FINAL SIGNAL
+     FINAL
   -------------------------------- */
 
   const difference =
@@ -897,20 +990,27 @@ function scoreEngine(history) {
   )
     ? "BIG"
     : "SMALL";
+
 }
 
 
 /* =====================================================
-   OPPOSITE PREDICTION LAYER
+   FINAL PREDICTION
 ===================================================== */
 
-function finalPrediction(
+function makePrediction(
   history
 ) {
 
   const engine =
-    scoreEngine(history);
+    calculateEngine(
+      history
+    );
 
+
+  /*
+     Opposite-output layer
+  */
 
   if (
     engine === "BIG"
@@ -931,6 +1031,7 @@ function finalPrediction(
 
 
   return "NO CLEAR SIGNAL";
+
 }
 
 
@@ -939,11 +1040,13 @@ function finalPrediction(
 ===================================================== */
 
 function startAnalysis(
-  period,
+  targetPeriod,
   history
 ) {
 
-  if (analysisTimer) {
+  if (
+    analysisTimer
+  ) {
 
     clearInterval(
       analysisTimer
@@ -952,7 +1055,7 @@ function startAnalysis(
   }
 
 
-  let remaining = 5;
+  let seconds = 5;
 
 
   state.analysis = {
@@ -961,9 +1064,11 @@ function startAnalysis(
 
     remaining: 5,
 
-    targetPeriod: period,
+    targetPeriod:
+      targetPeriod,
 
-    prediction: "ANALYZING",
+    prediction:
+      "ANALYZING",
 
     message:
       "ANALYZING PATTERN..."
@@ -992,18 +1097,24 @@ function startAnalysis(
     setInterval(
       () => {
 
-        remaining--;
+        seconds--;
 
 
         if (
-          remaining > 0
+          seconds > 0
         ) {
 
-          state.analysis.remaining =
-            remaining;
+          state.analysis
+            .remaining =
+            seconds;
 
-          state.analysis.message =
-            messages[remaining];
+
+          state.analysis
+            .message =
+            messages[
+              seconds
+            ];
+
 
           return;
 
@@ -1014,7 +1125,15 @@ function startAnalysis(
           analysisTimer
         );
 
-        analysisTimer = null;
+
+        analysisTimer =
+          null;
+
+
+        const prediction =
+          makePrediction(
+            history
+          );
 
 
         state.analysis = {
@@ -1024,12 +1143,10 @@ function startAnalysis(
           remaining: 0,
 
           targetPeriod:
-            period,
+            targetPeriod,
 
           prediction:
-            finalPrediction(
-              history
-            ),
+            prediction,
 
           message:
             "PREDICTION READY"
@@ -1039,115 +1156,101 @@ function startAnalysis(
       },
       1000
     );
+
 }
 
 
 /* =====================================================
-   LIVE POLLING
+   UPDATE FROM WINGOBOT
 ===================================================== */
 
-async function poll() {
+async function updateFromAPI() {
 
-  if (pollBusy) {
+  if (
+    requestRunning
+  ) {
+
     return;
+
   }
 
 
-  pollBusy = true;
+  requestRunning = true;
 
 
   try {
 
-    const payload =
-      await fetchSource();
+    const data =
+      await fetchWingoBot();
 
 
     const history =
-      findRows(payload);
+      normalizeHistory(
+        data.history
+      );
 
 
-    if (!history.length) {
+    if (
+      !history.length
+    ) {
 
       throw new Error(
-        "No valid result history found"
+        "No history received"
       );
 
     }
-
-
-    state.history =
-      history.slice(0, 30);
-
-
-    const apiPeriod =
-      findCurrentPeriod(
-        payload
-      );
-
-
-    const latestSettled =
-      state.history[0]
-        ?.issueNumber ||
-      null;
-
-
-    state.currentPeriod =
-      apiPeriod ||
-      latestSettled;
 
 
     /*
-       If API does not expose
-       an explicit next period,
-       fallback to latest + 1.
+       Exact API current period
     */
 
-    if (
-      apiPeriod &&
-      latestSettled &&
-      apiPeriod !== latestSettled
-    ) {
-
-      state.nextPeriod =
-        apiPeriod;
-
-    } else if (
-      latestSettled &&
-      /^\d+$/.test(
-        latestSettled
-      )
-    ) {
-
-      try {
-
-        state.nextPeriod =
-          (
-            BigInt(
-              latestSettled
-            ) + 1n
+    const currentPeriod =
+      data.current &&
+      data.current.issueNumber
+        ? String(
+            data.current.issueNumber
           )
-          .toString()
-          .padStart(
-            latestSettled.length,
-            "0"
-          );
-
-      } catch {
-
-        state.nextPeriod =
-          null;
-
-      }
-
-    } else {
-
-      state.nextPeriod =
-        null;
-
-    }
+        : history[0]
+            .issueNumber;
 
 
-    state.lastPoll =
+    /*
+       Prediction period
+    */
+
+    const predictionPeriod =
+      getNextPeriod(
+        currentPeriod,
+        history
+      );
+
+
+    state.success =
+      true;
+
+
+    state.currentPeriod =
+      currentPeriod;
+
+
+    state.predictionPeriod =
+      predictionPeriod;
+
+
+    state.history =
+      history.slice(
+        0,
+        30
+      );
+
+
+    state.stats =
+      data.stats ||
+      null;
+
+
+    state.lastUpdate =
       Date.now();
 
 
@@ -1161,21 +1264,20 @@ async function poll() {
 
     /*
        NEW PERIOD DETECTED
-       => 5 SECOND ANALYSIS
     */
 
     if (
-      state.nextPeriod &&
-      state.nextPeriod !==
-        lastDetectedPeriod
+      predictionPeriod &&
+      predictionPeriod !==
+        lastPredictionPeriod
     ) {
 
-      lastDetectedPeriod =
-        state.nextPeriod;
+      lastPredictionPeriod =
+        predictionPeriod;
 
 
       startAnalysis(
-        state.nextPeriod,
+        predictionPeriod,
         state.history
       );
 
@@ -1183,6 +1285,10 @@ async function poll() {
 
 
   } catch (error) {
+
+    state.success =
+      false;
+
 
     state.lastError =
       error.message;
@@ -1193,7 +1299,8 @@ async function poll() {
 
   } finally {
 
-    pollBusy = false;
+    requestRunning =
+      false;
 
   }
 
@@ -1201,14 +1308,14 @@ async function poll() {
 
 
 /* =====================================================
-   START POLLING
+   POLL EVERY 1 SECOND
 ===================================================== */
 
-poll();
+updateFromAPI();
 
 
 setInterval(
-  poll,
+  updateFromAPI,
   1000
 );
 
@@ -1231,9 +1338,9 @@ const server =
         );
 
 
-      /* ==============================
-         STATE API
-      ============================== */
+      /* ============================================
+         LIVE STATE
+      ============================================ */
 
       if (
         url.pathname ===
@@ -1244,34 +1351,29 @@ const server =
           res,
           {
 
-            success: true,
+            success:
+              state.success,
 
             currentPeriod:
               state.currentPeriod,
 
-            nextPeriod:
-              state.nextPeriod,
+            predictionPeriod:
+              state.predictionPeriod,
 
             history:
-              state.history.slice(
-                0,
-                20
-              ),
+              state.history,
+
+            stats:
+              state.stats,
 
             analysis:
               state.analysis,
 
             sourceStatus:
-              state.sourceStatus ===
-                "LIVE" &&
-              Date.now() -
-                state.lastPoll <=
-                5000
-                ? "LIVE"
-                : state.sourceStatus,
+              state.sourceStatus,
 
-            lastPoll:
-              state.lastPoll,
+            lastUpdate:
+              state.lastUpdate,
 
             error:
               state.lastError
@@ -1282,9 +1384,9 @@ const server =
       }
 
 
-      /* ==============================
-         HISTORY API
-      ============================== */
+      /* ============================================
+         HISTORY
+      ============================================ */
 
       if (
         url.pathname ===
@@ -1295,13 +1397,11 @@ const server =
           res,
           {
 
-            success: true,
+            success:
+              true,
 
             history:
-              state.history.slice(
-                0,
-                30
-              )
+              state.history
 
           }
         );
@@ -1309,9 +1409,9 @@ const server =
       }
 
 
-      /* ==============================
-         HEALTH API
-      ============================== */
+      /* ============================================
+         HEALTH
+      ============================================ */
 
       if (
         url.pathname ===
@@ -1322,24 +1422,28 @@ const server =
           res,
           {
 
-            ok: true,
+            ok:
+              true,
 
-            source:
+            api:
               API_URL,
 
             method:
-              API_METHOD,
+              "GET",
 
             tokenConfigured:
               Boolean(
-                API_TOKEN
+                WINGOBOT_TOKEN
               ),
 
-            lastPoll:
-              state.lastPoll,
+            sourceStatus:
+              state.sourceStatus,
 
-            status:
-              state.sourceStatus
+            lastUpdate:
+              state.lastUpdate,
+
+            lastError:
+              state.lastError
 
           }
         );
@@ -1347,9 +1451,9 @@ const server =
       }
 
 
-      /* ==============================
+      /* ============================================
          ADMIN CHECK
-      ============================== */
+      ============================================ */
 
       if (
         url.pathname ===
@@ -1376,9 +1480,9 @@ const server =
       }
 
 
-      /* ==============================
+      /* ============================================
          PREDICTION PAGE
-      ============================== */
+      ============================================ */
 
       if (
         url.pathname === "/" ||
@@ -1388,40 +1492,39 @@ const server =
 
         return sendFile(
           res,
-          "prediction.html",
-          "text/html; charset=utf-8"
+          "prediction.html"
         );
 
       }
 
 
-      /* ==============================
+      /* ============================================
          ADMIN PAGE
-      ============================== */
+      ============================================ */
 
       if (
-        url.pathname === "/admin"
+        url.pathname ===
+        "/admin"
       ) {
 
         return sendFile(
           res,
-          "admin.html",
-          "text/html; charset=utf-8"
+          "admin.html"
         );
 
       }
 
 
-      /* ==============================
+      /* ============================================
          MUSIC
-      ============================== */
+      ============================================ */
 
       if (
         url.pathname ===
         "/music.mp3"
       ) {
 
-        const musicPath =
+        const music =
           path.join(
             __dirname,
             "music.mp3"
@@ -1430,16 +1533,16 @@ const server =
 
         if (
           !fs.existsSync(
-            musicPath
+            music
           )
         ) {
 
-          return sendJSON(
-            res,
-            {
-              success: false
-            },
+          res.writeHead(
             404
+          );
+
+          return res.end(
+            "Music not found"
           );
 
         }
@@ -1456,16 +1559,16 @@ const server =
 
         return fs
           .createReadStream(
-            musicPath
+            music
           )
           .pipe(res);
 
       }
 
 
-      /* ==============================
-         NOT FOUND
-      ============================== */
+      /* ============================================
+         404
+      ============================================ */
 
       res.writeHead(
         404,
@@ -1474,6 +1577,7 @@ const server =
             "text/plain"
         }
       );
+
 
       res.end(
         "Not Found"
@@ -1484,7 +1588,7 @@ const server =
 
 
 /* =====================================================
-   SERVER START
+   START
 ===================================================== */
 
 server.listen(
@@ -1492,11 +1596,11 @@ server.listen(
   () => {
 
     console.log(
-      "================================="
+      "===================================="
     );
 
     console.log(
-      "DY AI WINGO SERVER STARTED"
+      "DY AI WINGO SERVER"
     );
 
     console.log(
@@ -1510,19 +1614,24 @@ server.listen(
     );
 
     console.log(
-      "METHOD:",
-      API_METHOD
-    );
-
-    console.log(
       "TOKEN:",
-      API_TOKEN
+      WINGOBOT_TOKEN
         ? "CONFIGURED"
         : "NOT CONFIGURED"
     );
 
     console.log(
-      "================================="
+      "POLL:",
+      "EVERY 1 SECOND"
+    );
+
+    console.log(
+      "ANALYSIS:",
+      "5 SECONDS"
+    );
+
+    console.log(
+      "===================================="
     );
 
   }
