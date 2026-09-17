@@ -1,19 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
 <meta charset="UTF-8">
-
-<meta
-  name="viewport"
-  content="width=device-width,initial-scale=1.0"
-/>
-
-<title>DY AI WinGo</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>DY AI WinGo Prediction</title>
 
 <style>
-
 *{
   box-sizing:border-box;
   margin:0;
@@ -24,7 +16,6 @@ body{
   background:#050711;
   color:#fff;
   font-family:Arial,sans-serif;
-  min-height:100vh;
 }
 
 .app{
@@ -35,187 +26,184 @@ body{
 
 .header{
   display:flex;
-  align-items:center;
   justify-content:space-between;
-  padding:10px 5px 20px;
+  align-items:center;
+  padding:10px 3px 20px;
 }
 
 .logo{
-  font-size:30px;
+  font-size:29px;
   font-weight:900;
-  letter-spacing:5px;
+  letter-spacing:4px;
 }
 
 .sub{
-  color:#6e7895;
+  color:#69748e;
   font-size:9px;
-  letter-spacing:4px;
-  margin-top:5px;
+  letter-spacing:3px;
+  margin-top:4px;
 }
 
 .live{
   display:flex;
   align-items:center;
   gap:7px;
-  font-size:10px;
+  font-size:9px;
   font-weight:bold;
 }
 
 .dot{
-  width:10px;
-  height:10px;
+  width:9px;
+  height:9px;
   border-radius:50%;
-  background:#31f39a;
-  box-shadow:0 0 16px #31f39a;
+  background:#35ef99;
+  box-shadow:0 0 14px #35ef99;
 }
 
-.dot.off{
-  background:#ff536b;
-  box-shadow:0 0 16px #ff536b;
+.off{
+  background:#ff4e67;
+  box-shadow:0 0 14px #ff4e67;
 }
 
 .error{
   display:none;
-  background:#291018;
-  border:1px solid #642435;
-  color:#ff8193;
   padding:12px;
-  border-radius:14px;
   margin-bottom:14px;
+  border-radius:14px;
+  background:#260f18;
+  border:1px solid #642337;
+  color:#ff8395;
   font-size:10px;
   word-break:break-word;
 }
 
 .card{
-  background:#0d1220;
+  background:#0c111f;
   border:1px solid #202a42;
-  border-radius:24px;
-  padding:20px;
-  margin-bottom:16px;
+  border-radius:22px;
+  padding:19px;
+  margin-bottom:14px;
 }
 
 .label{
-  color:#727d99;
+  color:#707b96;
   font-size:9px;
-  letter-spacing:3px;
   font-weight:bold;
+  letter-spacing:3px;
 }
 
 .period{
-  margin-top:16px;
-  font-size:26px;
+  margin-top:13px;
+  font-size:24px;
   font-weight:900;
   word-break:break-all;
 }
 
 .next{
-  margin-top:8px;
-  color:#75809b;
-  font-size:10px;
+  color:#69748e;
+  font-size:9px;
+  margin-top:6px;
 }
 
 .result{
   display:flex;
   align-items:center;
-  gap:20px;
-  margin-top:20px;
+  gap:18px;
+  margin-top:18px;
 }
 
 .number{
-  width:92px;
-  height:92px;
+  width:86px;
+  height:86px;
   border-radius:50%;
   background:#03060c;
-  border:1px solid #29344e;
+  border:1px solid #293650;
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:42px;
+  font-size:40px;
   font-weight:900;
 }
 
 .type{
-  font-size:24px;
+  font-size:23px;
   font-weight:900;
 }
 
 .issue{
-  color:#75809c;
-  font-size:10px;
-  margin-top:7px;
+  color:#68738e;
+  font-size:9px;
+  margin-top:6px;
 }
 
 .ai{
   text-align:center;
 }
 
-.aiTitle{
-  color:#8792ad;
+.ai-title{
+  color:#7d88a2;
   font-size:10px;
   letter-spacing:3px;
 }
 
 .prediction{
-  margin:17px 0 6px;
-  font-size:46px;
+  margin:15px 0 5px;
+  font-size:43px;
   font-weight:1000;
-  letter-spacing:4px;
+  letter-spacing:3px;
 }
 
-.prediction.BIG{
-  color:#43ddff;
-  text-shadow:0 0 22px rgba(67,221,255,.4);
+.BIG{
+  color:#42ddff;
+  text-shadow:0 0 22px rgba(66,221,255,.45);
 }
 
-.prediction.SMALL{
-  color:#c08cff;
-  text-shadow:0 0 22px rgba(192,140,255,.4);
+.SMALL{
+  color:#c18cff;
+  text-shadow:0 0 22px rgba(193,140,255,.45);
 }
 
-.prediction.SKIP{
-  color:#77829b;
+.SKIP{
+  color:#7b849a;
 }
 
-.prediction.WAIT{
-  color:#ffc65b;
+.WAIT{
+  color:#ffc45b;
 }
 
-.prediction.ANALYZING{
-  color:#43ddff;
-  animation:pulse 1s infinite;
+.ANALYZING{
+  color:#42ddff;
+  animation:pulse .8s infinite;
 }
 
 @keyframes pulse{
-  50%{
-    opacity:.4;
-  }
+  50%{opacity:.35}
 }
 
 .clock{
-  min-height:38px;
-  font-size:32px;
+  min-height:35px;
+  font-size:28px;
   font-weight:900;
-  color:#43ddff;
+  color:#42ddff;
 }
 
 .target{
-  color:#75809b;
-  font-size:10px;
+  color:#68738e;
+  font-size:9px;
 }
 
 .conf{
   display:flex;
   justify-content:space-between;
-  margin-top:22px;
-  margin-bottom:7px;
-  color:#7a85a1;
-  font-size:9px;
+  margin:18px 0 7px;
+  color:#727d97;
+  font-size:8px;
   letter-spacing:2px;
 }
 
 .bar{
-  height:8px;
-  background:#05080e;
+  height:7px;
+  background:#050810;
   border-radius:20px;
   overflow:hidden;
 }
@@ -225,56 +213,56 @@ body{
   height:100%;
   background:linear-gradient(
     90deg,
-    #527dff,
-    #43e1ff
+    #527cff,
+    #42e0ff
   );
-  transition:.4s;
+  transition:.3s;
 }
 
 .status{
-  color:#7a85a0;
-  font-size:10px;
   margin-top:12px;
+  color:#77829d;
+  font-size:10px;
   line-height:1.5;
 }
 
 .grid{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:11px;
-  margin-top:17px;
+  gap:9px;
+  margin-top:15px;
 }
 
 .stat{
   background:#070b14;
-  border:1px solid #151e32;
-  border-radius:17px;
-  padding:15px;
+  border:1px solid #151e31;
+  border-radius:15px;
+  padding:14px;
 }
 
-.statName{
-  color:#6c7793;
+.stat-name{
+  color:#68738e;
   font-size:8px;
   letter-spacing:2px;
 }
 
-.statValue{
-  font-size:22px;
+.stat-value{
+  margin-top:7px;
+  font-size:21px;
   font-weight:900;
-  margin-top:8px;
 }
 
-.statSub{
-  color:#65708a;
-  font-size:9px;
-  margin-top:5px;
+.stat-sub{
+  margin-top:4px;
+  color:#5f6982;
+  font-size:8px;
 }
 
 .signals{
-  margin-top:15px;
+  margin-top:13px;
+  padding:12px;
   background:#070b14;
-  border-radius:16px;
-  padding:13px;
+  border-radius:14px;
 }
 
 .signal{
@@ -285,46 +273,41 @@ body{
 }
 
 .signal span:first-child{
-  color:#68738e;
+  color:#66718b;
 }
 
 .signal span:last-child{
-  color:#c8d0e1;
+  color:#d1d7e4;
 }
 
 .pattern{
   display:flex;
   flex-wrap:wrap;
   gap:5px;
-  margin-top:15px;
+  margin-top:13px;
 }
 
 .pill{
   padding:6px 8px;
   border-radius:8px;
-  font-size:8px;
+  font-size:7px;
   font-weight:bold;
 }
 
 .pill.big{
-  color:#43ddff;
   background:#10343f;
+  color:#42ddff;
 }
 
 .pill.small{
-  color:#c08cff;
   background:#28183d;
-}
-
-.history{
-  margin-top:15px;
+  color:#c18cff;
 }
 
 .hrow{
   display:grid;
-  grid-template-columns:1.5fr .4fr .7fr;
-  gap:7px;
-  padding:11px 0;
+  grid-template-columns:1.5fr .5fr .7fr;
+  padding:9px 0;
   border-bottom:1px solid #151e30;
   font-size:9px;
 }
@@ -332,321 +315,208 @@ body{
 .head{
   color:#68738e;
   font-size:7px;
-  letter-spacing:1px;
 }
 
 .bigText{
-  color:#43ddff;
+  color:#42ddff;
   font-weight:bold;
 }
 
 .smallText{
-  color:#c08cff;
+  color:#c18cff;
   font-weight:bold;
 }
 
 .footer{
   text-align:center;
-  color:#4c5670;
+  color:#4e5870;
   font-size:8px;
   letter-spacing:2px;
-  padding:10px 0 30px;
+  padding:10px 0 25px;
 }
-
-@media(max-width:480px){
-
-  .app{
-    padding:12px;
-  }
-
-  .card{
-    padding:18px;
-  }
-
-  .prediction{
-    font-size:40px;
-  }
-
-  .number{
-    width:88px;
-    height:88px;
-  }
-
-}
-
 </style>
-
 </head>
 
 <body>
 
 <div class="app">
 
-
-<div class="header">
-
-  <div>
-
-    <div class="logo">
-      DY AI
-    </div>
-
-    <div class="sub">
-      WINGO 1 MINUTE
-    </div>
-
-  </div>
-
-
-  <div class="live">
-
-    <span
-      id="dot"
-      class="dot off"
-    ></span>
-
-    <span id="live">
-      CONNECTING
-    </span>
-
-  </div>
-
-</div>
-
-
-<div
-  id="error"
-  class="error"
-></div>
-
-
-<!-- PERIOD -->
-
-<div class="card">
-
-  <div class="label">
-    CURRENT PERIOD
-  </div>
-
-  <div
-    id="current"
-    class="period"
-  >
-    —
-  </div>
-
-  <div
-    id="next"
-    class="next"
-  >
-    NEXT PERIOD: —
-  </div>
-
-</div>
-
-
-<!-- RESULT -->
-
-<div class="card">
-
-  <div class="label">
-    LATEST RESULT
-  </div>
-
-  <div class="result">
-
-    <div
-      id="number"
-      class="number"
-    >
-      —
-    </div>
-
+  <div class="header">
     <div>
+      <div class="logo">DY AI</div>
+      <div class="sub">WINGO 1 MINUTE</div>
+    </div>
 
-      <div
-        id="type"
-        class="type"
-      >
+    <div class="live">
+      <span id="dot" class="dot off"></span>
+      <span id="liveText">CONNECTING</span>
+    </div>
+  </div>
+
+  <div id="error" class="error"></div>
+
+
+  <!-- CURRENT PERIOD -->
+
+  <div class="card">
+
+    <div class="label">CURRENT PERIOD</div>
+
+    <div id="current" class="period">—</div>
+
+    <div id="next" class="next">
+      NEXT PERIOD: —
+    </div>
+
+  </div>
+
+
+  <!-- LATEST RESULT -->
+
+  <div class="card">
+
+    <div class="label">LATEST RESULT</div>
+
+    <div class="result">
+
+      <div id="number" class="number">
         —
       </div>
 
-      <div
-        id="issue"
-        class="issue"
-      >
-        Waiting for live data...
+      <div>
+        <div id="type" class="type">—</div>
+
+        <div id="issue" class="issue">
+          Waiting...
+        </div>
       </div>
 
     </div>
 
   </div>
 
-</div>
 
+  <!-- PREDICTION -->
 
-<!-- AI PREDICTION -->
+  <div class="card ai">
 
-<div class="card ai">
-
-  <div class="aiTitle">
-    🎯 AI PREMIUM PREDICTION
-  </div>
-
-
-  <div
-    id="prediction"
-    class="prediction SKIP"
-  >
-    WAIT
-  </div>
-
-
-  <!-- 4 SECOND ANALYSIS CLOCK -->
-
-  <div
-    id="clock"
-    class="clock"
-  ></div>
-
-
-  <div
-    id="target"
-    class="target"
-  >
-    TARGET PERIOD: —
-  </div>
-
-
-  <div class="conf">
-
-    <span>
-      AI CONFIDENCE
-    </span>
-
-    <span id="confidence">
-      0%
-    </span>
-
-  </div>
-
-
-  <div class="bar">
+    <div class="ai-title">
+      🎯 AI PREMIUM PREDICTION
+    </div>
 
     <div
-      id="fill"
-      class="fill"
+      id="prediction"
+      class="prediction WAIT"
+    >
+      WAIT
+    </div>
+
+    <div
+      id="clock"
+      class="clock"
     ></div>
 
+    <div
+      id="target"
+      class="target"
+    >
+      TARGET PERIOD: —
+    </div>
+
+    <div class="conf">
+      <span>AI CONFIDENCE</span>
+      <span id="confidence">0%</span>
+    </div>
+
+    <div class="bar">
+      <div id="fill" class="fill"></div>
+    </div>
+
+    <div id="status" class="status">
+      Waiting for live data...
+    </div>
+
   </div>
 
 
-  <div
-    id="status"
-    class="status"
-  >
-    Waiting for analysis...
-  </div>
+  <!-- AI ANALYSIS -->
 
-</div>
+  <div class="card">
 
+    <div class="label">
+      REAL PATTERN ANALYSIS
+    </div>
 
-<!-- REAL ANALYSIS -->
+    <div class="grid">
 
-<div class="card">
-
-  <div class="label">
-    REAL PATTERN ENGINE
-  </div>
-
-
-  <div class="grid">
-
-
-    <div class="stat">
-
-      <div class="statName">
-        BIG
+      <div class="stat">
+        <div class="stat-name">BIG</div>
+        <div id="bigPercent" class="stat-value">0%</div>
+        <div id="bigCount" class="stat-sub">
+          0 results
+        </div>
       </div>
 
-      <div
-        id="bigPercent"
-        class="statValue"
-      >
-        0%
+      <div class="stat">
+        <div class="stat-name">SMALL</div>
+        <div id="smallPercent" class="stat-value">0%</div>
+        <div id="smallCount" class="stat-sub">
+          0 results
+        </div>
       </div>
 
-      <div
-        id="bigCount"
-        class="statSub"
-      >
-        0 results
+      <div class="stat">
+        <div class="stat-name">STREAK</div>
+        <div id="streak" class="stat-value">—</div>
+        <div id="streakSub" class="stat-sub">
+          0 rounds
+        </div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-name">PATTERN MATCH</div>
+        <div id="matches" class="stat-value">0</div>
+        <div class="stat-sub">
+          Historical matches
+        </div>
       </div>
 
     </div>
 
 
-    <div class="stat">
+    <div id="pattern" class="pattern"></div>
 
-      <div class="statName">
-        SMALL
+
+    <div class="signals">
+
+      <div class="signal">
+        <span>RECENCY</span>
+        <span id="recent">0</span>
       </div>
 
-      <div
-        id="smallPercent"
-        class="statValue"
-      >
-        0%
+      <div class="signal">
+        <span>TRANSITION</span>
+        <span id="transition">0</span>
       </div>
 
-      <div
-        id="smallCount"
-        class="statSub"
-      >
-        0 results
+      <div class="signal">
+        <span>SEQUENCE</span>
+        <span id="patternSignal">0</span>
       </div>
 
-    </div>
-
-
-    <div class="stat">
-
-      <div class="statName">
-        CURRENT STREAK
+      <div class="signal">
+        <span>DIRECTION</span>
+        <span id="direction">0</span>
       </div>
 
-      <div
-        id="streak"
-        class="statValue"
-      >
-        —
+      <div class="signal">
+        <span>AGREEMENT</span>
+        <span id="agreement">0%</span>
       </div>
 
-      <div
-        id="streakSub"
-        class="statSub"
-      >
-        0 rounds
-      </div>
-
-    </div>
-
-
-    <div class="stat">
-
-      <div class="statName">
-        PATTERN MATCH
-      </div>
-
-      <div
-        id="matches"
-        class="statValue"
-      >
-        0
-      </div>
-
-      <div class="statSub">
-        Historical matches
+      <div class="signal">
+        <span>MODEL QUALITY</span>
+        <span id="quality">—</span>
       </div>
 
     </div>
@@ -654,136 +524,31 @@ body{
   </div>
 
 
-  <div
-    id="pattern"
-    class="pattern"
-  ></div>
+  <!-- HISTORY -->
 
+  <div class="card">
 
-  <div class="signals">
-
-
-    <div class="signal">
-
-      <span>
-        RECENCY
-      </span>
-
-      <span id="recent">
-        0
-      </span>
-
+    <div class="label">
+      LAST 30 LIVE RESULTS
     </div>
 
-
-    <div class="signal">
-
-      <span>
-        TRANSITION
-      </span>
-
-      <span id="transition">
-        0
-      </span>
-
+    <div
+      class="hrow head"
+      style="margin-top:12px"
+    >
+      <div>PERIOD</div>
+      <div>NO.</div>
+      <div>RESULT</div>
     </div>
-
-
-    <div class="signal">
-
-      <span>
-        SEQUENCE PATTERN
-      </span>
-
-      <span id="patternSignal">
-        0
-      </span>
-
-    </div>
-
-
-    <div class="signal">
-
-      <span>
-        DIRECTION
-      </span>
-
-      <span id="direction">
-        0
-      </span>
-
-    </div>
-
-
-    <div class="signal">
-
-      <span>
-        SIGNAL AGREEMENT
-      </span>
-
-      <span id="agreement">
-        0%
-      </span>
-
-    </div>
-
-
-    <div class="signal">
-
-      <span>
-        MODEL QUALITY
-      </span>
-
-      <span id="quality">
-        —
-      </span>
-
-    </div>
-
-  </div>
-
-</div>
-
-
-<!-- HISTORY -->
-
-<div class="card">
-
-  <div class="label">
-    LAST 30 LIVE RESULTS
-  </div>
-
-
-  <div class="history">
-
-    <div class="hrow head">
-
-      <div>
-        PERIOD
-      </div>
-
-      <div>
-        NO.
-      </div>
-
-      <div>
-        RESULT
-      </div>
-
-    </div>
-
 
     <div id="history"></div>
 
   </div>
 
-</div>
 
-
-<div class="footer">
-  DY AI • LIVE 1 MINUTE • ENSEMBLE
-</div>
-
+  <div class="footer">
+    DY AI • LIVE 1 MINUTE
+  </div>
 
 </div>
 
@@ -797,35 +562,22 @@ body{
 const ACCESS_KEY =
   "DY-JPMSUULN";
 
-const POLL =
-  3000;
+const UPDATE_INTERVAL =
+  1000;
+
+const ANALYSIS_SECONDS =
+  4;
 
 
 /* =====================================================
-   STATE
-===================================================== */
-
-let state = null;
-
-let analysisRunning =
-  false;
-
-let analysisTarget =
-  null;
-
-let analysisTimer =
-  null;
-
-
-/* =====================================================
-   DEVICE
+   DEVICE ID
 ===================================================== */
 
 function getDeviceId(){
 
   let id =
     localStorage.getItem(
-      "dy_ai_device_id"
+      "dy_device_id"
     );
 
   if(!id){
@@ -836,10 +588,10 @@ function getDeviceId(){
       "-" +
       Math.random()
         .toString(36)
-        .slice(2,12);
+        .substring(2);
 
     localStorage.setItem(
-      "dy_ai_device_id",
+      "dy_device_id",
       id
     );
   }
@@ -849,7 +601,22 @@ function getDeviceId(){
 
 
 /* =====================================================
-   TEXT
+   STATE
+===================================================== */
+
+let state = null;
+
+let lastTarget = null;
+
+let analysisRunning = false;
+
+let analysisTarget = null;
+
+let analysisTimer = null;
+
+
+/* =====================================================
+   ELEMENT
 ===================================================== */
 
 function setText(
@@ -861,7 +628,6 @@ function setText(
     document.getElementById(id);
 
   if(el){
-
     el.textContent =
       value == null
         ? "—"
@@ -871,7 +637,7 @@ function setText(
 
 
 /* =====================================================
-   LIVE
+   LIVE STATUS
 ===================================================== */
 
 function setLive(
@@ -883,27 +649,23 @@ function setLive(
       "dot"
     );
 
-  const live =
+  const label =
     document.getElementById(
-      "live"
+      "liveText"
     );
 
   if(online){
 
-    dot.classList.remove(
-      "off"
-    );
+    dot.classList.remove("off");
 
-    live.textContent =
+    label.textContent =
       "LIVE";
 
   }else{
 
-    dot.classList.add(
-      "off"
-    );
+    dot.classList.add("off");
 
-    live.textContent =
+    label.textContent =
       "OFFLINE";
   }
 }
@@ -913,7 +675,7 @@ function setLive(
    ERROR
 ===================================================== */
 
-function showError(
+function setError(
   message
 ){
 
@@ -927,9 +689,6 @@ function showError(
     box.style.display =
       "none";
 
-    box.textContent =
-      "";
-
     return;
   }
 
@@ -942,69 +701,10 @@ function showError(
 
 
 /* =====================================================
-   ESCAPE
-===================================================== */
-
-function escapeHtml(
-  value
-){
-
-  return String(
-    value ?? ""
-  )
-  .replaceAll(
-    "&",
-    "&amp;"
-  )
-  .replaceAll(
-    "<",
-    "&lt;"
-  )
-  .replaceAll(
-    ">",
-    "&gt;"
-  )
-  .replaceAll(
-    '"',
-    "&quot;"
-  )
-  .replaceAll(
-    "'",
-    "&#039;"
-  );
-}
-
-
-/* =====================================================
-   ROUND SECOND
-===================================================== */
-
-function currentSecond(){
-
-  return new Date()
-    .getSeconds();
-}
-
-
-function secondsUntilAnalysis(){
-
-  const second =
-    currentSecond();
-
-  if(second >= 56){
-
-    return 0;
-  }
-
-  return 56 - second;
-}
-
-
-/* =====================================================
    4 SECOND ANALYSIS
 ===================================================== */
 
-function startAnalysis(
+function startFourSecondAnalysis(
   target
 ){
 
@@ -1013,7 +713,6 @@ function startAnalysis(
   ){
     return;
   }
-
 
   if(
     analysisTarget ===
@@ -1030,19 +729,20 @@ function startAnalysis(
     target;
 
 
-  let count = 4;
+  let remaining =
+    ANALYSIS_SECONDS;
 
 
-  const el =
+  const prediction =
     document.getElementById(
       "prediction"
     );
 
 
-  el.className =
+  prediction.className =
     "prediction ANALYZING";
 
-  el.textContent =
+  prediction.textContent =
     "ANALYZING";
 
 
@@ -1054,35 +754,32 @@ function startAnalysis(
 
 
   setText(
+    "clock",
+    remaining + "s"
+  );
+
+
+  setText(
     "confidence",
     "—"
   );
 
 
   document
-    .getElementById(
-      "fill"
-    )
+    .getElementById("fill")
     .style.width =
     "0%";
 
 
   setText(
-    "clock",
-    count + "s"
-  );
-
-
-  setText(
     "status",
-    "🧠 Checking recent sequence..."
+    "🧠 Starting AI analysis..."
   );
 
 
   if(
     analysisTimer
   ){
-
     clearInterval(
       analysisTimer
     );
@@ -1091,51 +788,51 @@ function startAnalysis(
 
   analysisTimer =
     setInterval(
-      () => {
+      function(){
 
-        count--;
+        remaining--;
 
 
         if(
-          count === 3
+          remaining === 3
         ){
 
           setText(
             "status",
-            "🔎 Checking BIG/SMALL transitions..."
+            "🔎 Checking recent transitions..."
           );
         }
 
 
         if(
-          count === 2
+          remaining === 2
         ){
 
           setText(
             "status",
-            "📊 Matching historical patterns..."
+            "📊 Matching historical sequences..."
           );
         }
 
 
         if(
-          count === 1
+          remaining === 1
         ){
 
           setText(
             "status",
-            "🧠 Calculating ensemble signal..."
+            "🧠 Combining AI signals..."
           );
         }
 
 
         if(
-          count > 0
+          remaining > 0
         ){
 
           setText(
             "clock",
-            count + "s"
+            remaining + "s"
           );
 
           return;
@@ -1160,8 +857,7 @@ function startAnalysis(
 
 
         /*
-          Fresh server request after
-          analysis completes.
+          Fresh state fetch.
         */
 
         loadState();
@@ -1173,69 +869,11 @@ function startAnalysis(
 
 
 /* =====================================================
-   ANALYSIS CHECK
-===================================================== */
-
-function checkAnalysis(){
-
-  if(!state){
-    return;
-  }
-
-
-  if(!state.live){
-    return;
-  }
-
-
-  if(!state.nextPeriod){
-    return;
-  }
-
-
-  /*
-    During cooldown there is NO analysis.
-  */
-
-  if(
-    state.prediction &&
-    state.prediction.status ===
-    "COOLDOWN"
-  ){
-
-    return;
-  }
-
-
-  const left =
-    secondsUntilAnalysis();
-
-
-  /*
-    Final 4 seconds.
-  */
-
-  if(
-    left === 0 &&
-    currentSecond() >= 56 &&
-    currentSecond() <= 59
-  ){
-
-    startAnalysis(
-      String(
-        state.nextPeriod
-      )
-    );
-  }
-}
-
-
-/* =====================================================
-   PREDICTION RENDER
+   PREDICTION DISPLAY
 ===================================================== */
 
 function renderPrediction(
-p
+  p
 ){
 
   if(
@@ -1260,36 +898,17 @@ p
       "WAIT";
 
     setText(
-      "clock",
-      ""
-    );
-
-    setText(
-      "confidence",
-      "0%"
-    );
-
-    document
-      .getElementById(
-        "fill"
-      )
-      .style.width =
-      "0%";
-
-    setText(
       "status",
-      "Waiting for live data..."
+      "Waiting..."
     );
 
     return;
   }
 
 
-  /*
-  =====================================================
-  FOUR ROUND SKIP
-  =====================================================
-  */
+  /* -----------------------------------------------
+     4 ROUND SKIP
+  ------------------------------------------------ */
 
   if(
     p.status ===
@@ -1312,10 +931,7 @@ p
     setText(
       "target",
       "TARGET PERIOD: " +
-      (
-        p.targetPeriod ||
-        "—"
-      )
+      p.targetPeriod
     );
 
 
@@ -1326,9 +942,7 @@ p
 
 
     document
-      .getElementById(
-        "fill"
-      )
+      .getElementById("fill")
       .style.width =
       "0%";
 
@@ -1336,12 +950,11 @@ p
     setText(
       "status",
 
-      "⏭️ SKIP " +
+      "⏭️ SKIP ROUND " +
       p.skipRound +
-      "/4" +
-      " • " +
+      " / 4 • " +
       p.skipRemaining +
-      " ROUND REMAINING"
+      " REMAINING"
     );
 
 
@@ -1349,11 +962,9 @@ p
   }
 
 
-  /*
-  =====================================================
-  WAIT FOR FINAL 4 SECONDS
-  =====================================================
-  */
+  /* -----------------------------------------------
+     WAIT FOR ANALYSIS
+  ------------------------------------------------ */
 
   if(
     p.status ===
@@ -1368,40 +979,15 @@ p
 
 
     setText(
-      "clock",
-      ""
-    );
-
-
-    setText(
       "target",
       "TARGET PERIOD: " +
-      (
-        p.targetPeriod ||
-        "—"
-      )
+      p.targetPeriod
     );
-
-
-    setText(
-      "confidence",
-      "—"
-    );
-
-
-    document
-      .getElementById(
-        "fill"
-      )
-      .style.width =
-      "0%";
 
 
     setText(
       "status",
-      "⏱️ Analysis starts in " +
-      p.secondsUntilAnalysis +
-      "s"
+      "⏱️ 4-second analysis window"
     );
 
 
@@ -1409,11 +995,9 @@ p
   }
 
 
-  /*
-  =====================================================
-  MODEL SKIP
-  =====================================================
-  */
+  /* -----------------------------------------------
+     MODEL SKIP
+  ------------------------------------------------ */
 
   if(
     p.status ===
@@ -1430,10 +1014,7 @@ p
     setText(
       "target",
       "TARGET PERIOD: " +
-      (
-        p.targetPeriod ||
-        "—"
-      )
+      p.targetPeriod
     );
 
 
@@ -1443,17 +1024,9 @@ p
     );
 
 
-    document
-      .getElementById(
-        "fill"
-      )
-      .style.width =
-      "0%";
-
-
     setText(
       "status",
-      "⚠️ Signals weak/conflicting"
+      "⚠️ Signals are conflicting"
     );
 
 
@@ -1461,11 +1034,9 @@ p
   }
 
 
-  /*
-  =====================================================
-  REAL PREDICTION
-  =====================================================
-  */
+  /* -----------------------------------------------
+     REAL PREDICTION
+  ------------------------------------------------ */
 
   const result =
     String(
@@ -1478,31 +1049,37 @@ p
     result;
 
 
-  el.className =
-    "prediction " +
-    (
-      result === "BIG"
-        ? "BIG"
-        : result === "SMALL"
-          ? "SMALL"
-          : "SKIP"
-    );
+  if(
+    result === "BIG"
+  ){
+
+    el.className =
+      "prediction BIG";
+
+  }else if(
+    result === "SMALL"
+  ){
+
+    el.className =
+      "prediction SMALL";
+
+  }else{
+
+    el.className =
+      "prediction SKIP";
+  }
 
 
   setText(
     "target",
     "TARGET PERIOD: " +
-    (
-      p.targetPeriod ||
-      "—"
-    )
+    p.targetPeriod
   );
 
 
   const confidence =
     Number(
-      p.confidence ||
-      0
+      p.confidence || 0
     );
 
 
@@ -1513,13 +1090,11 @@ p
 
 
   document
-    .getElementById(
-      "fill"
-    )
+    .getElementById("fill")
     .style.width =
     Math.min(
-      100,
-      confidence
+      confidence,
+      100
     ) + "%";
 
 
@@ -1530,7 +1105,7 @@ p
 
     setText(
       "status",
-      "✅ WIN • Actual Number: " +
+      "✅ WIN • Actual number: " +
       p.actualNumber
     );
 
@@ -1541,7 +1116,7 @@ p
 
     setText(
       "status",
-      "❌ LOSS • Actual Number: " +
+      "❌ LOSS • Actual number: " +
       p.actualNumber
     );
 
@@ -1556,21 +1131,20 @@ p
 
 
 /* =====================================================
-   MODEL RENDER
+   MODEL
 ===================================================== */
 
 function renderModel(
-model
+  m
 ){
 
-  if(!model){
+  if(!m){
     return;
   }
 
 
   const counts =
-    model.counts ||
-    {};
+    m.counts || {};
 
 
   const big =
@@ -1578,12 +1152,10 @@ model
       counts.big || 0
     );
 
-
   const small =
     Number(
       counts.small || 0
     );
-
 
   const total =
     big + small;
@@ -1592,9 +1164,7 @@ model
   const bigPercent =
     total
       ? Math.round(
-          big /
-          total *
-          100
+          big / total * 100
         )
       : 0;
 
@@ -1602,9 +1172,7 @@ model
   const smallPercent =
     total
       ? Math.round(
-          small /
-          total *
-          100
+          small / total * 100
         )
       : 0;
 
@@ -1633,22 +1201,24 @@ model
   );
 
 
+  const latest =
+    state &&
+    state.recentResults &&
+    state.recentResults[0];
+
+
   setText(
     "streak",
-    (
-      state &&
-      state.recentResults &&
-      state.recentResults[0]
-        ? state.recentResults[0].result
-        : "—"
-    )
+    latest
+      ? latest.result
+      : "—"
   );
 
 
   setText(
     "streakSub",
     Number(
-      model.streak || 0
+      m.streak || 0
     ) +
     " rounds"
   );
@@ -1656,40 +1226,35 @@ model
 
   setText(
     "matches",
-    model.matches || 0
+    m.matches || 0
   );
 
 
   const signals =
-    model.signals ||
-    {};
+    m.signals || {};
 
 
   setText(
     "recent",
-    signals.recent ??
-    "0"
+    signals.recent ?? "0"
   );
 
 
   setText(
     "transition",
-    signals.transition ??
-    "0"
+    signals.transition ?? "0"
   );
 
 
   setText(
     "patternSignal",
-    signals.pattern ??
-    "0"
+    signals.pattern ?? "0"
   );
 
 
   setText(
     "direction",
-    signals.direction ??
-    "0"
+    signals.direction ?? "0"
   );
 
 
@@ -1697,34 +1262,26 @@ model
     "agreement",
     Math.round(
       Number(
-        model.agreement ||
-        0
-      ) *
-      100
-    ) +
-    "%"
+        m.agreement || 0
+      ) * 100
+    ) + "%"
   );
 
 
   setText(
     "quality",
-    model.quality ||
-    "—"
+    m.quality || "—"
   );
 
 
-  /*
-    Recent pattern
-  */
+  /* Last 10 pattern */
 
-  const pattern =
+  const box =
     document.getElementById(
       "pattern"
     );
 
-
-  pattern.innerHTML =
-    "";
+  box.innerHTML = "";
 
 
   if(
@@ -1740,13 +1297,13 @@ model
       .forEach(
         row => {
 
-          const pill =
+          const span =
             document.createElement(
               "span"
             );
 
 
-          pill.className =
+          span.className =
             "pill " +
             (
               row.result === "BIG"
@@ -1755,12 +1312,12 @@ model
             );
 
 
-          pill.textContent =
+          span.textContent =
             row.result;
 
 
-          pattern.appendChild(
-            pill
+          box.appendChild(
+            span
           );
         }
       );
@@ -1773,7 +1330,7 @@ model
 ===================================================== */
 
 function renderHistory(
-rows
+  rows
 ){
 
   const box =
@@ -1781,9 +1338,7 @@ rows
       "history"
     );
 
-
-  box.innerHTML =
-    "";
+  box.innerHTML = "";
 
 
   if(
@@ -1791,16 +1346,15 @@ rows
     !rows.length
   ){
 
-    box.innerHTML =
-      `
+    box.innerHTML = `
       <div style="
-        padding:18px 0;
-        color:#68738f;
-        font-size:10px;
+        padding:15px 0;
+        color:#68738e;
+        font-size:9px;
       ">
         Waiting for live results...
       </div>
-      `;
+    `;
 
     return;
   }
@@ -1811,8 +1365,7 @@ rows
 
       const result =
         String(
-          row.result ||
-          ""
+          row.result || ""
         ).toUpperCase();
 
 
@@ -1827,7 +1380,6 @@ rows
 
 
       div.innerHTML = `
-
         <div>
           ${escapeHtml(
             row.issueNumber
@@ -1845,13 +1397,10 @@ rows
             ? "bigText"
             : "smallText"
         }">
-
           ${escapeHtml(
             result
           )}
-
         </div>
-
       `;
 
 
@@ -1864,12 +1413,128 @@ rows
 
 
 /* =====================================================
+   ESCAPE
+===================================================== */
+
+function escapeHtml(
+  value
+){
+
+  return String(
+    value ?? ""
+  )
+  .replaceAll("&","&amp;")
+  .replaceAll("<","&lt;")
+  .replaceAll(">","&gt;")
+  .replaceAll('"',"&quot;")
+  .replaceAll("'","&#039;");
+}
+
+
+/* =====================================================
+   ANALYSIS TRIGGER
+===================================================== */
+
+function checkAnalysis(){
+
+  if(!state){
+    return;
+  }
+
+  if(!state.live){
+    return;
+  }
+
+  if(analysisRunning){
+    return;
+  }
+
+
+  const p =
+    state.prediction;
+
+
+  /*
+    NEVER start 4-second analysis
+    during 4-round cooldown.
+  */
+
+  if(
+    p &&
+    p.status ===
+    "COOLDOWN"
+  ){
+
+    return;
+  }
+
+
+  /*
+    Server says analysis window.
+  */
+
+  if(
+    p &&
+    p.status ===
+    "WAIT_ANALYSIS"
+  ){
+
+    const second =
+      new Date()
+        .getSeconds();
+
+
+    if(
+      second >= 56
+    ){
+
+      startFourSecondAnalysis(
+        String(
+          p.targetPeriod
+        )
+      );
+    }
+
+    return;
+  }
+
+
+  /*
+    Fallback.
+  */
+
+  const second =
+    new Date()
+      .getSeconds();
+
+
+  if(
+    second >= 56 &&
+    state.nextPeriod &&
+    lastTarget !==
+      state.nextPeriod
+  ){
+
+    startFourSecondAnalysis(
+      String(
+        state.nextPeriod
+      )
+    );
+  }
+}
+
+
+/* =====================================================
    LOAD STATE
 ===================================================== */
 
 async function loadState(){
 
   try{
+
+    const device =
+      getDeviceId();
+
 
     const url =
       "/api/state" +
@@ -1879,7 +1544,7 @@ async function loadState(){
       ) +
       "&device=" +
       encodeURIComponent(
-        getDeviceId()
+        device
       );
 
 
@@ -1901,9 +1566,9 @@ async function loadState(){
 
       setLive(false);
 
-      showError(
+      setError(
         data.error ||
-        "Access denied"
+        "Access key error"
       );
 
       return;
@@ -1925,20 +1590,16 @@ async function loadState(){
       data.live
     ){
 
-      showError("");
+      setError("");
 
     }else{
 
-      showError(
+      setError(
         data.liveError ||
-        "Waiting for WingoBot..."
+        "Waiting for live API..."
       );
     }
 
-
-    /*
-      Period
-    */
 
     setText(
       "current",
@@ -1957,10 +1618,6 @@ async function loadState(){
     );
 
 
-    /*
-      Latest result
-    */
-
     if(
       data.latestResult
     ){
@@ -1970,12 +1627,10 @@ async function loadState(){
         data.latestResult.number
       );
 
-
       setText(
         "type",
         data.latestResult.result
       );
-
 
       setText(
         "issue",
@@ -1997,32 +1652,33 @@ async function loadState(){
 
       setText(
         "issue",
-        "Waiting for live data..."
+        "Waiting..."
       );
     }
 
 
     /*
-      Prediction
+      Remember target.
     */
+
+    if(
+      data.nextPeriod
+    ){
+
+      lastTarget =
+        String(
+          data.nextPeriod
+        );
+    }
+
 
     renderPrediction(
       data.prediction
     );
 
-
-    /*
-      Model
-    */
-
     renderModel(
       data.model
     );
-
-
-    /*
-      History
-    */
 
     renderHistory(
       data.recentResults
@@ -2033,7 +1689,7 @@ async function loadState(){
 
     setLive(false);
 
-    showError(
+    setError(
       "Connection error: " +
       error.message
     );
@@ -2048,15 +1704,23 @@ async function loadState(){
 loadState();
 
 
+/*
+  Update every 1 second.
+*/
+
 setInterval(
   loadState,
-  POLL
+  UPDATE_INTERVAL
 );
 
 
+/*
+  Check analysis window.
+*/
+
 setInterval(
   checkAnalysis,
-  250
+  200
 );
 
 </script>
