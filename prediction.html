@@ -1,790 +1,396 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
 
 <meta charset="UTF-8">
 
 <meta
   name="viewport"
-  content="width=device-width, initial-scale=1.0"
+  content="width=device-width,initial-scale=1"
 >
 
 <title>DY AI Prediction</title>
 
 <style>
 
-/* =========================
-   RESET
-========================= */
-
 *{
   box-sizing:border-box;
-  margin:0;
-  padding:0;
 }
-
-
-/* =========================
-   BODY
-========================= */
 
 body{
-
+  margin:0;
   min-height:100vh;
-
-  background:
-    radial-gradient(
-      circle at top,
-      #111827 0%,
-      #05070d 45%,
-      #020308 100%
-    );
-
-  color:#ffffff;
-
-  font-family:
-    Arial,
-    Helvetica,
-    sans-serif;
-
+  background:#05070d;
+  color:white;
+  font-family:Arial,sans-serif;
 }
-
-
-/* =========================
-   MAIN
-========================= */
 
 .container{
-
-  width:100%;
-
   max-width:520px;
-
   margin:auto;
-
   padding:18px;
-
 }
-
-
-/* =========================
-   HEADER
-========================= */
 
 .header{
-
   text-align:center;
-
   margin-bottom:18px;
-
 }
-
 
 .header h1{
-
   font-size:27px;
-
+  margin:5px 0;
   font-weight:900;
-
-  letter-spacing:1px;
-
 }
-
 
 .header p{
-
-  margin-top:7px;
-
   font-size:11px;
-
-  opacity:.55;
-
+  opacity:.5;
 }
-
 
 .status{
-
   margin-top:9px;
-
   font-size:12px;
-
-  font-weight:700;
-
+  font-weight:800;
 }
 
-
-.status.live{
-
+.live{
   color:#55ff91;
-
 }
 
-
-.status.error{
-
-  color:#ff5757;
-
+.error{
+  color:#ff5c5c;
 }
-
-
-.status.delay{
-
-  color:#ffb454;
-
-}
-
-
-/* =========================
-   CARD
-========================= */
 
 .card{
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(18,24,38,.98),
-      rgba(8,11,19,.98)
-    );
-
-  border:
-    1px solid
-    rgba(100,120,160,.22);
-
+  background:#0d111c;
+  border:1px solid #20283b;
   border-radius:20px;
-
   padding:20px;
-
   margin-bottom:14px;
-
-  box-shadow:
-    0 12px 35px
-    rgba(0,0,0,.25);
-
 }
-
-
-/* =========================
-   LABEL
-========================= */
 
 .label{
-
   font-size:11px;
-
-  font-weight:800;
-
-  letter-spacing:1px;
-
   opacity:.55;
-
+  font-weight:800;
+  letter-spacing:1px;
   margin-bottom:10px;
-
 }
-
-
-/* =========================
-   PERIOD
-========================= */
 
 .period{
-
   font-size:19px;
-
   font-weight:900;
-
-  letter-spacing:.5px;
-
-  word-break:
-    break-all;
-
+  word-break:break-all;
 }
 
-
-/* =========================
-   ANALYSIS
-========================= */
-
-.analysis-card{
-
+.analysis{
   min-height:155px;
-
   display:flex;
-
   flex-direction:column;
-
-  align-items:center;
-
   justify-content:center;
-
+  align-items:center;
   text-align:center;
-
 }
 
-
-.analysis-text{
-
+.analysisText{
   font-size:14px;
-
   font-weight:800;
-
   letter-spacing:1px;
-
-  opacity:.8;
-
 }
-
 
 .count{
-
   font-size:58px;
-
   font-weight:900;
-
   margin-top:8px;
-
-  line-height:1;
-
 }
-
 
 .loader{
-
-  width:45px;
-
-  height:45px;
-
+  width:42px;
+  height:42px;
   border-radius:50%;
-
-  border:
-    3px solid
-    rgba(255,255,255,.12);
-
-  border-top-color:#ffffff;
-
-  animation:
-    spin .8s linear infinite;
-
-  margin-top:15px;
-
+  border:3px solid #252b3b;
+  border-top-color:white;
+  margin-top:14px;
+  animation:spin .8s linear infinite;
 }
-
 
 @keyframes spin{
-
   to{
-
-    transform:
-      rotate(360deg);
-
+    transform:rotate(360deg);
   }
-
 }
-
-
-/* =========================
-   PREDICTION
-========================= */
-
-.prediction-card{
-
-  text-align:center;
-
-}
-
 
 .prediction{
-
-  min-height:95px;
-
+  min-height:100px;
   display:flex;
-
-  align-items:center;
-
   justify-content:center;
-
+  align-items:center;
+  text-align:center;
   font-size:39px;
-
   font-weight:1000;
-
-  letter-spacing:1px;
-
 }
 
-
-.prediction.big{
-
+.big{
   color:#58ff91;
-
 }
 
-
-.prediction.small{
-
+.small{
   color:#5db5ff;
-
 }
 
-
-.prediction.clear{
-
+.clear{
   color:#ffbd55;
-
 }
 
-
-.prediction.wait{
-
-  opacity:.45;
-
+.wait{
+  opacity:.4;
   font-size:22px;
-
 }
-
-
-/* =========================
-   HISTORY
-========================= */
 
 .history{
-
   max-height:390px;
-
   overflow-y:auto;
-
 }
 
-
-.history::-webkit-scrollbar{
-
-  width:4px;
-
-}
-
-
-.history::-webkit-scrollbar-thumb{
-
-  background:#30394d;
-
-  border-radius:10px;
-
-}
-
-
-.history-row{
-
+.row{
   display:grid;
-
-  grid-template-columns:
-    minmax(0,1fr)
-    45px
-    75px;
-
+  grid-template-columns:1fr 45px 70px;
   gap:8px;
-
-  align-items:center;
-
-  padding:13px 3px;
-
-  border-bottom:
-    1px solid
-    rgba(255,255,255,.06);
-
+  padding:13px 2px;
+  border-bottom:1px solid #1b2130;
   font-size:13px;
-
 }
 
-
-.history-period{
-
-  overflow:hidden;
-
-  text-overflow:ellipsis;
-
-  white-space:nowrap;
-
-}
-
-
-.history-number{
-
+.num{
   text-align:center;
-
-  font-size:16px;
-
   font-weight:900;
-
 }
 
-
-.history-size{
-
+.size{
   text-align:right;
-
-  font-size:12px;
-
   font-weight:900;
-
 }
-
-
-.history-size.big{
-
-  color:#58ff91;
-
-}
-
-
-.history-size.small{
-
-  color:#5db5ff;
-
-}
-
 
 .empty{
-
   text-align:center;
-
-  padding:25px 0;
-
-  opacity:.45;
-
-}
-
-
-/* =========================
-   MOBILE
-========================= */
-
-@media(max-width:380px){
-
-  .container{
-
-    padding:13px;
-
-  }
-
-  .card{
-
-    padding:17px;
-
-  }
-
-  .period{
-
-    font-size:16px;
-
-  }
-
-  .prediction{
-
-    font-size:32px;
-
-  }
-
+  padding:25px;
+  opacity:.4;
 }
 
 </style>
 
 </head>
 
-
 <body>
-
 
 <div class="container">
 
+<div class="header">
 
-  <!-- =========================
-       HEADER
-  ========================== -->
+<h1>
+DY AI PREDICTION
+</h1>
 
-  <div class="header">
+<p>
+LIVE WIN GO 1 MIN ANALYSIS
+</p>
 
-    <h1>
-      DY AI PREDICTION
-    </h1>
-
-    <p>
-      LIVE WIN GO 1 MIN ANALYSIS
-    </p>
-
-    <div
-      id="status"
-      class="status"
-    >
-      ● CONNECTING...
-    </div>
-
-  </div>
-
-
-
-  <!-- =========================
-       CURRENT PERIOD
-  ========================== -->
-
-  <div class="card">
-
-    <div class="label">
-      CURRENT PERIOD
-    </div>
-
-    <div
-      id="currentPeriod"
-      class="period"
-    >
-      --
-    </div>
-
-  </div>
-
-
-
-  <!-- =========================
-       PREDICTION PERIOD
-  ========================== -->
-
-  <div class="card">
-
-    <div class="label">
-      PREDICTION PERIOD
-    </div>
-
-    <div
-      id="nextPeriod"
-      class="period"
-    >
-      --
-    </div>
-
-  </div>
-
-
-
-  <!-- =========================
-       5 SECOND ANALYSIS
-  ========================== -->
-
-  <div
-    class="card analysis-card"
-  >
-
-    <div
-      id="analysisText"
-      class="analysis-text"
-    >
-      WAITING FOR NEW PERIOD...
-    </div>
-
-
-    <div
-      id="count"
-      class="count"
-    >
-    </div>
-
-
-    <div
-      id="loader"
-      class="loader"
-      style="display:none"
-    >
-    </div>
-
-  </div>
-
-
-
-  <!-- =========================
-       PREDICTION
-  ========================== -->
-
-  <div
-    class="card prediction-card"
-  >
-
-    <div class="label">
-      PREDICTION
-    </div>
-
-
-    <div
-      id="prediction"
-      class="prediction wait"
-    >
-      WAITING
-    </div>
-
-  </div>
-
-
-
-  <!-- =========================
-       HISTORY
-  ========================== -->
-
-  <div class="card">
-
-    <div class="label">
-      HISTORY
-    </div>
-
-
-    <div
-      id="history"
-      class="history"
-    >
-
-      <div class="empty">
-        Loading...
-      </div>
-
-    </div>
-
-  </div>
-
+<div
+id="status"
+class="status"
+>
+● CONNECTING...
+</div>
 
 </div>
 
 
+<div class="card">
+
+<div class="label">
+CURRENT PERIOD
+</div>
+
+<div
+id="current"
+class="period"
+>
+--
+</div>
+
+</div>
+
+
+<div class="card">
+
+<div class="label">
+PREDICTION PERIOD
+</div>
+
+<div
+id="next"
+class="period"
+>
+--
+</div>
+
+</div>
+
+
+<div class="card analysis">
+
+<div
+id="analysisText"
+class="analysisText"
+>
+WAITING FOR NEW PERIOD...
+</div>
+
+<div
+id="count"
+class="count"
+>
+</div>
+
+<div
+id="loader"
+class="loader"
+style="display:none"
+>
+</div>
+
+</div>
+
+
+<div class="card">
+
+<div class="label">
+PREDICTION
+</div>
+
+<div
+id="prediction"
+class="prediction wait"
+>
+WAITING
+</div>
+
+</div>
+
+
+<div class="card">
+
+<div class="label">
+HISTORY
+</div>
+
+<div
+id="history"
+class="history"
+>
+<div class="empty">
+Loading...
+</div>
+</div>
+
+</div>
+
+</div>
+
 
 <script>
 
-/* =====================================================
-   HTML ESCAPE
-===================================================== */
+function escapeHTML(v){
 
-function escapeHTML(value){
-
-  return String(
-    value ?? ""
-  )
-
-  .replaceAll(
-    "&",
-    "&amp;"
-  )
-
-  .replaceAll(
-    "<",
-    "&lt;"
-  )
-
-  .replaceAll(
-    ">",
-    "&gt;"
-  )
-
-  .replaceAll(
-    '"',
-    "&quot;"
-  )
-
-  .replaceAll(
-    "'",
-    "&#039;"
-  );
+  return String(v ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
 
 }
 
 
-/* =====================================================
-   RENDER HISTORY
-===================================================== */
-
-function renderHistory(
-  rows
-){
+function renderHistory(rows){
 
   const box =
     document.getElementById(
       "history"
     );
 
-
   if(
     !Array.isArray(rows) ||
-    rows.length === 0
+    !rows.length
   ){
 
-    box.innerHTML = `
-      <div class="empty">
+    box.innerHTML =
+      `<div class="empty">
         No history available
-      </div>
-    `;
+      </div>`;
 
     return;
-
   }
 
 
   box.innerHTML =
-    rows.map(
-      row => {
+    rows.map(row => {
 
-        const size =
-          row.size ||
-          (
-            Number(row.number) <= 4
-              ? "SMALL"
-              : "BIG"
-          );
+      const size =
+        row.size ||
+        (
+          Number(row.number) <= 4
+            ? "SMALL"
+            : "BIG"
+        );
 
+      const cls =
+        size === "BIG"
+          ? "big"
+          : "small";
 
-        const sizeClass =
-          size === "BIG"
-            ? "big"
-            : "small";
+      return `
+        <div class="row">
 
-
-        return `
-
-          <div class="history-row">
-
-            <div
-              class="history-period"
-            >
-              ${escapeHTML(
-                row.issueNumber
-              )}
-            </div>
-
-
-            <div
-              class="history-number"
-            >
-              ${escapeHTML(
-                row.number
-              )}
-            </div>
-
-
-            <div
-              class="history-size ${sizeClass}"
-            >
-              ${size}
-            </div>
-
+          <div>
+            ${escapeHTML(
+              row.issueNumber
+            )}
           </div>
 
-        `;
+          <div class="num">
+            ${escapeHTML(
+              row.number
+            )}
+          </div>
 
-      }
-    ).join("");
+          <div class="size ${cls}">
+            ${size}
+          </div>
+
+        </div>
+      `;
+
+    }).join("");
 
 }
 
 
-/* =====================================================
-   UPDATE STATUS
-===================================================== */
+function render(data){
 
-function updateStatus(
-  data
-){
+  document.getElementById(
+    "current"
+  ).textContent =
+    data.currentPeriod || "--";
+
+
+  document.getElementById(
+    "next"
+  ).textContent =
+    data.predictionPeriod ||
+    data.nextPeriod ||
+    "--";
+
 
   const status =
     document.getElementById(
@@ -803,43 +409,24 @@ function updateStatus(
     status.className =
       "status live";
 
-    return;
-
-  }
-
-
-  if(
-    data.sourceStatus ===
-    "ERROR"
-  ){
+  }else{
 
     status.textContent =
-      "● API ERROR";
+      "● " +
+      (
+        data.error ||
+        "API ERROR"
+      );
 
     status.className =
       "status error";
 
-    return;
-
   }
 
 
-  status.textContent =
-    "● DATA DELAYED";
+  const analysis =
+    data.analysis || {};
 
-  status.className =
-    "status delay";
-
-}
-
-
-/* =====================================================
-   UPDATE ANALYSIS UI
-===================================================== */
-
-function updateAnalysis(
-  analysis
-){
 
   const text =
     document.getElementById(
@@ -860,7 +447,6 @@ function updateAnalysis(
 
 
   if(
-    analysis &&
     analysis.active
   ){
 
@@ -868,135 +454,89 @@ function updateAnalysis(
       analysis.message ||
       "ANALYZING...";
 
-
     count.textContent =
-      analysis.remaining ||
-      "";
-
+      analysis.remaining;
 
     loader.style.display =
       "block";
 
+  }else{
 
-    return;
+    text.textContent =
+      analysis.message ||
+      "WAITING FOR NEW PERIOD...";
+
+    count.textContent =
+      "";
+
+    loader.style.display =
+      "none";
 
   }
 
 
-  text.textContent =
-    analysis?.message ||
-    "WAITING FOR NEW PERIOD...";
-
-
-  count.textContent =
-    "";
-
-
-  loader.style.display =
-    "none";
-
-}
-
-
-/* =====================================================
-   UPDATE PREDICTION UI
-===================================================== */
-
-function updatePrediction(
-  analysis
-){
-
-  const box =
+  const p =
     document.getElementById(
       "prediction"
     );
 
 
   if(
-    !analysis ||
     analysis.active
   ){
 
-    box.textContent =
+    p.textContent =
       "ANALYZING...";
 
-    box.className =
+    p.className =
       "prediction wait";
 
-    return;
+  }else{
+
+    const value =
+      analysis.prediction ||
+      "WAITING";
+
+    p.textContent =
+      value;
+
+
+    if(value === "BIG"){
+
+      p.className =
+        "prediction big";
+
+    }else if(value === "SMALL"){
+
+      p.className =
+        "prediction small";
+
+    }else if(
+      value ===
+      "NO CLEAR SIGNAL"
+    ){
+
+      p.className =
+        "prediction clear";
+
+    }else{
+
+      p.className =
+        "prediction wait";
+
+    }
 
   }
 
 
-  const prediction =
-    analysis.prediction ||
-    "WAITING";
-
-
-  box.textContent =
-    prediction;
-
-
-  if(
-    prediction === "BIG"
-  ){
-
-    box.className =
-      "prediction big";
-
-  }
-
-  else if(
-    prediction === "SMALL"
-  ){
-
-    box.className =
-      "prediction small";
-
-  }
-
-  else if(
-    prediction ===
-    "NO CLEAR SIGNAL"
-  ){
-
-    box.className =
-      "prediction clear";
-
-  }
-
-  else{
-
-    box.className =
-      "prediction wait";
-
-  }
+  renderHistory(
+    data.history || []
+  );
 
 }
 
 
-/* =====================================================
-   LOAD LIVE STATE
-===================================================== */
-
-let requestRunning =
-  false;
-
-
-async function loadState(){
-
-  if(
-    requestRunning
-  ){
-
-    return;
-
-  }
-
-
-  requestRunning =
-    true;
-
+async function load(){
 
   try{
 
@@ -1005,132 +545,43 @@ async function loadState(){
         "/api/state?_=" +
         Date.now(),
         {
-          method:"GET",
           cache:"no-store"
         }
       );
-
-
-    if(
-      !response.ok
-    ){
-
-      throw new Error(
-        "HTTP " +
-        response.status
-      );
-
-    }
 
 
     const data =
       await response.json();
 
 
-    if(
-      !data.success
-    ){
+    render(data);
 
-      throw new Error(
-        data.error ||
-        "State API error"
-      );
-
-    }
-
-
-    /* PERIOD */
-
-    document.getElementById(
-      "currentPeriod"
-    ).textContent =
-      data.currentPeriod ||
-      "--";
-
-
-    document.getElementById(
-      "nextPeriod"
-    ).textContent =
-      data.nextPeriod ||
-      "--";
-
-
-    /* STATUS */
-
-    updateStatus(
-      data
-    );
-
-
-    /* ANALYSIS */
-
-    updateAnalysis(
-      data.analysis
-    );
-
-
-    /* PREDICTION */
-
-    updatePrediction(
-      data.analysis
-    );
-
-
-    /* HISTORY */
-
-    renderHistory(
-      data.history || []
-    );
-
-
-  }
-
-  catch(error){
+  }catch{
 
     const status =
       document.getElementById(
         "status"
       );
 
-
     status.textContent =
       "● CONNECTION ERROR";
-
 
     status.className =
       "status error";
 
   }
 
-  finally{
-
-    requestRunning =
-      false;
-
-  }
-
 }
 
 
-/* =====================================================
-   INITIAL LOAD
-===================================================== */
-
-loadState();
-
-
-/* =====================================================
-   UPDATE EVERY SECOND
-===================================================== */
+load();
 
 setInterval(
-  loadState,
+  load,
   1000
 );
 
 </script>
 
-
 </body>
-
 </html>
