@@ -5,10 +5,12 @@
 
 <meta charset="UTF-8">
 
-<meta name="viewport"
-      content="width=device-width,initial-scale=1.0">
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0"
+>
 
-<title>DY AI • Admin</title>
+<title>DY AI Admin Panel</title>
 
 <style>
 
@@ -19,134 +21,282 @@
 }
 
 body{
+
   min-height:100vh;
-  font-family:Arial,Helvetica,sans-serif;
+
   background:
-    radial-gradient(circle at top,#1a2440,#070910 55%,#030408);
+    radial-gradient(
+      circle at top,
+      #111827,
+      #05070d 50%,
+      #020308
+    );
+
   color:#fff;
+
+  font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
+
 }
+
 
 .container{
-  width:min(900px,92%);
+
+  width:100%;
+
+  max-width:520px;
+
   margin:auto;
-  padding:30px 0;
+
+  padding:20px;
+
 }
+
 
 .header{
-  padding:22px;
-  border-radius:22px;
-  background:rgba(15,20,32,.9);
-  border:1px solid rgba(255,255,255,.1);
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
+
+  text-align:center;
+
+  margin:25px 0;
+
 }
 
-.logo{
-  font-size:25px;
+
+.header h1{
+
+  font-size:27px;
+
   font-weight:900;
+
 }
 
-.logo span{
-  color:#00eaff;
+
+.header p{
+
+  margin-top:8px;
+
+  font-size:11px;
+
+  opacity:.5;
+
 }
 
-.panel{
-  margin-top:20px;
-  padding:25px;
-  border-radius:22px;
-  background:rgba(12,17,29,.9);
-  border:1px solid rgba(255,255,255,.1);
+
+.card{
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(18,24,38,.98),
+      rgba(7,10,18,.98)
+    );
+
+  border:
+    1px solid
+    rgba(120,140,180,.2);
+
+  border-radius:20px;
+
+  padding:20px;
+
+  margin-bottom:15px;
+
 }
 
-h1{
-  font-size:25px;
-}
-
-h2{
-  font-size:18px;
-  margin-bottom:17px;
-}
-
-.input{
-  width:100%;
-  padding:15px;
-  border-radius:13px;
-  border:1px solid #303a4e;
-  background:#080d17;
-  color:#fff;
-  outline:none;
-  margin-top:10px;
-}
-
-.button{
-  width:100%;
-  border:0;
-  border-radius:13px;
-  padding:15px;
-  margin-top:12px;
-  font-weight:900;
-  cursor:pointer;
-  background:#00c9e8;
-  color:#001014;
-}
-
-.status{
-  margin-top:15px;
-  padding:15px;
-  border-radius:13px;
-  background:#111827;
-  color:#aeb9ca;
-  line-height:1.5;
-}
-
-.hidden{
-  display:none;
-}
-
-.statgrid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:12px;
-  margin-top:15px;
-}
-
-.stat{
-  padding:17px;
-  border-radius:15px;
-  background:#101725;
-}
 
 .label{
+
   font-size:11px;
-  color:#7f8ca3;
-  text-transform:uppercase;
+
+  letter-spacing:1px;
+
+  opacity:.55;
+
+  margin-bottom:9px;
+
 }
+
+
+input{
+
+  width:100%;
+
+  padding:14px;
+
+  border-radius:12px;
+
+  border:
+    1px solid
+    #30394c;
+
+  background:#080b13;
+
+  color:#fff;
+
+  outline:none;
+
+  font-size:14px;
+
+}
+
+
+input:focus{
+
+  border-color:#667da5;
+
+}
+
+
+button{
+
+  width:100%;
+
+  padding:14px;
+
+  margin-top:12px;
+
+  border:0;
+
+  border-radius:12px;
+
+  background:#ffffff;
+
+  color:#05070d;
+
+  font-size:14px;
+
+  font-weight:900;
+
+  cursor:pointer;
+
+}
+
+
+button:active{
+
+  transform:scale(.98);
+
+}
+
+
+.result{
+
+  margin-top:15px;
+
+  padding:14px;
+
+  border-radius:12px;
+
+  text-align:center;
+
+  font-weight:800;
+
+  font-size:13px;
+
+}
+
+
+.success{
+
+  background:
+    rgba(50,255,130,.08);
+
+  border:
+    1px solid
+    rgba(50,255,130,.2);
+
+  color:#62ff9a;
+
+}
+
+
+.error{
+
+  background:
+    rgba(255,70,70,.08);
+
+  border:
+    1px solid
+    rgba(255,70,70,.2);
+
+  color:#ff6b6b;
+
+}
+
+
+.info{
+
+  background:
+    rgba(100,140,255,.08);
+
+  border:
+    1px solid
+    rgba(100,140,255,.2);
+
+  color:#9db5ff;
+
+}
+
+
+.stat{
+
+  display:flex;
+
+  justify-content:
+    space-between;
+
+  align-items:center;
+
+  padding:13px 0;
+
+  border-bottom:
+    1px solid
+    rgba(255,255,255,.06);
+
+  font-size:13px;
+
+}
+
+
+.stat:last-child{
+
+  border-bottom:0;
+
+}
+
 
 .value{
-  margin-top:7px;
-  font-size:20px;
+
   font-weight:900;
+
 }
 
-.logout{
-  background:#222a38;
-  color:#fff;
+
+.live{
+
+  color:#62ff9a;
+
 }
 
-.link{
-  display:block;
-  margin-top:15px;
+
+.bad{
+
+  color:#ff6b6b;
+
+}
+
+
+.footer{
+
   text-align:center;
-  color:#58ddff;
-  text-decoration:none;
-}
 
-@media(max-width:600px){
+  margin-top:20px;
 
-  .statgrid{
-    grid-template-columns:1fr;
-  }
+  font-size:10px;
+
+  opacity:.35;
 
 }
 
@@ -154,173 +304,264 @@ h2{
 
 </head>
 
+
 <body>
+
 
 <div class="container">
 
+
+  <!-- HEADER -->
+
   <div class="header">
 
-    <div class="logo">
-      DY <span>AI</span> ADMIN
-    </div>
+    <h1>
+      DY AI ADMIN
+    </h1>
 
-    <div>
-      1-MIN
-    </div>
+    <p>
+      LIVE PREDICTION CONTROL PANEL
+    </p>
 
   </div>
+
 
 
   <!-- LOGIN -->
 
-  <div id="loginPanel" class="panel">
+  <div
+    id="loginCard"
+    class="card"
+  >
 
-    <h1>Admin Login</h1>
+    <div class="label">
+      ADMIN KEY
+    </div>
 
-    <p style="margin-top:8px;color:#8995a9">
-      Enter your server-side admin key.
-    </p>
 
     <input
       id="adminKey"
-      class="input"
       type="password"
-      placeholder="Admin Key"
+      placeholder="Enter admin key"
       autocomplete="off"
     >
 
+
     <button
-      class="button"
-      onclick="login()">
+      onclick="login()"
+    >
       LOGIN
     </button>
 
+
     <div
-      id="loginStatus"
-      class="status">
+      id="loginResult"
+    >
     </div>
 
   </div>
 
 
-  <!-- DASHBOARD -->
+
+  <!-- PANEL -->
 
   <div
-    id="dashboard"
-    class="hidden">
-
-    <div class="panel">
-
-      <h2>System Status</h2>
-
-      <div class="statgrid">
-
-        <div class="stat">
-
-          <div class="label">
-            Server
-          </div>
-
-          <div
-            id="serverStatus"
-            class="value">
-            —
-          </div>
-
-        </div>
+    id="panel"
+    style="display:none"
+  >
 
 
-        <div class="stat">
+    <!-- SOURCE STATUS -->
 
-          <div class="label">
-            API
-          </div>
+    <div class="card">
 
-          <div
-            id="apiStatus"
-            class="value">
-            —
-          </div>
-
-        </div>
+      <div class="label">
+        API STATUS
+      </div>
 
 
-        <div class="stat">
+      <div class="stat">
 
-          <div class="label">
-            Game
-          </div>
+        <span>
+          Source
+        </span>
 
-          <div class="value">
-            1 MIN
-          </div>
-
-        </div>
+        <span
+          id="source"
+          class="value"
+        >
+          --
+        </span>
 
       </div>
 
-      <button
-        class="button"
-        onclick="checkSystem()">
-        CHECK SYSTEM
-      </button>
+
+      <div class="stat">
+
+        <span>
+          Method
+        </span>
+
+        <span
+          id="method"
+          class="value"
+        >
+          --
+        </span>
+
+      </div>
+
+
+      <div class="stat">
+
+        <span>
+          Token
+        </span>
+
+        <span
+          id="token"
+          class="value"
+        >
+          --
+        </span>
+
+      </div>
+
+
+      <div class="stat">
+
+        <span>
+          Server
+        </span>
+
+        <span
+          id="serverStatus"
+          class="value"
+        >
+          --
+        </span>
+
+      </div>
+
+    </div>
+
+
+
+    <!-- LIVE DATA -->
+
+    <div class="card">
+
+      <div class="label">
+        LIVE DATA
+      </div>
+
+
+      <div class="stat">
+
+        <span>
+          Current Period
+        </span>
+
+        <span
+          id="currentPeriod"
+          class="value"
+        >
+          --
+        </span>
+
+      </div>
+
+
+      <div class="stat">
+
+        <span>
+          Prediction Period
+        </span>
+
+        <span
+          id="nextPeriod"
+          class="value"
+        >
+          --
+        </span>
+
+      </div>
+
+
+      <div class="stat">
+
+        <span>
+          Analysis
+        </span>
+
+        <span
+          id="analysis"
+          class="value"
+        >
+          --
+        </span>
+
+      </div>
+
+
+      <div class="stat">
+
+        <span>
+          Prediction
+        </span>
+
+        <span
+          id="prediction"
+          class="value"
+        >
+          --
+        </span>
+
+      </div>
+
+    </div>
+
+
+
+    <!-- REFRESH -->
+
+    <div class="card">
+
+      <div class="label">
+        CONTROL
+      </div>
+
 
       <button
-        class="button logout"
-        onclick="logout()">
+        onclick="refreshNow()"
+      >
+        REFRESH STATUS
+      </button>
+
+
+      <button
+        onclick="logout()"
+      >
         LOGOUT
       </button>
 
     </div>
 
 
-    <div class="panel">
-
-      <h2>Live API Information</h2>
-
-      <div class="status">
-
-        <div>
-          Endpoint:
-        </div>
-
-        <div style="margin-top:6px;color:#58ddff">
-          WingoBot 1-Minute Game History
-        </div>
-
-        <br>
-
-        <div>
-          Token:
-          <strong>
-            Server-side only
-          </strong>
-        </div>
-
-      </div>
-
-    </div>
-
-
-    <a
-      href="/prediction"
-      class="link">
-      ← Open Prediction Dashboard
-    </a>
-
   </div>
+
+
+
+  <div class="footer">
+    DY AI • Server-side API configuration
+  </div>
+
 
 </div>
 
 
+
 <script>
-
-function $(id){
-
-  return document.getElementById(id);
-
-}
-
 
 /* =====================================================
    LOGIN
@@ -329,71 +570,103 @@ function $(id){
 async function login(){
 
   const key =
-    $("adminKey").value.trim();
+    document
+      .getElementById(
+        "adminKey"
+      )
+      .value
+      .trim();
+
+
+  const result =
+    document
+      .getElementById(
+        "loginResult"
+      );
+
 
   if(!key){
 
-    $("loginStatus").textContent =
-      "Please enter admin key.";
+    result.className =
+      "result error";
+
+    result.textContent =
+      "Enter admin key";
 
     return;
 
   }
 
-  $("loginStatus").textContent =
-    "Checking...";
 
   try{
 
     const response =
       await fetch(
-        "/api/admin/check",
+        "/api/admin/check?key=" +
+        encodeURIComponent(
+          key
+        ) +
+        "&_=" +
+        Date.now(),
         {
-          method:"POST",
-
-          headers:{
-            "Content-Type":
-              "application/json"
-          },
-
-          body:JSON.stringify({
-            key
-          })
+          cache:"no-store"
         }
       );
+
 
     const data =
       await response.json();
 
-    if(!response.ok || !data.success){
 
-      $("loginStatus").textContent =
-        data.error ||
-        "Invalid admin key.";
+    if(
+      data.success
+    ){
 
-      return;
+      sessionStorage.setItem(
+        "dy_admin",
+        "1"
+      );
+
+
+      document
+        .getElementById(
+          "loginCard"
+        )
+        .style.display =
+        "none";
+
+
+      document
+        .getElementById(
+          "panel"
+        )
+        .style.display =
+        "block";
+
+
+      loadStatus();
 
     }
 
-    sessionStorage.setItem(
-      "dy_admin_auth",
-      "1"
-    );
+    else{
 
-    $("loginPanel")
-      .classList
-      .add("hidden");
+      result.className =
+        "result error";
 
-    $("dashboard")
-      .classList
-      .remove("hidden");
+      result.textContent =
+        "INVALID ADMIN KEY";
 
-    checkSystem();
+    }
 
-  }catch(error){
+  }
 
-    $("loginStatus").textContent =
-      "Server connection failed.";
+  catch(error){
+
+    result.className =
+      "result error";
+
+    result.textContent =
+      "SERVER CONNECTION ERROR";
 
   }
 
@@ -401,40 +674,158 @@ async function login(){
 
 
 /* =====================================================
-   SYSTEM CHECK
+   LOAD STATUS
 ===================================================== */
 
-async function checkSystem(){
+async function loadStatus(){
 
   try{
 
-    const response =
+    const healthResponse =
       await fetch(
-        "/api/health",
+        "/api/health?_=" +
+        Date.now(),
         {
           cache:"no-store"
         }
       );
 
-    const data =
-      await response.json();
 
-    $("serverStatus").textContent =
-      data.success
-        ? "ONLINE"
-        : "OFFLINE";
+    const health =
+      await healthResponse.json();
 
-    $("apiStatus").textContent =
-      data.apiConfigured
+
+    document
+      .getElementById(
+        "source"
+      )
+      .textContent =
+      health.source ||
+      "--";
+
+
+    document
+      .getElementById(
+        "method"
+      )
+      .textContent =
+      health.method ||
+      "--";
+
+
+    const token =
+      document
+        .getElementById(
+          "token"
+        );
+
+
+    token.textContent =
+      health.tokenConfigured
         ? "CONFIGURED"
-        : "NOT SET";
+        : "NOT CONFIGURED";
 
-  }catch(error){
 
-    $("serverStatus").textContent =
-      "OFFLINE";
+    token.className =
+      "value " +
+      (
+        health.tokenConfigured
+          ? "live"
+          : "bad"
+      );
 
-    $("apiStatus").textContent =
+
+    const serverStatus =
+      document
+        .getElementById(
+          "serverStatus"
+        );
+
+
+    serverStatus.textContent =
+      health.status ||
+      "--";
+
+
+    serverStatus.className =
+      "value " +
+      (
+        health.status ===
+        "LIVE"
+          ? "live"
+          : "bad"
+      );
+
+
+    /* LIVE STATE */
+
+    const stateResponse =
+      await fetch(
+        "/api/state?_=" +
+        Date.now(),
+        {
+          cache:"no-store"
+        }
+      );
+
+
+    const state =
+      await stateResponse.json();
+
+
+    document
+      .getElementById(
+        "currentPeriod"
+      )
+      .textContent =
+      state.currentPeriod ||
+      "--";
+
+
+    document
+      .getElementById(
+        "nextPeriod"
+      )
+      .textContent =
+      state.nextPeriod ||
+      "--";
+
+
+    const analysis =
+      state.analysis ||
+      {};
+
+
+    document
+      .getElementById(
+        "analysis"
+      )
+      .textContent =
+      analysis.active
+        ? "RUNNING " +
+          analysis.remaining +
+          "s"
+        : "READY";
+
+
+    document
+      .getElementById(
+        "prediction"
+      )
+      .textContent =
+      analysis.prediction ||
+      "WAITING";
+
+
+  }
+
+  catch(error){
+
+    document
+      .getElementById(
+        "serverStatus"
+      )
+      .textContent =
       "ERROR";
 
   }
@@ -443,14 +834,50 @@ async function checkSystem(){
 
 
 /* =====================================================
-   LOGOUT
+   REFRESH
 ===================================================== */
+
+function refreshNow(){
+
+  loadStatus();
+
+}
+
+
+/* =====================================================
+   AUTO REFRESH
+===================================================== */
+
+let autoRefresh =
+  null;
+
+
+function startAutoRefresh(){
+
+  if(autoRefresh){
+
+    clearInterval(
+      autoRefresh
+    );
+
+  }
+
+
+  autoRefresh =
+    setInterval(
+      loadStatus,
+      1000
+    );
+
+}
+
 
 function logout(){
 
   sessionStorage.removeItem(
-    "dy_admin_auth"
+    "dy_admin"
   );
+
 
   location.reload();
 
@@ -458,28 +885,44 @@ function logout(){
 
 
 /* =====================================================
-   RESTORE SESSION UI
+   AUTO LOGIN SESSION
 ===================================================== */
 
 if(
   sessionStorage.getItem(
-    "dy_admin_auth"
+    "dy_admin"
   ) === "1"
 ){
 
-  $("loginPanel")
-    .classList
-    .add("hidden");
+  document
+    .getElementById(
+      "loginCard"
+    )
+    .style.display =
+    "none";
 
-  $("dashboard")
-    .classList
-    .remove("hidden");
 
-  checkSystem();
+  document
+    .getElementById(
+      "panel"
+    )
+    .style.display =
+    "block";
+
+
+  loadStatus();
 
 }
 
+
+/* =====================================================
+   START
+===================================================== */
+
+startAutoRefresh();
+
 </script>
+
 
 </body>
 
