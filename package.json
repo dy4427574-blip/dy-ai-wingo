@@ -1,7 +1,7 @@
 {
-  "name": "dy-ai-wingo",
-  "version": "4.0.0",
-  "description": "DY AI WinGo Live Analysis Dashboard",
+  "name": "dy-ai-wingo-1min",
+  "version": "1.0.0",
+  "description": "Wingo 1 Minute historical analysis dashboard",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
@@ -10,6 +10,6 @@
     "node": ">=18"
   },
   "dependencies": {
-    "pg": "^8.16.3"
+    "express": "^4.21.2"
   }
 }
