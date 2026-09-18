@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
 <meta charset="UTF-8">
 
 <meta
@@ -10,7 +8,7 @@
   content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"
 >
 
-<title>DY AI WinGo</title>
+<title>DY AI ML WinGo</title>
 
 <style>
 
@@ -20,6 +18,10 @@
   padding:0;
 }
 
+html{
+  background:#020306;
+}
+
 body{
   min-height:100vh;
   padding:12px;
@@ -27,11 +29,14 @@ body{
   background:
     radial-gradient(
       circle at 50% -10%,
-      #202a4d,
-      #080b14 45%,
-      #020306
+      #20294d 0%,
+      #080b14 42%,
+      #020306 78%
     );
-  font-family:Arial,sans-serif;
+  font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
 }
 
 .wrap{
@@ -40,23 +45,26 @@ body{
   margin:auto;
 }
 
+/* ================= HEADER ================= */
+
 header{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  padding:16px 4px 22px;
+  padding:14px 4px 22px;
 }
 
 .logo{
-  font-size:28px;
-  font-weight:900;
-  letter-spacing:8px;
+  font-size:27px;
+  font-weight:1000;
+  letter-spacing:7px;
 }
 
 .sub{
   margin-top:7px;
-  color:#68728d;
-  font-size:10px;
+  color:#66728d;
+  font-size:9px;
+  font-weight:800;
   letter-spacing:4px;
 }
 
@@ -64,96 +72,142 @@ header{
   display:flex;
   align-items:center;
   gap:7px;
-  color:#8992a9;
-  font-size:10px;
+  color:#727d96;
+  font-size:9px;
   font-weight:900;
+  letter-spacing:1px;
 }
 
 .dot{
-  width:11px;
-  height:11px;
+  width:10px;
+  height:10px;
   border-radius:50%;
   background:#ff315d;
 }
 
 .dot.ok{
   background:#2cff9f;
-  box-shadow:0 0 15px #2cff9f;
+  box-shadow:
+    0 0 7px #2cff9f,
+    0 0 18px rgba(44,255,159,.5);
 }
 
+/* ================= CARD ================= */
+
 .card{
-  margin-bottom:15px;
+  margin-bottom:14px;
   padding:20px;
   border:1px solid #202b45;
-  border-radius:25px;
-  background:rgba(8,13,25,.97);
-  box-shadow:0 14px 40px rgba(0,0,0,.3);
+  border-radius:24px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(13,19,34,.96),
+      rgba(5,8,15,.98)
+    );
+  box-shadow:
+    0 14px 40px rgba(0,0,0,.30);
 }
 
 .label{
-  margin-bottom:15px;
-  color:#68728d;
-  font-size:10px;
+  margin-bottom:14px;
+  color:#68738d;
+  font-size:9px;
   font-weight:900;
   letter-spacing:4px;
 }
 
+/* ================= LOGIN ================= */
+
 .login{
   display:none;
+}
+
+.hide{
+  display:none !important;
 }
 
 input{
   width:100%;
   margin-bottom:12px;
   padding:16px;
+
   outline:none;
-  border:1px solid #273654;
+
+  border:1px solid #293754;
   border-radius:14px;
+
   color:#fff;
   background:#050914;
-  font-size:15px;
+
+  font-size:14px;
+}
+
+input:focus{
+  border-color:#ff3d68;
+  box-shadow:
+    0 0 0 2px
+    rgba(255,61,104,.08);
 }
 
 button{
   width:100%;
-  padding:16px;
+  padding:15px;
+
   border:0;
   border-radius:14px;
+
   color:#fff;
-  background:#ff3c68;
+  background:#ff3d68;
+
+  font-size:12px;
   font-weight:900;
+
+  cursor:pointer;
+}
+
+button:active{
+  transform:scale(.98);
 }
 
 .error{
   display:none;
+
   margin-bottom:14px;
   padding:13px;
+
   border:1px solid #713149;
   border-radius:14px;
+
   color:#ff7594;
   background:#29101a;
-  font-size:12px;
+
+  font-size:11px;
   font-weight:800;
 }
 
-.hide{
-  display:none!important;
-}
+/* ================= PERIOD ================= */
 
 .period{
   color:#fff;
-  font-size:25px;
-  font-weight:900;
-  letter-spacing:2px;
+
+  font-size:24px;
+  line-height:1.25;
+  font-weight:1000;
+
   word-break:break-all;
 }
 
 .next{
-  margin-top:12px;
-  color:#69738e;
-  font-size:11px;
+  margin-top:9px;
+
+  color:#5f6a83;
+
+  font-size:10px;
   font-weight:800;
 }
+
+/* ================= RESULT ================= */
 
 .result{
   display:flex;
@@ -162,133 +216,286 @@ button{
 }
 
 .ball{
+  flex-shrink:0;
+
   display:flex;
-  width:120px;
-  height:120px;
   align-items:center;
   justify-content:center;
+
+  width:112px;
+  height:112px;
+
   border:2px solid #263551;
   border-radius:50%;
-  background:#02050a;
-  font-size:40px;
-  font-weight:900;
+
+  background:
+    radial-gradient(
+      circle,
+      #111a2c 0%,
+      #03060c 65%
+    );
+
+  color:#fff;
+
+  font-size:39px;
+  font-weight:1000;
+
+  box-shadow:
+    inset 0 0 25px
+    rgba(255,255,255,.025);
 }
 
 .number{
-  font-size:29px;
-  font-weight:900;
+  color:#fff;
+
+  font-size:28px;
+  font-weight:1000;
 }
 
 .type{
   margin-top:8px;
-  color:#68738e;
-  font-size:12px;
+
+  color:#68738d;
+
+  font-size:11px;
   font-weight:900;
+  letter-spacing:2px;
 }
 
 .big{
-  color:#ffbe50!important;
-  text-shadow:0 0 18px rgba(255,190,80,.45);
+  color:#ffbe50 !important;
+
+  text-shadow:
+    0 0 12px rgba(255,190,80,.35),
+    0 0 25px rgba(255,190,80,.15);
 }
 
 .small{
-  color:#4bdcff!important;
-  text-shadow:0 0 18px rgba(75,220,255,.45);
+  color:#4bdcff !important;
+
+  text-shadow:
+    0 0 12px rgba(75,220,255,.35),
+    0 0 25px rgba(75,220,255,.15);
 }
 
+/* ================= PREDICTION ================= */
+
 .prediction{
+  min-height:62px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  margin:7px 0 8px;
+
   text-align:center;
-  margin:12px 0;
-  font-size:52px;
-  font-weight:900;
+
+  font-size:45px;
+  line-height:1;
+
+  font-weight:1000;
   letter-spacing:3px;
 }
 
 .wait{
-  color:#ffbf51;
+  color:#ffbf51 !important;
+
+  text-shadow:
+    0 0 15px
+    rgba(255,191,81,.25);
 }
 
 .target{
   text-align:center;
-  color:#68738e;
-  font-size:10px;
+
+  color:#65708a;
+
+  font-size:9px;
   font-weight:900;
+  letter-spacing:2px;
 }
 
 .conf{
   display:flex;
   justify-content:space-between;
-  margin:20px 0 8px;
-  color:#69738e;
-  font-size:10px;
+
+  margin:21px 0 8px;
+
+  color:#68738d;
+
+  font-size:9px;
   font-weight:900;
+  letter-spacing:2px;
 }
 
 .bar{
-  height:10px;
+  width:100%;
+  height:9px;
+
   overflow:hidden;
+
   border-radius:20px;
+
   background:#03050a;
 }
 
 .fill{
-  width:0;
+  width:0%;
   height:100%;
+
   border-radius:20px;
-  background:linear-gradient(
-    90deg,
-    #ff3967,
-    #ffc151
-  );
-  transition:.3s;
+
+  background:
+    linear-gradient(
+      90deg,
+      #ff3967,
+      #ffc151
+    );
+
+  transition:
+    width .35s ease;
 }
 
 .status{
   min-height:18px;
+
   margin-top:14px;
+
   text-align:center;
-  color:#727c96;
-  font-size:12px;
+
+  color:#737d96;
+
+  font-size:11px;
   font-weight:800;
 }
 
 .skip{
   display:none;
+
   margin-top:13px;
   padding:12px;
+
   border:1px solid #55431d;
   border-radius:13px;
+
   color:#ffc866;
+
   background:#191309;
+
   text-align:center;
-  font-size:11px;
+
+  font-size:10px;
   font-weight:900;
+  letter-spacing:1px;
 }
+
+/* ================= ANALYSIS TIMER ================= */
+
+.analysisBox{
+  display:none;
+
+  margin-top:15px;
+  padding:12px;
+
+  border:1px solid #283550;
+  border-radius:14px;
+
+  background:#050914;
+
+  text-align:center;
+}
+
+.analysisTitle{
+  color:#69758e;
+
+  font-size:8px;
+  font-weight:900;
+  letter-spacing:3px;
+}
+
+.analysisTime{
+  margin-top:6px;
+
+  color:#fff;
+
+  font-size:18px;
+  font-weight:1000;
+}
+
+.analysisLine{
+  height:4px;
+
+  margin-top:9px;
+
+  overflow:hidden;
+
+  border-radius:10px;
+
+  background:#11192a;
+}
+
+.analysisFill{
+  width:0%;
+  height:100%;
+
+  border-radius:10px;
+
+  background:#ff3d68;
+
+  transition:
+    width .2s linear;
+}
+
+/* ================= STATS ================= */
 
 .grid{
   display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
+
+  grid-template-columns:
+    1fr 1fr;
+
+  gap:9px;
 }
 
 .stat{
-  padding:15px;
+  min-width:0;
+
+  padding:14px;
+
   border:1px solid #1c2942;
   border-radius:15px;
-  background:#070b14;
+
+  background:#060a13;
 }
 
 .stat small{
   display:block;
+
   margin-bottom:7px;
+
   color:#626d88;
+
   font-size:8px;
-  letter-spacing:2px;
+  font-weight:900;
+  letter-spacing:1.5px;
 }
 
 .stat b{
-  font-size:15px;
+  display:block;
+
+  overflow:hidden;
+
+  color:#fff;
+
+  font-size:13px;
+  font-weight:900;
+
+  text-overflow:ellipsis;
+  white-space:nowrap;
 }
+
+/* ================= HISTORY ================= */
 
 .history{
   display:flex;
@@ -298,71 +505,135 @@ button{
 
 .h{
   display:flex;
+
   width:42px;
   height:42px;
+
   align-items:center;
   justify-content:center;
+
   border:1px solid #202d49;
   border-radius:11px;
+
   background:#070c16;
+
+  color:#fff;
+
   font-size:15px;
-  font-weight:900;
+  font-weight:1000;
 }
+
+.h.big{
+  border-color:
+    rgba(255,190,80,.25);
+
+  background:
+    rgba(255,190,80,.05);
+}
+
+.h.small{
+  border-color:
+    rgba(75,220,255,.25);
+
+  background:
+    rgba(75,220,255,.05);
+}
+
+/* ================= FOOTER NOTE ================= */
+
+.note{
+  margin-top:13px;
+
+  color:#58637c;
+
+  font-size:9px;
+  line-height:1.55;
+
+  text-align:center;
+}
+
+/* ================= RESPONSIVE ================= */
 
 @media(max-width:450px){
 
+  body{
+    padding:9px;
+  }
+
+  .card{
+    padding:17px;
+    border-radius:21px;
+  }
+
   .logo{
-    font-size:23px;
+    font-size:22px;
+    letter-spacing:5px;
+  }
+
+  .sub{
+    font-size:8px;
+    letter-spacing:3px;
   }
 
   .ball{
-    width:105px;
-    height:105px;
+    width:100px;
+    height:100px;
+    font-size:34px;
   }
 
   .prediction{
-    font-size:43px;
+    font-size:39px;
+  }
+
+  .period{
+    font-size:21px;
   }
 
 }
 
 </style>
-
 </head>
+
 
 <body>
 
 <div class="wrap">
 
+
+<!-- ================= HEADER ================= -->
+
 <header>
 
-<div>
+  <div>
 
-<div class="logo">
-DY AI
-</div>
+    <div class="logo">
+      DY AI
+    </div>
 
-<div class="sub">
-WINGO 1 MINUTE
-</div>
+    <div class="sub">
+      ML WINGO 1 MINUTE
+    </div>
 
-</div>
+  </div>
 
-<div class="online">
 
-<span
-  id="dot"
-  class="dot"
-></span>
+  <div class="online">
 
-<span id="online">
-OFFLINE
-</span>
+    <span
+      id="dot"
+      class="dot"
+    ></span>
 
-</div>
+    <span id="online">
+      OFFLINE
+    </span>
+
+  </div>
 
 </header>
 
+
+<!-- ================= ERROR ================= -->
 
 <div
   id="error"
@@ -370,29 +641,34 @@ OFFLINE
 ></div>
 
 
+<!-- ================= LOGIN ================= -->
+
 <div
   id="login"
   class="card login"
 >
 
-<div class="label">
-PREMIUM ACCESS
+  <div class="label">
+    PREMIUM ACCESS
+  </div>
+
+  <input
+    id="key"
+    type="text"
+    placeholder="ENTER ACCESS KEY"
+    autocomplete="off"
+  >
+
+  <button
+    onclick="login()"
+  >
+    UNLOCK AI
+  </button>
+
 </div>
 
-<input
-  id="key"
-  placeholder="ENTER ACCESS KEY"
-  autocomplete="off"
->
 
-<button
-  onclick="login()"
->
-UNLOCK AI
-</button>
-
-</div>
-
+<!-- ================= APP ================= -->
 
 <div
   id="app"
@@ -400,178 +676,344 @@ UNLOCK AI
 >
 
 
-<div class="card">
-
-<div class="label">
-CURRENT PERIOD
-</div>
-
-<div
-  id="period"
-  class="period"
->
-—
-</div>
-
-<div
-  id="next"
-  class="next"
->
-NEXT PERIOD: —
-</div>
-
-</div>
-
+<!-- ================= CURRENT PERIOD ================= -->
 
 <div class="card">
 
-<div class="label">
-LATEST RESULT
-</div>
+  <div class="label">
+    CURRENT PERIOD
+  </div>
 
-<div class="result">
+  <div
+    id="period"
+    class="period"
+  >
+    —
+  </div>
 
-<div
-  id="ball"
-  class="ball"
->
-—
-</div>
-
-<div>
-
-<div
-  id="number"
-  class="number"
->
-—
-</div>
-
-<div
-  id="type"
-  class="type"
->
-Waiting...
-</div>
+  <div
+    id="next"
+    class="next"
+  >
+    NEXT PERIOD: —
+  </div>
 
 </div>
 
-</div>
 
-</div>
-
+<!-- ================= LATEST RESULT ================= -->
 
 <div class="card">
 
-<div class="label">
-AI PREMIUM PREDICTION
-</div>
+  <div class="label">
+    LATEST RESULT
+  </div>
 
-<div
-  id="prediction"
-  class="prediction wait"
->
-WAIT
-</div>
+  <div class="result">
 
-<div
-  id="target"
-  class="target"
->
-TARGET PERIOD: —
-</div>
+    <div
+      id="ball"
+      class="ball"
+    >
+      —
+    </div>
 
-<div class="conf">
+    <div>
 
-<span>
-AI CONFIDENCE
-</span>
+      <div
+        id="number"
+        class="number"
+      >
+        —
+      </div>
 
-<span id="confidence">
-0%
-</span>
+      <div
+        id="type"
+        class="type"
+      >
+        WAITING
+      </div>
 
-</div>
+    </div>
 
-<div class="bar">
-
-<div
-  id="fill"
-  class="fill"
-></div>
+  </div>
 
 </div>
 
-<div
-  id="status"
-  class="status"
->
-WAITING FOR LIVE DATA...
-</div>
 
-<div
-  id="skip"
-  class="skip"
-></div>
-
-</div>
-
+<!-- ================= AI PREDICTION ================= -->
 
 <div class="card">
 
-<div class="label">
-AI ANALYSIS
+  <div class="label">
+    AI ML PREDICTION
+  </div>
+
+
+  <div
+    id="prediction"
+    class="prediction wait"
+  >
+    WAIT
+  </div>
+
+
+  <div
+    id="target"
+    class="target"
+  >
+    TARGET PERIOD: —
+  </div>
+
+
+  <!-- 4 SECOND ANALYSIS -->
+
+  <div
+    id="analysisBox"
+    class="analysisBox"
+  >
+
+    <div class="analysisTitle">
+      AI ANALYSIS RUNNING
+    </div>
+
+    <div
+      id="analysisTime"
+      class="analysisTime"
+    >
+      4.0s
+    </div>
+
+    <div class="analysisLine">
+
+      <div
+        id="analysisFill"
+        class="analysisFill"
+      ></div>
+
+    </div>
+
+  </div>
+
+
+  <!-- CONFIDENCE -->
+
+  <div class="conf">
+
+    <span>
+      AI CONFIDENCE
+    </span>
+
+    <span
+      id="confidence"
+    >
+      0%
+    </span>
+
+  </div>
+
+
+  <div class="bar">
+
+    <div
+      id="fill"
+      class="fill"
+    ></div>
+
+  </div>
+
+
+  <div
+    id="status"
+    class="status"
+  >
+    WAITING FOR LIVE DATA...
+  </div>
+
+
+  <!-- SKIP -->
+
+  <div
+    id="skip"
+    class="skip"
+  ></div>
+
 </div>
 
-<div class="grid">
 
-<div class="stat">
-<small>MODEL</small>
-<b id="model">—</b>
-</div>
-
-<div class="stat">
-<small>QUALITY</small>
-<b id="quality">—</b>
-</div>
-
-<div class="stat">
-<small>SKIP ROUND</small>
-<b id="skipRound">0</b>
-</div>
-
-<div class="stat">
-<small>SKIP LEFT</small>
-<b id="skipLeft">0</b>
-</div>
-
-<div class="stat">
-<small>SAMPLE</small>
-<b id="sample">0</b>
-</div>
-
-<div class="stat">
-<small>AI SCORE</small>
-<b id="score">—</b>
-</div>
-
-</div>
-
-</div>
-
+<!-- ================= MODEL DIAGNOSTICS ================= -->
 
 <div class="card">
 
-<div class="label">
-LAST 10 RESULTS
+  <div class="label">
+    MODEL DIAGNOSTICS
+  </div>
+
+
+  <div class="grid">
+
+
+    <div class="stat">
+
+      <small>
+        MODEL
+      </small>
+
+      <b id="model">
+        —
+      </b>
+
+    </div>
+
+
+    <div class="stat">
+
+      <small>
+        QUALITY
+      </small>
+
+      <b id="quality">
+        —
+      </b>
+
+    </div>
+
+
+    <div class="stat">
+
+      <small>
+        EVIDENCE
+      </small>
+
+      <b id="evidence">
+        —
+      </b>
+
+    </div>
+
+
+    <div class="stat">
+
+      <small>
+        SAMPLE
+      </small>
+
+      <b id="sample">
+        0
+      </b>
+
+    </div>
+
+
+    <div class="stat">
+
+      <small>
+        ML PROBABILITY
+      </small>
+
+      <b id="mlProb">
+        —
+      </b>
+
+    </div>
+
+
+    <div class="stat">
+
+      <small>
+        PATTERN MODEL
+      </small>
+
+      <b id="pattern">
+        —
+      </b>
+
+    </div>
+
+
+    <div class="stat">
+
+      <small>
+        VALIDATION
+      </small>
+
+      <b id="validation">
+        —
+      </b>
+
+    </div>
+
+
+    <div class="stat">
+
+      <small>
+        RANDOMNESS
+      </small>
+
+      <b id="randomness">
+        —
+      </b>
+
+    </div>
+
+
+    <div class="stat">
+
+      <small>
+        PATTERN MATCHES
+      </small>
+
+      <b id="matches">
+        0
+      </b>
+
+    </div>
+
+
+    <div class="stat">
+
+      <small>
+        MODEL EDGE
+      </small>
+
+      <b id="edge">
+        —
+      </b>
+
+    </div>
+
+
+  </div>
+
+
+  <div class="note">
+
+    AI uses chronological ML training,
+    sequence features, pattern similarity,
+    randomness detection and walk-forward
+    validation. Historical patterns cannot
+    guarantee the next result.
+
+  </div>
+
 </div>
 
-<div
-  id="history"
-  class="history"
-></div>
+
+<!-- ================= LAST 10 ================= -->
+
+<div class="card">
+
+  <div class="label">
+    LAST 10 RESULTS
+  </div>
+
+  <div
+    id="history"
+    class="history"
+  ></div>
 
 </div>
+
 
 </div>
 
@@ -580,32 +1022,52 @@ LAST 10 RESULTS
 
 <script>
 
+/* =========================================================
+   STORAGE
+========================================================= */
+
 const KEY_STORE =
-  "DY_AI_ACCESS_KEY_V5";
+  "DY_AI_ACCESS_KEY_V6";
 
 const DEVICE_STORE =
-  "DY_AI_DEVICE_ID_V5";
+  "DY_AI_DEVICE_ID_V6";
 
 
-let key =
+let accessKey =
   localStorage.getItem(
     KEY_STORE
   ) || "";
 
 
-let device =
+let deviceId =
   localStorage.getItem(
     DEVICE_STORE
   );
 
 
-function makeDevice(){
+/* =========================================================
+   ELEMENT
+========================================================= */
+
+function $(id){
+  return document.getElementById(id);
+}
+
+
+/* =========================================================
+   DEVICE ID
+========================================================= */
+
+function makeDeviceId(){
 
   if(
-    crypto &&
-    crypto.randomUUID
+    window.crypto &&
+    typeof crypto.randomUUID ===
+      "function"
   ){
+
     return crypto.randomUUID();
+
   }
 
   return (
@@ -613,53 +1075,28 @@ function makeDevice(){
     Math.random()
       .toString(36)
       .slice(2) +
+    "-" +
     Date.now()
   );
 }
 
 
-if(!device){
+if(!deviceId){
 
-  device =
-    makeDevice();
+  deviceId =
+    makeDeviceId();
 
   localStorage.setItem(
     DEVICE_STORE,
-    device
-  );
-}
-
-
-function $(id){
-
-  return document.getElementById(
-    id
+    deviceId
   );
 
 }
 
 
-function error(text){
-
-  $("error")
-    .textContent =
-    text;
-
-  $("error")
-    .style.display =
-    "block";
-
-}
-
-
-function clearError(){
-
-  $("error")
-    .style.display =
-    "none";
-
-}
-
+/* =========================================================
+   UI
+========================================================= */
 
 function showLogin(){
 
@@ -689,27 +1126,56 @@ function showApp(){
 }
 
 
+function showError(
+  message
+){
+
+  $("error")
+    .textContent =
+    message || "ERROR";
+
+  $("error")
+    .style.display =
+    "block";
+
+}
+
+
+function clearError(){
+
+  $("error")
+    .style.display =
+    "none";
+
+}
+
+
+/* =========================================================
+   LOGIN
+========================================================= */
+
 async function login(){
 
   clearError();
 
-  const entered =
+  const key =
     $("key")
       .value
       .trim();
 
-  if(!entered){
+  if(!key){
 
-    error(
+    showError(
       "ACCESS KEY ENTER KARO."
     );
 
     return;
   }
 
+
   try{
 
-    const r =
+    const response =
       await fetch(
         "/api/key/check",
         {
@@ -722,40 +1188,47 @@ async function login(){
 
           body:
             JSON.stringify({
-              key:entered,
-              deviceId:device
+              key:key,
+              deviceId:deviceId
             })
         }
       );
 
+
     const data =
-      await r.json();
+      await response.json();
+
 
     if(!data.ok){
 
-      error(
-        data.error ||
-        "INVALID KEY"
+      showError(
+        getErrorText(
+          data.error
+        )
       );
 
       return;
     }
 
-    key =
-      entered;
+
+    accessKey =
+      key;
+
 
     localStorage.setItem(
       KEY_STORE,
-      key
+      accessKey
     );
+
 
     showApp();
 
-    load();
+    loadState();
 
-  }catch(e){
+  }
+  catch(error){
 
-    error(
+    showError(
       "SERVER CONNECTION FAILED."
     );
 
@@ -764,72 +1237,146 @@ async function login(){
 }
 
 
-async function load(){
+/* =========================================================
+   ERROR TEXT
+========================================================= */
 
-  if(!key){
+function getErrorText(
+  code
+){
+
+  const map = {
+
+    INVALID_KEY:
+      "INVALID ACCESS KEY.",
+
+    KEY_ALREADY_USED_ON_ANOTHER_DEVICE:
+      "YE KEY DUSRE DEVICE PAR LINK HAI.",
+
+    KEY_AND_DEVICE_REQUIRED:
+      "KEY OR DEVICE ID REQUIRED.",
+
+    WINGOBOT_TOKEN_MISSING:
+      "LIVE API TOKEN MISSING.",
+
+    CURRENT_PERIOD_NOT_FOUND:
+      "CURRENT PERIOD NAHI MILA.",
+
+    HISTORY_NOT_FOUND:
+      "GAME HISTORY NAHI MILI."
+
+  };
+
+
+  return (
+    map[code] ||
+    code ||
+    "UNKNOWN ERROR"
+  );
+
+}
+
+
+/* =========================================================
+   LOAD STATE
+========================================================= */
+
+let requestRunning = false;
+
+
+async function loadState(){
+
+  if(
+    !accessKey
+  ){
 
     showLogin();
 
     return;
   }
 
+
+  if(
+    requestRunning
+  ){
+    return;
+  }
+
+
+  requestRunning = true;
+
+
   try{
 
-    const r =
+    const response =
       await fetch(
         "/api/state?t=" +
         Date.now(),
         {
+          method:"GET",
+
           cache:"no-store",
 
           headers:{
             "X-Access-Key":
-              key,
+              accessKey,
 
             "X-Device-ID":
-              device
+              deviceId
           }
         }
       );
 
+
     const data =
-      await r.json();
+      await response.json();
+
 
     if(
-      r.status === 403
+      response.status ===
+      403
     ){
 
       localStorage.removeItem(
         KEY_STORE
       );
 
-      key = "";
+      accessKey = "";
 
       showLogin();
 
-      error(
-        data.error ||
-        "ACCESS DENIED"
+      showError(
+        getErrorText(
+          data.error
+        )
       );
 
       return;
     }
 
-    if(!data.ok){
 
-      error(
-        data.error ||
-        "LIVE DATA ERROR"
+    if(
+      !data.ok
+    ){
+
+      showError(
+        getErrorText(
+          data.error
+        )
       );
 
       return;
     }
+
 
     clearError();
 
-    render(data);
+    render(
+      data
+    );
 
-  }catch(e){
+  }
+  catch(error){
 
     $("online")
       .textContent =
@@ -841,16 +1388,65 @@ async function load(){
       );
 
   }
+  finally{
+
+    requestRunning = false;
+
+  }
 
 }
 
 
-function render(data){
+/* =========================================================
+   RENDER
+========================================================= */
+
+function render(
+  data
+){
+
+  renderConnection(
+    data
+  );
+
+  renderPeriod(
+    data
+  );
+
+  renderLatest(
+    data
+  );
+
+  renderPrediction(
+    data
+  );
+
+  renderDiagnostics(
+    data
+  );
+
+  renderHistory(
+    data
+  );
+
+}
+
+
+/* =========================================================
+   CONNECTION
+========================================================= */
+
+function renderConnection(
+  data
+){
 
   const source =
     data.source || {};
 
-  if(source.ok){
+
+  if(
+    source.ok
+  ){
 
     $("online")
       .textContent =
@@ -861,7 +1457,8 @@ function render(data){
         "ok"
       );
 
-  }else{
+  }
+  else{
 
     $("online")
       .textContent =
@@ -871,81 +1468,177 @@ function render(data){
       .classList.remove(
         "ok"
       );
+
   }
+
+}
+
+
+/* =========================================================
+   PERIOD
+========================================================= */
+
+function renderPeriod(
+  data
+){
+
+  const current =
+    data.currentPeriod ||
+    "—";
 
 
   $("period")
     .textContent =
-    data.currentPeriod ||
-    "—";
+    current;
 
 
   $("next")
     .textContent =
     "NEXT PERIOD: " +
-    (
-      data.currentPeriod ||
-      "—"
-    );
+    current;
+
+}
 
 
-  const latest =
+/* =========================================================
+   LATEST RESULT
+========================================================= */
+
+function renderLatest(
+  data
+){
+
+  const item =
     data.latestResult;
 
-  if(latest){
+
+  if(
+    !item
+  ){
 
     $("ball")
       .textContent =
-      latest.number;
+      "—";
 
     $("number")
       .textContent =
-      latest.number;
+      "—";
 
     $("type")
       .textContent =
-      latest.result ||
-      "—";
+      "WAITING";
 
-    const cls =
-      latest.result === "BIG"
-        ? "big"
-        : latest.result === "SMALL"
-          ? "small"
-          : "";
-
-    $("ball")
-      .className =
-      "ball " + cls;
-
-    $("type")
-      .className =
-      "type " + cls;
+    return;
   }
 
 
-  const p =
-    data.prediction || {};
+  const number =
+    Number(
+      item.number
+    );
 
-  const value =
+
+  const type =
+    item.result ||
+    (
+      number >= 5
+        ? "BIG"
+        : "SMALL"
+    );
+
+
+  $("ball")
+    .textContent =
+    number;
+
+
+  $("number")
+    .textContent =
+    number;
+
+
+  $("type")
+    .textContent =
+    type;
+
+
+  const cls =
+    type === "BIG"
+      ? "big"
+      : type === "SMALL"
+        ? "small"
+        : "";
+
+
+  $("ball")
+    .className =
+    "ball " +
+    cls;
+
+
+  $("type")
+    .className =
+    "type " +
+    cls;
+
+}
+
+
+/* =========================================================
+   PREDICTION
+========================================================= */
+
+function renderPrediction(
+  data
+){
+
+  const p =
+    data.prediction ||
+    {};
+
+
+  const result =
     p.result ||
     "WAIT";
 
 
-  $("prediction")
-    .textContent =
-    value;
+  const prediction =
+    $("prediction");
 
-  $("prediction")
+
+  prediction
+    .textContent =
+    result;
+
+
+  let cls =
+    "prediction";
+
+
+  if(
+    result === "BIG"
+  ){
+
+    cls += " big";
+
+  }
+  else if(
+    result === "SMALL"
+  ){
+
+    cls += " small";
+
+  }
+  else{
+
+    cls += " wait";
+
+  }
+
+
+  prediction
     .className =
-    "prediction " +
-    (
-      value === "BIG"
-        ? "big"
-        : value === "SMALL"
-          ? "small"
-          : "wait"
-    );
+    cls;
 
 
   $("target")
@@ -971,12 +1664,17 @@ function render(data){
 
   $("fill")
     .style.width =
-    Math.min(
-      100,
-      confidence
+    Math.max(
+      0,
+      Math.min(
+        100,
+        confidence
+      )
     ) +
     "%";
 
+
+  /* ================= STATUS ================= */
 
   let status =
     "WAITING FOR LIVE DATA...";
@@ -988,14 +1686,7 @@ function render(data){
   ){
 
     status =
-      "AI ANALYSIS • " +
-      (
-        Number(
-          p.analysis?.remaining ||
-          0
-        ) / 1000
-      ).toFixed(1) +
-      " SEC";
+      "AI ANALYSIS RUNNING";
 
   }
 
@@ -1027,8 +1718,18 @@ function render(data){
     status;
 
 
+  /* ================= 4 SEC TIMER ================= */
+
+  renderAnalysis(
+    p
+  );
+
+
+  /* ================= SKIP ================= */
+
   const cycle =
-    data.cycle || {};
+    data.cycle ||
+    {};
 
 
   if(
@@ -1040,17 +1741,28 @@ function render(data){
       .style.display =
       "block";
 
+
     $("skip")
       .textContent =
       "SKIP " +
-      cycle.skipRound +
+      (
+        cycle.skipRound ||
+        0
+      ) +
       " / " +
-      cycle.skipTotal +
+      (
+        cycle.skipTotal ||
+        4
+      ) +
       " • " +
-      cycle.skipRemaining +
-      " LEFT";
+      (
+        cycle.skipRemaining ||
+        0
+      ) +
+      " ROUND LEFT";
 
-  }else{
+  }
+  else{
 
     $("skip")
       .style.display =
@@ -1058,67 +1770,307 @@ function render(data){
 
   }
 
+}
+
+
+/* =========================================================
+   4 SECOND ANALYSIS
+========================================================= */
+
+function renderAnalysis(
+  prediction
+){
+
+  const box =
+    $("analysisBox");
+
+
+  if(
+    prediction.status !==
+    "ANALYZING"
+  ){
+
+    box.style.display =
+      "none";
+
+    $("analysisFill")
+      .style.width =
+      "0%";
+
+    return;
+  }
+
+
+  box.style.display =
+    "block";
+
+
+  const remaining =
+    Number(
+      prediction
+        .analysis
+        ?.remaining || 0
+    );
+
+
+  const duration =
+    4000;
+
+
+  const elapsed =
+    Math.max(
+      0,
+      duration -
+      remaining
+    );
+
+
+  const percent =
+    Math.max(
+      0,
+      Math.min(
+        100,
+        elapsed /
+        duration *
+        100
+      )
+    );
+
+
+  $("analysisFill")
+    .style.width =
+    percent +
+    "%";
+
+
+  $("analysisTime")
+    .textContent =
+    (
+      remaining /
+      1000
+    ).toFixed(1) +
+    "s";
+
+}
+
+
+/* =========================================================
+   DIAGNOSTICS
+========================================================= */
+
+function renderDiagnostics(
+  data
+){
 
   const ai =
-    data.ai || {};
+    data.ai ||
+    {};
+
 
   $("model")
     .textContent =
-    ai.model || "—";
-
-  $("quality")
-    .textContent =
-    ai.quality || "—";
-
-  $("sample")
-    .textContent =
-    ai.sampleSize || 0;
-
-  $("score")
-    .textContent =
-    ai.score ??
+    ai.model ||
     "—";
 
 
-  $("skipRound")
+  $("quality")
     .textContent =
-    cycle.skipRound || 0;
+    ai.quality ||
+    "—";
 
-  $("skipLeft")
+
+  $("evidence")
     .textContent =
-    cycle.skipRemaining || 0;
+    ai.evidence ||
+    "—";
 
+
+  $("sample")
+    .textContent =
+    ai.sampleSize ||
+    0;
+
+
+  if(
+    ai.mlProbability !==
+    undefined
+  ){
+
+    $("mlProb")
+      .textContent =
+      (
+        Number(
+          ai.mlProbability
+        ) * 100
+      ).toFixed(1) +
+      "%";
+
+  }
+  else{
+
+    $("mlProb")
+      .textContent =
+      "—";
+
+  }
+
+
+  if(
+    ai.patternProbability !==
+    undefined
+  ){
+
+    $("pattern")
+      .textContent =
+      (
+        Number(
+          ai.patternProbability
+        ) * 100
+      ).toFixed(1) +
+      "%";
+
+  }
+  else{
+
+    $("pattern")
+      .textContent =
+      "—";
+
+  }
+
+
+  if(
+    ai.validation
+  ){
+
+    $("validation")
+      .textContent =
+      (
+        Number(
+          ai.validation.accuracy
+        ) * 100
+      ).toFixed(1) +
+      "%";
+
+    $("edge")
+      .textContent =
+      (
+        Number(
+          ai.validation.edge
+        ) * 100
+      ).toFixed(1) +
+      "%";
+
+  }
+  else{
+
+    $("validation")
+      .textContent =
+      "—";
+
+    $("edge")
+      .textContent =
+      "—";
+
+  }
+
+
+  if(
+    ai.randomness !==
+    undefined
+  ){
+
+    $("randomness")
+      .textContent =
+      Number(
+        ai.randomness
+      ).toFixed(2);
+
+  }
+  else{
+
+    $("randomness")
+      .textContent =
+      "—";
+
+  }
+
+
+  $("matches")
+    .textContent =
+    ai.patternMatches ||
+    0;
+
+}
+
+
+/* =========================================================
+   HISTORY
+========================================================= */
+
+function renderHistory(
+  data
+){
 
   const box =
     $("history");
 
+
   box.innerHTML = "";
 
-  (
+
+  const results =
     data.recentResults ||
-    []
-  )
+    [];
+
+
+  results
     .slice(0,10)
     .forEach(
       item => {
+
+        const number =
+          Number(
+            item.number
+          );
+
+
+        const type =
+          item.result ||
+          (
+            number >= 5
+              ? "BIG"
+              : "SMALL"
+          );
+
 
         const el =
           document.createElement(
             "div"
           );
 
-        const cls =
-          item.result === "BIG"
-            ? "big"
-            : item.result === "SMALL"
-              ? "small"
-              : "";
 
         el.className =
-          "h " + cls;
+          "h " +
+          (
+            type === "BIG"
+              ? "big"
+              : "small"
+          );
+
 
         el.textContent =
-          item.number;
+          number;
+
+
+        el.title =
+          (
+            item.issue ||
+            ""
+          ) +
+          " " +
+          type;
+
 
         box.appendChild(
           el
@@ -1130,27 +2082,64 @@ function render(data){
 }
 
 
-if(key){
+/* =========================================================
+   INITIAL
+========================================================= */
+
+if(
+  accessKey
+){
 
   showApp();
 
-}else{
+}
+else{
 
   showLogin();
 
 }
 
 
-load();
+/* =========================================================
+   LIVE UPDATE EVERY SECOND
+========================================================= */
+
+loadState();
 
 
 setInterval(
-  load,
+  loadState,
   1000
+);
+
+
+/* =========================================================
+   PRECISE LOCAL ANALYSIS COUNTDOWN
+   UI ONLY — SERVER REMAINS AUTHORITY
+========================================================= */
+
+setInterval(
+  () => {
+
+    /*
+      State is refreshed every second.
+      This small repaint makes the 4-second
+      analysis indicator smoother.
+    */
+
+    if(
+      $("app")
+        .classList
+        .contains("hide")
+    ){
+      return;
+    }
+
+  },
+  200
 );
 
 </script>
 
 </body>
-
 </html>
