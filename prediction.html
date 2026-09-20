@@ -20,13 +20,13 @@
 
 body{
   margin:0;
-  padding:14px;
+  padding:12px;
   min-height:100vh;
   background:
     radial-gradient(
       circle at top,
-      #172b52,
-      #050914 52%,
+      #182e57,
+      #050914 55%,
       #020308
     );
   color:#fff;
@@ -41,31 +41,32 @@ body{
 
 .top{
   display:flex;
-  align-items:center;
   justify-content:space-between;
-  padding:8px 3px 18px;
+  align-items:center;
+  padding:8px 4px 18px;
 }
 
 .logo{
-  font-size:25px;
+  font-size:27px;
   font-weight:900;
-  letter-spacing:3px;
+  letter-spacing:5px;
 }
 
 .status{
-  padding:7px 12px;
+  padding:9px 14px;
   border-radius:30px;
+  background:#071326;
   font-size:10px;
   font-weight:900;
-  background:#101a2c;
+  letter-spacing:1px;
 }
 
 .online{
-  color:#42ffb7;
+  color:#45ffba;
 }
 
 .offline{
-  color:#ff6464;
+  color:#ff6060;
 }
 
 .card{
@@ -75,25 +76,20 @@ body{
       #0a101e,
       #050914
     );
-
   border:1px solid #1d3358;
-
   border-radius:24px;
-
-  padding:21px;
-
+  padding:20px;
   margin-bottom:15px;
-
   box-shadow:
     0 15px 45px #0008;
 }
 
 .label{
-  color:#687793;
+  color:#697893;
   font-size:10px;
   font-weight:900;
   letter-spacing:5px;
-  margin-bottom:14px;
+  margin-bottom:16px;
 }
 
 .period{
@@ -112,29 +108,24 @@ body{
 .result{
   display:flex;
   align-items:center;
-  gap:22px;
+  gap:23px;
 }
 
 .orb{
   width:120px;
   height:120px;
   min-width:120px;
-
   border-radius:50%;
-
   border:3px solid #29416b;
-
   background:
     radial-gradient(
       circle,
-      #0a1726,
+      #0b1929,
       #02050b
     );
-
   display:flex;
   align-items:center;
   justify-content:center;
-
   box-shadow:
     0 0 35px #000;
 }
@@ -144,17 +135,17 @@ body{
   font-weight:900;
 }
 
-.big{
-  color:#ffb83d;
-}
-
-.small{
-  color:#3bdcff;
-}
-
 .resultName{
   font-size:27px;
   font-weight:900;
+}
+
+.big{
+  color:#ffb63d;
+}
+
+.small{
+  color:#35d9ff;
 }
 
 .predictionBox{
@@ -162,18 +153,18 @@ body{
 }
 
 .predictionValue{
-  font-size:48px;
+  font-size:47px;
   font-weight:900;
   letter-spacing:3px;
   margin:16px 0;
 }
 
 .wait{
-  color:#ffb83d;
+  color:#ffb63d;
 }
 
 .target{
-  color:#6e7b95;
+  color:#6f7d96;
   font-size:10px;
   letter-spacing:3px;
   word-break:break-all;
@@ -182,8 +173,8 @@ body{
 .confRow{
   display:flex;
   justify-content:space-between;
-  margin-top:23px;
-  color:#7d8aa3;
+  margin-top:22px;
+  color:#7c8aa2;
   font-size:10px;
   font-weight:900;
 }
@@ -191,7 +182,7 @@ body{
 .progress{
   width:100%;
   height:9px;
-  margin-top:8px;
+  margin-top:9px;
   background:#02040a;
   border-radius:20px;
   overflow:hidden;
@@ -206,7 +197,7 @@ body{
       #15c8ff,
       #8056ff
     );
-  transition:.2s;
+  transition:.15s;
 }
 
 .message{
@@ -219,19 +210,14 @@ body{
 
 .grid{
   display:grid;
-  grid-template-columns:
-    1fr 1fr;
+  grid-template-columns:1fr 1fr;
   gap:11px;
 }
 
 .box{
   padding:15px;
-
-  border:
-    1px solid #1b2e4d;
-
+  border:1px solid #1b2e4d;
   border-radius:17px;
-
   background:#050914;
 }
 
@@ -250,17 +236,11 @@ body{
 
 .row{
   display:grid;
-  grid-template-columns:
-    1fr 45px 70px;
-
+  grid-template-columns:1fr 45px 70px;
   align-items:center;
-
   gap:8px;
-
   padding:12px 0;
-
-  border-bottom:
-    1px solid #172237;
+  border-bottom:1px solid #172237;
 }
 
 .row:last-child{
@@ -288,34 +268,22 @@ body{
 .login{
   position:fixed;
   inset:0;
-
   z-index:100;
-
   display:flex;
-
   align-items:center;
   justify-content:center;
-
   padding:20px;
-
   background:#02040a;
 }
 
 .loginBox{
   width:100%;
   max-width:400px;
-
   padding:28px;
-
-  border:
-    1px solid #22395f;
-
+  border:1px solid #22395f;
   border-radius:24px;
-
   background:#080d18;
-
-  box-shadow:
-    0 20px 70px #000;
+  box-shadow:0 20px 70px #000;
 }
 
 .loginTitle{
@@ -333,42 +301,27 @@ body{
 
 input{
   width:100%;
-
   padding:14px;
-
-  margin:
-    8px 0 12px;
-
+  margin:8px 0 12px;
   background:#02050a;
-
   color:#fff;
-
-  border:
-    1px solid #273d60;
-
+  border:1px solid #273d60;
   border-radius:13px;
-
   outline:none;
 }
 
 button{
   width:100%;
-
   padding:14px;
-
   border:0;
-
   border-radius:13px;
-
   background:
     linear-gradient(
       90deg,
       #00afea,
       #8055ff
     );
-
   color:#fff;
-
   font-weight:900;
 }
 
@@ -386,7 +339,7 @@ button{
 @media(max-width:420px){
 
   body{
-    padding:10px;
+    padding:9px;
   }
 
   .card{
@@ -394,9 +347,9 @@ button{
   }
 
   .orb{
-    width:102px;
-    height:102px;
-    min-width:102px;
+    width:100px;
+    height:100px;
+    min-width:100px;
   }
 
   .number{
@@ -408,13 +361,12 @@ button{
   }
 
   .predictionValue{
-    font-size:42px;
+    font-size:40px;
   }
 
   .period{
     font-size:18px;
   }
-
 }
 
 </style>
@@ -447,9 +399,7 @@ button{
       autocomplete="off"
     >
 
-    <button
-      onclick="login()"
-    >
+    <button onclick="login()">
       ENTER DASHBOARD
     </button>
 
@@ -486,7 +436,7 @@ button{
   </div>
 
 
-  <!-- CURRENT PERIOD -->
+  <!-- PERIOD -->
 
   <div class="card">
 
@@ -554,7 +504,7 @@ button{
   </div>
 
 
-  <!-- AI -->
+  <!-- PREDICTION -->
 
   <div class="card">
 
@@ -634,7 +584,7 @@ button{
           id="model"
           class="boxValue"
         >
-          DY-AI-V5
+          —
         </div>
 
       </div>
@@ -707,15 +657,11 @@ button{
 <script>
 
 const ACCESS_STORAGE =
-  "DY_AI_ACCESS_KEY_V5";
+  "DY_AI_ACCESS_KEY_V6";
 
 const DEVICE_STORAGE =
-  "DY_AI_DEVICE_ID_V5";
+  "DY_AI_DEVICE_ID_V6";
 
-
-/* =========================================================
-   DEVICE ID
-========================================================= */
 
 function getDeviceId(){
 
@@ -730,12 +676,9 @@ function getDeviceId(){
       window.crypto &&
       crypto.randomUUID
     ){
-
       id =
         crypto.randomUUID();
-
     }else{
-
       id =
         "device-" +
         Date.now() +
@@ -755,9 +698,7 @@ function getDeviceId(){
 }
 
 
-/* =========================================================
-   LOGIN
-========================================================= */
+/* LOGIN */
 
 async function login(){
 
@@ -775,14 +716,11 @@ async function login(){
         "loginError"
       );
 
-  error.textContent =
-    "";
+  error.textContent = "";
 
   if(!key){
-
     error.textContent =
       "Enter access key";
-
     return;
   }
 
@@ -801,9 +739,7 @@ async function login(){
 
           body:
             JSON.stringify({
-
               accessKey:key,
-
               deviceId:
                 getDeviceId()
             })
@@ -814,11 +750,9 @@ async function login(){
       await response.json();
 
     if(!data.ok){
-
       error.textContent =
         data.message ||
         "Access denied";
-
       return;
     }
 
@@ -829,35 +763,25 @@ async function login(){
 
     showDashboard();
 
-  }catch(error){
+  }catch(err){
 
-    document
-      .getElementById(
-        "loginError"
-      )
-      .textContent =
-        "Server connection failed";
+    error.textContent =
+      "Server connection failed";
   }
 }
 
 
-/* =========================================================
-   SHOW
-========================================================= */
+/* SHOW */
 
 function showDashboard(){
 
   document
-    .getElementById(
-      "login"
-    )
+    .getElementById("login")
     .classList
     .add("hidden");
 
   document
-    .getElementById(
-      "app"
-    )
+    .getElementById("app")
     .classList
     .remove("hidden");
 
@@ -865,9 +789,7 @@ function showDashboard(){
 }
 
 
-/* =========================================================
-   ESCAPE
-========================================================= */
+/* ESCAPE */
 
 function escapeHTML(value){
 
@@ -886,17 +808,14 @@ function escapeHTML(value){
 }
 
 
-/* =========================================================
-   RENDER
-========================================================= */
+/* RENDER */
 
 function render(data){
 
   const status =
-    document
-      .getElementById(
-        "status"
-      );
+    document.getElementById(
+      "status"
+    );
 
   status.textContent =
     data.online
@@ -912,22 +831,18 @@ function render(data){
     );
 
 
-  document
-    .getElementById(
-      "currentPeriod"
-    )
-    .textContent =
-      data.currentPeriod ||
-      "—";
+  document.getElementById(
+    "currentPeriod"
+  ).textContent =
+    data.currentPeriod ||
+    "—";
 
 
-  document
-    .getElementById(
-      "nextPeriod"
-    )
-    .textContent =
-      data.nextPeriod ||
-      "—";
+  document.getElementById(
+    "nextPeriod"
+  ).textContent =
+    data.nextPeriod ||
+    "—";
 
 
   const number =
@@ -938,14 +853,12 @@ function render(data){
       : null;
 
 
-  document
-    .getElementById(
-      "latestNumber"
-    )
-    .textContent =
-      number === null
-        ? "—"
-        : number;
+  document.getElementById(
+    "latestNumber"
+  ).textContent =
+    number === null
+      ? "—"
+      : number;
 
 
   const result =
@@ -954,15 +867,12 @@ function render(data){
 
 
   const resultName =
-    document
-      .getElementById(
-        "resultName"
-      );
-
+    document.getElementById(
+      "resultName"
+    );
 
   resultName.textContent =
     result;
-
 
   resultName.className =
     "resultName " +
@@ -976,14 +886,12 @@ function render(data){
 
 
   const resultType =
-    document
-      .getElementById(
-        "resultType"
-      );
+    document.getElementById(
+      "resultType"
+    );
 
   resultType.textContent =
     result;
-
 
   resultType.className =
     result === "BIG"
@@ -994,42 +902,33 @@ function render(data){
 
 
   const prediction =
-    document
-      .getElementById(
-        "prediction"
-      );
-
+    document.getElementById(
+      "prediction"
+    );
 
   const target =
-    document
-      .getElementById(
-        "targetPeriod"
-      );
-
+    document.getElementById(
+      "targetPeriod"
+    );
 
   const confidence =
-    document
-      .getElementById(
-        "confidence"
-      );
-
+    document.getElementById(
+      "confidence"
+    );
 
   const fill =
-    document
-      .getElementById(
-        "progressFill"
-      );
-
+    document.getElementById(
+      "progressFill"
+    );
 
   const message =
-    document
-      .getElementById(
-        "message"
-      );
+    document.getElementById(
+      "message"
+    );
 
 
   /*
-     PREDICTION
+    REAL PREDICTION
   */
 
   if(data.prediction){
@@ -1066,7 +965,7 @@ function render(data){
   }
 
   /*
-     SKIP
+    SKIP
   */
 
   else if(
@@ -1096,10 +995,11 @@ function render(data){
       data.cycle.skipRound +
       " / " +
       data.cycle.skipTotal;
+
   }
 
   /*
-     ANALYSIS
+    4 SECOND ANALYSIS
   */
 
   else if(
@@ -1107,16 +1007,24 @@ function render(data){
     data.analysisSession.active
   ){
 
+    const total =
+      Number(
+        data.analysisSession.total
+      ) || 4000;
+
+    const elapsed =
+      Number(
+        data.analysisSession.elapsed
+      ) || 0;
+
     const progress =
-      Math.round(
-        (
-          data.analysisSession.elapsed /
-          (
-            data.analysisSession.total ||
-            4000
-          )
-        ) *
-        100
+      Math.min(
+        100,
+        Math.round(
+          elapsed /
+          total *
+          100
+        )
       );
 
     prediction.textContent =
@@ -1126,8 +1034,13 @@ function render(data){
       "predictionValue wait";
 
     target.textContent =
+      data.analysisSession.issue ||
       data.currentPeriod ||
       "—";
+
+    /*
+      Analysis progress only.
+    */
 
     confidence.textContent =
       progress + "%";
@@ -1139,10 +1052,11 @@ function render(data){
       "AI ANALYSIS " +
       progress +
       "%";
+
   }
 
   /*
-     WAIT
+    WAIT
   */
 
   else{
@@ -1169,51 +1083,41 @@ function render(data){
   }
 
 
-  document
-    .getElementById(
-      "model"
-    )
-    .textContent =
-      data.modelVersion ||
-      "DY-AI-V5";
+  document.getElementById(
+    "model"
+  ).textContent =
+    data.modelVersion ||
+    "DY-AI-V6";
 
 
-  document
-    .getElementById(
-      "mode"
-    )
-    .textContent =
-      data.cycle
-        ? data.cycle.mode
-        : "—";
+  document.getElementById(
+    "mode"
+  ).textContent =
+    data.cycle
+      ? data.cycle.mode
+      : "—";
 
 
-  document
-    .getElementById(
-      "sample"
-    )
-    .textContent =
-      data.recentResults
-        ? data.recentResults.length
-        : 0;
+  document.getElementById(
+    "sample"
+  ).textContent =
+    data.recentResults
+      ? data.recentResults.length
+      : 0;
 
 
-  document
-    .getElementById(
-      "evidence"
-    )
-    .textContent =
-      data.prediction
-        ? "MODEL"
-        : "—";
+  document.getElementById(
+    "evidence"
+  ).textContent =
+    data.prediction
+      ? "SUPPORTED"
+      : "—";
 
 
   const history =
-    document
-      .getElementById(
-        "history"
-      );
-
+    document.getElementById(
+      "history"
+    );
 
   const results =
     data.recentResults ||
@@ -1222,70 +1126,59 @@ function render(data){
 
   history.innerHTML =
     results
-      .map(
-        item => {
+      .map(item => {
 
-          const result =
-            item.result ||
-            "—";
+        const r =
+          item.result || "—";
 
-          const cls =
-            result.toLowerCase();
+        const cls =
+          r.toLowerCase();
 
-          return `
+        return `
+          <div class="row">
 
-            <div class="row">
-
-              <div class="issue">
-                ${escapeHTML(
-                  item.issue
-                )}
-              </div>
-
-              <div
-                class="rowNumber ${cls}"
-              >
-                ${
-                  Number.isInteger(
-                    item.number
-                  )
-                    ? item.number
-                    : "—"
-                }
-              </div>
-
-              <div
-                class="rowResult ${cls}"
-              >
-                ${escapeHTML(
-                  result
-                )}
-              </div>
-
+            <div class="issue">
+              ${escapeHTML(
+                item.issue
+              )}
             </div>
 
-          `;
-        }
-      )
+            <div
+              class="rowNumber ${cls}"
+            >
+              ${
+                Number.isInteger(
+                  item.number
+                )
+                  ? item.number
+                  : "—"
+              }
+            </div>
+
+            <div
+              class="rowResult ${cls}"
+            >
+              ${escapeHTML(r)}
+            </div>
+
+          </div>
+        `;
+      })
       .join("");
 
 
   if(!results.length){
-
     history.innerHTML =
       `
-        <div class="message">
-          No results
-        </div>
+      <div class="message">
+        No results
+      </div>
       `;
   }
-
 }
 
 
-/* =========================================================
-   UPDATE
-========================================================= */
+/* UPDATE */
 
 async function updateState(){
 
@@ -1295,18 +1188,7 @@ async function updateState(){
       await fetch(
         "/api/state",
         {
-          cache:
-            "no-store",
-
-          headers:{
-            "X-Access-Key":
-              localStorage.getItem(
-                ACCESS_STORAGE
-              ) || "",
-
-            "X-Device-ID":
-              getDeviceId()
-          }
+          cache:"no-store"
         }
       );
 
@@ -1315,7 +1197,7 @@ async function updateState(){
 
     render(data);
 
-  }catch(error){
+  }catch(err){
 
     document
       .getElementById(
@@ -1327,9 +1209,7 @@ async function updateState(){
 }
 
 
-/* =========================================================
-   AUTO REFRESH 1 SECOND
-========================================================= */
+/* 1 SECOND REFRESH */
 
 setInterval(
   updateState,
@@ -1337,20 +1217,18 @@ setInterval(
 );
 
 
-/* =========================================================
-   AUTO LOGIN
-========================================================= */
+/* AUTO LOGIN */
 
 if(
   localStorage.getItem(
     ACCESS_STORAGE
   )
 ){
-
   showDashboard();
 }
 
 </script>
 
 </body>
+
 </html>
