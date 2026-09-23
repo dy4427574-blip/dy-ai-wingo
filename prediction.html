@@ -1,1234 +1,988 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
 <meta charset="UTF-8">
+<meta name="viewport"
+content="width=device-width,initial-scale=1,
+maximum-scale=1,user-scalable=no">
+<meta http-equiv="Cache-Control"
+content="no-store">
 
-<meta
-  name="viewport"
-  content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"
->
-
-<title>DY AI Wingo</title>
+<title>DY AI WinGo</title>
 
 <style>
-
-*{
-  box-sizing:border-box;
-}
+*{box-sizing:border-box}
 
 body{
-  margin:0;
-  padding:12px;
-  min-height:100vh;
-  background:
-    radial-gradient(
-      circle at top,
-      #182e57,
-      #050914 55%,
-      #020308
-    );
-  color:#fff;
-  font-family:Arial,sans-serif;
+ margin:0;
+ padding:14px;
+ background:#05070c;
+ color:#fff;
+ font-family:Arial,sans-serif
 }
 
-.wrap{
-  width:100%;
-  max-width:650px;
-  margin:auto;
-}
-
-.top{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:8px 4px 18px;
-}
-
-.logo{
-  font-size:27px;
-  font-weight:900;
-  letter-spacing:5px;
-}
-
-.status{
-  padding:9px 14px;
-  border-radius:30px;
-  background:#071326;
-  font-size:10px;
-  font-weight:900;
-  letter-spacing:1px;
-}
-
-.online{
-  color:#45ffba;
-}
-
-.offline{
-  color:#ff6060;
+.app{
+ max-width:560px;
+ margin:auto
 }
 
 .card{
-  background:
-    linear-gradient(
-      145deg,
-      #0a101e,
-      #050914
-    );
-  border:1px solid #1d3358;
-  border-radius:24px;
-  padding:20px;
-  margin-bottom:15px;
-  box-shadow:
-    0 15px 45px #0008;
+ background:linear-gradient(
+  145deg,#101722,#080c13
+ );
+ border:1px solid #202c3f;
+ border-radius:18px;
+ padding:16px;
+ margin-bottom:12px;
+ box-shadow:0 12px 35px #0008
+}
+
+.logo{
+ text-align:center;
+ font-size:25px;
+ font-weight:900
+}
+
+.blue{color:#2196ff}
+
+.sub{
+ text-align:center;
+ color:#8490a3;
+ font-size:11px;
+ margin-top:5px
+}
+
+.status{
+ display:flex;
+ justify-content:center;
+ align-items:center;
+ gap:8px;
+ margin:13px 0 2px;
+ color:#8995a8;
+ font-size:12px
+}
+
+.dot{
+ width:9px;
+ height:9px;
+ border-radius:50%;
+ background:#555
+}
+
+.online .dot{
+ background:#19ed8b;
+ box-shadow:0 0 13px #19ed8b
+}
+
+.offline .dot{
+ background:#ff4655;
+ box-shadow:0 0 13px #ff4655
 }
 
 .label{
-  color:#697893;
-  font-size:10px;
-  font-weight:900;
-  letter-spacing:5px;
-  margin-bottom:16px;
+ color:#7d899c;
+ font-size:10px;
+ letter-spacing:1.4px;
+ font-weight:bold
 }
 
-.period{
-  font-size:22px;
-  font-weight:900;
-  word-break:break-all;
-}
-
-.sub{
-  color:#687691;
-  font-size:10px;
-  margin-top:11px;
-  word-break:break-all;
-}
-
-.result{
-  display:flex;
-  align-items:center;
-  gap:23px;
-}
-
-.orb{
-  width:120px;
-  height:120px;
-  min-width:120px;
-  border-radius:50%;
-  border:3px solid #29416b;
-  background:
-    radial-gradient(
-      circle,
-      #0b1929,
-      #02050b
-    );
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  box-shadow:
-    0 0 35px #000;
-}
-
-.number{
-  font-size:43px;
-  font-weight:900;
-}
-
-.resultName{
-  font-size:27px;
-  font-weight:900;
-}
-
-.big{
-  color:#ffb63d;
-}
-
-.small{
-  color:#35d9ff;
-}
-
-.predictionBox{
-  text-align:center;
-}
-
-.predictionValue{
-  font-size:47px;
-  font-weight:900;
-  letter-spacing:3px;
-  margin:16px 0;
-}
-
-.wait{
-  color:#ffb63d;
-}
-
-.target{
-  color:#6f7d96;
-  font-size:10px;
-  letter-spacing:3px;
-  word-break:break-all;
-}
-
-.confRow{
-  display:flex;
-  justify-content:space-between;
-  margin-top:22px;
-  color:#7c8aa2;
-  font-size:10px;
-  font-weight:900;
-}
-
-.progress{
-  width:100%;
-  height:9px;
-  margin-top:9px;
-  background:#02040a;
-  border-radius:20px;
-  overflow:hidden;
-}
-
-.progressFill{
-  width:0%;
-  height:100%;
-  background:
-    linear-gradient(
-      90deg,
-      #15c8ff,
-      #8056ff
-    );
-  transition:.15s;
-}
-
-.message{
-  text-align:center;
-  margin-top:16px;
-  color:#8995aa;
-  font-size:11px;
-  font-weight:900;
+.value{
+ margin-top:6px;
+ font-size:18px;
+ font-weight:900;
+ word-break:break-all
 }
 
 .grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:11px;
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:10px
 }
 
-.box{
-  padding:15px;
-  border:1px solid #1b2e4d;
-  border-radius:17px;
-  background:#050914;
+.bigbox{
+ text-align:center;
+ padding:22px 12px
 }
 
-.boxTitle{
-  color:#697792;
-  font-size:9px;
-  letter-spacing:3px;
-  margin-bottom:8px;
+.prediction{
+ margin:11px 0;
+ font-size:39px;
+ font-weight:1000
 }
 
-.boxValue{
-  font-size:15px;
-  font-weight:900;
-  word-break:break-word;
+.big{
+ color:#ff9d35;
+ text-shadow:0 0 20px #ff9d3544
+}
+
+.small{
+ color:#42a9ff;
+ text-shadow:0 0 20px #42a9ff44
+}
+
+.wait{color:#ffd34d}
+.skip{color:#8e9aac}
+
+.progress{
+ height:8px;
+ background:#1b2533;
+ border-radius:20px;
+ overflow:hidden;
+ margin-top:12px
+}
+
+.bar{
+ width:0%;
+ height:100%;
+ background:#2196ff;
+ transition:.2s
 }
 
 .row{
-  display:grid;
-  grid-template-columns:1fr 45px 70px;
-  align-items:center;
-  gap:8px;
-  padding:12px 0;
-  border-bottom:1px solid #172237;
+ display:flex;
+ justify-content:space-between;
+ gap:10px;
+ padding:9px 0;
+ border-bottom:1px solid #17202d;
+ font-size:12px
 }
 
 .row:last-child{
-  border-bottom:0;
+ border-bottom:0
 }
 
-.issue{
-  color:#71809a;
-  font-size:9px;
-  word-break:break-all;
+.history{
+ display:flex;
+ gap:6px;
+ flex-wrap:wrap;
+ margin-top:10px
 }
 
-.rowNumber{
-  text-align:center;
-  font-size:18px;
-  font-weight:900;
+.ball{
+ width:38px;
+ height:38px;
+ border-radius:10px;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ background:#121a26;
+ border:1px solid #263247;
+ font-weight:900
 }
 
-.rowResult{
-  text-align:right;
-  font-size:9px;
-  font-weight:900;
-}
-
-.login{
-  position:fixed;
-  inset:0;
-  z-index:100;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:20px;
-  background:#02040a;
-}
-
-.loginBox{
-  width:100%;
-  max-width:400px;
-  padding:28px;
-  border:1px solid #22395f;
-  border-radius:24px;
-  background:#080d18;
-  box-shadow:0 20px 70px #000;
-}
-
-.loginTitle{
-  font-size:28px;
-  font-weight:900;
-  letter-spacing:2px;
-}
-
-.loginSub{
-  color:#748099;
-  font-size:12px;
-  margin-top:7px;
-  margin-bottom:12px;
-}
+.ball.big{color:#ffac45}
+.ball.small{color:#4aaaff}
 
 input{
-  width:100%;
-  padding:14px;
-  margin:8px 0 12px;
-  background:#02050a;
-  color:#fff;
-  border:1px solid #273d60;
-  border-radius:13px;
-  outline:none;
+ width:100%;
+ padding:13px;
+ background:#080d15;
+ border:1px solid #29364a;
+ border-radius:12px;
+ color:#fff;
+ outline:none
 }
 
 button{
-  width:100%;
-  padding:14px;
-  border:0;
-  border-radius:13px;
-  background:
-    linear-gradient(
-      90deg,
-      #00afea,
-      #8055ff
-    );
-  color:#fff;
-  font-weight:900;
+ width:100%;
+ padding:13px;
+ margin-top:9px;
+ border:0;
+ border-radius:12px;
+ background:#188fff;
+ color:#fff;
+ font-weight:900
 }
 
 .error{
-  color:#ff6262;
-  text-align:center;
-  font-size:11px;
-  margin-top:10px;
+ color:#ff5b68;
+ font-size:12px;
+ margin-top:8px
 }
 
 .hidden{
-  display:none !important;
+ display:none!important
 }
 
-@media(max-width:420px){
-
-  body{
-    padding:9px;
-  }
-
-  .card{
-    padding:17px;
-  }
-
-  .orb{
-    width:100px;
-    height:100px;
-    min-width:100px;
-  }
-
-  .number{
-    font-size:35px;
-  }
-
-  .resultName{
-    font-size:22px;
-  }
-
-  .predictionValue{
-    font-size:40px;
-  }
-
-  .period{
-    font-size:18px;
-  }
+.footer{
+ text-align:center;
+ color:#596577;
+ font-size:10px;
+ padding:5px
 }
-
 </style>
-
 </head>
 
 <body>
 
-<!-- LOGIN -->
+<div class="app">
 
-<div
-  id="login"
-  class="login"
->
+<div id="loginCard" class="card">
 
-  <div class="loginBox">
+ <div class="logo">
+  DY AI WIN<span class="blue">GO</span>
+ </div>
 
-    <div class="loginTitle">
-      DY AI WINGO
-    </div>
+ <div class="sub">
+  LIVE RANDOM PREDICTION
+ </div>
 
-    <div class="loginSub">
-      Enter your access key
-    </div>
+ <div style="margin-top:20px">
 
-    <input
-      id="accessKey"
-      type="text"
-      placeholder="Access Key"
-      autocomplete="off"
-    >
+  <div class="label">
+   ACCESS KEY
+  </div>
 
-    <button onclick="login()">
-      ENTER DASHBOARD
-    </button>
+  <input
+   id="accessKey"
+   placeholder="Enter access key"
+  >
 
-    <div
-      id="loginError"
-      class="error"
-    ></div>
+  <button onclick="login()">
+   UNLOCK SYSTEM
+  </button>
+
+  <div id="loginMsg"
+       class="error">
+  </div>
+
+ </div>
+</div>
+
+<div id="dashboard"
+     class="hidden">
+
+ <div class="card">
+
+  <div class="logo">
+   DY AI WIN<span class="blue">GO</span>
+  </div>
+
+  <div class="sub">
+   RANDOM LIVE ENGINE
+  </div>
+
+  <div
+   id="statusBox"
+   class="status offline">
+
+   <span class="dot"></span>
+
+   <span id="status">
+    CONNECTING...
+   </span>
 
   </div>
+
+ </div>
+
+ <div class="card">
+
+  <div class="label">
+   CURRENT PERIOD
+  </div>
+
+  <div
+   id="currentIssue"
+   class="value">
+   —
+  </div>
+
+  <div style="height:15px"></div>
+
+  <div class="label">
+   LATEST RESULT
+  </div>
+
+  <div
+   id="latestResult"
+   class="value">
+   —
+  </div>
+
+ </div>
+
+ <div class="card bigbox">
+
+  <div class="label">
+   AI ML PREDICTION
+  </div>
+
+  <div
+   id="prediction"
+   class="prediction wait">
+   WAIT
+  </div>
+
+  <div
+   id="targetText"
+   class="label">
+   TARGET: —
+  </div>
+
+  <div class="progress">
+   <div
+    id="progressBar"
+    class="bar">
+   </div>
+  </div>
+
+  <div
+   id="progressText"
+   style="
+   font-size:10px;
+   color:#68758a;
+   margin-top:7px">
+   IDLE
+  </div>
+
+ </div>
+
+ <div class="grid">
+
+  <div class="card">
+
+   <div class="label">
+    CONFIDENCE
+   </div>
+
+   <div
+    id="confidence"
+    class="value">
+    —
+   </div>
+
+  </div>
+
+  <div class="card">
+
+   <div class="label">
+    MODE
+   </div>
+
+   <div
+    id="mode"
+    class="value">
+    WAIT
+   </div>
+
+  </div>
+
+  <div class="card">
+
+   <div class="label">
+    MODEL
+   </div>
+
+   <div
+    id="model"
+    class="value"
+    style="font-size:12px">
+    —
+   </div>
+
+  </div>
+
+  <div class="card">
+
+   <div class="label">
+    ENGINE
+   </div>
+
+   <div
+    id="evidence"
+    class="value"
+    style="font-size:12px">
+    —
+   </div>
+
+  </div>
+
+ </div>
+
+ <div class="card">
+
+  <div class="label">
+   RECENT RESULTS
+  </div>
+
+  <div
+   id="history"
+   class="history">
+  </div>
+
+ </div>
+
+ <div class="card">
+
+  <div class="row">
+   <span>API UPDATE</span>
+   <b id="apiTime">—</b>
+  </div>
+
+  <div class="row">
+   <span>ENGINE</span>
+   <b style="color:#20e88a">
+    RANDOM
+   </b>
+  </div>
+
+  <button
+   onclick="logout()"
+   style="background:#202936">
+   LOGOUT
+  </button>
+
+ </div>
+
+ <div class="footer">
+  DY AI WinGo • Random engine
+ </div>
 
 </div>
 
-
-<!-- APP -->
-
-<div
-  id="app"
-  class="wrap hidden"
->
-
-  <div class="top">
-
-    <div class="logo">
-      DY AI
-    </div>
-
-    <div
-      id="status"
-      class="status offline"
-    >
-      OFFLINE
-    </div>
-
-  </div>
-
-
-  <!-- PERIOD -->
-
-  <div class="card">
-
-    <div class="label">
-      CURRENT PERIOD
-    </div>
-
-    <div
-      id="currentPeriod"
-      class="period"
-    >
-      —
-    </div>
-
-    <div class="sub">
-      NEXT PERIOD:
-      <span id="nextPeriod">
-        —
-      </span>
-    </div>
-
-  </div>
-
-
-  <!-- RESULT -->
-
-  <div class="card">
-
-    <div class="label">
-      LATEST RESULT
-    </div>
-
-    <div class="result">
-
-      <div class="orb">
-
-        <div
-          id="latestNumber"
-          class="number"
-        >
-          —
-        </div>
-
-      </div>
-
-      <div>
-
-        <div
-          id="resultName"
-          class="resultName"
-        >
-          WAIT
-        </div>
-
-        <div
-          id="resultType"
-        >
-          —
-        </div>
-
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <!-- PREDICTION -->
-
-  <div class="card">
-
-    <div class="label">
-      AI ML PREDICTION
-    </div>
-
-    <div class="predictionBox">
-
-      <div
-        id="prediction"
-        class="predictionValue wait"
-      >
-        WAIT
-      </div>
-
-      <div class="target">
-
-        TARGET PERIOD:
-
-        <span id="targetPeriod">
-          —
-        </span>
-
-      </div>
-
-      <div class="confRow">
-
-        <span>
-          AI CONFIDENCE
-        </span>
-
-        <span id="confidence">
-          0%
-        </span>
-
-      </div>
-
-      <div class="progress">
-
-        <div
-          id="progressFill"
-          class="progressFill"
-        ></div>
-
-      </div>
-
-      <div
-        id="message"
-        class="message"
-      >
-        WAITING FOR LIVE DATA...
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <!-- DIAGNOSTICS -->
-
-  <div class="card">
-
-    <div class="label">
-      MODEL DIAGNOSTICS
-    </div>
-
-    <div class="grid">
-
-      <div class="box">
-
-        <div class="boxTitle">
-          MODEL
-        </div>
-
-        <div
-          id="model"
-          class="boxValue"
-        >
-          —
-        </div>
-
-      </div>
-
-      <div class="box">
-
-        <div class="boxTitle">
-          MODE
-        </div>
-
-        <div
-          id="mode"
-          class="boxValue"
-        >
-          —
-        </div>
-
-      </div>
-
-      <div class="box">
-
-        <div class="boxTitle">
-          EVIDENCE
-        </div>
-
-        <div
-          id="evidence"
-          class="boxValue"
-        >
-          —
-        </div>
-
-      </div>
-
-      <div class="box">
-
-        <div class="boxTitle">
-          SAMPLE
-        </div>
-
-        <div
-          id="sample"
-          class="boxValue"
-        >
-          0
-        </div>
-
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <!-- HISTORY -->
-
-  <div class="card">
-
-    <div class="label">
-      RECENT RESULTS
-    </div>
-
-    <div id="history"></div>
-
-  </div>
-
 </div>
-
 
 <script>
 
-const ACCESS_STORAGE =
-  "DY_AI_ACCESS_KEY_V6";
-
-const DEVICE_STORAGE =
-  "DY_AI_DEVICE_ID_V6";
-
+let requestRunning=false;
 
 function getDeviceId(){
 
-  let id =
-    localStorage.getItem(
-      DEVICE_STORAGE
-    );
+ let id=
+  localStorage.getItem(
+   "dy_device_id"
+  );
 
-  if(!id){
+ if(!id){
 
-    if(
-      window.crypto &&
-      crypto.randomUUID
-    ){
-      id =
-        crypto.randomUUID();
-    }else{
-      id =
-        "device-" +
-        Date.now() +
-        "-" +
-        Math.random()
-          .toString(36)
-          .slice(2);
-    }
+  id=
+   "dy-" +
+   crypto.randomUUID();
 
-    localStorage.setItem(
-      DEVICE_STORAGE,
-      id
-    );
-  }
+  localStorage.setItem(
+   "dy_device_id",
+   id
+  );
+ }
 
-  return id;
+ return id;
 }
-
-
-/* LOGIN */
 
 async function login(){
 
-  const key =
-    document
-      .getElementById(
-        "accessKey"
-      )
-      .value
-      .trim();
-
-  const error =
-    document
-      .getElementById(
-        "loginError"
-      );
-
-  error.textContent = "";
-
-  if(!key){
-    error.textContent =
-      "Enter access key";
-    return;
-  }
-
-  try{
-
-    const response =
-      await fetch(
-        "/api/key/check",
-        {
-          method:"POST",
-
-          headers:{
-            "Content-Type":
-              "application/json"
-          },
-
-          body:
-            JSON.stringify({
-              accessKey:key,
-              deviceId:
-                getDeviceId()
-            })
-        }
-      );
-
-    const data =
-      await response.json();
-
-    if(!data.ok){
-      error.textContent =
-        data.message ||
-        "Access denied";
-      return;
-    }
-
-    localStorage.setItem(
-      ACCESS_STORAGE,
-      key
-    );
-
-    showDashboard();
-
-  }catch(err){
-
-    error.textContent =
-      "Server connection failed";
-  }
-}
-
-
-/* SHOW */
-
-function showDashboard(){
-
+ const key=
   document
-    .getElementById("login")
-    .classList
-    .add("hidden");
+  .getElementById(
+   "accessKey"
+  )
+  .value
+  .trim();
 
+ const msg=
   document
-    .getElementById("app")
-    .classList
-    .remove("hidden");
-
-  updateState();
-}
-
-
-/* ESCAPE */
-
-function escapeHTML(value){
-
-  return String(
-    value ?? ""
-  ).replace(
-    /[&<>"']/g,
-    char => ({
-      "&":"&amp;",
-      "<":"&lt;",
-      ">":"&gt;",
-      '"':"&quot;",
-      "'":"&#039;"
-    }[char])
+  .getElementById(
+   "loginMsg"
   );
+
+ if(!key){
+
+  msg.textContent=
+   "Enter access key";
+
+  return;
+ }
+
+ msg.textContent=
+  "Checking...";
+
+ try{
+
+  const response=
+   await fetch(
+    "/api/key/check?_="+
+    Date.now(),
+    {
+     method:"POST",
+     cache:"no-store",
+
+     headers:{
+      "Content-Type":
+       "application/json"
+     },
+
+     body:JSON.stringify({
+      accessKey:key,
+      deviceId:
+       getDeviceId()
+     })
+    }
+   );
+
+  const data=
+   await response.json();
+
+  if(!data.ok){
+
+   msg.textContent=
+    data.message ||
+    "Access denied";
+
+   return;
+  }
+
+  localStorage.setItem(
+   "dy_access_key",
+   key
+  );
+
+  openDashboard();
+
+ }catch(error){
+
+  msg.textContent=
+   "Server connection failed";
+ }
 }
 
+function openDashboard(){
 
-/* RENDER */
+ document
+  .getElementById(
+   "loginCard"
+  )
+  .classList
+  .add("hidden");
+
+ document
+  .getElementById(
+   "dashboard"
+  )
+  .classList
+  .remove("hidden");
+
+ updateState();
+}
+
+function logout(){
+
+ localStorage.removeItem(
+  "dy_access_key"
+ );
+
+ location.reload();
+}
+
+async function verifyKey(){
+
+ const key=
+  localStorage.getItem(
+   "dy_access_key"
+  );
+
+ if(!key) return;
+
+ try{
+
+  const response=
+   await fetch(
+    "/api/key/check?_="+
+    Date.now(),
+    {
+     method:"POST",
+     cache:"no-store",
+
+     headers:{
+      "Content-Type":
+       "application/json"
+     },
+
+     body:JSON.stringify({
+      accessKey:key,
+      deviceId:
+       getDeviceId()
+     })
+    }
+   );
+
+  const data=
+   await response.json();
+
+  if(data.ok){
+
+   openDashboard();
+
+  }else{
+
+   localStorage.removeItem(
+    "dy_access_key"
+   );
+  }
+
+ }catch(error){}
+}
+
+function setStatus(
+ online
+){
+
+ const box=
+  document.getElementById(
+   "statusBox"
+  );
+
+ const text=
+  document.getElementById(
+   "status"
+  );
+
+ box.className=
+  "status " +
+  (
+   online
+    ? "online"
+    : "offline"
+  );
+
+ text.textContent=
+  online
+   ? "LIVE API CONNECTED"
+   : "OFFLINE";
+}
 
 function render(data){
 
-  const status =
-    document.getElementById(
-      "status"
-    );
+ setStatus(
+  Boolean(data.online)
+ );
 
-  status.textContent =
-    data.online
-      ? "ONLINE"
-      : "OFFLINE";
+ document.getElementById(
+  "currentIssue"
+ ).textContent=
+  data.currentIssue ||
+  "—";
 
-  status.className =
-    "status " +
-    (
-      data.online
-        ? "online"
-        : "offline"
-    );
-
+ if(
+  data.latestNumber !==
+  null &&
+  data.latestNumber !==
+  undefined
+ ){
 
   document.getElementById(
-    "currentPeriod"
-  ).textContent =
-    data.currentPeriod ||
-    "—";
-
-
-  document.getElementById(
-    "nextPeriod"
-  ).textContent =
-    data.nextPeriod ||
-    "—";
-
-
-  const number =
-    Number.isInteger(
-      data.latestNumber
-    )
-      ? data.latestNumber
-      : null;
-
-
-  document.getElementById(
-    "latestNumber"
-  ).textContent =
-    number === null
-      ? "—"
-      : number;
-
-
-  const result =
+   "latestResult"
+  ).textContent=
+   data.latestNumber +
+   " " +
+   (
     data.latestResult ||
-    "WAIT";
+    ""
+   );
 
-
-  const resultName =
-    document.getElementById(
-      "resultName"
-    );
-
-  resultName.textContent =
-    result;
-
-  resultName.className =
-    "resultName " +
-    (
-      result === "BIG"
-        ? "big"
-        : result === "SMALL"
-          ? "small"
-          : ""
-    );
-
-
-  const resultType =
-    document.getElementById(
-      "resultType"
-    );
-
-  resultType.textContent =
-    result;
-
-  resultType.className =
-    result === "BIG"
-      ? "big"
-      : result === "SMALL"
-        ? "small"
-        : "";
-
-
-  const prediction =
-    document.getElementById(
-      "prediction"
-    );
-
-  const target =
-    document.getElementById(
-      "targetPeriod"
-    );
-
-  const confidence =
-    document.getElementById(
-      "confidence"
-    );
-
-  const fill =
-    document.getElementById(
-      "progressFill"
-    );
-
-  const message =
-    document.getElementById(
-      "message"
-    );
-
-
-  /*
-    REAL PREDICTION
-  */
-
-  if(data.prediction){
-
-    prediction.textContent =
-      data.prediction.result;
-
-    prediction.className =
-      "predictionValue " +
-      (
-        data.prediction.result ===
-        "BIG"
-          ? "big"
-          : "small"
-      );
-
-    target.textContent =
-      data.prediction.issue;
-
-    const c =
-      Number(
-        data.prediction.confidence
-      ) || 0;
-
-    confidence.textContent =
-      c + "%";
-
-    fill.style.width =
-      c + "%";
-
-    message.textContent =
-      "AI PREDICTION READY";
-
-  }
-
-  /*
-    SKIP
-  */
-
-  else if(
-    data.cycle &&
-    data.cycle.mode ===
-      "SKIP"
-  ){
-
-    prediction.textContent =
-      "SKIP";
-
-    prediction.className =
-      "predictionValue wait";
-
-    target.textContent =
-      data.currentPeriod ||
-      "—";
-
-    confidence.textContent =
-      "0%";
-
-    fill.style.width =
-      "0%";
-
-    message.textContent =
-      "SKIP ROUND " +
-      data.cycle.skipRound +
-      " / " +
-      data.cycle.skipTotal;
-
-  }
-
-  /*
-    4 SECOND ANALYSIS
-  */
-
-  else if(
-    data.analysisSession &&
-    data.analysisSession.active
-  ){
-
-    const total =
-      Number(
-        data.analysisSession.total
-      ) || 4000;
-
-    const elapsed =
-      Number(
-        data.analysisSession.elapsed
-      ) || 0;
-
-    const progress =
-      Math.min(
-        100,
-        Math.round(
-          elapsed /
-          total *
-          100
-        )
-      );
-
-    prediction.textContent =
-      "ANALYZING";
-
-    prediction.className =
-      "predictionValue wait";
-
-    target.textContent =
-      data.analysisSession.issue ||
-      data.currentPeriod ||
-      "—";
-
-    /*
-      Analysis progress only.
-    */
-
-    confidence.textContent =
-      progress + "%";
-
-    fill.style.width =
-      progress + "%";
-
-    message.textContent =
-      "AI ANALYSIS " +
-      progress +
-      "%";
-
-  }
-
-  /*
-    WAIT
-  */
-
-  else{
-
-    prediction.textContent =
-      "WAIT";
-
-    prediction.className =
-      "predictionValue wait";
-
-    target.textContent =
-      "—";
-
-    confidence.textContent =
-      "0%";
-
-    fill.style.width =
-      "0%";
-
-    message.textContent =
-      data.online
-        ? "WAITING FOR NEXT ROUND..."
-        : "WAITING FOR LIVE DATA...";
-  }
-
+ }else{
 
   document.getElementById(
-    "model"
-  ).textContent =
-    data.modelVersion ||
-    "DY-AI-V6";
+   "latestResult"
+  ).textContent=
+   "—";
+ }
 
+ document.getElementById(
+  "model"
+ ).textContent=
+  data.model ||
+  "—";
 
+ const prediction=
   document.getElementById(
-    "mode"
-  ).textContent =
+   "prediction"
+  );
+
+ const mode=
+  document.getElementById(
+   "mode"
+  );
+
+ const target=
+  document.getElementById(
+   "targetText"
+  );
+
+ const confidence=
+  document.getElementById(
+   "confidence"
+  );
+
+ const evidence=
+  document.getElementById(
+   "evidence"
+  );
+
+ const bar=
+  document.getElementById(
+   "progressBar"
+  );
+
+ const progressText=
+  document.getElementById(
+   "progressText"
+  );
+
+ prediction.className=
+  "prediction wait";
+
+ if(
+  data.analysisSession &&
+  data.analysisSession.active
+ ){
+
+  prediction.textContent=
+   "ANALYZING";
+
+  mode.textContent=
+   "ANALYZING";
+
+  target.textContent=
+   "TARGET: " +
+   (
+    data.analysisSession
+     .targetIssue ||
+    "—"
+   );
+
+  const p=
+   Number(
+    data.analysisSession
+     .progress || 0
+   );
+
+  bar.style.width=
+   p + "%";
+
+  progressText.textContent=
+   p +
+   "% ANALYSIS";
+
+  confidence.textContent=
+   "RANDOM";
+
+  evidence.textContent=
+   "RANDOM ENGINE";
+
+ }
+ else if(
+  data.cycle &&
+  data.cycle.mode ===
+   "SKIP"
+ ){
+
+  prediction.textContent=
+   "SKIP";
+
+  prediction.className=
+   "prediction skip";
+
+  mode.textContent=
+   "SKIP";
+
+  target.textContent=
+   "WAITING NEXT ROUND";
+
+  bar.style.width=
+   "0%";
+
+  progressText.textContent=
+   "RISK CONTROL";
+
+  confidence.textContent=
+   "—";
+
+  evidence.textContent=
+   "SKIP: " +
+   (
     data.cycle
-      ? data.cycle.mode
-      : "—";
+     .skipRemaining ||
+    0
+   );
 
+ }
+ else if(
+  data.prediction
+ ){
 
-  document.getElementById(
-    "sample"
-  ).textContent =
-    data.recentResults
-      ? data.recentResults.length
-      : 0;
+  const value=
+   data.prediction
+    .prediction;
 
+  prediction.textContent=
+   value;
 
-  document.getElementById(
-    "evidence"
-  ).textContent =
+  prediction.className=
+   "prediction " +
+   (
+    value === "BIG"
+     ? "big"
+     : "small"
+   );
+
+  mode.textContent=
+   "PREDICT";
+
+  target.textContent=
+   "TARGET: " +
+   (
     data.prediction
-      ? "SUPPORTED"
-      : "—";
+     .targetIssue ||
+    data.currentIssue ||
+    "—"
+   );
 
+  confidence.textContent=
+   (
+    data.prediction
+     .confidence ||
+    0
+   ) + "%";
 
-  const history =
-    document.getElementById(
-      "history"
+  evidence.textContent=
+   "RANDOM";
+
+  bar.style.width=
+   "100%";
+
+  progressText.textContent=
+   "PREDICTION READY";
+
+ }
+ else {
+
+  prediction.textContent=
+   "WAIT";
+
+  mode.textContent=
+   data.cycle
+    ? data.cycle.mode
+    : "WAIT";
+
+  target.textContent=
+   "TARGET: " +
+   (
+    data.currentIssue ||
+    "—"
+   );
+
+  bar.style.width=
+   "0%";
+
+  progressText.textContent=
+   data.online
+    ? "WAITING FOR ANALYSIS"
+    : "WAITING FOR API";
+
+  confidence.textContent=
+   "—";
+
+  evidence.textContent=
+   "—";
+ }
+
+ const history=
+  document.getElementById(
+   "history"
+  );
+
+ history.innerHTML="";
+
+ const list=
+  Array.isArray(data.history)
+   ? data.history.slice(-10)
+   : [];
+
+ list.reverse()
+  .forEach(row=>{
+
+   const el=
+    document.createElement(
+     "div"
     );
 
-  const results =
-    data.recentResults ||
-    [];
+   el.className=
+    "ball " +
+    (
+     row.result ===
+      "BIG"
+      ? "big"
+      : "small"
+    );
 
+   el.textContent=
+    row.number;
 
-  history.innerHTML =
-    results
-      .map(item => {
+   el.title=
+    row.issue || "";
 
-        const r =
-          item.result || "—";
+   history.appendChild(el);
+  });
 
-        const cls =
-          r.toLowerCase();
+ if(data.fetchedAt){
 
-        return `
-          <div class="row">
-
-            <div class="issue">
-              ${escapeHTML(
-                item.issue
-              )}
-            </div>
-
-            <div
-              class="rowNumber ${cls}"
-            >
-              ${
-                Number.isInteger(
-                  item.number
-                )
-                  ? item.number
-                  : "—"
-              }
-            </div>
-
-            <div
-              class="rowResult ${cls}"
-            >
-              ${escapeHTML(r)}
-            </div>
-
-          </div>
-        `;
-      })
-      .join("");
-
-
-  if(!results.length){
-    history.innerHTML =
-      `
-      <div class="message">
-        No results
-      </div>
-      `;
-  }
+  document.getElementById(
+   "apiTime"
+  ).textContent=
+   new Date(
+    data.fetchedAt
+   ).toLocaleTimeString();
+ }
 }
-
-
-/* UPDATE */
 
 async function updateState(){
 
-  try{
+ if(requestRunning)
+  return;
 
-    const response =
-      await fetch(
-        "/api/state",
-        {
-          cache:"no-store"
-        }
-      );
+ requestRunning=true;
 
-    const data =
-      await response.json();
+ try{
 
-    render(data);
+  const response=
+   await fetch(
+    "/api/state?_="+
+    Date.now(),
+    {
+     cache:"no-store",
 
-  }catch(err){
+     headers:{
+      "Cache-Control":
+       "no-cache",
+      "Pragma":
+       "no-cache"
+     }
+    }
+   );
 
-    document
-      .getElementById(
-        "status"
-      )
-      .textContent =
-        "OFFLINE";
-  }
+  const data=
+   await response.json();
+
+  render(data);
+
+ }catch(error){
+
+  setStatus(false);
+
+ }finally{
+
+  requestRunning=false;
+
+  setTimeout(
+   updateState,
+   1000
+  );
+ }
 }
 
-
-/* 1 SECOND REFRESH */
-
-setInterval(
-  updateState,
-  1000
-);
-
-
-/* AUTO LOGIN */
-
-if(
-  localStorage.getItem(
-    ACCESS_STORAGE
-  )
-){
-  showDashboard();
-}
+verifyKey();
 
 </script>
 
 </body>
-
 </html>
